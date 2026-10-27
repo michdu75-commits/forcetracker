@@ -157,9 +157,9 @@ const dejaNote = (pg, q) => pg.evaluate((q) => { _afSuggLoc = _afSuggLocales(q);
   return [...document.querySelectorAll('#af-sugg [onclick^="_afSuggPrendreLocale"]')].map((x) => (x.children[1] && x.children[1].children[1]) ? x.children[1].children[1].innerText.replace(/\s+/g, ' ') : ''); }, q);
 const neuves = (L, avant) => L.filter((x) => x && avant.indexOf(x.id) < 0);
 
-async function choisirCiqual(pg, texte, code) {
+async function choisirCiqual(pg, texte, code, essais) {   // `essais` : la patience (× 250 ms) — la 1ʳᵉ recherche télécharge la table CIQUAL, plus longue sous charge
   await taper(pg, '#af-desc', texte); await pg.evaluate(() => { try { _afSuggInput(); } catch (e) {} });
-  let i = -1; for (let k = 0; k < 24 && i < 0; k++) { await pause(pg, 250); i = await pg.evaluate((c) => (typeof _afSuggCiq !== 'undefined' && _afSuggCiq || []).findIndex((a) => a && a[0] === c), code); }
+  let i = -1; for (let k = 0; k < (essais || 24) && i < 0; k++) { await pause(pg, 250); i = await pg.evaluate((c) => (typeof _afSuggCiq !== 'undefined' && _afSuggCiq || []).findIndex((a) => a && a[0] === c), code); }
   const txt = i < 0 ? '' : await pg.evaluate((i) => { const x = document.querySelector('#af-sugg [onclick="_afSuggPrendreCiqual(' + i + ')"]');
     return (x && x.children[1] && x.children[1].children[1]) ? x.children[1].children[1].innerText.replace(/\s+/g, ' ') : ''; }, i);
   const ok = i >= 0 && await clic(pg, '#af-sugg [onclick="_afSuggPrendreCiqual(' + i + ')"]'); await pause(pg, 250);
@@ -1290,4 +1290,469 @@ async function croiseFiab(t, b, PORT) {
   for (const D of [D1, D2, D3]) await D.cx.close();
 }
 
-module.exports = { ecran: ecranFiab, croise: croiseFiab };
+/* ═════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+   🔗 B-NIDT · RÉUTILISER UN ANCIEN ALIMENT SANS EN PERDRE NI EN INVENTER L'IDENTITÉ (mission de Michel, 27/10/2026)
+   Banc : NUTF_PARTIE=identite node tools/banc_nut_fiabilite.js · contrôle négatif : tools/mut_nut_fiabilite.py (partie « identite »).
+   POURQUOI : l'export réel du 27/10 (564 lignes) — 270 sans `source_id` (47,9 %), dont les 210 reprises d'avant la V2, TOUTES ; leur
+     pour-100 g ne fait que reformuler leurs calories (137 sur 142). Michel : « Modifier » ne doit plus faire perdre son code-barres /
+     son code CIQUAL à une ligne, et un ancien aliment dont on retrouve l'identité doit pouvoir se recalculer — SANS que le nom
+     décide, SANS lier quoi que ce soit en silence, SANS rien écrire avant « Ajouter ».
+   CONDUIT : la vraie app, « Mes aliments » (la reprise), le panneau « même aliment déjà identifié dans ton journal ? », « Ajouter »,
+     « Modifier » / « Enregistrer », « + Ajouter », « Tes repas habituels » ; puis, avec le VRAI Code.js en local, la synchro et
+     « 🔄 Restaurer ». Open Food Facts SIMULÉ (ou route coupée = hors ligne) ; la table CIQUAL est la vraie (publique).
+   OBSERVE : le panneau (texte, boutons), l'écran de reprise, les 4 champs, le stockage BRUT du journal avant/après chaque geste, les
+     lignes écrites (identité, pour-100 g, mode, fiabilité, provenance, copie d'origine `n2.av`), les clés de stockage.
+   NE COUVRE PAS : le vrai Open Food Facts, l'iPhone (recette de Michel), le vrai serveur (Code.js local seulement).
+   ⛔ DONNÉES INVENTÉES (« (test) », codes-barres 30000000007xx) + la fiche CIQUAL publique.
+   ⛔ ORACLES À LA MAIN (jamais lus dans le moteur) — fiches de la table CIQUAL 2025 :
+     9810 « Pâtes sèches, standard, crues » 364 · 13,1 · 72,7 · 1,6 → 150 g = 546 · 19,65 → 20 · 109,05 → 109 · 2,4 → 2.
+     17270 « Huile d'olive vierge extra » 899 · 0,2 · 0 · 99,9 → 10 g = 89,9 → 90 · 0,02 → 0 · 0 · 9,99 → 10 ;
+       20 g = 179,8 → 180 · 0,04 → 0 · 0 · 19,98 → 20 ; la saisie d'avant (corrompue) : 36 · 0 · 0 · 4 pour 10 g.
+     9119 « Riz thaï ou basmati, cru » 351 · 7,4 · 78,4 · 0,6 → 150 g = 526,5 → 527 · 11,1 → 11 · 117,6 → 118 · 0,9 → 1.
+     Compote (Open Food Facts simulé) 57 · 0,5 · 12,1 · 0,3 → 90 g = 51,3 → 51 · 0,45 → 0 · 10,89 → 11 · 0,27 → 0 ;
+       120 g = 68,4 → 68 · 0,6 → 1 · 14,52 → 15 · 0,36 → 0.
+     Iso zero (fiche vérifiée du journal) 388,5 · 88 · 2,8 · 3,3 → 35 g = 135,975 → 136 · 30,8 → 31 · 0,98 → 1 · 1,155 → 1.
+     Ratatouille B 219 · 3 · 20 · 10 → 200 g = 438 · 6 · 40 · 20 ; A 85 · 1,5 · 7 · 5 → 200 g = 170 · 3 · 14 · 10.
+   ═════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
+const PAT = 'Pâtes sèches, standard, crues', HUI = 'Huile d\'olive vierge extra', RIZ9 = 'Riz thaï ou basmati, cru';
+const P9810 = { kcal: 364, prot: 13.1, carbs: 72.7, fat: 1.6 }, P17270 = { kcal: 899, prot: 0.2, carbs: 0, fat: 99.9 }, P9119 = { kcal: 351, prot: 7.4, carbs: 78.4, fat: 0.6 };
+/* Une ligne d'AVANT V2 qui porte une identité CIQUAL (le sélecteur de V1). */
+const V1C = (id, k, nom, code, q, v, p100, meal) => ({ id, date: jour(k), ts: ilya(k), meal: meal || 'dejeuner', name: nom, q, u: 'g', kcal: v[0], prot: v[1], carbs: v[2], fat: v[3],
+  per100: p100, sourceId: 'ciqual:' + code, saisie: 'ciqual', origine: 'ciqual', v: 1 });
+/* Une REPRISE d'avant V2, telle que l'export la montre : l'identité PERDUE (`sourceId` vide), et un pour-100 g qui ne fait que reformuler
+   les calories de la ligne (« tautologique », écrit à la main dans chaque fixture). */
+const V1R = (id, k, nom, q, v, p100, meal) => ({ id, date: jour(k), ts: ilya(k), meal: meal || 'dejeuner', name: nom, q, u: 'g', kcal: v[0], prot: v[1], carbs: v[2], fat: v[3],
+  per100: p100, sourceId: null, saisie: 'liste', origine: 'reprise', v: 1 });
+const PAT_ID1 = V1C('nidt-pat-id-000001', 60, PAT, 9810, 110, [400, 14, 80, 2], P9810);
+const PAT_ID2 = V1C('nidt-pat-id-000002', 30, PAT, 9810, 130, [473, 17, 95, 2], P9810);
+const PAT_OLD = V1R('nidt-pat-old-000001', 5, PAT, 150, [450, 15, 90, 3], { kcal: 300, prot: 10, carbs: 60, fat: 2 });
+/* L'huile : le cas le plus abîmé de l'export (« 10 g · 36 kcal »). Quatre anciennes formes, dont deux écrites par ft-v1260 (V2). */
+const HUI_ID = V1C('nidt-hui-id-000001', 40, HUI, 17270, 15, [135, 0, 0, 15], P17270);
+const HUI_OLD1 = V1R('nidt-hui-old-000001', 6, HUI, 10, [36, 0, 0, 4], { kcal: 360, prot: 0, carbs: 0, fat: 40 });
+const HUI_OLD2 = N2.ligneNouvelle({ id: 'nidt-hui-old-000002', ts: ilya(4), date: jour(4), repas: 'dejeuner', nom: HUI, origine: { saisie: 'manuel', origine: 'utilisateur' },
+  mode: 'declaree', declare: { kcal: 43, prot: 0, carbs: 0, fat: 5 }, quantite: { val: 12, unite: 'g', origine: 'tapee' } }).ligne;      // déclarée par V2, sans identité
+const HUI_OLD3 = V1R('nidt-hui-old-000003', 7, 'HUILE D’OLIVE VIERGE EXTRA ', 8, [29, 0, 0, 3], { kcal: 362.5, prot: 0, carbs: 0, fat: 37.5 });   // casse, apostrophe typographique, espace de fin
+const HUI_V2D = N2.ligneNouvelle({ id: 'nidt-hui-v2d-000001', ts: ilya(3), date: jour(3), repas: 'dejeuner', nom: HUI, origine: { saisie: 'etiquette-main', origine: 'etiquette' },
+  mode: 'pesee', fiche: { base: 'g', p100: { kcal: 360, prot: 0, carbs: 0, fat: 40 }, cle: null, source: 'etiquette', fiab: 'declaree' },
+  quantite: { val: 20, unite: 'g', origine: 'tapee' } }).ligne;                                                                          // fiche seulement DÉCLARÉE (étiquette tapée) : 20 g = 72·0·0·8
+/* Le riz : le nom abîmé de l'export (« Riz thaï ou 90basmati »), et la ligne propre qui porte le code CIQUAL. */
+const RIZ_ID = V1C('nidt-riz-id-000001', 45, RIZ9, 9119, 200, [702, 15, 157, 1], P9119, 'diner');
+const RIZ_TYPO = Object.assign(V1R('nidt-riz-typo-00001', 4, 'Riz thaï ou 90basmati', 150, [530, 12, 117, 2], { kcal: 353.3, prot: 8, carbs: 78, fat: 1.3 }), { sourceId: 'ciqual:9119', saisie: 'ciqual', origine: 'ciqual' });
+/* La compote : un scan d'avant V2 (code-barres, fiche NON vérifiable) et sa reprise qui a perdu le code. */
+const EAN_COMP = '3000000000731';
+const OFF_COMP = { status: 1, product: { code: EAN_COMP, product_name_fr: 'Compote pomme (test)', quantity: '90 g', product_quantity_unit: 'g',
+  nutriments: { 'energy-kcal_100g': 57, proteins_100g: 0.5, carbohydrates_100g: 12.1, fat_100g: 0.3 } } };
+const COMP_ID = { id: 'nidt-comp-id-000001', date: jour(20), ts: ilya(20), meal: 'collation', name: 'Compote pomme (test)', q: 90, u: 'g', kcal: 51, prot: 0, carbs: 11, fat: 0,
+  per100: { kcal: 57, prot: 0.5, carbs: 12.1, fat: 0.3 }, sourceId: EAN_COMP, saisie: 'scan', origine: 'off', etat: 'tel-que-vendu', v: 1 };
+const COMP_OLD = V1R('nidt-comp-old-000001', 3, 'Compote pomme (test)', 90, [60, 0, 14, 0], { kcal: 66.7, prot: 0, carbs: 15.6, fat: 0 }, 'collation');
+/* L'isolat : une saisie SANS quantité ni valeurs (la forme « zéro »), et une ligne V2 vérifiée (la fiche est DANS le journal : pas de réseau). */
+const ISO_ZERO = { id: 'nidt-iso-zero-00001', date: jour(2), ts: ilya(2), meal: 'collation', name: 'Iso zero (test)', kcal: 0, prot: 0, carbs: 0, fat: 0, q: null, per100: null, v: 1, saisie: 'manuel', origine: 'utilisateur' };
+/* La ratatouille : DEUX produits identifiés portent ce nom (deux codes-barres) — le choix est à la personne. */
+const EAN_RA = '3000000000748', EAN_RB = '3000000000755', RAT = 'Ratatouille (test)';
+const ratV2 = (id, k, ean, p100, q) => N2.ligneNouvelle({ id, ts: ilya(k), date: jour(k), repas: 'diner', nom: RAT, origine: { saisie: 'code-tape', origine: 'off' }, mode: 'pesee',
+  fiche: { base: 'g', p100, cle: ean, source: 'off', fiab: 'source', etat: 'tel-que-vendu' }, quantite: { val: q, unite: 'g', origine: 'tapee' } }).ligne;
+const RAT_A = ratV2('nidt-rat-a-0000001', 50, EAN_RA, { kcal: 85, prot: 1.5, carbs: 7, fat: 5 }, 250);
+const RAT_B1 = ratV2('nidt-rat-b-0000001', 35, EAN_RB, { kcal: 219, prot: 3, carbs: 20, fat: 10 }, 200);
+const RAT_B2 = ratV2('nidt-rat-b-0000002', 12, EAN_RB, { kcal: 219, prot: 3, carbs: 20, fat: 10 }, 200);
+const RAT_OLD = V1R('nidt-rat-old-000001', 3, RAT, 220, [440, 6, 40, 20], { kcal: 200, prot: 2.7, carbs: 18.2, fat: 9.1 }, 'diner');
+
+async function identiteFiab(t, b, PORT) {
+  console.log('\n-- B-NIDT. NUTRITION · RÉUTILISER UN ANCIEN ALIMENT : l\'identité ne se perd pas, ne s\'invente pas, se confirme (mission du 27/10) --');
+  const ERR = [], SORTIES = [];
+  const fin = async (o) => { ERR.push(...o.erreurs); SORTIES.push(...o.sorties); await o.cx.close(); };
+  /* Le stockage BRUT du journal : ce qu'un rechargement relirait. Rien ne s'y écrit avant « Ajouter ». */
+  const brut = (pg) => pg.evaluate(() => localStorage.getItem('ft4_foodlog'));
+  const cles = (pg) => pg.evaluate(() => { const r = {}; for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); r[k] = localStorage.getItem(k); } return r; });
+  const liste = (pg) => pg.evaluate(() => (_afQuickItems || []).map((it, i) => ({ i, nom: it.name, fav: !!it.fav, sid: (it._src || {}).sourceId || null, id: (it._src || {}).id || null })));
+  const ouvrirLigne = async (pg, id, ms) => { let it = null;
+    for (let k = 0; k < 12 && !it; k++) { it = (await liste(pg)).find((x) => x.id === id) || null; if (!it) await pause(pg, 250); }   // la liste se remplit après l'ouverture
+    const ok = !!it && await clic(pg, '#af-quick-list div[onclick="quickFillFood(' + it.i + ')"]'); await pause(pg, ms || 1500); return ok; };
+  const panneau = (pg) => pg.evaluate(() => { const e = document.getElementById('af-cand-row');
+    return { vu: !!e && e.style.display !== 'none' && e.offsetParent !== null, texte: e ? e.innerText.replace(/\s+/g, ' ').trim() : '',
+      boutons: e ? [...e.querySelectorAll('button')].map((x) => x.innerText.replace(/\s+/g, ' ').trim()) : [], cand: _n2Cand ? _n2Cand.liste.length : 0 }; });
+  const etat = (pg) => pg.evaluate(() => ({ bc: !!_bcNutr, fige: !!(_afRef && _afRef.fige), nom: ((document.getElementById('af-bc-name') || {}).textContent || '').replace(/\s+/g, ' '),
+    grams: (document.getElementById('af-bc-grams') || {}).value, prop: (document.getElementById('af-prop') || {}).value,
+    retrouver: ((document.getElementById('af-retrouver-etat') || {}).textContent || '').replace(/\s+/g, ' '),
+    ecran: ['kcal', 'prot', 'carbs', 'fat'].map((c) => (document.getElementById('af-' + c) || {}).value).join('/') }));
+  const choisir = async (pg, k, ms) => { let ok = await clic(pg, '#af-cand-row button:nth-of-type(' + (k + 1) + ')');
+    if (!ok) ok = await pg.evaluate((k) => { try { _n2ChoisirCandidat(k); return true; } catch (e) { return false; } }, k);
+    await pause(pg, ms || 1100); return ok; };
+  const refermer = async (pg) => { await pg.evaluate(() => { try { closeAddFood(); } catch (e) {} }); await pause(pg, 250); return ouvrirAjout(pg); };
+  const intacts = (L, anciennes) => anciennes.every((x) => J(L.find((y) => y && y.id === x.id)) === J(x));
+
+  /* ═══ P — PÂTES CIQUAL : UN SEUL CANDIDAT, PROPOSÉ, CONFIRMÉ, PUIS ÉCRIT PAR « AJOUTER » (porte ① addFoodEntry) ═══ */
+  let cles_P = null;
+  { const o = await ouvrir(b, PORT, fixture('nidt-p', [PAT_ID1, PAT_ID2, PAT_OLD]), null); const pg = o.pg;
+    let g = o.ok && await ouvrirAjout(pg);
+    const b0 = await brut(pg), k0 = await cles(pg);
+    const ok1 = await ouvrirLigne(pg, PAT_OLD.id);
+    const pn = await panneau(pg), s1 = await etat(pg), b1 = await brut(pg);
+    t('B-NIDT P ① ⭐⭐ UN CANDIDAT UNIQUE EST PROPOSÉ, JAMAIS PRIS : la reprise de l\'ancien « ' + PAT + ' » (identité perdue, 150 g · 450 kcal) montre UNE fiche — CIQUAL 9810, 364 kcal/100 g, « noté 2 fois » — ; l\'écran reste sur l\'ancienne saisie, rien n\'est écrit',
+      g && ok1 && pn.vu && pn.boutons.length === 1 && /^✅ Fiche CIQUAL 9810 — Pâtes sèches, standard, crues · 364 kcal\/100 g noté 2 fois/.test(pn.boutons[0])
+      && /Même aliment déjà identifié dans ton journal \?/.test(pn.texte) && s1.fige && !s1.bc && b1 === b0, J({ pn, s1 }));
+    const ok2 = await choisir(pg, 0), s2 = await etat(pg), pn2 = await panneau(pg), b2 = await brut(pg);
+    t('B-NIDT P ② la fiche CHOISIE devient celle de l\'écran, prise à la SOURCE : « fiche CIQUAL choisie par toi », la saisie d\'avant DITE (« ta saisie disait 450 kcal · P 15 pour 150 g »), aucune quantité posée, le panneau retiré — et toujours rien d\'écrit',
+      ok2 && s2.bc && /fiche CIQUAL choisie par toi/.test(s2.nom) && /ta saisie disait 450 kcal · P 15 pour 150 g/.test(s2.nom) && s2.grams === '' && !pn2.vu && b2 === b0, J({ s2, pn2 }));
+    g = await taper(pg, '#af-bc-grams', 150); const v150 = await ecran(pg), b3 = await brut(pg);
+    t('B-NIDT P ③ ⭐⭐ LA FICHE FIABLE ET LA SAISIE D\'AVANT NE DISENT PAS LA MÊME CHOSE — C\'EST LA FICHE QUI CALCULE : 150 g = 546·20·109·2 (364 · 13,1 · 72,7 · 1,6 × 1,5), pas 450·15·90·3 ; le stockage n\'a pas bougé',
+      g && v150 === '546/20/109/2' && b3 === b0, J({ v150 }));
+    const L0 = await journal(pg), av = L0.map((x) => x.id); await ajouter(pg); const L1 = await journal(pg), l = neuves(L1, av)[0] || null, k1 = await cles(pg);
+    t('B-NIDT P ④ « Ajouter » ÉCRIT UNE LIGNE NEUVE — identité, pour-100 g de la SOURCE, valeurs de la fiche — et les trois anciennes lignes sont INTACTES (à l\'octet)',
+      neuves(L1, av).length === 1 && !!l && l.q === 150 && l.u === 'g' && memes(vals(l), { kcal: 546, prot: 20, carbs: 109, fat: 2 }) && memes(l.per100, P9810) && l.sourceId === 'ciqual:9810'
+      && !!l.n2 && l.n2.m === 'p' && l.n2.st === 'fiable' && l.n2.f.fiab === 'source' && l.n2.f.src === 'ciqual' && intacts(L1, [PAT_ID1, PAT_ID2, PAT_OLD]), J({ l }));
+    await refermer(pg); const M2 = await liste(pg);
+    t('B-NIDT P ⑤ (C) RIEN N\'EST MASQUÉ : après l\'ajout, l\'ancienne saisie sans identité reste PROPOSÉE à côté de la ligne neuve (cette mission ne cache aucun doublon)',
+      M2.some((x) => x.id === PAT_OLD.id) && !!l && M2.some((x) => x.id === l.id), J(M2.filter((x) => x.nom === PAT)));
+    cles_P = { avant: k0, apres: k1 };
+    await fin(o); }
+  /* P ⑥ — AUCUNE DONNÉE PERSISTÉE DE PLUS : le même ajout par le chemin ORDINAIRE (on choisit la fiche CIQUAL dans la recherche) écrit
+     exactement les mêmes clés de stockage — la confirmation vit dans la ligne neuve, pas dans une table d'associations. (Le 1ᵉʳ `persist()`
+     de l'app écrit toutes ses clés : on compare donc les deux chemins ENTRE EUX, pas à un stockage vide.) */
+  { const o = await ouvrir(b, PORT, fixture('nidt-p2', [PAT_ID1, PAT_ID2, PAT_OLD]), null); const pg = o.pg;
+    let g = o.ok && await ouvrirAjout(pg);
+    const k0 = await cles(pg); const c = await choisirCiqual(pg, 'pâtes sèches, standard, crues', 9810, 100); g = g && c.ok;   // patient : sous charge la table CIQUAL tarde
+    g = g && await taper(pg, '#af-bc-grams', 150); await ajouter(pg); const k1 = await cles(pg);
+    const changees = (a, z) => Object.keys(z).filter((k) => a[k] !== z[k]).sort(), nouvelles = (a, z) => Object.keys(z).filter((k) => !(k in a)).sort();
+    const viaCand = { ch: changees(cles_P.avant, cles_P.apres), nv: nouvelles(cles_P.avant, cles_P.apres) }, viaOrdi = { ch: changees(k0, k1), nv: nouvelles(k0, k1) };
+    const ecart = (x, y) => x.filter((k) => y.indexOf(k) < 0).concat(y.filter((k) => x.indexOf(k) < 0));
+    /* ⚖️ On compare les clés CRÉÉES (la 1ʳᵉ écriture de l'app : indépendantes du temps), pas les valeurs de toutes les clés modifiées : un minuteur
+       de l'app qui tombe dans l'une des deux fenêtres rendait ce témoin instable sous charge (mesuré le 27/10 : 1 rouge sur 8 passes, arbre sain). */
+    const vide = (k) => (cles_P.avant[k] || '[]') === (cles_P.apres[k] || '[]');
+    t('B-NIDT P ⑥ ⭐ AUCUNE DONNÉE PERSISTÉE DE PLUS (R17) : le choix d\'un candidat crée exactement les mêmes clés de stockage que le choix ordinaire de la fiche CIQUAL (' + viaCand.nv.length + ' créées par la 1ʳᵉ écriture de l\'app, dans les deux cas) — aucune clé en plus, aucune table d\'associations — et les favoris et les masquages n\'ont pas bougé',
+      g && viaCand.ch.indexOf('ft4_foodlog') >= 0 && viaCand.nv.length > 0 && ecart(viaCand.nv, viaOrdi.nv).length === 0 && vide('ft4_savedfoods') && vide('ft4_hiddenfoods'),
+      J({ en_plus_candidat: ecart(viaCand.nv, viaOrdi.nv), nbCreees: viaCand.nv.length, nbModifiees: [viaCand.ch.length, viaOrdi.ch.length] }));
+    await fin(o); }
+
+  /* P ⑦ / P ⑧ — SANS RÉSEAU : la table CIQUAL (téléchargée à la demande, jamais dans le cache) n'est pas là. Le candidat se montre quand même, sans
+     inventer sa fiche ; son choix ne prend RIEN et le recalcul reste bloqué (D-101 ⑧) ; la connexion revenue, le même bouton charge la table. */
+  { let coupee = true;
+    const o = await ouvrir(b, PORT, fixture('nidt-p3', [PAT_ID1, PAT_ID2, PAT_OLD]), null, { ciqualCoupee: () => coupee }); const pg = o.pg;
+    let g = o.ok && await ouvrirAjout(pg);
+    const ok1 = await ouvrirLigne(pg, PAT_OLD.id), pn = await panneau(pg), b0 = await brut(pg);
+    g = g && await taper(pg, '#af-prop', '180');                                  // une autre quantité, tapée AVANT de choisir
+    const ch1 = await choisir(pg, 0, 1300), s1 = await etat(pg), pn1 = await panneau(pg);
+    const n0 = (await journal(pg)).length; await ajouter(pg); const n1 = (await journal(pg)).length, msg = await dernierToast(pg), b1 = await brut(pg);
+    t('B-NIDT P ⑦ ⭐ SANS RÉSEAU (la table CIQUAL ne se charge pas) : le candidat se montre sans inventer sa fiche (« table à charger (connexion) »), son choix ne prend RIEN (« La base CIQUAL n\'est pas disponible… »), les 180 g tapés restent, « Ajouter » refuse les valeurs de 150 g pour 180 g — rien d\'écrit',
+      g && ok1 && pn.vu && /^✅ Fiche CIQUAL 9810 · table à charger \(connexion\) noté 2 fois/.test(pn.boutons[0]) && ch1 && !s1.bc && s1.fige && /n'est pas disponible/.test(s1.retrouver) && s1.prop === '180'
+      && pn1.vu && n1 === n0 && /valent pour 150 g/.test(msg) && b1 === b0, J({ pn, s1, pn1, n0, n1, msg }));
+    coupee = false;
+    const ch2 = await choisir(pg, 0, 1500), s2 = await etat(pg); g = g && await taper(pg, '#af-bc-grams', 150); const v150 = await ecran(pg);
+    const av = (await journal(pg)).map((x) => x.id); await ajouter(pg); const l = neuves(await journal(pg), av)[0] || null;
+    t('B-NIDT P ⑧ LA CONNEXION REVENUE, LE MÊME BOUTON CHARGE LA TABLE ET LA FICHE : 150 g = 546·20·109·2, la ligne écrite porte ciqual:9810 « source »',
+      g && ch2 && s2.bc && /fiche CIQUAL choisie par toi/.test(s2.nom) && v150 === '546/20/109/2' && !!l && l.sourceId === 'ciqual:9810' && l.n2.f.fiab === 'source'
+      && memes(vals(l), { kcal: 546, prot: 20, carbs: 109, fat: 2 }), J({ ch2, s2, v150, l }));
+    await fin(o); }
+
+  /* ═══ H — HUILE D'OLIVE (le cas le plus abîmé de l'export) : quatre anciennes formes, une seule fiche source ═══
+     « Mes aliments » ne montre qu'UNE ligne par nom et par identité (la plus récente) : chaque ancienne forme a donc son journal. */
+  { const R = {};
+    for (const [cle, L, q, v] of [['V1 corrompue (10 g · 36 kcal)', HUI_OLD1, 10, [90, 0, 0, 10]], ['V2 déclarée par ft-v1260 (12 g · 43 kcal)', HUI_OLD2, 12, [108, 0, 0, 12]],
+        ['casse + apostrophe typographique + espace de fin (8 g · 29 kcal)', HUI_OLD3, 8, [72, 0, 0, 8]]]) {
+      const o = await ouvrir(b, PORT, fixture('nidt-h-' + q, [HUI_ID, L]), null); const pg = o.pg;
+      let g = o.ok && await ouvrirAjout(pg);
+      const ouvert = await ouvrirLigne(pg, L.id), pn = await panneau(pg), b0 = await brut(pg);
+      const ch = await choisir(pg, 0), s2 = await etat(pg); await taper(pg, '#af-bc-grams', q); const vq = await ecran(pg), b1 = await brut(pg);
+      const av = (await journal(pg)).map((x) => x.id); await ajouter(pg); const LJ = await journal(pg), l = neuves(LJ, av)[0] || null;
+      R[cle] = { g, ouvert, un: pn.boutons.length === 1 && /^✅ Fiche CIQUAL 17270 — Huile d'olive vierge extra · 899 kcal\/100 g noté 1 fois/.test(pn.boutons[0]), ch, bc: s2.bc, vq, attendu: v.join('/'), rien: b1 === b0,
+        ecrit: !!l && l.q === q && l.sourceId === 'ciqual:17270' && memes(l.per100, P17270) && l.n2.m === 'p' && l.n2.f.fiab === 'source' && memes(vals(l), { kcal: v[0], prot: v[1], carbs: v[2], fat: v[3] }),
+        intacte: J(LJ.find((x) => x.id === L.id)) === J(L) };
+      await fin(o);
+    }
+    // oracles : 17270 × q/100 → 10 g = 90·0·0·10 ; 12 g = 107,88 → 108 · 0,024 → 0 · 0 · 11,988 → 12 ; 8 g = 71,92 → 72 · 0,016 → 0 · 0 · 7,992 → 8
+    t('B-NIDT H ① ⭐⭐ LES TROIS ANCIENNES SAISIES SANS IDENTITÉ (V1 corrompue 36 kcal/10 g · déclarée par ft-v1260 · casse + apostrophe typographique + espace de fin) PROPOSENT la même fiche CIQUAL 17270 ; une fois choisie, la quantité se calcule par la FICHE (10 g = 90·0·0·10, 12 g = 108·0·0·12, 8 g = 72·0·0·8), rien n\'est écrit avant « Ajouter »',
+      Object.values(R).every((r) => r.g && r.ouvert && r.un && r.ch && r.bc && r.vq === r.attendu && r.rien), J(R));
+    t('B-NIDT H ② les lignes écrites portent l\'identité CIQUAL 17270, le pour-100 g de la source (899 · 0,2 · 0 · 99,9), « pesée / fiable » — et chaque ancienne saisie est INTACTE',
+      Object.values(R).every((r) => r.ecrit && r.intacte), J(R)); }
+  /* La fiche seulement DÉCLARÉE (étiquette tapée à la main, ft-v1260) : elle calcule avec ses chiffres tapés (20 g = 72·0·0·8) ; le choix de la
+     fiche de la SOURCE la remplace — et la quantité déjà tapée SURVIT (D-101 ⑧/⑨) : 20 g = 180·0·0·20 (899 × 0,2 = 179,8). */
+  { const o = await ouvrir(b, PORT, fixture('nidt-h2', [HUI_ID, HUI_V2D]), null); const pg = o.pg;
+    let g = o.ok && await ouvrirAjout(pg);
+    const okD = await ouvrirLigne(pg, HUI_V2D.id), pnD = await panneau(pg), sD0 = await etat(pg);
+    g = g && await taper(pg, '#af-bc-grams', 20); const vD0 = await ecran(pg);
+    const bD0 = await brut(pg), chD = await choisir(pg, 0), sD1 = await etat(pg), pnD1 = await panneau(pg), bD1 = await brut(pg);
+    t('B-NIDT H ③ ⭐⭐ UNE FICHE SEULEMENT DÉCLARÉE (étiquette tapée) N\'EST PAS LA SOURCE : elle calcule 20 g = 72·0·0·8, le panneau propose la fiche CIQUAL ; choisie, elle REMPLACE la déclarée, la quantité tapée (20 g) SURVIT et les valeurs deviennent 180·0·0·20 — rien d\'écrit entre-temps',
+      g && okD && sD0.bc && pnD.vu && pnD.boutons.length === 1 && vD0 === '72/0/0/8' && chD && sD1.bc && sD1.grams === '20' && sD1.ecran === '180/0/0/20'
+      && /ta quantité \(20 g\) est gardée/.test(sD1.nom) && !pnD1.vu && bD1 === bD0, J({ okD, pnD, sD0, vD0, sD1, pnD1 }));
+    const avD = (await journal(pg)).map((x) => x.id); await ajouter(pg); const LD = await journal(pg), lD = neuves(LD, avD)[0] || null;
+    t('B-NIDT H ④ la ligne écrite depuis la fiche déclarée remplacée : 20 g, 180·0·0·20, identité CIQUAL 17270, pour-100 g de la SOURCE (pas les 360·40 de l\'étiquette tapée) — l\'ancienne ligne intacte',
+      !!lD && lD.q === 20 && memes(vals(lD), { kcal: 180, prot: 0, carbs: 0, fat: 20 }) && memes(lD.per100, P17270) && lD.sourceId === 'ciqual:17270' && lD.n2.f.src === 'ciqual'
+      && J(LD.find((x) => x.id === HUI_V2D.id)) === J(HUI_V2D), J(lD));
+    await fin(o); }
+
+  /* ═══ V — UN FAVORI SANS IDENTITÉ se reprend comme une ligne du journal, et « ⭐ Corriger ce favori » reste offert après le choix de la fiche ═══ */
+  { const FAV_PAT = { name: PAT, kcal: 450, prot: 15, carbs: 90, fat: 3, per100: { kcal: 300, prot: 10, carbs: 60, fat: 2 }, q: 150, u: 'g', t: Date.now() - 1000 };
+    const o = await ouvrir(b, PORT, fixture('nidt-v', [PAT_ID1, PAT_ID2], [FAV_PAT]), null); const pg = o.pg;
+    let g = o.ok && await ouvrirAjout(pg);
+    const M = await liste(pg), it = M.find((x) => x.fav && x.nom === PAT);
+    const ouvert = !!it && await clic(pg, '#af-quick-list div[onclick="quickFillFood(' + it.i + ')"]'); await pause(pg, 1500);
+    const pn = await panneau(pg), fav0 = await pg.evaluate(() => (document.getElementById('af-fav-maj') || {}).style && document.getElementById('af-fav-maj').style.display);
+    const b0 = await brut(pg), ch = await choisir(pg, 0), s2 = await etat(pg);
+    const fav1 = await pg.evaluate(() => (document.getElementById('af-fav-maj') || {}).style && document.getElementById('af-fav-maj').style.display);
+    g = g && await taper(pg, '#af-bc-grams', 150); const v150 = await ecran(pg), b1 = await brut(pg);
+    t('B-NIDT V ⭐ LE FAVORI SANS IDENTITÉ PROPOSE LA FICHE COMME UNE LIGNE DU JOURNAL, ET « ⭐ CORRIGER CE FAVORI » RESTE OFFERT APRÈS LE CHOIX : la fiche CIQUAL 9810 choisie, 150 g = 546·20·109·2, le favori garde son lien de correction, le stockage n\'a pas bougé',
+      g && ouvert && pn.vu && pn.boutons.length === 1 && fav0 === 'block' && ch && s2.bc && fav1 === 'block' && v150 === '546/20/109/2' && b1 === b0, J({ ouvert, pn, fav0, s2, fav1, v150 }));
+    await fin(o); }
+
+  /* ═══ C — COMPOTE (CODE-BARRES) : HORS LIGNE LE RECALCUL RESTE BLOQUÉ ; EN LIGNE LA FICHE VIENT D'OPEN FOOD FACTS, LA QUANTITÉ TAPÉE SURVIT ═══ */
+  { const o = await ouvrir(b, PORT, fixture('nidt-c1', [COMP_ID, COMP_OLD]), null); const pg = o.pg;
+    let g = o.ok && await ouvrirAjout(pg);
+    const ok1 = await ouvrirLigne(pg, COMP_OLD.id), pn = await panneau(pg);
+    g = g && await taper(pg, '#af-prop', '120');                              // une autre quantité, tapée AVANT de choisir
+    const b0 = await brut(pg), ch = await choisir(pg, 0, 1500), s2 = await etat(pg), pn2 = await panneau(pg);
+    const n0 = (await journal(pg)).length; await ajouter(pg); const n1 = (await journal(pg)).length, msg = await dernierToast(pg), b1 = await brut(pg);
+    t('B-NIDT C ① ⭐ SANS RÉSEAU, LE RECALCUL RESTE BLOQUÉ : le candidat (code-barres, « fiche à récupérer en ligne ») est choisi mais Open Food Facts ne répond pas — l\'écran dit « Fiche introuvable », garde les 120 g tapés, le panneau reste (on pourra réessayer), « Ajouter » refuse les valeurs de 90 g pour 120 g et ne dit rien d\'écrit',
+      g && ok1 && pn.vu && pn.boutons.length === 1 && /^✅ Produit code-barres 3000000000731 · fiche à récupérer en ligne noté 1 fois/.test(pn.boutons[0])
+      && ch && !s2.bc && s2.fige && /introuvable/i.test(s2.retrouver) && s2.prop === '120' && pn2.vu && n1 === n0 && /valent pour 90 g/.test(msg) && b1 === b0, J({ pn, s2, pn2, n0, n1, msg }));
+    await fin(o); }
+  { const o = await ouvrir(b, PORT, fixture('nidt-c2', [COMP_ID, COMP_OLD]), { produits: { [EAN_COMP]: OFF_COMP } }); const pg = o.pg;
+    let g = o.ok && await ouvrirAjout(pg);
+    const ok1 = await ouvrirLigne(pg, COMP_OLD.id), pn = await panneau(pg);
+    g = g && await taper(pg, '#af-prop', '120');
+    const b0 = await brut(pg), ch = await choisir(pg, 0, 600);
+    let s2 = await etat(pg); for (let k = 0; k < 24 && !s2.bc; k++) { await pause(pg, 250); s2 = await etat(pg); }
+    const pn2 = await panneau(pg), v = await ecran(pg), b1 = await brut(pg);
+    t('B-NIDT C ② ⭐⭐ EN LIGNE, LA FICHE D\'OPEN FOOD FACTS SE RETROUVE PAR LE CODE-BARRES CHOISI ET LA QUANTITÉ TAPÉE SURVIT : 120 g = 68·1·15·0 (57 · 0,5 · 12,1 · 0,3 × 1,2), l\'écran dit ce que disait l\'ancienne saisie (« 60 kcal · P 0 pour 90 g »), le panneau est retiré — rien d\'écrit',
+      g && ok1 && pn.vu && ch && s2.bc && /fiche retrouvée par son code-barres/.test(s2.nom) && /ta saisie disait 60 kcal · P 0 pour 90 g/.test(s2.nom) && s2.grams === '120'
+      && v === '68/1/15/0' && !pn2.vu && b1 === b0, J({ pn, s2, v, pn2 }));
+    const av = (await journal(pg)).map((x) => x.id); await ajouter(pg); const L = await journal(pg), l = neuves(L, av)[0] || null;
+    t('B-NIDT C ③ « Ajouter » écrit la ligne : 120 g, 68·1·15·0, le code-barres, le pour-100 g d\'Open Food Facts (57 · 0,5 · 12,1 · 0,3), « pesée / fiable / off » — les deux anciennes lignes INTACTES',
+      neuves(L, av).length === 1 && !!l && l.q === 120 && l.u === 'g' && memes(vals(l), { kcal: 68, prot: 1, carbs: 15, fat: 0 }) && memes(l.per100, { kcal: 57, prot: 0.5, carbs: 12.1, fat: 0.3 })
+      && l.sourceId === EAN_COMP && l.n2.m === 'p' && l.n2.f.fiab === 'source' && l.n2.f.src === 'off' && intacts(L, [COMP_ID, COMP_OLD]), J(l));
+    await fin(o); }
+
+  /* ═══ I — ISOLAT, SAISIE SANS QUANTITÉ NI VALEURS : LA FICHE EST DANS LE JOURNAL (ligne V2 vérifiée), AUCUN RÉSEAU NÉCESSAIRE ═══ */
+  { const o = await ouvrir(b, PORT, fixture('nidt-i', [V2_ISO, ISO_ZERO]), null); const pg = o.pg;
+    let g = o.ok && await ouvrirAjout(pg);
+    const ok1 = await ouvrirLigne(pg, ISO_ZERO.id), pn = await panneau(pg), b0 = await brut(pg);
+    const ch = await choisir(pg, 0), s2 = await etat(pg); g = g && await taper(pg, '#af-bc-grams', 35); const v35 = await ecran(pg), b1 = await brut(pg);
+    t('B-NIDT I ① ⭐ UNE SAISIE SANS QUANTITÉ NI VALEURS (« zéro ») PROPOSE LE PRODUIT IDENTIFIÉ DE MÊME NOM : « Produit code-barres 3000000000700 · 388,5 kcal/100 g » (fiche vérifiée DU JOURNAL — aucun réseau) ; choisi, 35 g = 136·31·1·1, aucune quantité n\'était posée, rien d\'écrit',
+      g && ok1 && pn.vu && pn.boutons.length === 1 && /^✅ Produit code-barres 3000000000700 · 388,5 kcal\/100 g noté 1 fois/.test(pn.boutons[0]) && ch && s2.bc
+      && /fiche du produit choisie par toi/.test(s2.nom) && s2.grams === '' && v35 === T(A.iso35) && b1 === b0, J({ pn, s2, v35 }));
+    const av = (await journal(pg)).map((x) => x.id); await ajouter(pg); const L = await journal(pg), l = neuves(L, av)[0] || null;
+    t('B-NIDT I ② la ligne écrite : 35 g, 136·31·1·1, le code-barres, la fiche 388,5·88·2,8·3,3, « pesée / fiable » — l\'ancienne saisie à 0 INTACTE',
+      neuves(L, av).length === 1 && !!l && l.q === 35 && memes(vals(l), A.iso35) && memes(l.per100, ISO_P100) && l.sourceId === EAN_ISO && l.n2.m === 'p' && l.n2.f.fiab === 'source'
+      && intacts(L, [ISO_ZERO]), J(l));
+    await fin(o); }
+
+  /* ═══ S — RATATOUILLE : DEUX PRODUITS IDENTIFIÉS PORTENT CE NOM → CHOIX EXPLICITE, AUCUN PRÉ-CHOISI ═══ */
+  { const o = await ouvrir(b, PORT, fixture('nidt-s', [RAT_A, RAT_B1, RAT_B2, RAT_OLD]), null); const pg = o.pg;
+    let g = o.ok && await ouvrirAjout(pg);
+    const ok1 = await ouvrirLigne(pg, RAT_OLD.id), pn = await panneau(pg), s1 = await etat(pg), b0 = await brut(pg);
+    const presse = await pg.evaluate(() => [...document.querySelectorAll('#af-cand-row [aria-pressed="true"], #af-cand-row .on, #af-cand-row .sel')].length);
+    t('B-NIDT S ① ⭐ PLUSIEURS CANDIDATS = UN CHOIX EXPLICITE, AUCUN PRÉ-CHOISI : « Plusieurs fiches identifiées portent ce nom » ; le plus noté d\'abord (219 kcal/100 g, noté 2 fois) puis l\'autre (85 kcal/100 g, noté 1 fois) ; l\'écran reste sur l\'ancienne saisie, aucun bouton enfoncé, rien d\'écrit',
+      g && ok1 && pn.vu && /Plusieurs fiches identifiées portent ce nom dans ton journal/.test(pn.texte) && pn.boutons.length === 2
+      && /3000000000755 · 219 kcal\/100 g noté 2 fois/.test(pn.boutons[0]) && /3000000000748 · 85 kcal\/100 g noté 1 fois/.test(pn.boutons[1]) && presse === 0 && !s1.bc && s1.fige && b0 === (await brut(pg)), J({ pn, s1, presse }));
+    g = g && await taper(pg, '#af-prop', '200');                              // la quantité est tapée AVANT de choisir la fiche : elle survit au choix (D-101 ⑧/⑨)
+    const ch = await choisir(pg, 0), s2 = await etat(pg), vB = await ecran(pg);
+    const av = (await journal(pg)).map((x) => x.id); await ajouter(pg); const L1 = await journal(pg), lB = neuves(L1, av)[0] || null;
+    t('B-NIDT S ② le produit choisi (le 1ᵉʳ) donne ses valeurs, la quantité tapée AVANT le choix est gardée : 200 g = 438·6·40·20, ligne écrite avec SON code-barres et SON pour-100 g (219 · 3 · 20 · 10)',
+      g && ch && s2.bc && /fiche du produit choisie par toi/.test(s2.nom) && /ta quantité \(200 g\) est gardée/.test(s2.nom) && s2.grams === '200' && vB === '438/6/40/20'
+      && !!lB && lB.sourceId === EAN_RB && memes(lB.per100, { kcal: 219, prot: 3, carbs: 20, fat: 10 }) && memes(vals(lB), { kcal: 438, prot: 6, carbs: 40, fat: 20 }), J({ s2, vB, lB }));
+    g = g && await refermer(pg); const ok3 = await ouvrirLigne(pg, RAT_OLD.id), pn3 = await panneau(pg);
+    const ch3 = await choisir(pg, 1); g = g && await taper(pg, '#af-bc-grams', 200); const vA = await ecran(pg);
+    const av2 = (await journal(pg)).map((x) => x.id); await ajouter(pg); const L2 = await journal(pg), lA = neuves(L2, av2)[0] || null;
+    t('B-NIDT S ③ ⭐ L\'AUTRE PRODUIT SE CHOISIT AUSSI (le 2ᵉ bouton) — la même ancienne saisie, une autre fiche : 200 g = 170·3·14·10, SON code-barres, SON pour-100 g (85 · 1,5 · 7 · 5) ; l\'ancienne saisie INTACTE',
+      g && ok3 && pn3.boutons.length === 2 && ch3 && vA === '170/3/14/10' && !!lA && lA.sourceId === EAN_RA && memes(lA.per100, { kcal: 85, prot: 1.5, carbs: 7, fat: 5 })
+      && memes(vals(lA), { kcal: 170, prot: 3, carbs: 14, fat: 10 }) && intacts(L2, [RAT_OLD]), J({ pn3, vA, lA }));
+    await fin(o); }
+
+  /* ═══ N — AUCUN CANDIDAT : LE NOM N'EST QU'UNE SUGGESTION, JAMAIS « RESSEMBLE À » ═══ */
+  const N_ID_PRODUIT = { id: 'nidt-n-prod-id-0001', date: jour(25), ts: ilya(25), meal: 'collation', name: 'Produit', q: 100, u: 'g', kcal: 150, prot: 5, carbs: 20, fat: 5,
+    per100: { kcal: 150, prot: 5, carbs: 20, fat: 5 }, sourceId: EAN_ISO, saisie: 'scan', origine: 'off', v: 1 };
+  const N_ID_AB = Object.assign({}, N_ID_PRODUIT, { id: 'nidt-n-ab-id-000001', name: 'Ab', sourceId: EAN_STK });
+  const N_OLD = (id, nom) => V1R(id, 4, nom, 150, [450, 15, 90, 3], { kcal: 300, prot: 10, carbs: 60, fat: 2 });
+  const N_CAS = [['accents effacés', N_OLD('nidt-n-accent-00001', 'Pates seches standard crues')], ['un autre mot (« cuites »)', N_OLD('nidt-n-cuites-00001', 'Pâtes sèches, standard, cuites')],
+    ['un mot de plus (« bio »)', N_OLD('nidt-n-bio-0000001', 'Pâtes sèches, standard, crues bio')], ['nom générique « Produit » (même identifié)', N_OLD('nidt-n-produit-0001', 'Produit')],
+    ['nom de 2 lettres', N_OLD('nidt-n-ab-0000001', 'Ab')], ['aucune ligne identifiée de ce nom', ANC_SOUPE]];
+  { const o = await ouvrir(b, PORT, fixture('nidt-n', [PAT_ID1, N_ID_PRODUIT, N_ID_AB].concat(N_CAS.map((c) => c[1]))), null); const pg = o.pg;
+    let g = o.ok && await ouvrirAjout(pg); const R = {};
+    for (const [lib, L] of N_CAS) {
+      g = g && await refermer(pg); const ok = await ouvrirLigne(pg, L.id, 700), pn = await panneau(pg), s = await etat(pg);
+      R[lib] = { ok, vu: pn.vu, cand: pn.cand, fige: s.fige, bc: s.bc };
+    }
+    t('B-NIDT N ① ⭐⭐ LE NOM N\'EST QU\'UNE SUGGESTION, JAMAIS « RESSEMBLE À » : accents effacés, un autre mot, un mot de plus, le nom générique « Produit » (même identifié), un nom de 2 lettres, aucune ligne identifiée — AUCUN panneau, l\'écran reste figé sur l\'ancienne saisie',
+      g && Object.values(R).every((r) => r.ok && !r.vu && r.cand === 0 && r.fige && !r.bc), J(R));
+    /* La ligne VRAIMENT sans fiche (aucune ligne identifiée du même nom) : le blocage de recalcul reste (D-101 ⑧). */
+    g = await refermer(pg); await ouvrirLigne(pg, ANC_SOUPE.id, 700); await taper(pg, '#af-prop', '200');
+    const n0 = (await journal(pg)).length, b0 = await brut(pg); await ajouter(pg); const msg = await dernierToast(pg), n1 = (await journal(pg)).length, b1 = await brut(pg);
+    t('B-NIDT N ② SANS FICHE FIABLE TROUVÉE, LE BLOCAGE RESTE : 200 g tapés sur une soupe notée pour 300 g — « Ces valeurs valent pour 300 g… », rien n\'est écrit, le stockage n\'a pas bougé',
+      g && n1 === n0 && /valent pour 300 g/.test(msg) && b1 === b0, J({ msg, n0, n1 }));
+    await fin(o); }
+
+  /* N ③ — un code CIQUAL que la table NE CONNAÎT PAS (la fiche a disparu de la base) : aucun bouton qui ne mènerait à rien */
+  { const INC = V1R('nidt-n-inconnu-00001', 3, ANC_CIQ_INCONNU.name, 100, [250, 5, 30, 12], { kcal: 250, prot: 5, carbs: 30, fat: 12 });
+    const o = await ouvrir(b, PORT, fixture('nidt-n2', [ANC_CIQ_INCONNU, INC]), null); const pg = o.pg;
+    let g = o.ok && await ouvrirAjout(pg); const ok = await ouvrirLigne(pg, INC.id, 1500), pn = await panneau(pg), s = await etat(pg);
+    const tab = await pg.evaluate(() => !!(typeof _ciqual === 'object' && _ciqual && Array.isArray(_ciqual.a)));
+    t('B-NIDT N ③ ⛔ UN CODE CIQUAL QUE LA TABLE NE CONNAÎT PAS N\'EST JAMAIS PROPOSÉ : la table est chargée, ciqual:999999 n\'y est pas — aucun bouton qui ne mènerait à aucune fiche, l\'écran reste figé',
+      g && ok && tab && !pn.vu && pn.boutons.length === 0 && s.fige && !s.bc, J({ pn, s, tab }));
+    await fin(o); }
+
+  /* N ④ — CE QUE « ✕ » OU LA REMISE À ZÉRO ONT ÉCARTÉ NE REVIENT PAS PAR LE PANNEAU (D-140 ②) ; ce qui est noté APRÈS le départ revient de lui-même */
+  { const NEUF = V1R('nidt-pat-new-000001', 1, PAT, 150, [450, 15, 90, 3], { kcal: 300, prot: 10, carbs: 60, fat: 2 });
+    const PAT_ID3 = V1C('nidt-pat-id-000003', 0, PAT, 9810, 120, [437, 16, 87, 2], P9810);                  // noté APRÈS le départ « ✕ » d'hier
+    const cas = [['« ✕ » sur l\'identité ciqual:9810 (hier)', [PAT_ID1, PAT_ID2, PAT_OLD], PAT_OLD, { ft4_hiddenfoods: J([{ k: 'id:ciqual:9810', t: Date.now() - 864e5 }]) }, 0],
+      ['la remise à zéro d\'avant-hier (la ligne à reprendre est d\'hier)', [PAT_ID1, PAT_ID2, NEUF], NEUF, { ft4_hiddenfoods: J([{ k: '*', t: Date.now() - 2 * 864e5 }]) }, 0],
+      ['« ✕ » d\'hier, mais une ligne identifiée notée AUJOURD\'HUI (après le départ)', [PAT_ID1, PAT_ID2, PAT_ID3, PAT_OLD], PAT_OLD, { ft4_hiddenfoods: J([{ k: 'id:ciqual:9810', t: Date.now() - 864e5 }]) }, 1]];
+    const R = {};
+    for (const [lib, lignes, L, plus, nb] of cas) {
+      const o = await ouvrir(b, PORT, fixture('nidt-n4-' + nb + lignes.length, lignes, [], plus), null); const pg = o.pg;
+      let g = o.ok && await ouvrirAjout(pg); const ok = await ouvrirLigne(pg, L.id, 1500), pn = await panneau(pg), s = await etat(pg);
+      R[lib] = { g, ok, boutons: pn.boutons.length, attendu: nb, fige: s.fige, un: nb === 0 || (pn.boutons.length === 1 && /noté 1 fois/.test(pn.boutons[0])) };
+      await fin(o);
+    }
+    t('B-NIDT N ④ ⭐ CE QUE « ✕ » OU LA REMISE À ZÉRO ONT ÉCARTÉ NE REVIENT PAS PAR LE PANNEAU, ET CE QUI EST NOTÉ APRÈS LE DÉPART REVIENT DE LUI-MÊME : aucun candidat quand les lignes identifiées sont d\'avant le départ ; une seule (« noté 1 fois ») quand l\'une est d\'après',
+      Object.values(R).every((r) => r.g && r.ok && r.boutons === r.attendu && r.un && r.fige), J(R)); }
+
+  /* ═══ F — LE PANNEAU MEURT AVEC SON ALIMENT (R15) : autre nom, autre aliment, écran refermé ═══ */
+  { const o = await ouvrir(b, PORT, fixture('nidt-f', [PAT_ID1, PAT_ID2, PAT_OLD, ANC_SOUPE]), null); const pg = o.pg;
+    let g = o.ok && await ouvrirAjout(pg);
+    g = g && await ouvrirLigne(pg, PAT_OLD.id); const vu0 = (await panneau(pg)).vu;
+    g = g && await taper(pg, '#af-desc', 'Autre plat (test)'); try { await pg.locator('#af-desc').blur(); } catch (e) { g = false; } await pause(pg, 250);
+    const p1 = await panneau(pg);
+    t('B-NIDT F ① le NOM change : ce n\'est plus le même aliment, le panneau tombe (il ne propose jamais la fiche des pâtes à un autre plat)', g && vu0 && !p1.vu && p1.boutons.length === 0, J({ vu0, p1 }));
+    g = await refermer(pg); g = g && await ouvrirLigne(pg, PAT_OLD.id); const vu1 = (await panneau(pg)).vu;
+    g = g && await refermer(pg); g = g && await ouvrirLigne(pg, ANC_SOUPE.id, 700); const p2 = await panneau(pg);
+    const rest = await pg.evaluate(() => (_n2Cand === null));
+    t('B-NIDT F ② UN AUTRE ALIMENT repris ensuite ne reçoit pas le panneau d\'avant, et l\'écran refermé puis rouvert n\'en garde rien', g && vu1 && !p2.vu && rest, J({ vu1, p2, rest }));
+    await fin(o); }
+  /* F ③ — UN AUTRE PRODUIT ARRIVE PAR LE SCAN pendant que le panneau est affiché : il remplace l'aliment, le panneau tombe avec lui (R15 : les marqueurs
+     meurent avec l'aliment). Avant la correction du panneau, la proposition des pâtes restait affichée au-dessus de l'isolat scanné. */
+  { const o = await ouvrir(b, PORT, fixture('nidt-f3', [PAT_ID1, PAT_ID2, PAT_OLD]), { produits: { [EAN_ISO]: OFF_ISO } }); const pg = o.pg;
+    let g = o.ok && await ouvrirAjout(pg); g = g && await ouvrirLigne(pg, PAT_OLD.id); const vu3 = (await panneau(pg)).vu;
+    const lu = await pg.evaluate(async (c) => { try { _bcSetEtat('SCANNING'); } catch (e) {} return await _bcTraiterCode(c); }, EAN_ISO); await pause(pg, 700);
+    const p3 = await panneau(pg), s3 = await etat(pg), mort = await pg.evaluate(() => _n2Cand === null);
+    t('B-NIDT F ③ ⛔ UN AUTRE PRODUIT ARRIVE PAR LE SCAN PENDANT QUE LE PANNEAU EST AFFICHÉ : l\'isolat remplace les pâtes à l\'écran, le panneau tombe avec elles (rien ne reste proposé pour un aliment qui n\'est plus là)',
+      g && vu3 && lu === true && s3.bc && /Iso zero/.test(s3.nom) && !p3.vu && p3.boutons.length === 0 && mort, J({ vu3, lu, s3, p3, mort }));
+    await fin(o); }
+
+  /* ═══ M — « MODIFIER » (porte ④ saveEditFood) : L'IDENTITÉ NE SE PERD PLUS, LA LIGNE NE DEVIENT JAMAIS « FIABLE » ═══
+     Mesuré sur ft-v1261 (sonde du 27/10) : une ancienne copie d'un scan (code-barres), dont on change SEULEMENT le nom (une espace en plus),
+     devenait `sourceId:null` — le produit n'était plus qu'un nom et sa fiche ne se retrouvait plus. */
+  const modifier = async (pg, id, ch) => {
+    await pg.evaluate((id) => openEditFood(id), id); await pause(pg, 900);
+    if (ch.nom !== undefined) await taper(pg, '#ef-name', ch.nom);
+    for (const c of ['kcal', 'prot', 'carbs', 'fat']) if (ch[c] !== undefined) await taper(pg, '#ef-' + c, ch[c]);
+    let ok = await clic(pg, '#ov-edit-food button[onclick="saveEditFood()"]');
+    if (!ok) ok = await pg.evaluate(() => { try { saveEditFood(); return true; } catch (e) { return false; } });
+    await pause(pg, 500); return ok; };
+  const lire = (pg, id) => pg.evaluate((id) => { const l = (S.foodLog || []).find((x) => x && x.id === id); if (!l) return null;
+    const r = NUT2.reprise(l, _n2Ctx()); return { l: JSON.parse(JSON.stringify(l)), statut: r.statut, mode: r.mode, fiche: !!r.fiche }; }, id);
+  /* ISO2 est la copie la PLUS RÉCENTE : c'est elle que « Mes aliments » montre pour l'isolat (une ligne par nom et par identité) — M ③b lit donc son texte. */
+  const ISO2 = Object.assign({}, ANC_ISO, { id: 'nidt-iso-cp2-000001', date: jour(1), ts: ilya(1) }), ISO3 = Object.assign({}, ANC_ISO, { id: 'nidt-iso-cp3-000001', date: jour(9), ts: ilya(9) }),
+    ISO4 = Object.assign({}, ANC_ISO, { id: 'nidt-iso-cp4-000001', date: jour(10), ts: ilya(10) });
+  const PAT_FAUTE = V1R('nidt-pat-faute-00001', 4, 'Pates seches standard crues', 150, [450, 15, 90, 3], { kcal: 300, prot: 10, carbs: 60, fat: 2 });
+  { const o = await ouvrir(b, PORT, fixture('nidt-m', [ANC_ISO, ISO2, ISO3, ISO4, RIZ_ID, RIZ_TYPO, PAT_ID1, PAT_ID2, PAT_FAUTE]), null); const pg = o.pg;
+    let g = o.ok;
+    /* ① la sonde du 27/10 : seulement le nom (une espace de plus) */
+    g = g && await modifier(pg, ANC_ISO.id, { nom: 'Iso zero (test) ' }); const m1 = await lire(pg, ANC_ISO.id), l1 = m1 && m1.l;
+    t('B-NIDT M ① ⭐⭐ « MODIFIER » NE FAIT PLUS PERDRE SON IDENTITÉ : la copie du scan dont on ne change que le nom garde son code-barres, son état, la provenance d\'origine (Open Food Facts) et ses valeurs (156·35·1·1 pour 40 g)',
+      g && !!l1 && l1.sourceId === EAN_ISO && l1.etat === 'tel-que-vendu' && l1.origine === 'off' && l1.saisie === 'historique' && l1.q === 40 && l1.u === 'g' && memes(vals(l1), A.isoAncien40), J(l1));
+    t('B-NIDT M ② ⛔ … ET ELLE NE DEVIENT PAS UNE LIGNE FIABLE : « déclarée », « reprise non vérifiée », AUCUN pour-100 g (celui d\'une ancienne ligne n\'est pas vérifiable), aucune fiche pour le moteur — et la copie d\'origine, pour-100 g compris (389 · 88 · 3 · 3), est gardée INTACTE dans `n2.av`',
+      !!l1 && l1.n2.m === 'd' && l1.n2.st === 'declaree' && l1.per100 === null && (l1.n2.no || []).indexOf('reprise-non-verifiee') >= 0 && !!m1 && m1.statut === 'v2' && m1.mode === 'd' && m1.fiche === false
+      && J(l1.n2.av) === J(ANC_ISO) && l1.n2.av.per100.kcal === 389, J(m1));
+    /* ③ des valeurs RETAPÉES disent autre chose que la fiche du produit : ni l'identité ni la provenance « off » ne suivent (comme avant) — la ligne
+       garderait sinon son code-barres avec des chiffres corrigés à la main, et « contredirait » toutes les autres saisies du produit (D-131). */
+    g = g && await modifier(pg, ISO2.id, { kcal: 160 }); const m3 = await lire(pg, ISO2.id), l3 = m3 && m3.l;
+    t('B-NIDT M ③ ⭐ DES VALEURS RETAPÉES (156 → 160 kcal) NE GARDENT NI L\'IDENTITÉ NI LA PROVENANCE « OFF » : la ligne devient une ligne sans identité (« déclarée », sans pour-100 g) — la saisie d\'avant, code-barres, pour-100 g et provenance compris, reste INTACTE dans `n2.av`',
+      g && !!l3 && !l3.sourceId && l3.kcal === 160 && l3.origine !== 'off' && l3.n2.m === 'd' && l3.per100 === null && J(l3.n2.av) === J(ISO2) && l3.n2.av.sourceId === EAN_ISO, J(m3));
+    g = g && await ouvrirAjout(pg); const Mi = await mesAliments(pg), iso = Mi.find((x) => x.sid === EAN_ISO) || {};
+    await pg.evaluate(() => { try { closeAddFood(); } catch (e) {} }); await pause(pg, 250);
+    t('B-NIDT M ③b ⭐ ET LES CHIFFRES RETAPÉS D\'UNE LIGNE NE FONT PAS DIRE « À VÉRIFIER » AUX AUTRES SAISIES DU MÊME PRODUIT : l\'isolat de « Mes aliments » reste « 156 kcal · pour 40 g », sans « ⚠️ à vérifier » (mesuré par B-NV2P P8 ①, rouge sur ma 1ʳᵉ version)',
+      g && !!iso.txt && /156 kcal/.test(iso.txt) && !/à vérifier/.test(iso.txt), J({ Mi }));
+    /* ④ un nom SANS RAPPORT : l'identité ne suit pas (renommer un produit en « Riz » ne lui laisse pas le code des autres) */
+    g = g && await modifier(pg, ISO3.id, { nom: 'Riz (test)' }); const m4 = await lire(pg, ISO3.id), l4 = m4 && m4.l;
+    t('B-NIDT M ④ ⛔ UN NOM SANS RAPPORT NE GARDE PAS L\'IDENTITÉ : renommer la copie du scan en « Riz (test) » — aucun code-barres sur la ligne (le produit n\'est plus celui-là), sa copie d\'origine reste dans `n2.av`',
+      g && !!l4 && !l4.sourceId && l4.name === 'Riz (test)' && l4.n2.m === 'd' && J(l4.n2.av) === J(ISO3), J(m4));
+    /* ⑤ le nom corrigé EST celui d'une autre ligne qui porte déjà cette identité (le « Riz thaï ou 90basmati » de l'export) */
+    g = g && await modifier(pg, RIZ_TYPO.id, { nom: RIZ9 }); const m5 = await lire(pg, RIZ_TYPO.id), l5 = m5 && m5.l;
+    t('B-NIDT M ⑤ LA FAUTE DE FRAPPE CORRIGÉE GARDE SON IDENTITÉ : « Riz thaï ou 90basmati » (ciqual:9119) devient « ' + RIZ9 + ' », le nom d\'une autre ligne de ce journal qui porte déjà ciqual:9119 — l\'identité suit ; 150 g · 530 kcal inchangés, « déclarée », sans fiche',
+      g && !!l5 && l5.sourceId === 'ciqual:9119' && l5.name === RIZ9 && l5.q === 150 && l5.kcal === 530 && l5.n2.m === 'd' && l5.per100 === null && J(l5.n2.av) === J(RIZ_TYPO), J(m5));
+    /* ⑥ une ligne SANS identité renommée au nom d'une ligne identifiée n'hérite de RIEN : la suggestion viendra à la reprise, pas ici */
+    g = g && await modifier(pg, PAT_FAUTE.id, { nom: PAT }); const m6 = await lire(pg, PAT_FAUTE.id), l6 = m6 && m6.l;
+    t('B-NIDT M ⑥ ⛔ LE NOM NE LIE RIEN EN SILENCE : « Pates seches standard crues » (sans identité) corrigée en « ' + PAT + ' » — AUCUN code CIQUAL n\'est posé sur la ligne',
+      g && !!l6 && !l6.sourceId && l6.name === PAT && l6.n2.m === 'd' && l6.per100 === null, J(m6));
+    /* ⑦ …et cette ligne corrigée, REPRISE, propose la fiche (le nom exact existe maintenant) — la personne confirme */
+    g = g && await ouvrirAjout(pg); const ok7 = await ouvrirLigne(pg, PAT_FAUTE.id), p7 = await panneau(pg);
+    t('B-NIDT M ⑦ la ligne corrigée, REPRISE, PROPOSE la fiche CIQUAL 9810 (nom exact, journal identifié) au lieu de la prendre : un bouton, à confirmer',
+      g && ok7 && p7.vu && p7.boutons.length === 1 && /Fiche CIQUAL 9810 — Pâtes sèches, standard, crues/.test(p7.boutons[0]), J(p7));
+    /* ⑧ la ligne au riz corrigé, reprise : son identité PARLE (fiche CIQUAL retrouvée par son identifiant), donc pas de panneau, et 150 g = 527·11·118·1 */
+    g = await refermer(pg); const ok8 = await ouvrirLigne(pg, RIZ_TYPO.id), p8 = await panneau(pg), s8 = await etat(pg); g = g && await taper(pg, '#af-bc-grams', 150); const v8 = await ecran(pg);
+    t('B-NIDT M ⑧ ⭐ L\'IDENTITÉ GARDÉE REND LA LIGNE RÉUTILISABLE : reprise, la fiche CIQUAL 9119 est retrouvée par son identifiant (pas de panneau — l\'identité parle) et 150 g = 527·11·118·1 (351 · 7,4 · 78,4 · 0,6 × 1,5), pas les 530·12·117·2 d\'avant',
+      g && ok8 && !p8.vu && s8.bc && /fiche CIQUAL retrouvée par son identifiant/.test(s8.nom) && /ta saisie disait 530 kcal · P 12 pour 150 g/.test(s8.nom) && v8 === '527/11/118/1', J({ p8, s8, v8 }));
+    await fin(o); }
+  /* M ⑨ — HORS LIGNE : la copie modifiée garde son code-barres mais le recalcul reste BLOQUÉ (rien d'inventé) ; EN LIGNE : sa fiche se retrouve par le code-barres gardé */
+  { const o = await ouvrir(b, PORT, fixture('nidt-m2', [ANC_ISO]), null); const pg = o.pg;
+    let g = o.ok && await modifier(pg, ANC_ISO.id, { nom: 'Iso zero (test) ' }); g = g && await ouvrirAjout(pg);
+    g = g && await ouvrirLigne(pg, ANC_ISO.id); g = g && await taper(pg, '#af-prop', '35'); const s = await etat(pg);
+    const n0 = (await journal(pg)).length; await ajouter(pg); const n1 = (await journal(pg)).length, msg = await dernierToast(pg);
+    t('B-NIDT M ⑨ ⛔ HORS LIGNE, LA COPIE MODIFIÉE NE SE RECALCULE PAS : 35 g tapés, elle garde 156·35·1·1 « pour 40 g », « Ajouter » refuse et n\'écrit rien (aucune fiche vérifiée, aucun réseau)',
+      g && s.fige && !s.bc && s.ecran === T(A.isoAncien40) && n1 === n0 && /valent pour 40 g/.test(msg), J({ s, n0, n1, msg }));
+    await fin(o); }
+  { const o = await ouvrir(b, PORT, fixture('nidt-m3', [ANC_ISO]), { produits: { [EAN_ISO]: OFF_ISO } }); const pg = o.pg;
+    let g = o.ok && await modifier(pg, ANC_ISO.id, { nom: 'Iso zero (test) ' }); g = g && await ouvrirAjout(pg);
+    g = g && await ouvrirLigne(pg, ANC_ISO.id, 1300); const s = await etat(pg); g = g && await taper(pg, '#af-bc-grams', 35); const v35 = await ecran(pg);
+    const av = (await journal(pg)).map((x) => x.id); await ajouter(pg); const l = neuves(await journal(pg), av)[0] || null;
+    t('B-NIDT M ⑩ ⭐⭐ EN LIGNE, LA COPIE MODIFIÉE RETROUVE SA FICHE PAR LE CODE-BARRES GARDÉ (avant : `sourceId:null`, impossible) : 35 g = 136·31·1·1, « Ajouter » écrit la ligne fiable (Open Food Facts « source »)',
+      g && s.bc && /fiche retrouvée par son code-barres/.test(s.nom) && v35 === T(A.iso35) && !!l && l.q === 35 && memes(vals(l), A.iso35) && l.sourceId === EAN_ISO && l.n2.m === 'p' && l.n2.f.fiab === 'source', J({ s, v35, l }));
+    await fin(o); }
+
+  /* ═══ D — LES PORTES « + AJOUTER » (quickAddFood) ET « TES REPAS HABITUELS » (rejouerRepas) : AUCUNE ASSOCIATION EN SILENCE ═══
+     Règle A (D-111) : elles ne recalculent jamais seules. Le candidat ne se propose que sur l'ÉCRAN. Une ligne sans identité reste sans identité. */
+  const PAT_OLD2 = V1R('nidt-pat-old-000002', 6, PAT, 150, [450, 15, 90, 3], { kcal: 300, prot: 10, carbs: 60, fat: 2 });
+  { const o = await ouvrir(b, PORT, fixture('nidt-d', [PAT_ID1, PAT_ID2, PAT_OLD, PAT_OLD2]), null); const pg = o.pg;
+    let g = o.ok && await ouvrirAjout(pg);
+    const M = await liste(pg), it = M.find((x) => x.id === PAT_OLD.id), av = (await journal(pg)).map((x) => x.id);
+    g = g && !!it && await clic(pg, '#af-quick-list button[onclick="quickAddFood(' + it.i + ')"]'); await pause(pg, 900);
+    const N = neuves(await journal(pg), av), s = await etat(pg), pn = await panneau(pg);
+    const forme = (l) => ({ q: l.q, u: l.u, v: vals(l), sid: l.sourceId || null, m: l.n2 && l.n2.m, p100: l.per100 });
+    t('B-NIDT D ① (porte ②, quickAddFood) « + AJOUTER » SUR UNE ANCIENNE SAISIE SANS IDENTITÉ NE LUI EN DONNE JAMAIS PAR LE NOM : elle est re-notée TELLE QU\'ELLE ÉTAIT (150 g · 450·15·90·3 « déclarée »), sans code CIQUAL, sans pour-100 g — pas les 546·20·109·2 de la fiche',
+      g && N.length === 1 && J(forme(N[0])) === J({ q: 150, u: 'g', v: { kcal: 450, prot: 15, carbs: 90, fat: 3 }, sid: null, m: 'd', p100: null }) && !pn.vu, J({ N: N.map(forme), s, pn }));
+    await fin(o); }
+  /* (le rejeu a son propre journal : une ligne notée AUJOURD'HUI par la porte ② ferait sortir l'habitude de la liste — « notée aujourd'hui » n'est pas une habitude) */
+  { const o = await ouvrir(b, PORT, fixture('nidt-d2', [PAT_ID1, PAT_ID2, PAT_OLD, PAT_OLD2]), null); const pg = o.pg;
+    let g = o.ok && await ouvrirAjout(pg); const avR = (await journal(pg)).map((x) => x.id);
+    const forme = (l) => ({ q: l.q, u: l.u, v: vals(l), sid: l.sourceId || null, m: l.n2 && l.n2.m, p100: l.per100 });
+    const trouve = await pg.evaluate(() => { const h = (_repasHabituels() || []).find((x) => x && (x.items || []).some((i) => i && /^Pâtes sèches, standard, crues$/.test(i.name)));
+      if (!h) return false; rejouerRepas(h.sig, 'dejeuner'); return true; });
+    await pause(pg, 800); const NR = neuves(await journal(pg), avR).filter((l) => l.name === PAT);
+    t('B-NIDT D ② (porte ③, rejouerRepas) « TES REPAS HABITUELS » : l\'habitude existe et son rejeu ne reçoit ni code ni fiche par le nom — la ligne rejouée garde les valeurs d\'avant (150 g · 450·15·90·3 « déclarée »), sans code, sans pour-100 g',
+      g && trouve && NR.length === 1 && J(forme(NR[0])) === J({ q: 150, u: 'g', v: { kcal: 450, prot: 15, carbs: 90, fat: 3 }, sid: null, m: 'd', p100: null }), J({ trouve, NR: NR.map(forme) }));
+    await fin(o); }
+
+  /* ═══ X — SYNCHRO ET RESTAURATION (le VRAI Code.js, en local) : la ligne écrite après le choix voyage telle quelle ═══
+     Aucune clé de plus, aucune table d'associations : la ligne neuve (identité + pour-100 g + `n2`) est dans `foodLog` comme toute ligne. */
+  { const etatSrv = { drivePanne: false, reseauCoupe: false };
+    const { X, tok } = CR.preparer(etatSrv);
+    const plus = { ft4_foodlog: J([PAT_ID1, PAT_ID2, PAT_OLD]), ft4_savedfoods: '[]', ft4_admin_ok: '1' };
+    const canon = (v) => J((function tri(x) { if (Array.isArray(x)) return x.map(tri); if (x && typeof x === 'object') { const r = {}; Object.keys(x).sort().forEach((k) => { r[k] = tri(x[k]); }); return r; } return x; })(v));
+    const empreinte = (L) => canon((L || []).slice().sort((a, c) => (a.id < c.id ? -1 : 1)));
+    const D1 = await CR.appareil(b, PORT, X, etatSrv, tok, 'nidt-a1', plus); const p1 = D1.pg;
+    let g = (await clic(p1, '#nb-nutrition')) && (await pause(p1, 350), await clic(p1, '#ntab-journal')); await pause(p1, 300);
+    g = g && await ouvrirAjout(p1); g = g && await ouvrirLigne(p1, PAT_OLD.id); g = g && await choisir(p1, 0);
+    g = g && await taper(p1, '#af-bc-grams', 150); const av = (await journal(p1)).map((x) => x.id); await ajouter(p1);
+    const J1 = await journal(p1), l = neuves(J1, av)[0] || null;
+    await CR.synchroniser(p1);
+    const chezSrv = ((X.compte(CR.ALICE) || {}).profile || {}).foodLog || [], lSrv = l ? chezSrv.find((x) => x && x.id === l.id) : null;
+    t('B-NIDT X ① ⭐ LA SYNCHRO ENVOIE LA LIGNE TELLE QUELLE : au serveur (le vrai Code.js), la ligne écrite après le choix est identique à celle du téléphone (identité ciqual:9810, pour-100 g, `n2`) et les trois anciennes aussi — ' + chezSrv.length + ' lignes',
+      g && !!l && !!lSrv && canon(lSrv) === canon(l) && chezSrv.length === 4 && [PAT_ID1, PAT_ID2, PAT_OLD].every((x) => canon(chezSrv.find((y) => y && y.id === x.id)) === canon(x)), J({ n: chezSrv.length, l, lSrv }));
+    const avantRel = empreinte(await CR.journalApp(p1)); await CR.redemarrer(p1); const apresRel = empreinte(await CR.journalApp(p1));
+    t('B-NIDT X ② le téléphone fermé puis rouvert (le démarrage relit le stockage ET le serveur) : le journal est identique à l\'octet, la ligne neuve y compris', avantRel === apresRel && apresRel.indexOf('ciqual:9810') >= 0, J({ n: JSON.parse(apresRel).length }));
+    /* un téléphone NEUF, démarré hors ligne, puis « 🔄 Restaurer » : la ligne neuve arrive intacte, et l'ancienne saisie propose toujours sa fiche */
+    etatSrv.reseauCoupe = true;
+    const D2 = await CR.appareil(b, PORT, X, etatSrv, tok, 'nidt-a2', { ft4_admin_ok: '1' }); const p2 = D2.pg; etatSrv.reseauCoupe = false;
+    await CR.restaurer(p2); const j2 = await CR.journalApp(p2);
+    const intactes2 = !!l && canon(j2.find((x) => x && x.id === l.id)) === canon(l) && [PAT_ID1, PAT_ID2, PAT_OLD].every((x) => canon(j2.find((y) => y && y.id === x.id)) === canon(x));
+    t('B-NIDT X ③ ⭐ « 🔄 RESTAURER » SUR UN TÉLÉPHONE NEUF : les ' + j2.length + ' lignes arrivent, la ligne neuve et les trois anciennes IDENTIQUES (identité, pour-100 g, copie d\'origine)', j2.length === 4 && intactes2, J({ n: j2.length }));
+    let g2 = (await clic(p2, '#nb-nutrition')) && (await pause(p2, 350), await clic(p2, '#ntab-journal')); await pause(p2, 300);
+    g2 = g2 && await ouvrirAjout(p2); const ok2 = await ouvrirLigne(p2, PAT_OLD.id), pn2 = await panneau(p2);
+    t('B-NIDT X ④ après la restauration, l\'ancienne saisie sans identité PROPOSE toujours sa fiche (le candidat se déduit du journal restauré — rien d\'autre n\'est nécessaire) et n\'a rien perdu',
+      g2 && ok2 && pn2.vu && pn2.boutons.length === 1 && /Fiche CIQUAL 9810/.test(pn2.boutons[0]) && /noté 3 fois/.test(pn2.boutons[0]), J(pn2));
+    ERR.push(...D1.erreurs, ...D2.erreurs);   // ⚖️ leurs sorties (le Worker de Milo, au démarrage de l'app) sont coupées et comptées par le harnais, comme dans B-NFIAB-X
+    await D1.cx.close(); await D2.cx.close(); }
+
+  t('B-NIDT Z aucune erreur de page ; aucune requête ne quitte la page (toutes coupées), et AUCUNE ne vise l\'IA ni Milo (le Worker)',
+    ERR.length === 0 && !SORTIES.some((h) => /workers\.dev|anthropic/.test(h)), J({ ERR: ERR.slice(0, 4), SORTIES: [...new Set(SORTIES)] }));
+}
+
+module.exports = { ecran: ecranFiab, croise: croiseFiab, identite: identiteFiab };

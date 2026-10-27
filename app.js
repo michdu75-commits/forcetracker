@@ -1340,12 +1340,16 @@ function _n2CiqualAbsente(sid){
    donc la table (locale, `_ciqualCharger`), UNE fois par session ; si elle ne vient pas (hors ligne, jamais
    chargée), la ligne reste non vérifiée — le repli sûr, jamais l'inverse. */
 let _n2CiqTente=false;
-function _n2BesoinCiqual(l){
+function _n2BesoinCiqual(l, avecCand){
   return !_n2CiqTente && !(typeof _ciqual==='object' && _ciqual) && typeof _ciqualCharger==='function'
-    && !!l && !(l.n2 && l.n2.s===1 && l.n2.m==='p') && typeof l.sourceId==='string' && /^ciqual:/.test(l.sourceId);   // NV2-FIAB : une copie déclarée garde aussi son identité
+    && !!l && (
+      (!(l.n2 && l.n2.s===1 && l.n2.m==='p') && typeof l.sourceId==='string' && /^ciqual:/.test(l.sourceId))   // NV2-FIAB : une copie déclarée garde aussi son identité
+      /* NIDT : une ligne SANS identité dont le nom est celui de lignes CIQUAL du journal (`avecCand`, seulement les deux portes qui
+         ouvrent l'écran) : la table d'abord, pour que le candidat s'affiche avec sa fiche (ses kcal/100 g) au lieu d'un « à charger ». */
+      || (!!avecCand && !(typeof l.sourceId==='string' && l.sourceId.trim()) && _n2Candidats(l).some(c=>_N2_ID_CIQUAL.test(c.sid))));
 }
-function _n2Apres(lignes, suite){
-  if(!(lignes||[]).some(_n2BesoinCiqual)) return suite();
+function _n2Apres(lignes, suite, avecCand){
+  if(!(lignes||[]).some(l=>_n2BesoinCiqual(l, avecCand))) return suite();
   _ciqualCharger().then(()=>{ _n2CiqTente=true; suite(); });
 }
 
@@ -1644,12 +1648,16 @@ function _bcMajUnite(){ const s=document.getElementById('af-bc-unite'); if(s) s.
    ⛔ Une quantité absente n'est JAMAIS complétée : la reprise ouvre l'écran et la demande. */
 
 /* ⭐ Reprendre un aliment DANS l'écran d'ajout (« Mes aliments », la recherche dans ton journal). */
-function _n2Reprendre(src, saisie){
+function _n2Reprendre(src, saisie, choixSid){
   const N=(typeof NUT2==='object'&&NUT2)?NUT2:null; if(!N) return false;
   /* ⭐ NV2-FIAB (24/10) : sans fiche de confiance, celle de son IDENTITÉ (CIQUAL, ou un scan de ce code-barres depuis V2) —
      la quantité se calcule alors comme pour un scan. ⛔ Rien n'est deviné ni emprunté à un aliment du même nom. */
-  const R=_n2RepriseIdentite(N.reprise(src, _n2Ctx()), src); if(!R.ok) return false;
+  /* ⭐ NIDT (27/10) : `choixSid` = l'identité que la PERSONNE vient de choisir parmi les candidats de son journal (`_n2ChoisirCandidat`) —
+     la fiche se charge alors à la SOURCE (table CIQUAL, ou fiche vérifiée / Open Food Facts du code-barres), jamais depuis les
+     anciennes valeurs de la ligne. Sans choix, rien ne change. */
+  const R=_n2RepriseIdentite(N.reprise(src, _n2Ctx()), choixSid ? {sourceId:choixSid} : src, !!choixSid); if(!R.ok) return false;
   const _sid=(src && typeof src.sourceId==='string') ? src.sourceId.trim() : '', _ean=/^\d{8,14}$/.test(_sid) ? _sid : '';
+  const _eanChoisi=(choixSid && /^\d{8,14}$/.test(choixSid)) ? choixSid : '';   // NIDT : la fiche du code-barres choisi se cherche en ligne
   const _jeton=++_n2RechJeton;
   const set=(id,v)=>{const el=document.getElementById(id); if(el) el.value=v;};
   set('af-desc', R.nom||'');
@@ -1690,6 +1698,7 @@ function _n2Reprendre(src, saisie){
     let _dit=' (ta dernière saisie)';
     if(R.parIdentite){
       _dit=(f.source==='ciqual') ? ' (fiche CIQUAL retrouvée par son identifiant)' : ' (fiche du produit retrouvée par son code-barres)';
+      if(R.parChoix) _dit=(f.source==='ciqual') ? ' (fiche CIQUAL choisie par toi)' : ' (fiche du produit choisie par toi)';
       const _c=q ? NUT2.calcule(f, q) : null, _v=R.valeurs;
       if(_c && _c.ok && _N2_CHAMPS.some(k=>(k in _v) && (k in _c.valeurs) && _v[k]!==_c.valeurs[k]))
         _dit+=' — ta saisie disait '+_n2Val(_v.kcal)+' kcal · P '+_n2Val(_v.prot)+' pour '+_n2QteTexte(q, false);
@@ -1713,7 +1722,7 @@ function _n2Reprendre(src, saisie){
     _afRepriseVide=_N2_CHAMPS.some(c=>(+R.valeurs[c])>0) ? null : {nom:String(R.nom||'').trim(), etat:''};
     _afMajAncre(true);
     if(_sid && _afSrc) _afSrc.sourceId=_sid.slice(0,32);   // NV2-FIAB : l'identité du produit suit (jamais une fiche)
-    if(_ean) _n2RetrouverEnLigne(_ean, _jeton, saisie, 0, R.nom||'');
+    if(_ean || _eanChoisi) _n2RetrouverEnLigne(_ean || _eanChoisi, _jeton, saisie, 0, R.nom||'');
   }else{
     _bcNutr=null; if(row) row.style.display='none'; _bcQsrc(null); _bcMontrerTotal(0);
     _afSetSrc({saisie:saisie, origine:'reprise'});
@@ -1724,8 +1733,17 @@ function _n2Reprendre(src, saisie){
     _afMajFige();
     /* ⭐ NV2-FIAB (24/10) — LE CAS FIGÉ N'EST PLUS UNE IMPASSE : un produit qui a un code-barres retrouve sa fiche en ligne,
        comme un scan (Open Food Facts) ; hors ligne, l'écran propose de le retrouver, de le scanner ou de saisir l'étiquette. */
-    if(_ean) _n2RetrouverEnLigne(_ean, _jeton, saisie, (q.unite==='g' || q.unite==='ml') ? q.val : 0, R.nom||'', q.unite, R.valeurs);
+    if(_ean || _eanChoisi) _n2RetrouverEnLigne(_ean || _eanChoisi, _jeton, saisie, (q.unite==='g' || q.unite==='ml') ? q.val : 0, R.nom||'', q.unite, R.valeurs);
   }
+  /* ⭐ NIDT (27/10) — UNE REPRISE SANS FICHE SOURCE ET SANS IDENTITÉ PROPOSE LES PRODUITS IDENTIFIÉS DE MÊME NOM, JAMAIS UNE ASSOCIATION
+     EN SILENCE : le nom exact d'une ligne de ton journal qui porte déjà un code CIQUAL ou un code-barres. La personne confirme (un
+     bouton, ou un choix explicite s'il y en a plusieurs) ; la fiche vient alors de la source ; rien ne s'écrit avant « Ajouter ». */
+  _n2Cand=null;
+  if(!(R.fiche && R.fiche.fiab==='source')){
+    const _cs=_n2Candidats(src);
+    if(_cs.length) _n2Cand={src:src, saisie:saisie, nom:String(R.nom||'').trim(), liste:_cs};
+  }
+  _n2CandRendre();
   _afCoherence();          // une ancienne entrée fausse se signale au moment où on la reprend
   _afNoteEtat(R.nom||'');
   return true;
@@ -2048,11 +2066,131 @@ function _n2FicheIdentite(src){
    voit les valeurs recalculées, l'écran dit ce que disait sa saisie, et rien ne s'écrit sans « Ajouter ». ⛔ Jamais hors de
    l'écran : la règle A de D-111 (Michel, 24/10) y tient (`_n2Reajouter`). Sa quantité ne suit que si la fiche sait la calculer
    en GRAMMES ou en ML : le poids d'une portion d'avant V2 n'est jamais fiable (D-103), la quantité se redemande. Lecture seule. */
-function _n2RepriseIdentite(R0, src){
-  if(!R0 || !R0.ok || R0.fiche) return R0;
+function _n2RepriseIdentite(R0, src, choix){
+  /* NIDT : `choix` = l'identité vient d'un CHOIX de la personne (`_n2ChoisirCandidat`) — elle remplace alors même une fiche seulement
+     déclarée / estimée de la ligne (celle-ci n'est pas la source), jamais une fiche de confiance posée par l'écrivain V2 d'un scan. */
+  if(!R0 || !R0.ok || (R0.fiche && !choix)) return R0;
   const F=_n2FicheIdentite(src); if(!F) return R0;
   const q=R0.quantite, qOK=!!q && (q.unite==='g' || q.unite==='ml') && NUT2.calcule(F, q).ok;
-  return Object.assign({}, R0, {fiche:F, parIdentite:true, corrections:[], quantite:qOK ? q : null});
+  return Object.assign({}, R0, {fiche:F, parIdentite:true, parChoix:!!choix, corrections:[], quantite:qOK ? q : null});
+}
+
+/* ═══ 🔗 NIDT (27/10/2026, GO de Michel) — RÉUTILISER UN ANCIEN ALIMENT QUI A PERDU SON IDENTITÉ : LE MÊME NOM, DÉJÀ IDENTIFIÉ DANS TON JOURNAL ═══
+   Mesuré sur l'export réel du 27/10 (564 lignes) : 270 n'ont aucun `source_id` (47,9 %) — les 210 reprises d'avant la V2 l'ont TOUTES
+   perdu — et 240 d'entre elles portent le nom exact d'une ligne identifiée de leur propre journal (CIQUAL ou code-barres), pour UNE
+   seule identité. Leur pour-100 g n'est qu'une reformulation de leurs calories (137 sur 142) : on ne s'en sert jamais.
+   ⭐ Le NOM sert de SUGGESTION, jamais de preuve : (1) nom EXACT (casse, espaces et apostrophes typographiques mis à part — pas d'accents
+   effacés, pas de « ressemble à ») ; (2) parmi les lignes qui portent DÉJÀ une identité (`ciqual:NNN` ou code-barres) et que l'app propose
+   encore (ni « ✕ », ni remise à zéro : `_n2Propose`) ; (3) la personne
+   CONFIRME — un bouton s'il n'y a qu'un candidat, un choix explicite (aucun pré-sélectionné) s'il y en a plusieurs ; (4) la fiche se charge
+   alors à la SOURCE (table CIQUAL ; fiche vérifiée du journal ou Open Food Facts pour un code-barres) et le calcul ne part QUE d'elle ;
+   (5) rien ne s'écrit avant « Ajouter », qui écrit une ligne NEUVE avec son identité et son pour-100 g — les anciennes restent intactes ;
+   (6) sans fiche retrouvée (hors ligne, produit inconnu), le blocage de recalcul reste (D-101 ⑧).
+   ⛔ Aucune table d'associations : la confirmation vit dans la ligne neuve que l'app écrit (elle voyage avec le journal, la synchro,
+   la restauration et l'export). ⛔ Pas de masquage des doublons ici (mission séparée). */
+let _n2Cand=null;   // {src, saisie, nom, liste:[{sid,n,derniere}]} tant que l'écran montre CETTE reprise ; meurt avec l'aliment (`_afOublierAliment`, R15)
+function _n2NomCle(s){
+  return String(s||'').normalize('NFC').toLowerCase().replace(/[\u2018\u2019\u02bc`´]/g,"'").replace(/\s+/g,' ').trim();
+}
+const _N2_ID_CIQUAL=/^ciqual:\d+$/, _N2_ID_EAN=/^\d{8,14}$/;
+/* Les identités (CIQUAL ou code-barres) que le journal associe déjà à CE nom exact. Rend [] si la ligne a déjà une identité (c'est elle
+   qui parle, `_n2RepriseIdentite`), si le nom est trop court / générique, ou si rien ne correspond. Lecture seule. */
+function _n2Candidats(src){
+  const sid=(src && typeof src.sourceId==='string') ? src.sourceId.trim() : ''; if(sid) return [];
+  const cle=_n2NomCle(src && src.name); if(cle.length<3 || cle==='produit') return [];
+  const par=Object.create(null);
+  (S.foodLog||[]).forEach(l=>{
+    if(!l || typeof l!=='object' || typeof l.sourceId!=='string') return;
+    const s=l.sourceId.trim(); if(!(_N2_ID_CIQUAL.test(s) || _N2_ID_EAN.test(s))) return;
+    if(_n2NomCle(l.name)!==cle) return;
+    if(!_n2Propose(l, l.ts)) return;   // ce que « ✕ » ou la remise à zéro ont écarté ne revient pas par ce panneau (D-140 ②) ; ce qui est noté APRÈS revient de lui-même
+    const c=par[s] || (par[s]={sid:s, n:0, derniere:''});
+    c.n++; if(String(l.date||'')>c.derniere) c.derniere=String(l.date||'');
+  });
+  return Object.keys(par).map(k=>par[k]).sort((a,b)=>(b.n-a.n) || (a.derniere<b.derniere?1:(a.derniere>b.derniere?-1:0)) || (a.sid<b.sid?-1:1));
+}
+/* L'identité d'une ligne MODIFIÉE (`saveEditFood`, branche sans fiche) : celle qu'elle avait, si le nom n'a pas changé — ou si le nouveau nom
+   est celui d'une AUTRE ligne du journal qui porte déjà cette identité (corriger « Riz thaï ou 90basmati » en « Riz thaï ou basmati »). */
+function _n2IdentiteQuiSuit(e, nom){
+  const sid=(e && typeof e.sourceId==='string') ? e.sourceId.trim() : ''; if(!sid) return '';
+  if(_n2NomCle(nom)===_n2NomCle(e.name)) return sid;
+  const cle=_n2NomCle(nom);
+  return (S.foodLog||[]).some(l=>l && l!==e && typeof l.sourceId==='string' && l.sourceId.trim()===sid && _n2NomCle(l.name)===cle) ? sid : '';
+}
+/* Ce qu'on peut dire d'un candidat À CET INSTANT (la table CIQUAL peut arriver après) : sa fiche source est-elle là, et combien de kcal/100. */
+function _n2CandDecrire(c){
+  const m=/^ciqual:(\d+)$/.exec(c.sid);
+  if(m){
+    const tableOK=!!(typeof _ciqual==='object' && _ciqual && Array.isArray(_ciqual.a)), r=tableOK ? _n2Ctx().ciqual(m[1]) : null;
+    return {type:'ciqual', code:m[1], tableOK:tableOK, dispo:!!r, nomFiche:r ? String(r.nom||'') : '', kcal:r ? r.kcal : null};
+  }
+  const v=_n2FichesVerifiees()[c.sid], p=(v && v.fiche && v.fiche.p100) || null;
+  return {type:'ean', code:c.sid, tableOK:true, dispo:!!v, nomFiche:'', kcal:p ? p.kcal : null};
+}
+function _n2CandRendre(){
+  const el=document.getElementById('af-cand-row'); if(!el) return;
+  const C=_n2Cand;
+  if(!C || !C.liste || !C.liste.length || C.nom!==_afNomCourant()){ el.style.display='none'; el.innerHTML=''; return; }
+  const lignes=[];
+  C.liste.forEach((c,i)=>{
+    const d=_n2CandDecrire(c);
+    if(d.type==='ciqual' && d.tableOK && !d.dispo) return;   // un code que la table CIQUAL n'a pas ne donne aucune fiche : il n'est pas proposé
+    const lib=d.type==='ciqual'
+      ? 'Fiche CIQUAL '+d.code+(d.nomFiche ? ' — '+d.nomFiche : '')+(d.kcal!=null ? ' · '+_nbFR(d.kcal)+' kcal/100 g' : (d.tableOK ? '' : ' · table à charger (connexion)'))
+      : 'Produit code-barres '+d.code+(d.kcal!=null ? ' · '+_nbFR(d.kcal)+' kcal/100 g' : ' · fiche à récupérer en ligne');
+    const vu='noté '+c.n+' fois'+(c.derniere ? ', dernier le '+c.derniere.split('-').reverse().join('/') : '');
+    lignes.push('<button type="button" onclick="_n2ChoisirCandidat('+i+')" style="display:block;width:100%;text-align:left;min-height:44px;padding:8px 11px;margin-top:6px;'
+      +'border-radius:9px;border:1px solid var(--sep);background:var(--bg2);color:var(--t1);font-size:12.5px;font-weight:700;font-family:var(--font);cursor:pointer;touch-action:manipulation;">'
+      +'✅ '+_escFood(lib)+'<span style="display:block;font-size:11px;font-weight:600;color:var(--t3);margin-top:2px;">'+_escFood(vu)+'</span></button>');
+  });
+  if(!lignes.length){ el.style.display='none'; el.innerHTML=''; return; }
+  const un=lignes.length===1;
+  el.innerHTML='<div style="font-size:12px;font-weight:800;color:var(--t1);margin-bottom:3px;">🔗 '+(un ? 'Même aliment déjà identifié dans ton journal ?' : 'Plusieurs fiches identifiées portent ce nom dans ton journal')+'</div>'
+    +'<div style="font-size:11.5px;color:var(--t2);line-height:1.45;">'+(un
+      ? '« '+_escFood(C.nom)+' » existe dans ton journal avec cette fiche. Si c\'est le même, prends-la :'
+      : 'Choisis la bonne pour « '+_escFood(C.nom)+' » — rien n\'est choisi à ta place :')+'</div>'
+    +lignes.join('')
+    +'<div style="font-size:11px;color:var(--t3);margin-top:7px;line-height:1.4;">Les valeurs viendront de cette fiche, pas de tes anciennes saisies. Rien n\'est enregistré tant que tu n\'as pas touché « Ajouter ».</div>';
+  el.style.display='block';
+}
+/* La quantité déjà posée quand la personne choisit : dans l'écran figé / sans quantité (`_n2QteRepriseAvantFiche`) ou dans le bloc
+   « Quantité » d'une fiche seulement déclarée. Lecture seule ; rien de posé → null. */
+function _n2QteAvantChoix(){
+  if(_bcNutr){
+    if(!_bcQtyPose) return null;
+    const v=numFR((document.getElementById('af-bc-grams')||{}).value); if(!(v>0)) return null;
+    return {val:v, unite:_bcUnite(), origine:(_bcQtyOrigine==='proposee')?'proposee':'tapee'};
+  }
+  return _n2QteRepriseAvantFiche();
+}
+function _n2ChoisirCandidat(i){
+  const C=_n2Cand, c=C && C.liste && C.liste[i]; if(!c) return;
+  const qPose=_n2QteAvantChoix();   // D-101 ⑧/⑨ : la quantité déjà tapée survit au choix
+  const go=()=>{
+    if(_n2Cand!==C) return;         // l'écran a changé d'aliment pendant le chargement de la table : ce choix ne vaut plus
+    const fav=(_afFavSource===C.src) ? C.src : null;   // un favori repris peut se corriger : choisir sa fiche ne le fait pas oublier
+    try{ _afOublierAliment(); }catch(e){}
+    if(!_n2Reprendre(C.src, C.saisie, c.sid)) return;
+    if(fav){ _afFavSource=fav; try{ _afFavMontrer(); }catch(e){} }
+    if(_bcNutr){   // la fiche source est là : la quantité déjà tapée se repose, et l'écran le dit
+      const dit=_n2ReposerQte(qPose), nm=document.getElementById('af-bc-name');
+      if(dit && nm) nm.textContent+=dit;
+      toast(dit ? 'Fiche prise — ta quantité est gardée ✅' : 'Fiche prise — choisis la quantité ✅','success');
+    }else{          // code-barres : la fiche se cherche en ligne ; en attendant, la quantité tapée reste dans son champ
+      if(qPose && qPose.unite!=='portion'){ const f=document.getElementById('af-prop'); if(f){ f.value=qPose.val; _afPropPoserFige(qPose.origine); } }
+      toast('Recherche de la fiche de ce produit…','info');
+    }
+  };
+  if(/^ciqual:/.test(c.sid) && !(typeof _ciqual==='object' && _ciqual && Array.isArray(_ciqual.a))){
+    _n2EtatRetrouver('🔎 Chargement de la base CIQUAL…');
+    _ciqualCharger().then(tab=>{
+      if(_n2Cand!==C) return;
+      if(tab) return go();
+      _n2EtatRetrouver('La base CIQUAL n\'est pas disponible pour l\'instant (hors ligne ?) : rien n\'a été pris, le recalcul reste bloqué.');
+    });
+    return;
+  }
+  go();
 }
 /* ⭐ NV2-FIAB (24/10) — DEUX SAISIES DU MÊME PRODUIT QUI NE PEUVENT PAS ÊTRE VRAIES ENSEMBLE : même identité (code-barres,
    `ciqual:…` — jamais le seul nom, D-111), et des valeurs qui, ramenées à 100 g (ou 100 ml), s'écartent au-delà de l'arrondi de
@@ -4994,7 +5132,7 @@ function quickFillFood(i){
     const pas=['af-bc-last','af-prop-pastille'].some(id=>{ const b=document.getElementById(id); return !!b && b.offsetParent!==null; });
     if(_afRepriseVide){ toast(_N2_VIDE,'info'); return; }
     toast('Repris — choisis la quantité ('+(pas?'touche la pastille ou tape-la':'tape-la')+'), puis « Ajouter au journal » ✅','info');
-  });
+  }, true);   // NIDT : la table CIQUAL d'abord si le nom a un candidat CIQUAL dans le journal
 }
 function quickAddFood(i){
   /* 🥗 V2 (jalon 4) — « + Ajouter » RE-NOTE l'aliment tel quel, par le moteur, sans lire l'écran (D-094) :
@@ -6604,7 +6742,7 @@ function _afSuggPrendreLocale(i){
     if(!_n2Reprendre(e, 'historique')) return;
     _afSuggVider();
     toast('Repris de ton journal 👍','success');
-  });
+  }, true);   // NIDT : idem
 }
 /* ② Un résultat de recherche est un produit Open Food Facts comme un autre : il passe par le
    MÊME chemin que le code-barres (grammes, provenance, avertissement cru/cuit, score santé). */
@@ -7818,6 +7956,7 @@ function _afOublierAliment(opts){
   try{ _n2RechJeton++; }catch(e){}   // NV2-FIAB : la fiche cherchée pour l'aliment d'avant ne s'applique plus
   try{ _afFavSource=null; _afFavMontrer(); }catch(e){}   // NV2-FIAB : le favori repris appartient à l'aliment d'avant
   try{ _afRepriseVide=null; }catch(e){}   // la reprise sans quantité ni valeurs appartient à l'aliment d'avant
+  try{ _n2Cand=null; _n2CandRendre(); }catch(e){}   // NIDT : les candidats d'identité appartiennent, eux aussi, à l'aliment d'avant (R15)
   try{ _afMontrerCorr(); _bcMajUnite(); }catch(e){}
 }
 /* Décide de la source et (re)construit le bloc. ⚠️ Appelée seulement quand la SOURCE des valeurs
@@ -7829,6 +7968,7 @@ function _afOublierAliment(opts){
 const _AIDE_POIDS_AF='Combien pèse ce que tu as devant toi ? <b>L\'app ne peut pas le deviner, toi si.</b> Indique-le : les 4 valeurs ci-dessous se calent dessus, et tu pourras ensuite mettre le poids que tu veux.';
 function _afMajAncre(srcChange){
   const el=document.getElementById('af-prop-row'); if(!el) return;
+  try{ _n2CandRendre(); }catch(e){}   // NIDT : le nom a-t-il changé ? la proposition d'identité tombe avec la reprise
   if(_bcNutr){ _afPropCacher(); return; }          // ① un pour-100 g est connu : `af-bc-row` s'en charge
   /* 🥗 V2 — une REPRISE sans fiche de confiance garde son bloc (la quantité se choisit, rien n'est recalculé) ;
      ⛔ mais si le nom a changé, ce n'est plus le même aliment : la reprise tombe (ft-v1180 appliqué à V2). */
@@ -8045,6 +8185,26 @@ function saveEditFood(){
       return;
     }
     entree=Object.assign(base, {mode:'declaree', declare:vals, quantite:q}, (R.statut==='non-verifiee')?{notes:['reprise-non-verifiee']}:{});
+    /* ⭐ NIDT (27/10, mission de Michel) — « MODIFIER » NE FAIT PLUS PERDRE SON IDENTITÉ À UNE LIGNE SANS FICHE. Mesuré sur ft-v1261
+       (sonde du 27/10) : une ancienne copie d'un scan (code-barres + pour-100 g) devenait, après avoir seulement changé son nom,
+       `sourceId:null` — le produit redevenait un simple nom, et l'on ne pouvait plus retrouver sa fiche. `_n2Reajouter` (« + Ajouter »)
+       transmettait déjà `cle` ; cette branche l'oubliait (R8, la porte jumelle).
+       ⛔ CE N'EST PAS UNE FICHE : la ligne reste « déclarée » et « non vérifiée », sans pour-100 g — celui d'une ancienne ligne n'est
+       pas vérifiable (137 des 142 de l'export du 27/10 ne font que reformuler leurs propres calories) ; il reste intact, avec toute la
+       ligne d'origine, dans `n2.av`. ⛔ L'identité ne suit que si le NOM est resté le même (ou devient celui d'une ligne du journal qui
+       porte déjà cette identité) : renommer en « Riz » une ligne de pâtes ne lui donne pas le code CIQUAL des pâtes.
+       ⛔ ET SEULEMENT SI LES VALEURS N'ONT PAS CHANGÉ (mesuré par le banc B-NV2P P8 ①, rouge sur ma 1ʳᵉ version) : des chiffres RETAPÉS
+       disent autre chose que la fiche du produit — une ligne qui garderait son code-barres avec des valeurs corrigées à la main
+       « contredirait » (D-131) toutes les autres saisies de ce produit, et la règle A bloquerait « + Ajouter » et « Tes repas habituels »
+       pour lui. Comme avant, elle devient alors une ligne sans identité (l'originale, code compris, reste dans `n2.av`).
+       La provenance d'origine (off, ciqual…) suit avec l'identité : mêmes chiffres, même source. */
+    const _id=_n2IdentiteQuiSuit(e, nom);
+    const _egal=['kcal','prot','carbs','fat'].every(c=>(Number.isFinite(e[c])?e[c]:null)===(Number.isFinite(vals[c])?vals[c]:null));
+    if(_id && _egal){
+      entree.cle=_id; if(e.etat) entree.etat=String(e.etat);
+      if(R.statut!=='v2' && ['off','ciqual','marque'].indexOf(e.origine)>=0)
+        entree.origine={saisie:'historique', origine:e.origine};
+    }
   }
   if(!entree.repas){ toast('Choisis le repas — la ligne n\'a pas été modifiée.','error'); return; }
   const r=_n2Enregistrer(entree,'saveEditFood');

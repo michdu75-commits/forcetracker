@@ -5,7 +5,7 @@ ROUGIR, et au BON endroit ?
 
 [!!] SUR UN ARBRE CLONE, JAMAIS SUR LE DEPOT (BUGS.md §60). Chaque mutation REINTRODUIT un defaut corrige (ou en invente un
      que la correction interdit) dans une COPIE ; le banc `tools/banc_nut_fiabilite.js` y est rejoue sur la seule partie visee
-     (`NUTF_PARTIE` : ecran ou croise), avec `NUTF_RACINE` = la copie.
+     (`NUTF_PARTIE` : ecran, identite ou croise), avec `NUTF_RACINE` = la copie.
 Point de depart : 0 rouge sur l'arbre sain, mesure d'abord (sinon le controle est refuse).
 Une mutation GARDE est conforme si le banc rougit (code 1) ET si CHACUN des temoins attendus fait partie des rouges : un rouge
 ailleurs ne prouve pas que le bon temoin mord. Une mutation OK (commentaire) est conforme si le banc reste vert.
@@ -20,8 +20,9 @@ SC = 'screens.js'
 
 E = lambda *c: ['B-NFIAB ' + x for x in c]       # partie ecran
 X = lambda *c: ['B-NFIAB-X ' + x for x in c]     # partie croisee (vrai Code.js en local)
+I = lambda *c: ['B-NIDT ' + x for x in c]       # partie identite (NIDT, 27/10) : reutiliser un ancien aliment sans perdre ni inventer son identite
 
-REPRISE = "function _n2RepriseIdentite(R0, src){\n  if(!R0 || !R0.ok || R0.fiche) return R0;\n"
+REPRISE = "  if(!R0 || !R0.ok || (R0.fiche && !choix)) return R0;\n"   # NIDT (27/10) : la fonction a gagne un 3e parametre (le choix de la personne)
 ENLIGNE = "async function _n2RetrouverEnLigne(ean, jeton, saisie, qDer, nom, uDer, vAnc){\n  if(typeof _offFetchProduct!=='function') return false;\n"
 PERIME = "  if(jeton!==_n2RechJeton || (ov && !ov.classList.contains('open')) || _afNomCourant()!==String(nom||'').trim()) return false;\n"
 ISSUES = r"""[['🔎 Retrouver l\'aliment','_n2RetrouverRecherche()'],['📷 Scanner le code-barres','scanBarcode()'],['🏷️ Saisir l\'étiquette (pour 100 g)','_n2EtiquetteFige()']]"""
@@ -99,10 +100,35 @@ QCOMM = "SURVIT À LA FICHE. Mesuré : 180 tapé dans l'écran figé AVANT la r�
 CABS = "function _n2CiqualAbsente(sid){\n  return /^ciqual:/.test(String(sid||'').trim()) && !(typeof _ciqual==='object' && _ciqual && Array.isArray(_ciqual.a));\n}\n"
 FIGE_REFUS = "    if(R.qte && !_afValeursTapees && !(q.unite===R.qte.unite && q.val===R.qte.val))\n"
 
+
+# NIDT (27/10, mission de Michel) : « Modifier » garde l'identite ; un ancien aliment sans identite PROPOSE (jamais ne prend) le produit
+# identifie de meme nom exact ; la personne confirme ; la fiche vient de la SOURCE ; rien ne s'ecrit avant « Ajouter »
+CAND_FIN = "    if(_cs.length) _n2Cand={src:src, saisie:saisie, nom:String(R.nom||'').trim(), liste:_cs};\n"
+CAND_NOM = ".normalize('NFC').toLowerCase()"
+CAND_COURT = "if(cle.length<3 || cle==='produit') return [];"
+CAND_CHOIX = "  const R=_n2RepriseIdentite(N.reprise(src, _n2Ctx()), choixSid ? {sourceId:choixSid} : src, !!choixSid); if(!R.ok) return false;\n"
+CAND_GO = "    try{ _afOublierAliment(); }catch(e){}\n    if(!_n2Reprendre(C.src, C.saisie, c.sid)) return;\n"
+CAND_FAV = "    if(fav){ _afFavSource=fav; try{ _afFavMontrer(); }catch(e){} }\n"
+CAND_PROPOSE = "    if(!_n2Propose(l, l.ts)) return;   // ce que « ✕ » ou la remise à zéro ont écarté ne revient pas par ce panneau (D-140 ②) ; ce qui est noté APRÈS revient de lui-même\n"
+CAND_QTE = "  const qPose=_n2QteAvantChoix();   // D-101 ⑧/⑨ : la quantité déjà tapée survit au choix\n"
+CAND_OUBLI = "  try{ _n2Cand=null; _n2CandRendre(); }catch(e){}   // NIDT : les candidats d'identité appartiennent, eux aussi, à l'aliment d'avant (R15)\n"
+CAND_BOUTON = "lignes.push('<button type=\"button\" onclick=\"_n2ChoisirCandidat('+i+')\""
+MOD_ID = "    const _id=_n2IdentiteQuiSuit(e, nom);\n"
+MOD_CLE = "      entree.cle=_id; if(e.etat) entree.etat=String(e.etat);\n"
+MOD_ORIG = "      if(R.statut!=='v2' && ['off','ciqual','marque'].indexOf(e.origine)>=0)\n"
+MOD_EGAL = "    if(_id && _egal){\n"
+MOD_NOM = "  const sid=(e && typeof e.sourceId==='string') ? e.sourceId.trim() : ''; if(!sid) return '';\n  if(_n2NomCle(nom)===_n2NomCle(e.name)) return sid;\n"
+PORTE_SID = "    if(_sid){ e.cle=_sid; if(src.etat) e.etat=String(src.etat); }\n    if(R.statut==='non-verifiee') e.notes=['reprise-non-verifiee'];\n"
+SYNC_FL = "      foodLog:(S.foodLog||[]).slice(-8000), // ~journal nutrition sur plusieurs annees (entrees minuscules)"
+CAND_TABLE = "  if(/^ciqual:/.test(c.sid) && !(typeof _ciqual==='object' && _ciqual && Array.isArray(_ciqual.a))){\n"
+CAND_INCONNU = "    if(d.type==='ciqual' && d.tableOK && !d.dispo) return;   // un code que la table CIQUAL n'a pas ne donne aucune fiche : il n'est pas proposé\n"
+ORACLE_P = "g && v150 === '546/20/109/2' && b3 === b0"
+ORACLE_H = "['V1 corrompue (10 g · 36 kcal)', HUI_OLD1, 10, [90, 0, 0, 10]]"
+
 MUT = [
     # ── la reprise d'un aliment : son IDENTITE, sa fiche retrouvee, ses issues ──
     ('F1 dans l\'ecran, la fiche n\'est plus retrouvee par l\'identite du produit (code-barres, ciqual:)',
-     [(A, REPRISE, REPRISE.replace("  if(!R0 || !R0.ok || R0.fiche) return R0;\n", "  return R0;\n"))], E('T02 ⑥b'), 'GARDE', 'ecran'),
+     [(A, REPRISE, "  return R0;\n")], E('T02 ⑥b'), 'GARDE', 'ecran'),
     # ⛔ Regle A de D-111 (Michel, 24/10) : HORS de l'ecran, une reference qui contredit la fiche verifiee de son produit n'est
     #    jamais recalculee en silence. La mutation reintroduit la fiche d'identite dans « + Ajouter » / l'apercu (la variante B).
     ('F1b la fiche d\'identite revient HORS de l\'ecran (« + Ajouter », la liste : la variante B que Michel a ecartee)',
@@ -255,6 +281,62 @@ MUT = [
      [(A, FIGE_REFUS, "    if(false)\n")], E('CHL ②', 'T02 ①'), 'GARDE', 'ecran'),
     ('MC2 [negatif] commentaire seulement dans le correctif NUT-QTY-02', [(A, QCOMM, QCOMM.replace("Mesuré :", "Mesuré (commentaire) :"))], [], 'OK', 'ecran'),
     ('MC3 [negatif] commentaire seulement dans le lecteur de la jumelle (`_afQtePoseeReprise`)', [(A, QREPCOMM, QREPCOMM.replace("GESTES", "GESTES (commentaire)"))], [], 'OK', 'ecran'),
+    # ── NIDT (27/10, mission de Michel) : la partie « identite » — chaque mutation REINTRODUIT un defaut que la mission interdit ──
+    ('I1 un candidat UNIQUE est pris en silence (l\'association par le nom, ce que la mission interdit)',
+     [(A, CAND_FIN, CAND_FIN + "    if(_cs.length===1 && !choixSid) return _n2Reprendre(src, saisie, _cs[0].sid);\n")], I('P ①', 'H ①', 'I ①'), 'GARDE', 'identite'),
+    ('I1b plusieurs candidats : le PREMIER est pris sans que la personne choisisse',
+     [(A, CAND_FIN, CAND_FIN + "    if(_cs.length>=1 && !choixSid) return _n2Reprendre(src, saisie, _cs[0].sid);\n")], I('S ①'), 'GARDE', 'identite'),
+    ('I1c plusieurs candidats : le premier bouton est affiche comme deja choisi',
+     [(A, CAND_BOUTON, CAND_BOUTON.replace('onclick="_n2', 'aria-pressed="\'+(i===0?\'true\':\'false\')+\'" onclick="_n2', 1))], I('S ①'), 'GARDE', 'identite'),
+    ('I2 le choix ECRIT l\'identite sur l\'ancienne ligne et l\'enregistre (rien ne devrait s\'ecrire avant « Ajouter », et les anciennes lignes restent intactes)',
+     [(A, CAND_GO, "    try{ C.src.sourceId=c.sid; persist(); }catch(e){}\n" + CAND_GO)], I('P ②', 'P ④', 'H ②'), 'GARDE', 'identite'),
+    ('I2b la confirmation vit dans une NOUVELLE clef de stockage (une table d\'associations a part, ce que la mission interdit)',
+     [(A, CAND_GO, "    try{ localStorage.setItem('ft4_idassoc', JSON.stringify({id:C.src.id, sid:c.sid})); }catch(e){}\n" + CAND_GO)], I('P ⑥'), 'GARDE', 'identite'),
+    ('I3 le nom est compare « a peu pres » (accents et ponctuation effaces : « Pates seches standard crues » trouve les pates)',
+     [(A, CAND_NOM, ".normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').replace(/[^a-z0-9 ]/gi,'').toLowerCase()")], I('N ①'), 'GARDE', 'identite'),
+    ('I4 un nom generique (« Produit ») ou de 2 lettres propose lui aussi un candidat',
+     [(A, CAND_COURT, "if(!cle) return [];")], I('N ①'), 'GARDE', 'identite'),
+    ('I5 le choix ne charge aucune fiche a la source (il relit la ligne d\'avant : rien ne se recalcule)',
+     [(A, CAND_CHOIX, CAND_CHOIX.replace("choixSid ? {sourceId:choixSid} : src", "src"))], I('P ②', 'H ①', 'S ②'), 'GARDE', 'identite'),
+    ('I6 la quantite deja tapee se PERD au choix (le defaut D-101 ⑧/⑨ rouvert)',
+     [(A, CAND_QTE, "  const qPose=null;\n")], I('H ③', 'C ②'), 'GARDE', 'identite'),
+    ('I7 le panneau ne meurt plus avec son aliment (R15) : il reste affiche quand un autre produit arrive (scan) ou quand la fiche en ligne arrive',
+     [(A, CAND_OUBLI, "")], I('F ③', 'C ②'), 'GARDE', 'identite'),
+    ('I8 « Modifier » perd de nouveau l\'identite (le defaut mesure sur ft-v1261 : `sourceId:null`)',
+     [(A, MOD_ID, "    const _id='';\n")], I('M ①', 'M ⑤', 'M ⑩'), 'GARDE', 'identite'),
+    ('I9 sur-correction : l\'identite suit N\'IMPORTE QUEL nouveau nom (« Riz (test) » garde le code-barres de l\'isolat)',
+     [(A, MOD_NOM, MOD_NOM.replace("  if(_n2NomCle(nom)===_n2NomCle(e.name)) return sid;\n", "  return sid;\n"))], I('M ④'), 'GARDE', 'identite'),
+    ('I10 « Modifier » DONNE une identite par le nom (une ligne sans code, renommee comme un produit identifie, en prend le code)',
+     [(A, MOD_NOM, "  const sid=(e && typeof e.sourceId==='string') ? e.sourceId.trim() : '';\n  if(!sid){ const o=(S.foodLog||[]).find(l=>l && l!==e && typeof l.sourceId==='string' && l.sourceId.trim() && _n2NomCle(l.name)===_n2NomCle(nom)); return o ? o.sourceId.trim() : ''; }\n  if(_n2NomCle(nom)===_n2NomCle(e.name)) return sid;\n")],
+     I('M ⑥'), 'GARDE', 'identite'),
+    ('I11 sur-correction : « Modifier » rend la ligne FIABLE avec l\'ancien pour-100 g, jamais verifie (pesee / fiable, sans fiche source)',
+     [(A, MOD_CLE, MOD_CLE + "      if(e.per100){ entree.mode='pesee'; entree.fiche={base:'g', p100:e.per100, cle:_id, source:(e.origine==='ciqual'?'ciqual':'off'), fiab:'source'}; delete entree.declare; delete entree.notes; }\n")],
+     I('M ②'), 'GARDE', 'identite'),
+    ('I12 l\'identite et la provenance suivent MEME quand les valeurs ont ete RETAPEES (la ligne corrigee a la main contredit les autres saisies du produit : le defaut mesure par B-NV2P P8 ①)',
+     [(A, MOD_EGAL, "    if(_id){\n")], I('M ③', 'M ③b'), 'GARDE', 'identite'),
+    ('I13 la provenance d\'origine n\'est plus jamais gardee par « Modifier »',
+     [(A, MOD_ORIG, MOD_ORIG.replace("if(R.statut", "if(false && R.statut"))], I('M ①'), 'GARDE', 'identite'),
+    ('I14 « + Ajouter » et « Tes repas habituels » donnent une identite par le nom (la regle A de D-111 ignoree : une association en silence)',
+     [(A, PORTE_SID, "    const _cs0=_sid ? [] : _n2Candidats(src);\n    if(_sid){ e.cle=_sid; if(src.etat) e.etat=String(src.etat); } else if(_cs0.length===1){ e.cle=_cs0[0].sid; }\n    if(R.statut==='non-verifiee') e.notes=['reprise-non-verifiee'];\n")],
+     I('D ①', 'D ②'), 'GARDE', 'identite'),
+    ('I15 le blocage de recalcul saute : hors ligne, une autre quantite s\'ecrit avec les valeurs d\'avant (D-101 ⑧ ignoree)',
+     [(A, FIGE_REFUS, "    if(false)\n")], I('C ①', 'N ②', 'M ⑨'), 'GARDE', 'identite'),
+    ('I16 la synchro perd l\'identite CIQUAL des lignes (le serveur et le telephone neuf ne la voient plus)',
+     [(SE, SYNC_FL, "      foodLog:(S.foodLog||[]).slice(-8000).map(l=>(l&&/^ciqual:/.test(String(l.sourceId||'')))?Object.assign({},l,{sourceId:null}):l),")], I('X ①', 'X ③'), 'GARDE', 'identite'),
+    ('I19 le choix ne recharge plus la table CIQUAL absente (la connexion revenue, le bouton ne fait rien : la table n\'est jamais retentee)',
+     [(A, CAND_TABLE, "  if(false){\n")], I('P ⑦', 'P ⑧'), 'GARDE', 'identite'),
+    ('I20 un code CIQUAL que la table ne connait pas est propose quand meme (un bouton qui ne mene a aucune fiche)',
+     [(A, CAND_INCONNU, "")], I('N ③'), 'GARDE', 'identite'),
+    ('I21 choisir la fiche d\'un favori lui fait oublier son lien « ⭐ Corriger ce favori »',
+     [(A, CAND_FAV, "")], I('V ⭐'), 'GARDE', 'identite'),
+    ('I22 une identite ecartee par « ✕ » ou la remise a zero revient par le panneau (les anciennes references incorrectes reapparaissent : D-140 ②)',
+     [(A, CAND_PROPOSE, "")], I('N ④'), 'GARDE', 'identite'),
+    ('I17 l\'oracle de la fiche CIQUAL : 150 g de pates attendus a 547 kcal au lieu de 546 (l\'oracle est bien LU)',
+     [(B, ORACLE_P, ORACLE_P.replace("546/20", "547/20"))], I('P ③'), 'GARDE', 'identite'),
+    ('I18 l\'oracle de l\'huile : 10 g attendus a 91 kcal au lieu de 90',
+     [(B, ORACLE_H, ORACLE_H.replace("[90, 0, 0, 10]", "[91, 0, 0, 10]"))], I('H ①'), 'GARDE', 'identite'),
+    ('MC4 [negatif] commentaire seulement dans `_n2Candidats` (cite return [], sourceId, ciqual)',
+     [(A, CAND_COURT, CAND_COURT + "   /* return []; sourceId:null ciqual:9810 — un commentaire ne change rien */")], [], 'OK', 'identite'),
     # ── l'oracle (ecrit a la main) et le controle « commentaire » ──
     ('F24 l\'oracle : 35 g d\'isolat attendus a 135 kcal au lieu de 136 (l\'oracle est bien LU)',
      [(B, ORACLE, ORACLE.replace("kcal: 136", "kcal: 135"))], E('T01 ①'), 'GARDE', 'ecran'),
@@ -296,6 +378,8 @@ def main():
     sans_d141 = '_nutRazFavoris_(' not in cj
     sans_objet = set()
     for nom, rempl, _, _, _ in MUT:
+        if not choisie(nom):   # NIDT (27/10) : avec un filtre, seules les ancres des mutations CHOISIES sont verifiees (sur master, `Code.js` n'a ni D-141 ni `hiddenFoods` : leurs ancres n'existent pas)
+            continue
         for f, old, _new in rempl:
             n = open(os.path.join(SRC, f), encoding='utf-8').read().count(old)
             if n == 0 and f == CJ and sans_d141 and nom.startswith('D'):

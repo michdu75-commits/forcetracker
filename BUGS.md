@@ -5805,3 +5805,53 @@ Témoins `B-NFIAB CHL ① ④` rouges avant, verts après ; `CHL ② ③ ⑤ ⑥
 **À quoi on le reconnaît.** Un message qui confond « absent » et « pas joignable ». *« Je n'ai pas » et « je n'arrive pas à
 l'atteindre » ne se réparent pas pareil : le premier renvoie la personne chercher ailleurs, le second lui dit d'attendre le
 réseau.*
+
+## §125 — ⛔⛔ « MODIFIER » FAISAIT PERDRE SON CODE-BARRES À UNE ANCIENNE LIGNE, ET 270 LIGNES SUR 564 DE L'EXPORT RÉEL N'AVAIENT PLUS D'IDENTITÉ : UN ANCIEN ALIMENT NE SE RECALCULAIT PLUS POUR UNE AUTRE QUANTITÉ *(27/10/2026, mission « GO développement Nutrition » de Michel ; export réel du 27/10, 564 lignes ; reproduit sur `ft-v1261` (master `53c464f6`) par sonde, données inventées ; corrigé sur la branche isolée `claude/nut-identite-reutilisation-01`, NON fusionné, NON publié)*
+
+**Ce qui se passait.** Deux faits, mesurés sur l'export réel : (1) **270 lignes sur 564 (47,9 %) n'ont aucun `source_id`** — les 210
+reprises d'avant la V2 l'ont toutes perdu — et leur pour-100 g n'est qu'une reformulation de leurs propres calories (137 sur 142) :
+on ne peut donc ni s'y fier ni recalculer pour une autre quantité (`D-101` ⑧, voulu) ; **240 d'entre elles portent pourtant le nom exact
+d'une ligne identifiée (CIQUAL ou code-barres) de leur propre journal, pour UNE seule identité**. (2) **« Modifier » une ancienne copie d'un
+scan, en ne changeant que le nom (une espace en plus), écrivait `sourceId:null`** : le produit n'était plus qu'un nom et sa fiche ne
+se retrouvait plus. `_n2Reajouter` (« + Ajouter ») transmettait déjà l'identité (`cle`) ; `saveEditFood` l'oubliait — **R8, la porte jumelle**.
+
+**La cause.** (2) la branche « déclarée » de `saveEditFood` ne passait pas `cle` au moteur. (1) aucune lecture du journal pour proposer
+l'identité qu'il connaît déjà ; et, surtout, **aucune façon sûre de le faire** : le nom ne prouve rien.
+
+**Ce qui le ferme.** `app.js` + 4 lignes d'`index.html`, **aucune donnée persistée de plus** (ni clef, ni champ, ni table d'associations).
+**A — `saveEditFood`** : l'identité suit (`_n2IdentiteQuiSuit`) si le nom est resté le même (casse, espaces, apostrophes typographiques près)
+ou devient celui d'une AUTRE ligne du journal qui porte déjà cette identité (« Riz thaï ou 90basmati » → « Riz thaï ou basmati, cru »),
+**et seulement si les valeurs n'ont pas changé** — des chiffres retapés disent autre chose que la fiche : la ligne garderait son code-barres
+avec des valeurs corrigées à la main et « contredirait » (`D-131`) toutes les autres saisies du produit, la règle A bloquant alors « + Ajouter »
+et « Tes repas habituels » (⭐ **trouvé par le banc voisin `B-NV2P P8 ①` : 110 / 1 sur ma première version, 111 / 0 sur master**) ; la provenance
+d'origine (off, ciqual…) suit avec l'identité. ⛔ **La ligne ne devient pas fiable** : « déclarée »,
+« reprise non vérifiée », sans pour-100 g — celui d'avant reste intact avec toute la ligne d'origine dans `n2.av`. **B — la reprise**
+(`_n2Candidats`, `_n2CandRendre`, `_n2ChoisirCandidat`, `_n2Reprendre(…, choixSid)`) : une reprise sans fiche source ET sans identité
+**propose** les produits identifiés de même nom EXACT ; un seul = un bouton, plusieurs = un choix explicite (aucun pré-choisi) ; la fiche
+vient alors de la **source** (table CIQUAL, fiche vérifiée du journal ou Open Food Facts du code-barres), le calcul ne part QUE d'elle, la
+quantité déjà tapée survit (D-101 ⑧/⑨) ; **rien ne s'écrit avant « Ajouter »**, qui écrit une ligne NEUVE (identité + pour-100 g de la
+source) ; les anciennes restent intactes ; sans fiche (hors ligne, produit inconnu) le blocage de recalcul reste. Les portes « + Ajouter »
+et « Tes repas habituels » ne reçoivent AUCUNE identité par le nom (règle A de `D-111`). Témoins `B-NIDT` (46, dont synchro et
+restauration avec le vrai `Code.js` en local) : verts ; contrôle négatif `tools/mut_nut_fiabilite.py` (partie `identite`, mutations I1 → I22)
+**28 / 28 conformes** (25 mutations qui réintroduisent chacune un défaut que la mission interdit, 1 commentaire seul qui doit rester vert, plus F1 et F1b dont l'ancre a changé ; une mutation — I7, la fiche en ligne qui n'efface pas le panneau — a d'abord révélé qu'un témoin ne mordait pas : il a été refait) ; **non-régression sur les bancs voisins** : Fiabilité complet 139 / 0 (13 « sans objet » attendus : D-141 et `hiddenFoods` non déployés), `nut2_parcours` 111 / 0 (⭐ **110 / 1 sur ma première version** : le défaut ci-dessus), m6 29 / 0, p1 × v2 16 / 0, journal_qty_guard 23 / 0, foodlog_restore 35 / 0, moteur 70 / 0, identité de ligne 32 / 0, B3 102 / 0, DASH1 12 / 0, lipides 25 38 / 0. ⭐ **Rejoué sur l'export réel** (lecture seule, en local, réseau coupé — rien n'est écrit) : sur les 270 lignes sans identité,
+`_n2Candidats` donne **240 un candidat, 19 deux (la « Ratatouille cuisinée à la provençale » aux deux codes-barres) et 11 aucun** (97 CIQUAL, 162
+code-barres, aucun mélange) — exactement les 259 correspondances de nom identique mesurées à part ; la normalisation (casse, espaces,
+apostrophes) n'en ajoute aucune sur ces données.
+
+**Limites écrites (à ne pas redécouvrir).** ① Un nom SANS RAPPORT, ou des valeurs RETAPÉES, font tomber l'identité en « Modifier » (renommer le
+scan d'un isolat en « Riz » ne lui laisse pas son code-barres ; corriger ses calories à la main non plus — comme avant) : choix conservateur,
+`D-144`, à confirmer. ② Le pour-100 g d'une ancienne ligne
+modifiée n'est PAS recopié sur la ligne neuve (il la rendrait lisible comme une fiche, M1) : il est dans `n2.av`. ③ « Mes aliments » ne montre
+qu'UNE ligne par nom et par identité (la plus récente) : les doublons ne sont PAS masqués par cette mission, ils le sont déjà par l'existant.
+④ Un candidat « code-barres » dont la fiche n'est ni vérifiée dans le journal ni joignable (hors ligne) se choisit mais ne charge rien : l'écran
+le dit et le blocage reste. ⑤ Pas de recette iPhone (le conteneur ne joint pas le site) : « corrigé sur branche », pas « vérifié sur iPhone ».
+
+**À quoi on le reconnaît.** Une ancienne ligne dont le nom est celui d'une ligne identifiée, mais qui n'a plus de `source_id`, et qui
+refuse toute autre quantité. *Le nom est une suggestion, pas une preuve : la bonne réponse n'est ni de l'ignorer, ni de s'en servir en
+silence — c'est de le montrer et de laisser la personne trancher.*
+
+**Leçon de méthode (R5, la règle à l'envers).** Rendre une donnée plus riche (garder l'identité) peut déclencher des contrôles écrits pour des
+lignes qui n'en avaient pas : ici la comparaison de `D-131`, qui n'avait jamais vu une ligne corrigée à la main porter un code-barres.
+Aucun témoin de la mission ne le voyait ; **le banc d'un chantier voisin (`nut2_parcours`) l'a vu** — et c'est pour cela que la non-régression
+se joue sur les bancs des *autres* chantiers, pas seulement sur le sien.
+
