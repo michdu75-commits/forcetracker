@@ -35252,10 +35252,10 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
                                         && corpsDe(n).includes('_afOublierAliment('));
     const SERVIES=PORTES.filter(n=>corpsDe(n).includes('_offRemplirFormulaire(')
                                 || corpsDe(n).includes('_afPreparerEcran('));
-    t('CCCII ⑮ ⭐⭐ PORTÉE RÉELLE — 12 portes appellent `_afOublierAliment`, et 6 atteignent le '+
+    t('CCCII ⑮ ⭐⭐ PORTÉE RÉELLE — 13 portes appellent `_afOublierAliment` (la 13ᵉ : `_n2ChoisirCandidat`, le choix de fiche proposée, NIDT), et 6 atteignent le '+
       'hub (les 5 du groupe A via `_offRemplirFormulaire`, + `onFoodLabelFile` en direct). '+
       '⛔ `_offRemplirFormulaire` N\'EST PAS une porte : 2 appelants ≠ 2 portes',
-      PORTES.length===12 && SERVIES.length===6,
+      PORTES.length===13 && SERVIES.length===6 && PORTES.includes('_n2ChoisirCandidat'),
       'portes='+PORTES.length+' servies='+SERVIES.length+' → '+SERVIES.join(','));
   }
 }
