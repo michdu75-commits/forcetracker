@@ -6521,7 +6521,13 @@ function _afSuggLocales(q, brut){
     if((k in vus) && !v) return;
     vus[k]=v; out.push(e);
   });
-  return out;
+  /* ⭐ NUT-FICHE-ORDRE (28/10) — UNE LIGNE QUI A SON IDENTIFIANT (code-barres, `ciqual:…`) ET UNE FICHE VÉRIFIÉE PASSE AVANT une
+     ancienne saisie SANS identifiant, qui ne peut pas se recalculer (D-101 ⑧) : sinon, la plus récente des deux est en tête, et
+     une ancienne saisie reprise après coup remet la personne devant le blocage alors que la bonne ligne est juste dessous.
+     ⛔ ORDRE SEULEMENT : rien n'est masqué, rien n'est fusionné, aucun nom ne relie deux produits (D-111) ; tri stable, le reste
+     garde son ordre. */
+  const bonne=e=>{ const sid=(typeof e.sourceId==='string') ? e.sourceId.trim() : ''; return !!sid && _n2Verifiee(_n2Apercu(e, vf)); };
+  return out.map((e,i)=>({e:e, i:i, b:bonne(e)})).sort((x,y)=>(y.b-x.b) || (x.i-y.i)).map(x=>x.e);
 }
 /* ② LA RECHERCHE OPEN FOOD FACTS. Même serveur que le code-barres, gratuit et sans clé.
    ⚠️ On demande explicitement les champs utiles : sans `fields`, la réponse pèse des centaines
