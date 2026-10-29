@@ -6,7 +6,7 @@
 jamais ecrit. Point de depart : 0 rouge sur l'arbre sain. Une mutation est TUEE si le banc rougit (code 1) ET si CHACUN des temoins attendus
 fait partie des rouges. Un PLANTAGE (code 2) n'est jamais un verdict. Une ancre absente ou multiple arrete tout. L'extrait ORIGINAL et
 l'extrait MUTE sont imprimes.
-Usage : python3 tools/mut_nut_verrou.py [V01|V02|...]
+Usage : python3 tools/mut_nut_verrou.py [V01|V02,V05|...|V15+]   (« V15+ » = de V15 jusqu'a la fin)
 """
 import os, re, shutil, subprocess, sys, tempfile, time
 
@@ -45,7 +45,7 @@ MUT = [
     ('V14 l ecran d ajout transmet de nouveau les corrections au moteur',
      [(A, "corrections:_n2VerrouEcran('af') ? [] : _n2CorrectionsEcran(_afCorr)})};", "corrections:_n2CorrectionsEcran(_afCorr)})};")], S('P17'), 'GARDE'),
     ('V15 la modification transmet de nouveau les corrections au moteur',
-     [(A, "corrections:_n2VerrouEcran('ef') ? [] : _n2CorrectionsEcran(_efCorr)});", "corrections:_n2CorrectionsEcran(_efCorr)});")], S('P26'), 'GARDE'),
+     [(A, "corrections:verr ? [] : _n2CorrectionsEcran(_efCorr)});", "corrections:_n2CorrectionsEcran(_efCorr)});")], S('P26'), 'GARDE'),
     ('V16 l avertissement d incoherence propose de nouveau « Mettre X kcal » sur une fiche verrouillee (plafond)',
      [(A, "      +(_verr ? '<div style=\"color:var(--t3);margin-top:6px;\">Cette fiche est verrouillée : seule la quantité se modifie.</div>' : '<button onclick=\"'+corrigeur+'('+plaf.theo+')", "      +(false ? '<div>' : '<button onclick=\"'+corrigeur+'('+plaf.theo+')")], S('P18b'), 'GARDE'),
     ('V17 l avertissement d incoherence propose de nouveau « Mettre X kcal » (ecart)',
@@ -127,8 +127,16 @@ def main():
         print('  !! ARBRE SAIN DEJA ROUGE OU PLANTE — controle refuse :', res); return 1
     print('  arbre sain : %s (point de depart valide)\n' % res)
     conformes, total = 0, 0
+    depuis = bool(seul and seul.endswith('+'))
+    if depuis:
+        seul = seul[:-1]
+    actif = not depuis
     for nom, rempl, attendus, attendu in MUT:
-        if seul and not nom.startswith(seul + ' '):
+        if depuis and nom.startswith(seul + ' '):
+            actif = True
+        if seul and not depuis and not any(nom.startswith(x + ' ') for x in seul.split(',')):
+            continue
+        if depuis and not actif:
             continue
         total += 1
         tmp, arbre = cloner()

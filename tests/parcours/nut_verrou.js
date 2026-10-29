@@ -171,7 +171,7 @@ module.exports.moteur = function moteur(t) {
     const dix9 = copie(plein); dix9.n2.hc.pop(); dix9.n2.corr = [{ c: 'prot', v: 9, avant: 25, le: 1760000003000 }];
     const vingt = NUT2.ligneNouvelle(entree(FICHE_OFF, 120, { remplace: dix9 }));
     t('B-NVV M22 ⭐⭐ historique à 20 : sans nouvelle correction la ligne s\'écrit et garde ses 20 entrées ; avec une 21ᵉ elle est REFUSÉE (HISTORIQUE_PLEIN) sans toucher à la ligne d\'avant ; à 19 + 1 = 20 elle passe, rien n\'est perdu',
-      sans.ok && sans.ligne.n2.hc.length === 20 && sans.ligne.n2.hc[0].v === 200 && refus.ok === false && refus.erreur === 'HISTORIQUE_PLEIN' && J(une) === avantJson && vingt.ok && vingt.ligne.n2.hc.length === 20 && vingt.ligne.n2.hc[0].v === 200 && vingt.ligne.n2.hc[19].c === 'prot', J([sans.ok, refus, vingt.ok && vingt.ligne.n2.hc.length])); }
+      sans.ok && (sans.ligne.n2.hc || []).length === 20 && ((sans.ligne.n2.hc || [])[0] || {}).v === 200 && refus.ok === false && refus.erreur === 'HISTORIQUE_PLEIN' && J(une) === avantJson && vingt.ok && (vingt.ligne.n2.hc || []).length === 20 && ((vingt.ligne.n2.hc || [])[0] || {}).v === 200 && ((vingt.ligne.n2.hc || [])[19] || {}).c === 'prot', J([sans.ok, refus, vingt.ok && (vingt.ligne.n2.hc || []).length])); }
 
   /* ④ Changer UNIQUEMENT le repas : la ligne telle quelle, sauf le repas */
   t('B-NVV M23 le moteur expose `changerRepas` (la ligne d\'avant, le seul repas qui change)', typeof NUT2.changerRepas === 'function');
@@ -347,8 +347,8 @@ module.exports.ecran = async function ecran(t, b, PORT) {
     sortie.verr === false && J(sortie.ro) === J([false, false, false, false]) && sortie.sid === false && sortie.ligneK === J(JSON.parse(avant).find((x) => x.id === 'nvv-K-00000010')), J(sortie));
   /* … et la SAISIE PERSONNELLE distincte est une vraie ligne à elle : ses valeurs tapées, sans l'identité du produit OFF, qui reste intacte */
   const nS0 = await E(() => (S.foodLog || []).length);
-  await pg.fill('#af-desc', 'Ma saisie perso 150 g'); await pg.dispatchEvent('#af-desc', 'change');
-  for (const [c, v] of [['kcal', '210'], ['prot', '15'], ['carbs', '20'], ['fat', '8']]) await pg.fill('#af-' + c, v);
+  await E(() => { const d = document.getElementById('af-desc'); d.value = 'Ma saisie perso 150 g'; d.dispatchEvent(new Event('input', { bubbles: true })); d.dispatchEvent(new Event('change', { bubbles: true })); });
+  await E(() => { [['kcal', '210'], ['prot', '15'], ['carbs', '20'], ['fat', '8']].forEach(([c, v]) => { const el = document.getElementById('af-' + c); el.value = v; el.dispatchEvent(new Event('input', { bubbles: true })); el.dispatchEvent(new Event('change', { bubbles: true })); }); });   // par la page (un plantage de test n'est pas un verdict : un champ en lecture seule ne doit pas faire planter `fill`)
   await pg.waitForTimeout(200);
   await E(() => { document.getElementById('af-prop').value = '150'; _afPropPoser('tapee'); }); await pg.waitForTimeout(250);
   const clicAj = await clic(pg, 'button[onclick="addFoodEntry()"]'); await pg.waitForTimeout(500);
@@ -423,7 +423,7 @@ module.exports.ecran = async function ecran(t, b, PORT) {
   /* ③ l'historique plein */
   await ouvrir('nvv-J-00000009');
   const avantJ = await ligne('nvv-J-00000009');
-  await E(() => { const g = document.getElementById('ef-grams'); g.value = '60'; _efApplyFiche(); saveEditFood(); saveEditFood(); }); await pg.waitForTimeout(400);
+  await E(() => { const g = document.getElementById('ef-grams'); g.value = '60'; _efApplyFiche(); try { saveEditFood(); } catch (e) { window.__toasts.push('EXCEPTION ' + e.message); } try { saveEditFood(); } catch (e) { window.__toasts.push('EXCEPTION ' + e.message); } }); await pg.waitForTimeout(400);
   const apresJ = await ligne('nvv-J-00000009'), toastsJ = await E(() => window.__toasts.slice(-3));
   t('B-NVV P30 ⭐⭐ ligne dont l\'historique des corrections est PLEIN (20) et qui porte encore une correction : « Enregistrer » est REFUSÉ avec une phrase, la ligne est strictement celle d\'avant, les 20 traces sont toutes là',
     J(apresJ) === J(avantJ) && apresJ.n2.hc.length === 20 && toastsJ.some((m) => /historique/.test(m) && /pas été modifiée/.test(m)), J([toastsJ, apresJ.n2.hc.length]));
