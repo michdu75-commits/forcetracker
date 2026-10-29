@@ -13,8 +13,8 @@
 | `master` / production | `3d8d49ef` · `ft-v1262` — **inchangés** |
 | Sauvegarde | `backup-prod-ft-v1262-avant-b2-b3-2026-10-29` = `3d8d49ef` |
 | **B2** (lecture normalisée des masquages) | `claude/nut-b2-lecture-normalisee` = `integration/nut-b2-2026-10-29` = **`b015db75`** — validé en bancs, **non publié** |
-| **NUT-VERROU-01** (finalisé) | `claude/nut-verrou-valeurs-01` — pointe = le commit « passation » le plus récent (son SHA figure dans le journal de partage et dans le rapport) ; **code applicatif = `09c1e80d`** (inchangé depuis), **tests = `eb63430d`** ; base `b015db75` — **non fusionné, non publié** |
-| Étapes de la finalisation | `fc28e086` journal d'ouverture · `3fe46015` les 4 défauts REPRODUITS (28 témoins rouges) · `09c1e80d` corrections + tests · `eb63430d` témoins à l'épreuve des plantages + 42 mutations · passation (ce fichier + journal) |
+| **NUT-VERROU-01** (finalisé) | `claude/nut-verrou-valeurs-01` — pointe = le dernier commit de passation (documentation seulement — un commit ne peut pas citer son propre SHA : le lire par `git rev-parse origin/claude/nut-verrou-valeurs-01`, il est aussi donné dans le rapport de Michel) ; **code applicatif = `09c1e80d`** (inchangé depuis), **tests = `eb63430d`** ; base `b015db75` — **non fusionné, non publié** |
+| Étapes de la finalisation | `fc28e086` journal d'ouverture · `3fe46015` les 4 défauts REPRODUITS (28 témoins rouges) · `09c1e80d` corrections + tests · `eb63430d` témoins à l'épreuve des plantages + 42 mutations · passation (ce fichier + journal) · correction d'un renvoi dans ce fichier |
 | **D-141 minimal** (serveur, `Code.js`) | `claude/nut-d141-masquages-serveur-minimal-01` = `76639a52` — testé en simulation, **non publié, non déployé** |
 | A2/A3 (études) | `claude/nut-d141-correctifs-a2-a3-01` = `7f40cf2b` — **aucun code**, rapports seulement |
 | Avant la finalisation | `712172f4` (= `f0488553` code + passation) |
