@@ -53,15 +53,22 @@
   var TRACE_CLES = ['etat', 'methode', 'raison', 'brut', 'retenu', 'champ', 'champSource', 'confiance', 'origine'];
 
   /* ═══ 🔒 NUT-VERROU-01 (29/10/2026, décision de Michel) — UNE FICHE IDENTIFIÉE EST VERROUILLÉE ═══
-     Une fiche identifiée (`fiab:'source'` : CIQUAL, Open Food Facts, fiche d'enseigne) fixe ses valeurs de référence : les calories et
-     macros consommées = fiche × quantité, JAMAIS une correction à la main. Seule la quantité varie.
+     Une fiche identifiée (CIQUAL, Open Food Facts, fiche d'enseigne) fixe ses valeurs de référence : les calories et
+     macros consommées = fiche × quantité, JAMAIS une correction à la main. Seule la quantité varie (et le repas, qui appartient
+     à la ligne du journal, pas au produit). Son NOM est verrouillé aussi.
+     ⭐ FINALISATION (29/10) — C'EST L'IDENTITÉ (la SOURCE) QUI VERROUILLE, PAS LA FIABILITÉ : un produit Open Food Facts dont l'énergie est
+        NON_RESOLU / dérivée descend à `fiab:'estimee'` (l'avertissement de fiabilité, que la ligne GARDE : `n2.st`, `n2.f.fiab`, trace du
+        résolveur) — il reste identifié, donc verrouillé. Se baser sur `fiab` seul laissait un produit identifié modifiable.
      ⛔ Ce n'est pas qu'un écran grisé : le moteur REFUSE (`FICHE_VERROUILLEE`) toute correction sur une fiche identifiée — un appel
         direct, une reprise, un favori ne contournent rien. Une fiche DÉCLARÉE (tapée) ou ESTIMÉE (IA) n'est pas identifiée :
         son parcours, dont la correction tracée (CR-2), est inchangé.
      ⭐ Les anciennes corrections ne sont ni effacées ni réappliquées : à la prochaine modification de la ligne elles passent dans
         l'historique additif `n2.hc` (borné), la ligne repart de la fiche et le dit (`n2.no` : `correction-ecartee`). */
   var HC_MAX = 20;
-  function verrouillee(f) { return !!(f && typeof f === 'object' && f.fiab === 'source'); }
+  var SOURCES_IDENTIFIEES = ['ciqual', 'off', 'marque'];   // les bases : CIQUAL, Open Food Facts, fiche d'enseigne
+  function verrouillee(f) {
+    return !!(f && typeof f === 'object' && (f.fiab === 'source' || SOURCES_IDENTIFIEES.indexOf(f.source) >= 0));
+  }
   function fini(x) { return typeof x === 'number' && isFinite(x); }
   function ko(code, detail) { return { ok: false, erreur: code, detail: detail || '' }; }
   function texte(x) { return typeof x === 'string' ? x.trim() : ''; }
@@ -265,6 +272,8 @@
       var rp = e.remplace;
       if (typeof rp !== 'object' || Array.isArray(rp)) return ko('REMPLACE_INVALIDE');
       if (rp.id !== e.id) return ko('REMPLACE_AUTRE_LIGNE');
+      /* 🔒 Le NOM d'un produit identifié ne change pas (décision de Michel, 29/10) : le repas et la quantité oui, jamais l'identité. */
+      if (verrou && texte(rp.name) && nom.slice(0, NOM_MAX) !== texte(rp.name).slice(0, NOM_MAX)) return ko('NOM_VERROUILLE');
       var av = null;
       try {
         if (!rp.n2) av = JSON.parse(JSON.stringify(rp));
@@ -280,13 +289,29 @@
           h = hs[hi];
           if (h && CHAMPS.indexOf(h.c) >= 0 && fini(h.v) && h.v >= 0) hc.push({ c: h.c, v: h.v, avant: fini(h.avant) ? h.avant : null, le: fini(h.le) ? h.le : null });
         }
-        if (hc.length > HC_MAX) hc = hc.slice(hc.length - HC_MAX);
+        /* ⛔ JAMAIS de suppression silencieuse d'une trace (décision de Michel, 29/10) : l'historique plein REFUSE la modification (la ligne
+           d'avant n'est pas touchée) au lieu d'oublier les plus anciennes corrections. Borne = pas de croissance sans fin ; refus = pas de perte. */
+        if (hc.length > HC_MAX) return ko('HISTORIQUE_PLEIN', String(hc.length));
         if (hc.length) n2.hc = hc;
         if (verrou && Array.isArray(rp.n2.corr) && rp.n2.corr.length && n2.no.indexOf('correction-ecartee') < 0) n2.no.push('correction-ecartee');
       }
     }
     L.n2 = n2;
     return { ok: true, ligne: L };
+  }
+
+  /* ═══ CHANGER LE REPAS SEUL (29/10, décision de Michel) ═══
+     Le repas appartient à la ligne du journal, pas au produit : ne changer QUE lui ne recalcule rien. La ligne d'avant est rendue
+     à l'identique (valeurs enregistrées, correction tracée, `n2` — ou son absence pour une ancienne ligne) ; seul `meal` change.
+     ⛔ Elle ne MODIFIE jamais la ligne reçue et n'en partage aucun objet. ⛔ Un repas vide n'est pas inventé. */
+  function changerRepas(l, repas) {
+    if (!l || typeof l !== 'object' || Array.isArray(l)) return ko('LIGNE_ILLISIBLE');
+    var r = texte(repas);
+    if (!r) return ko('REPAS_ABSENT');
+    var c;
+    try { c = JSON.parse(JSON.stringify(l)); } catch (err) { return ko('LIGNE_ILLISIBLE'); }
+    c.meal = r;
+    return { ok: true, ligne: c };
   }
 
   /* ═══ ③ L'ADAPTATEUR DES ANCIENNES LIGNES — LECTURE SEULE ═══
@@ -463,7 +488,7 @@
   }
 
   var NUT2 = { VERSION: VERSION, CHAMPS: CHAMPS.slice(), calcule: calcule, ligneNouvelle: ligneNouvelle,
-               lireAncienne: lireAncienne, lireJournal: lireJournal, ficheVerifiee: ficheVerifiee, reprise: reprise, verrouillee: verrouillee };
+               lireAncienne: lireAncienne, lireJournal: lireJournal, ficheVerifiee: ficheVerifiee, reprise: reprise, verrouillee: verrouillee, changerRepas: changerRepas };
   if (Object.freeze) { Object.freeze(NUT2.CHAMPS); Object.freeze(NUT2); }
   if (typeof module !== 'undefined' && module.exports) module.exports = NUT2;
   else racine.NUT2 = NUT2;

@@ -227,6 +227,9 @@ const LIGNES = [
     v: 1, saisie: 'code-tape', origine: 'off', sourceId: '3000000000311', etat: 'tel-que-vendu', n2: Object.assign({}, NPV2, { corr: [{ c: 'kcal', v: 100, avant: 114, le: 1760000000500 }] }) },
   { id: 'nvv-H-00000008', meal: 'collation', name: 'Whey H (test)', kcal: 100, prot: 23, carbs: 2, fat: 2, q: 30, u: 'g', per100: { kcal: 380, prot: 75, carbs: 8, fat: 5 },
     v: 1, saisie: 'code-tape', origine: 'off', sourceId: '3000000000312', etat: 'tel-que-vendu', n2: Object.assign({}, NPV2, { corr: [{ c: 'kcal', v: 100, avant: 114, le: 1760000000500 }] }) },
+  /* K : un produit OFF dont l'énergie (40 kcal/100 g) est NON_RESOLU face à ses macros (20 g P + 10 g L ≥ 170 kcal) sans que la MASSE soit impossible — c'est CE cas que l'avertissement « l'app ne sait pas laquelle croire » décrit */
+  { id: 'nvv-K-00000010', meal: 'collation', name: 'Énergie douteuse (test)', kcal: 16, prot: 8, carbs: 2, fat: 4, q: 40, u: 'g', per100: { kcal: 40, prot: 20, carbs: 5, fat: 10 },
+    v: 1, saisie: 'code-tape', origine: 'off', sourceId: '3000000000314', etat: 'tel-que-vendu', n2: NPV2 },
   /* J : déjà 20 corrections dans l'historique et une 21ᵉ à écarter */
   { id: 'nvv-J-00000009', meal: 'collation', name: 'Whey J (test)', kcal: 100, prot: 23, carbs: 2, fat: 2, q: 30, u: 'g', per100: { kcal: 380, prot: 75, carbs: 8, fat: 5 },
     v: 1, saisie: 'code-tape', origine: 'off', sourceId: '3000000000313', etat: 'tel-que-vendu', n2: Object.assign({}, NPV2, { corr: [{ c: 'kcal', v: 100, avant: 114, le: 1760000000500 }], hc: HC20 }) },
@@ -252,7 +255,7 @@ module.exports.ecran = async function ecran(t, b, PORT) {
   const E = (f, a) => pg.evaluate(f, a);
   const ligne = (id) => E((i) => JSON.parse(JSON.stringify((S.foodLog || []).find((x) => x && x.id === i) || null)), id);
   const avant = await E(() => JSON.stringify(S.foodLog));
-  t('B-NVV P0 la page est prête avec 9 lignes inventées (identifiée, identifiée corrigée, déclarée, sans fiche, incohérente, NON_RESOLU, deux corrigées à part, une à historique plein)', (await E(() => (S.foodLog || []).length)) === 9);
+  t('B-NVV P0 la page est prête avec 10 lignes inventées (identifiée, identifiée corrigée, déclarée, sans fiche, incohérente, NON_RESOLU ×2, deux corrigées à part, une à historique plein)', (await E(() => (S.foodLog || []).length)) === 10);
 
   /* ── ① MODIFIER une ligne identifiée ── */
   const ouvrir = async (id) => { await E((i) => { openEditFood(i); }, id); await pg.waitForTimeout(500); };
@@ -284,14 +287,15 @@ module.exports.ecran = async function ecran(t, b, PORT) {
   t('B-NVV P7 ouvrir ne modifie rien : la ligne enregistrée est toujours à 100 kcal avec sa correction tracée (aucune réécriture silencieuse)', bAvant.kcal === 100 && bAvant.n2.corr.length === 1 && bAvant.n2.corr[0].v === 100);
   await E(() => { const g = document.getElementById('ef-grams'); g.value = '60'; _efApplyFiche(); });
   const c60B = await champs(), n60B = await noteEf();
-  t('B-NVV P7b ⭐⭐ la quantité change (60 g) : l\'écran montre la FICHE × 60 g (228) et AVERTIT avant toute confirmation — les chiffres enregistrés vont passer de 100 à 228, l\'ancienne correction est abandonnée (mais gardée dans l\'historique) ; le bouton demande de confirmer',
-    c60B.kcal === '228' && n60B.visible && /100/.test(n60B.txt) && /228/.test(n60B.txt) && /abandonn/.test(n60B.txt) && /[Cc]onfirm/.test(n60B.bouton), J([c60B, n60B]));
+  t('B-NVV P7b ⭐⭐ la quantité change (60 g) : l\'écran montre la FICHE × 60 g (228) et AVERTIT avant toute confirmation — les chiffres enregistrés vont passer de 100 à 228, l\'ancienne correction est abandonnée (mais gardée dans l\'historique) ; il sera demandé de confirmer',
+    c60B.kcal === '228' && n60B.visible && /100/.test(n60B.txt) && /228/.test(n60B.txt) && /abandonn/.test(n60B.txt) && /confirmer/.test(n60B.txt) && !/Confirmer :/.test(n60B.bouton), J([c60B, n60B]));
   await E(() => { const g = document.getElementById('ef-grams'); g.value = '30'; _efApplyFiche(); });
   const c30B = await champs();
   t('B-NVV P7c ⭐ … revenir à la quantité d\'origine (30 g) remet les valeurs ENREGISTRÉES (100) et retire l\'avertissement de confirmation (rien ne changerait)', c30B.kcal === '100' && !/[Cc]onfirm/.test((await noteEf()).bouton), J([c30B, await noteEf()]));
   await E(() => { const g = document.getElementById('ef-grams'); g.value = '60'; _efApplyFiche(); saveEditFood(); }); await pg.waitForTimeout(300);
   const bSans = await ligne('nvv-B-00000002');
-  t('B-NVV P7d ⭐⭐ un 1ᵉʳ « Enregistrer » à 60 g NE ÉCRIT RIEN : la ligne est toujours celle d\'avant (100 kcal, 30 g, correction tracée) — il faut confirmer', J(bSans) === J(bAvant), J(bSans));
+  const bt7d = (await noteEf()).bouton;
+  t('B-NVV P7d ⭐⭐ un 1ᵉʳ « Enregistrer » à 60 g NE ÉCRIT RIEN : la ligne est toujours celle d\'avant (100 kcal, 30 g, correction tracée), le bouton devient « Confirmer : 228 kcal au lieu de 100 »', J(bSans) === J(bAvant) && /Confirmer : 228 kcal au lieu de 100/.test(bt7d), J([bSans, bt7d]));
   await E(() => { saveEditFood(); }); await pg.waitForTimeout(400);
   const bApres = await ligne('nvv-B-00000002');
   t('B-NVV P8 ⭐⭐ le 2ᵉ « Enregistrer » (confirmation) à 60 g : 228 (la fiche, pas 200 = la correction doublée), `corr` vide, l\'ancienne correction (100 kcal) est dans l\'historique `n2.hc`, la note « correction écartée » est posée',
@@ -332,15 +336,26 @@ module.exports.ecran = async function ecran(t, b, PORT) {
   /* FINALISATION (ex-CONSTAT P17b, tranché par Michel) : un produit identifié dont l'énergie est NON_RESOLU est VERROUILLÉ aussi — il garde son avertissement
      de fiabilité (« estimée »), et la sortie est dite : choisir un autre produit, ou une saisie personnelle. */
   await E(() => { _afOublierAliment(); }); await pg.waitForTimeout(250);
-  const exc = await E(() => { const l = (S.foodLog || []).find((x) => x.id === 'nvv-E-00000005'); _n2Reprendre(l, 'historique'); document.getElementById('af-bc-grams').value = '40'; _afCoherence();
+  const exc = await E(() => { const l = (S.foodLog || []).find((x) => x.id === 'nvv-K-00000010'); _n2Reprendre(l, 'historique'); document.getElementById('af-bc-grams').value = '40'; _afCoherence();
     const el = document.getElementById('af-coherence');
     return { etat: _bcNutr && _bcNutr.fiab && _bcNutr.fiab.etat, fiab: _n2FicheBc().fiab, source: _n2FicheBc().source, ro: ['kcal', 'prot', 'carbs', 'fat'].map((c) => document.getElementById('af-' + c).readOnly), verr: _n2VerrouEcran('af'),
       avert: !!el && el.style.display !== 'none' && /ne sait pas laquelle croire/.test(el.textContent), bouton: !!el && /Mettre .* kcal/.test(el.innerHTML), sortie: !!el && /autre produit/.test(el.textContent) && /verrouillée/.test(el.textContent) }; });
   t('B-NVV P17b ⭐⭐ (FINALISATION) produit identifié à énergie NON_RESOLU : classé « estimé » (avertissement conservé) MAIS verrouillé — quatre champs en lecture seule, l\'avertissement « l\'app ne sait pas laquelle croire » s\'affiche, SANS « Mettre X kcal », et la sortie est dite (autre produit / saisie personnelle)',
     exc.etat === 'NON_RESOLU' && exc.fiab === 'estimee' && exc.source === 'off' && J(exc.ro) === J([true, true, true, true]) && exc.verr === true && exc.avert === true && exc.bouton === false && exc.sortie === true, J(exc));
-  const sortie = await E(() => { openAddFood(); return { verr: _n2VerrouEcran('af'), ro: ['kcal', 'prot', 'carbs', 'fat'].map((c) => document.getElementById('af-' + c).readOnly), sid: !!(_afSrc && _afSrc.sourceId), ligneE: JSON.stringify((S.foodLog || []).find((x) => x.id === 'nvv-E-00000005')) }; });
-  t('B-NVV P17c ⭐⭐ la sortie existe : rouvrir « Ajouter » (ou choisir un autre produit) libère les champs, l\'identité du produit OFF ne suit PAS, et la référence enregistrée de la ligne OFF n\'a pas bougé',
-    sortie.verr === false && J(sortie.ro) === J([false, false, false, false]) && sortie.sid === false && sortie.ligneE === J(JSON.parse(avant).find((x) => x.id === 'nvv-E-00000005')), J(sortie));
+  const sortie = await E(() => { openAddFood(); return { verr: _n2VerrouEcran('af'), ro: ['kcal', 'prot', 'carbs', 'fat'].map((c) => document.getElementById('af-' + c).readOnly), sid: !!(_afSrc && _afSrc.sourceId), ligneK: JSON.stringify((S.foodLog || []).find((x) => x.id === 'nvv-K-00000010')) }; });
+  t('B-NVV P17c ⭐⭐ la sortie existe : rouvrir « Ajouter » (ou choisir un autre produit) libère les champs, l\'identité du produit OFF ne suit PAS, et la ligne OFF enregistrée n\'a pas bougé',
+    sortie.verr === false && J(sortie.ro) === J([false, false, false, false]) && sortie.sid === false && sortie.ligneK === J(JSON.parse(avant).find((x) => x.id === 'nvv-K-00000010')), J(sortie));
+  /* … et la SAISIE PERSONNELLE distincte est une vraie ligne à elle : ses valeurs tapées, sans l'identité du produit OFF, qui reste intacte */
+  const nS0 = await E(() => (S.foodLog || []).length);
+  await pg.fill('#af-desc', 'Ma saisie perso 150 g'); await pg.dispatchEvent('#af-desc', 'change');
+  for (const [c, v] of [['kcal', '210'], ['prot', '15'], ['carbs', '20'], ['fat', '8']]) await pg.fill('#af-' + c, v);
+  await pg.waitForTimeout(200);
+  await E(() => { document.getElementById('af-prop').value = '150'; _afPropPoser('tapee'); }); await pg.waitForTimeout(250);
+  const clicAj = await clic(pg, 'button[onclick="addFoodEntry()"]'); await pg.waitForTimeout(500);
+  const perso = await E((n0) => { const L = S.foodLog || []; const l = L[L.length - 1]; return { n1: L.length, n0, name: l && l.name, kcal: l && l.kcal, sid: l && l.sourceId, src: l && l.n2 && l.n2.f && l.n2.f.src, st: l && l.n2 && l.n2.st, ligneK: JSON.stringify(L.find((x) => x.id === 'nvv-K-00000010')) }; }, nS0);
+  t('B-NVV P17d ⭐⭐ une SAISIE PERSONNELLE distincte (après la sortie) s\'enregistre comme telle : ses valeurs (210 kcal), « déclarée », SANS l\'identité du produit OFF — et la ligne OFF d\'origine n\'a pas bougé',
+    clicAj && perso.n1 === perso.n0 + 1 && perso.name === 'Ma saisie perso 150 g' && perso.kcal === 210 && !perso.sid && perso.src === 'utilisateur' && perso.st === 'declaree' && perso.ligneK === J(JSON.parse(avant).find((x) => x.id === 'nvv-K-00000010')), J(perso));
+  await E(() => { S.foodLog = S.foodLog.filter((x) => x.name !== 'Ma saisie perso 150 g'); persist(); });
   await E(() => { const l = (S.foodLog || []).find((x) => x.id === 'nvv-A-00000001'); _n2Reprendre(l, 'historique'); }); await pg.waitForTimeout(250);
   /* … puis un aliment tapé à la main : tout redevient éditable, « Mettre X kcal » existe */
   await E(() => { _afOublierAliment(); }); await pg.waitForTimeout(250);
@@ -391,6 +406,10 @@ module.exports.ecran = async function ecran(t, b, PORT) {
   const apresA = await ligne('nvv-A-00000001');
   const attenduA = JSON.parse(JSON.stringify(avantA)); attenduA.meal = 'diner';
   t('B-NVV P28b ⭐⭐ un nom forcé par un appel direct n\'est PAS enregistré (le nom reste « Whey (test) »), le REPAS, lui, change (diner), et rien d\'autre ne bouge dans la ligne (quantité inchangée = valeurs enregistrées telles quelles)', J(apresA) === J(attenduA), J(apresA));
+  await ouvrir('nvv-A-00000001');
+  await E(() => { document.getElementById('ef-name').value = 'Un autre nom'; const g = document.getElementById('ef-grams'); g.value = '120'; _efApplyFiche(); saveEditFood(); }); await pg.waitForTimeout(400);
+  const apresA2 = await ligne('nvv-A-00000001');
+  t('B-NVV P28d ⭐⭐ nom forcé + autre quantité (120 g) : la ligne s\'écrit depuis la fiche (456 kcal) et GARDE son nom (« Whey (test) ») — le nom saisi n\'est ni écrit ni cause de refus', apresA2.name === 'Whey (test)' && apresA2.q === 120 && apresA2.kcal === 456 && apresA2.meal === 'diner', J(apresA2));
   await ouvrir('nvv-C-00000003'); const nC = await nom();
   await ouvrir('nvv-D-00000004'); const nD = await nom();
   t('B-NVV P28c ⭐ le nom d\'une fiche DÉCLARÉE et d\'une ancienne ligne sans fiche reste modifiable (parcours inchangé)', nC.ro === false && nD.ro === false, J([nC, nD]));
@@ -416,6 +435,9 @@ module.exports.ecran = async function ecran(t, b, PORT) {
   const apresG = await ligne('nvv-G-00000007');
   const attenduG = JSON.parse(JSON.stringify(avantG)); attenduG.meal = 'diner';
   t('B-NVV P31b ⭐⭐ ne changer QUE le repas : la ligne est identique à l\'octet à l\'ancienne, sauf le repas — 100 kcal gardées (pas 114), correction tracée gardée, pas d\'historique ajouté, pas de note, aucune confirmation demandée', J(apresG) === J(attenduG) && apresG.kcal === 100 && apresG.n2.corr.length === 1 && apresG.n2.hc === undefined, J(apresG));
+  const favE = await E((src) => { const f = _favDepuisLigne(src); return { corr: f.n2 && f.n2.corr, sid: f.sourceId, fiab: f.n2 && f.n2.f && f.n2.f.fiab }; },
+    Object.assign({}, LIGNES[1], { date: '2026-10-28', ts: 1760000060000, n2: Object.assign({}, LIGNES[1].n2, { st: 'estimee', f: { src: 'off', ver: null, fiab: 'estimee', base: 'g' } }) }));
+  t('B-NVV P33 ⭐ un FAVORI pris sur une ligne identifiée « estimée » (énergie NON_RESOLU) et corrigée ne recopie pas non plus la correction — il garde l\'identité et l\'avertissement', favE.corr === undefined && favE.sid === '3000000000305' && favE.fiab === 'estimee', J(favE));
   /* ⑤ rien d'autre n'a bougé dans les lignes non visées */
   const autres7 = await E(() => JSON.stringify((S.foodLog || []).filter((x) => ['nvv-C-00000003', 'nvv-D-00000004', 'nvv-E-00000005', 'nvv-H-00000008', 'nvv-J-00000009'].indexOf(x.id) >= 0 && x.id !== 'nvv-J-00000009')));
   const att7 = J(JSON.parse(avant).filter((x) => ['nvv-C-00000003', 'nvv-D-00000004', 'nvv-E-00000005', 'nvv-H-00000008'].indexOf(x.id) >= 0));

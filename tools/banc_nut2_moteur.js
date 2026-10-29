@@ -242,7 +242,7 @@ try { (() => {
                             ts: 1756720000000, v: 1, saisie: 'scan', origine: 'off', q: 140, u: 'g', per100: { kcal: 364, prot: 13, carbs: 73, fat: 2 },
                             modifie: false, fiab: { etat: 'NON_RESOLU' } });
     const avant = J(vieille);
-    const a = N.ligneNouvelle(Object.assign(ent(PESEE), { id: 'vieille-0001', remplace: vieille }));
+    const a = N.ligneNouvelle(Object.assign(ent(PESEE), { id: 'vieille-0001', nom: vieille.name, remplace: vieille }));   // FINALISATION 29/10 : sur une fiche identifiée, « Modifier » garde le NOM de la ligne (verrouillé)
     const b = N.ligneNouvelle(Object.assign(ent(PESEE), { id: 'autre-ligne-01', remplace: vieille }));
     const v2 = N.ligneNouvelle(ent(PESEE)).ligne;
     const c = N.ligneNouvelle(Object.assign(ent(PESEE), { remplace: v2 }));
@@ -273,9 +273,9 @@ try { (() => {
     const vieille = geler({ id: 'vieille-0002', date: '2026-09-02', meal: 'collation', name: 'Iso fictif', kcal: 156, prot: 26, carbs: 1, fat: 1,
                             ts: 1756800000000, v: 1, saisie: 'liste', origine: 'reprise', q: 40, u: 'g', per100: null });
     const avant = J(vieille);
-    const a = N.ligneNouvelle(Object.assign(ent(PESEE), { id: 'vieille-0002', remplace: vieille }));
-    const b = a.ok ? N.ligneNouvelle(Object.assign(ent(PESEE), { id: 'vieille-0002', remplace: a.ligne })) : a;
-    const c = b.ok ? N.ligneNouvelle(Object.assign(ent(PESEE), { id: 'vieille-0002', remplace: b.ligne })) : b;
+    const a = N.ligneNouvelle(Object.assign(ent(PESEE), { id: 'vieille-0002', nom: vieille.name, remplace: vieille }));   // FINALISATION 29/10 : le nom d'une fiche identifiée ne change pas
+    const b = a.ok ? N.ligneNouvelle(Object.assign(ent(PESEE), { id: 'vieille-0002', nom: vieille.name, remplace: a.ligne })) : a;
+    const c = b.ok ? N.ligneNouvelle(Object.assign(ent(PESEE), { id: 'vieille-0002', nom: vieille.name, remplace: b.ligne })) : b;
     return a.ok && b.ok && c.ok && J(b.ligne.n2.av) === avant && J(c.ligne.n2.av) === avant
       && b.ligne.n2.av !== a.ligne.n2.av && c.ligne.n2.av !== b.ligne.n2.av && b.ligne.n2.av.saisie === 'liste' && J(vieille) === avant
       || J([a.ligne && a.ligne.n2, b.ligne && b.ligne.n2, c.ligne && c.ligne.n2]);
@@ -491,9 +491,9 @@ try { (() => {
     const c = J(N.lireJournal(LISTE, ctx)), d = J(N.lireJournal(LISTE, ctx));
     return a === b && c === d || 'résultats différents';
   });
-  essai('B-NV2-P ③ le moteur n\'expose que ses 7 fonctions (les 6 d\'origine + `verrouillee`, NUT-VERROU-01), gelé (rien ne peut le remplacer en cours de route)', () => {
+  essai('B-NV2-P ③ le moteur n\'expose que ses 8 fonctions (les 6 d\'origine + `verrouillee` et `changerRepas`, NUT-VERROU-01), gelé (rien ne peut le remplacer en cours de route)', () => {
     const k = Object.keys(N).sort().join(',');
-    return Object.isFrozen(N) && k === 'CHAMPS,VERSION,calcule,ficheVerifiee,ligneNouvelle,lireAncienne,lireJournal,reprise,verrouillee' || k;
+    return Object.isFrozen(N) && k === 'CHAMPS,VERSION,calcule,changerRepas,ficheVerifiee,ligneNouvelle,lireAncienne,lireJournal,reprise,verrouillee' || k;
   });
   essai('B-NV2-P ④ ⛔ le fichier ne lit ni écran, ni stockage, ni réseau, ni horloge (aucune de ces API dans son code)', () => {
     const src = fs.readFileSync(CIBLE, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');

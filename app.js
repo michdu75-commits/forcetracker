@@ -1418,6 +1418,9 @@ function _n2VerrouChamps(pre){
     el.readOnly=v; el.style.opacity=v?'0.78':'';
     if(v) el.dataset.ref=el.value; else delete el.dataset.ref;
   });
+  /* FINALISATION : le NOM du produit identifié est verrouillé aussi (le repas, non : il appartient à la ligne du journal). */
+  const nm=(pre==='ef') ? document.getElementById('ef-name') : null;
+  if(nm){ nm.readOnly=v; nm.style.opacity=v?'0.78':''; }
   return v;
 }
 /* Un appel direct (sans bouton) a tenté de changer un champ verrouillé : le champ retrouve ce que la fiche donne. */
@@ -1453,9 +1456,10 @@ function _n2LireChamps(pre){
 function _n2Enregistrer(entree, porte){
   const N=(typeof NUT2==='object'&&NUT2)?NUT2:null;
   if(!N) return {ok:false, erreur:'MOTEUR_ABSENT'};
-  const r=N.ligneNouvelle(entree);
+  /* FINALISATION : ne changer QUE le repas d'une fiche identifiée ne recalcule rien — le moteur rend la ligne d'avant, son repas en plus. */
+  const r=entree.repasSeul ? N.changerRepas(entree.remplace, entree.repas) : N.ligneNouvelle(entree);
   if(!r.ok) return r;
-  try{ _douaneLigne(r.ligne, porte); }catch(e){}
+  if(!entree.repasSeul){ try{ _douaneLigne(r.ligne, porte); }catch(e){} }
   if(!S.foodLog) S.foodLog=[];
   if(entree.remplace){
     const i=S.foodLog.indexOf(entree.remplace);
@@ -1477,7 +1481,9 @@ function _n2Message(r){
     NOM_ABSENT:'Donne un nom à l\'aliment.',
     DECLARE_INVALIDE:'Renseigne au moins les calories.',
     FICHE_INVALIDE:'Cette fiche n\'a aucune valeur utilisable — recopie l\'étiquette pour 100 g.',
-    FICHE_VERROUILLEE:'Les valeurs de cette fiche sont verrouillées : seule la quantité se modifie — rien n\'a été ajouté.'
+    FICHE_VERROUILLEE:'Les valeurs de cette fiche sont verrouillées : seule la quantité se modifie — rien n\'a été ajouté.',
+    NOM_VERROUILLE:'Le nom d\'un produit identifié ne change pas : seuls la quantité et le repas se modifient — rien n\'a été ajouté.',
+    HISTORIQUE_PLEIN:'L\'historique des anciennes corrections de cette ligne est plein : aucune trace n\'est effacée, donc rien n\'a été ajouté. Pour repartir de la fiche, supprime la ligne puis ajoute-la de nouveau.'
   };
   return M[e] || ('Enregistrement refusé ('+(e||'?')+') — rien n\'a été ajouté.');
 }
@@ -1620,6 +1626,16 @@ function _n2EntreeEcran(nom, vals, bcActif){
        portions — la forme qu'écrivent « + Ajouter » et « Tes repas habituels » pour la même ligne. Le moteur fait la
        conversion (portion → masse par le poids d'UNE portion) : les valeurs sont celles des 450 g. Tapé ou retouché,
        c'est une quantité en grammes, comme avant. */
+    /* 🔒 FINALISATION : le NOM d'un produit identifié ne change pas (même règle que la modification). Le champ du haut sert aussi à chercher :
+       un autre texte n'est donc pas écrit en silence sous le nom d'un autre produit — l'écran le dit, et rien n'est construit. */
+    if(_n2VerrouEcran('af')){
+      const nf=String(_bcNutr.name||'').trim();
+      if(nf){
+        if(_afNorm(nom).slice(0,60)!==_afNorm(nf).slice(0,60))
+          return {ok:false, message:'Le nom d\'un produit identifié ne change pas (« '+nf+' »). Garde ce nom, ou choisis un autre produit dans la recherche — rien n\'a été ajouté.'};
+        if(nf.length<60) e.nom=nf;
+      }
+    }
     const P=_bcPortionPrise, prise=!!(P && _bcQtyOrigine==='proposee' && v===P.masse);
     const quantite=prise
       ? {val:P.q.val, unite:'portion', origine:'proposee', portion:Object.assign({}, P.q.portion)}
@@ -2353,9 +2369,47 @@ function _efApplyFiche(){
     const r=NUT2.calcule(f, {val:nq, unite:'portion', portion:q.portion});
     const pq=document.getElementById('ef-pqte');   // D-103 : la quantité dite suit le CALCUL (le nombre tapé, ou celui d'origine)
     if(pq) pq.innerHTML='<b>'+_escFood(_n2QteTexte({val:nq, unite:'portion', portion:q.portion}, true))+'</b>';
-    _n2Afficher('ef', r, _efCorr); _efCalc=r.ok?r.valeurs:null; _efCoherence(); return;
+    _n2Afficher('ef', r, _efCorr); _efCalc=r.ok?r.valeurs:null; _efCoherence(); _efLigneTelleQuelle(); return;
   }
   _qtyRescale('ef', f.p100, 100, (document.getElementById('ef-grams')||{}).value, f.base, _N2_CHAMPS.filter(c=>!(c in f.p100)));
+  _efLigneTelleQuelle();
+}
+
+/* 🔒 FINALISATION (29/10, décision de Michel) — UNE FICHE IDENTIFIÉE : LA LIGNE TELLE QU'ENREGISTRÉE TANT QUE LA QUANTITÉ NE CHANGE PAS.
+   · quantité d'origine → l'écran montre les valeurs ENREGISTRÉES (jamais recalculées en silence ; une ancienne correction à la main reste ce
+     qu'elle est) ; si la ligne en porte une, une note le dit ;
+   · autre quantité → la FICHE × cette quantité (ce que « Enregistrer » écrira) ; si cela change les chiffres enregistrés parce qu'une ancienne
+     correction est abandonnée, la note le dit AVANT, avec les chiffres, et « Enregistrer » demande une confirmation (`saveEditFood`).
+   Rien d'autre qu'un affichage : aucune écriture ici. */
+let _efAbandonVu='';
+function _efQteIdentique(R, q){
+  const q0=R && R.quantite; if(!q0 || !q) return false;
+  if(q.unite!==q0.unite || q.val!==q0.val) return false;
+  return q.unite!=='portion' || !!(q.portion && q0.portion && q.portion.poids===q0.portion.poids);
+}
+function _efLigneTelleQuelle(){
+  const nt=document.getElementById('ef-abandon'), bt=document.getElementById('ef-save');
+  const dire=h=>{ if(nt){ nt.innerHTML=h; nt.style.display=h?'block':'none'; nt.style.outline=''; } };
+  _efAbandonVu=''; if(bt) bt.textContent='✅ Enregistrer';
+  const R=_efR, e=(S.foodLog||[]).find(x=>x&&x.id===_editFoodId);
+  if(!R || !R.fiche || !e || !_n2VerrouEcran('ef')){ dire(''); return; }
+  const q=_efQteFiche(R, e), corriges=R.correctionsEcartees>0;
+  const calc=(q && NUT2.calcule(R.fiche, q)) || {ok:false};
+  const f=x=>Number.isFinite(x)?x:'?';
+  if(q && _efQteIdentique(R, q)){
+    _N2_CHAMPS.forEach(c=>{ const el=document.getElementById('ef-'+c); if(el) el.value=Number.isFinite(e[c])?e[c]:''; });
+    _n2VerrouChamps('ef'); _efCoherence();
+    const ref=(calc.ok && calc.valeurs)?calc.valeurs.kcal:null;
+    dire(corriges ? '🔒 Cette ligne avait été <b>corrigée à la main</b> avant le verrouillage : <b>'+f(e.kcal)+' kcal</b> enregistrées'
+      +(Number.isFinite(ref)?' au lieu de <b>'+ref+' kcal</b> avec la fiche':'')+'. Rien n\'est recalculé tant que la quantité ne change pas ; si tu la changes, la ligne repart de la fiche '
+      +'(l\'ancienne correction reste dans son historique).' : '');
+    return;
+  }
+  if(!corriges || !calc.ok){ dire(''); return; }
+  if(!_N2_CHAMPS.some(c=>(Number.isFinite(e[c])?e[c]:null)!==(c in calc.valeurs?calc.valeurs[c]:null))){ dire(''); return; }
+  dire('⚠️ Cette ligne avait été <b>corrigée à la main</b>. Avec cette quantité, elle repart de la fiche : <b>'+f(e.kcal)+' → '+f(calc.valeurs.kcal)+' kcal</b>'
+    +' (P '+f(e.prot)+' → '+f(calc.valeurs.prot)+' · G '+f(e.carbs)+' → '+f(calc.valeurs.carbs)+' · L '+f(e.fat)+' → '+f(calc.valeurs.fat)+'). '
+    +'L\'ancienne correction est <b>abandonnée</b> — elle reste gardée dans l\'historique de la ligne. Il te sera demandé de confirmer.');
 }
 
 /* ── Le journal : une valeur inconnue se dit « ? », et la ligne dit d'où viennent ses chiffres ── */
@@ -5252,7 +5306,7 @@ function _favDepuisLigne(s){
       if(s.n2.pv) n2.pv=JSON.parse(JSON.stringify(s.n2.pv));
       /* D-103 : ses corrections aussi — sans elles, le favori d'une ligne corrigée n'était plus « fiable » (« 2 portions » sans
          gramme là où sa ligne dit « 2 portions (200 g) ») et « + Ajouter » réécrivait le calcul au lieu de la valeur corrigée. */
-      if(Array.isArray(s.n2.corr) && s.n2.corr.length && !(s.n2.f && s.n2.f.fiab==='source')) n2.corr=JSON.parse(JSON.stringify(s.n2.corr));   // 🔒 NUT-VERROU-01 : jamais sur une fiche identifiée
+      if(Array.isArray(s.n2.corr) && s.n2.corr.length && !(s.n2.f && NUT2.verrouillee({source:s.n2.f.src, fiab:s.n2.f.fiab}))) n2.corr=JSON.parse(JSON.stringify(s.n2.corr));   // 🔒 NUT-VERROU-01 : jamais sur une fiche identifiée (source CIQUAL / Open Food Facts / enseigne, « estimée » comprise)
       fav.n2=n2;
     }
     return fav;
@@ -6993,7 +7047,7 @@ function openEditFood(id){
   _editFoodId=id; _editFoodMeal=e.meal||null;
   /* 🥗 V2 (jalon 4) : ce que la ligne permet, lu par le moteur (fiche de confiance ou non, quantité valide ou non). */
   _efR=(typeof NUT2==='object'&&NUT2)?NUT2.reprise(e, _n2Ctx()):null; if(_efR && !_efR.ok) _efR=null;
-  _efCorr={}; _efCalc=null; _efValeursTapees=false;
+  _efCorr={}; _efCalc=null; _efValeursTapees=false; _efAbandonVu='';
   if(_efR) _efR.corrections.forEach(x=>{ if(e[x.c]===x.v) _efCorr[x.c]={v:x.v, avant:x.avant, le:x.le}; });
   _efUniteDecl=(_efR && _efR.quantite) ? _efR.quantite.unite : 'g';
   let ov=document.getElementById('ov-edit-food');
@@ -7043,7 +7097,8 @@ function openEditFood(id){
     +gramsFld
     +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">'+fld('ef-kcal','Calories (kcal)',e.kcal)+fld('ef-prot','Protéines (g)',e.prot)+fld('ef-carbs','Glucides (g)',e.carbs)+fld('ef-fat','Lipides (g)',e.fat)+'</div>'
     +'<div id="ef-coherence" style="display:none;font-size:12px;line-height:1.45;color:var(--orange);background:var(--bg3);border-radius:10px;padding:10px 11px;margin-bottom:14px;"></div>'
-    +'<button class="btn btn-red" onclick="saveEditFood()" style="width:100%;padding:13px;font-size:15px;">✅ Enregistrer</button>'
+    +'<div id="ef-abandon" style="display:none;font-size:12px;line-height:1.45;color:var(--t2);background:var(--bg3);border-radius:10px;padding:10px 11px;margin-bottom:14px;"></div>'
+    +'<button id="ef-save" class="btn btn-red" onclick="saveEditFood()" style="width:100%;padding:13px;font-size:15px;">✅ Enregistrer</button>'
     +'<button class="btn btn-bg2" onclick="confirmRemoveFood(\''+_foodIdAttr(id)+'\')" style="width:100%;margin-top:8px;color:var(--red);">🗑 Supprimer</button>'
     +'<button class="btn btn-bg2" onclick="document.getElementById(\'ov-edit-food\').classList.remove(\'open\')" style="width:100%;margin-top:8px;">Annuler</button>'
     +'</div>';
@@ -7056,8 +7111,8 @@ function openEditFood(id){
      quantité tombait à 0 et l'alerte ne partait jamais. *On ne peut pas lire ce qui est à
      l'écran avant qu'il y soit.* On ouvre, PUIS on mesure. */
   ov.classList.add('open');
-  /* 🔒 NUT-VERROU-01 : sur une fiche identifiée l'écran montre ce que la FICHE donne pour la quantité de la ligne (jamais une ancienne
-     correction) — ce qu'« Enregistrer » écrira est ce qui est affiché. La ligne enregistrée, elle, n'est pas touchée à l'ouverture. */
+  /* 🔒 NUT-VERROU-01 : sur une fiche identifiée l'écran montre la ligne TELLE QU'ENREGISTRÉE tant que la quantité ne change pas (rien n'est
+     recalculé en silence, y compris une ancienne correction), et la FICHE × la nouvelle quantité dès qu'elle change (`_efLigneTelleQuelle`). */
   if(_n2VerrouEcran('ef')) _efApplyFiche();
   _efCoherence();                     // l'incohérence se voit À L'OUVERTURE, sans rien toucher
 }
@@ -7502,8 +7557,12 @@ function _coherenceKcal(pfx, corrigeur){
         +'<b>même si les glucides ne comptaient pour rien</b>.';
     if(z.etat==='NON_RESOLU'){
       el.innerHTML='🔬 '+laRaison+' <b>L\'app ne sait pas laquelle croire</b>, et elle ne touche '
-        +'à rien.<div style="color:var(--t3);margin-top:6px;">Le plus sûr : lis l\'étiquette et '
-        +'tape les valeurs pour 100 g.</div>';
+        +'à rien.'+(_verr
+          /* 🔒 FINALISATION : un produit identifié reste verrouillé même quand son énergie est douteuse — on le dit, et on dit la SORTIE. */
+          ? '<div style="color:var(--t3);margin-top:6px;">Cette fiche est verrouillée : ses valeurs ne se modifient pas. Choisis un <b>autre produit</b>, ou ferme puis rouvre « Ajouter » '
+            +'pour créer <b>ta propre saisie</b> (lis l\'étiquette et tape les valeurs pour 100 g).</div>'
+          : '<div style="color:var(--t3);margin-top:6px;">Le plus sûr : lis l\'étiquette et '
+            +'tape les valeurs pour 100 g.</div>');
     }else{
       /* ⚠️ `z.kcal` — PAS `z.retenu` : `retenu` est le nom que la TRACE porte dans `_provFood`,
          il n'existe pas sur l'objet du résolveur. *Le témoin ⑱ a attrapé ce défaut chez moi ;
@@ -7513,7 +7572,9 @@ function _coherenceKcal(pfx, corrigeur){
             ? ', l\'autre valeur de la fiche (<b>'+z.champ+'</b>).'
             : ', calculées depuis les macros.')
         +'<div style="color:var(--t3);margin-top:6px;">La valeur d\'origine ('+z.brut+') est '
-        +'conservée avec la ligne. Si tu as l\'étiquette, tu peux corriger.</div>';
+        +'conservée avec la ligne. '+(_verr
+          ? 'Cette fiche est verrouillée : pour d\'autres valeurs, choisis un autre produit ou crée ta propre saisie.'
+          : 'Si tu as l\'étiquette, tu peux corriger.')+'</div>';
     }
     montrer(); return;
   }
@@ -8209,7 +8270,26 @@ function saveEditFood(){
      n'est alors PAS modifiée (le garde de NUT-JOURNAL-QTY-GUARD-01 est gardé, et élargi à toutes les lignes). */
   const R=_efR || ((typeof NUT2==='object'&&NUT2)?NUT2.reprise(e, _n2Ctx()):null);
   if(!R || !R.ok){ toast('Ligne illisible — elle n\'a pas été modifiée.','error'); return; }
-  const nom=(String((document.getElementById('ef-name')||{}).value||'').trim() || String(e.name||'')).slice(0,80);
+  const verr=!!(R.fiche && NUT2.verrouillee(R.fiche));   // 🔒 NUT-VERROU-01 : une fiche identifiée (CIQUAL, Open Food Facts, enseigne)
+  /* 🔒 FINALISATION — NE CHANGER QUE LE REPAS d'une fiche identifiée : la ligne reste telle quelle (valeurs enregistrées, ancienne correction
+     comprise), seul le repas change. Rien n'est recalculé : le repas appartient à la ligne du journal, pas au produit. */
+  if(verr){
+    const q0=_efQteFiche(R, e);
+    if(q0 && _efQteIdentique(R, q0)){
+      if(!_editFoodMeal){ toast('Choisis le repas — la ligne n\'a pas été modifiée.','error'); return; }
+      if(_editFoodMeal!==e.meal){
+        const rm=_n2Enregistrer({repasSeul:true, remplace:e, repas:_editFoodMeal},'saveEditFood');
+        if(!rm.ok){ toast(_n2Message(rm).replace('rien n\'a été ajouté','la ligne n\'a pas été modifiée'),'error'); return; }
+        persist(); if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
+      }
+      const ovm=document.getElementById('ov-edit-food'); if(ovm)ovm.classList.remove('open');
+      renderFoodJournal();
+      toast(_editFoodMeal!==e.meal ? 'Modifié ✅' : 'Rien n\'a changé','success');
+      return;
+    }
+  }
+  /* Le nom d'un produit identifié est verrouillé : c'est celui de la ligne, jamais le champ (qui est en lecture seule, et un appel direct n'y change rien). */
+  const nom=(verr ? String(e.name||'') : (String((document.getElementById('ef-name')||{}).value||'').trim() || String(e.name||''))).slice(0,80);
   const vals=_n2LireChamps('ef');
   if(!Object.keys(vals).length){ toast('Renseigne au moins les calories — la ligne n\'a pas été modifiée.','error'); return; }
   const base={id:e.id, ts:Number.isFinite(e.ts) ? e.ts : Date.now(), date:e.date, repas:_editFoodMeal, nom:nom,
@@ -8222,7 +8302,23 @@ function saveEditFood(){
   if(R.fiche){
     const q=_efQteFiche(R, e);
     if(!q){ toast('Combien en as-tu mangé ? Tape une quantité supérieure à 0 — la ligne n\'a pas été modifiée.','error'); return; }
-    entree=Object.assign(base, {mode:'pesee', fiche:R.fiche, quantite:q, corrections:_n2VerrouEcran('ef') ? [] : _n2CorrectionsEcran(_efCorr)});
+    entree=Object.assign(base, {mode:'pesee', fiche:R.fiche, quantite:q, corrections:verr ? [] : _n2CorrectionsEcran(_efCorr)});
+    /* 🔒 FINALISATION — UNE ANCIENNE CORRECTION QU'ON ABANDONNE SE CONFIRME : si les chiffres enregistrés vont changer parce que la ligne repart de
+       la fiche, la note (`_efLigneTelleQuelle`) les a déjà montrés ; le 1ᵉʳ « Enregistrer » ne fait que demander la confirmation, le 2ᵉ écrit. */
+    if(verr && R.correctionsEcartees>0){
+      const essai=NUT2.ligneNouvelle(entree);
+      if(!essai.ok){ toast(_n2Message(essai).replace('rien n\'a été ajouté','la ligne n\'a pas été modifiée'),'error'); return; }
+      const chg=_N2_CHAMPS.some(c=>(Number.isFinite(e[c])?e[c]:null)!==(Number.isFinite(essai.ligne[c])?essai.ligne[c]:null));
+      const cle=JSON.stringify(_N2_CHAMPS.map(c=>Number.isFinite(essai.ligne[c])?essai.ligne[c]:null));
+      if(chg && _efAbandonVu!==cle){
+        _efAbandonVu=cle;
+        const bt=document.getElementById('ef-save'), nt=document.getElementById('ef-abandon');
+        if(bt) bt.textContent='✅ Confirmer : '+(Number.isFinite(essai.ligne.kcal)?essai.ligne.kcal:'?')+' kcal au lieu de '+(Number.isFinite(e.kcal)?e.kcal:'?');
+        if(nt){ nt.style.outline='2px solid var(--orange)'; try{ _amenerALaVue(nt); }catch(x){} }
+        toast('Cette ligne avait été corrigée à la main : vérifie les chiffres, puis confirme.','info');
+        return;
+      }
+    }
   }else{
     const q=_efQteDeclaree(R, e);
     if(!q){ toast('Indique la quantité (en g ou en ml) — la ligne n\'a pas été modifiée.','error'); return; }

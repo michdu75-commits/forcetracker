@@ -811,9 +811,11 @@ async function ecran(t, b, PORT) {
       const err = [], L = [];
       const ecrire = (o) => { const r = NUT2.ligneNouvelle(o); if (r.ok) L.push(r.ligne); else err.push(o.nom + ':' + r.erreur); return r.ok ? r.ligne : null; };
       const pesee = (id, k, repas, nom, p100, q, extra) => Object.assign({ id: id, ts: Date.now() - 9e6 + k * 1000, date: J0(k), repas: repas, nom: nom,
-        origine: { saisie: 'code-tape', origine: 'off' }, mode: 'pesee', fiche: { base: 'g', p100: p100, cle: '3000000000' + id.slice(5, 7).replace('F', '5') + '01', source: 'off',
-          /* 🔒 NUT-VERROU-01 : une fiche IDENTIFIÉE refuse toute correction — la « Galette » (kcal corrigées à la main) est donc posée sur une fiche
-             DÉCLARÉE, le seul cas où une ligne corrigée peut encore se fabriquer ; ses témoins (P14 ⑤b ⑱, P15 ㉛ ㉝) gardent leurs assertions. */
+        origine: { saisie: 'code-tape', origine: 'off' }, mode: 'pesee', fiche: { base: 'g', p100: p100, cle: '3000000000' + id.slice(5, 7).replace('F', '5') + '01',
+          /* 🔒 NUT-VERROU-01 : une fiche IDENTIFIÉE (par sa SOURCE : off, ciqual, enseigne) refuse toute correction — la « Galette » (kcal corrigées à la
+             main) est donc posée sur une fiche DÉCLARÉE (source « utilisateur »), le seul cas où une ligne corrigée peut encore se fabriquer ;
+             ses témoins (P14 ⑤b ⑱, P15 ㉛ ㉝) gardent leurs assertions. */
+          source: (extra && extra.corrections) ? 'utilisateur' : 'off',
           fiab: (extra && extra.corrections) ? 'declaree' : 'source' },
         quantite: q }, extra || {});
       const riz3 = { val: 3, unite: 'portion', origine: 'portion', portion: { libelle: 'part', poids: 150, unite: 'g' } };
@@ -1370,7 +1372,7 @@ async function incident(t, b, PORT) {
       { k: 2, v1: { id: 'nv2u-B1-00000001', meal: 'collation', name: 'Barre P15 (test)', kcal: 230, carbs: 30, fat: 10, v: 1, saisie: 'manuel', origine: 'utilisateur',
                     q: 50, u: 'g', per100: null, sourceId: null, etat: null } },
       { k: 1, v2: { id: 'nv2u-G1-00000001', repas: 'diner', nom: 'Galette P15 (test)', origine: { saisie: 'code-tape', origine: 'off' }, mode: 'pesee',
-                    fiche: { base: 'g', p100: { kcal: 180, prot: 6, carbs: 30, fat: 4 }, cle: '3000000000504', source: 'off', fiab: 'declaree' },   // 🔒 NUT-VERROU-01 : déclarée, car une fiche identifiée refuse la correction
+                    fiche: { base: 'g', p100: { kcal: 180, prot: 6, carbs: 30, fat: 4 }, cle: '3000000000504', source: 'utilisateur', fiab: 'declaree' },   // 🔒 NUT-VERROU-01 : déclarée, car une fiche identifiée refuse la correction
                     quantite: { val: 2, unite: 'portion', origine: 'portion', portion: { libelle: 'part', poids: 100, unite: 'g' } },
                     corrections: [{ c: 'kcal', v: 300, le: 1, avant: 360 }] } }]);
     const semees3 = await journal(pg);
