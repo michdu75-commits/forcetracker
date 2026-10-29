@@ -1721,6 +1721,39 @@ function _logHistShrink_(email, recues, enBase) {
   } catch (e) {}
 }
 
+/* 🙈 D-141 MINIMAL (29/10/2026, mission de Michel) — LES MASQUAGES NUTRITION (« ✕ ») SURVIVENT AU SERVEUR.
+   `hiddenFoods` = des DATES DE DÉPART {k, t} : `k` = l'identité d'un aliment (`id:…`, `nom:…`) ou `*` (la remise à zéro), `t` = l'instant
+   (ms). Avant ce lot, la liste blanche de `handleSaveProfile_` ne la nommait pas : elle partait du téléphone et était jetée ici.
+   ⭐ LA FUSION NE PEUT QUE MASQUER, jamais démasquer : par identité, le plus TARD gagne ; une entrée antérieure ou égale à `*` tombe ;
+      un envoi vide, plus court, plus ancien ou absent ne retire rien (un ancien téléphone, ou une sauvegarde d'avant, ne fait rien revenir).
+   ⛔ MÊME CONTRAT QUE LE CLIENT, à la lettre — c'est la copie serveur de `_nutMasquesNormaliser` (state.js), qu'il faut garder alignée (R2) :
+      clé = trim + minuscules + 120 caractères max (le client la tronque AVANT d'envoyer : ici, rien de plus) ; date invalide (non fini, ≤ 0)
+      ignorée ; date future ramenée à maintenant ; bornée à 300, `*` gardé en premier ; tri par date décroissante puis clé, donc le résultat ne
+      dépend pas de l'ordre des entrées. Les anciennes chaînes nues (d'avant le 23/10) ne sont PAS reconnues ici — le client ne les envoie jamais.
+   ⛔ Aucune normalisation du nom (`_afNorm` reste du client, B2) : `id:…` et `nom:…` ne se confondent jamais. Sans effet sur `foodLog`,
+      `savedFoods` et P1 : ce sont des propositions qu'on masque, pas des repas, et aucun favori n'est supprimé (la suppression à la
+      remise à zéro est un autre sujet). Dictionnaire sans prototype : une clé comme `__proto__` n'est qu'une clé. */
+var NUT_MASQUES_MAX_ = 300;
+function _nutMasquesFusion_(existant, recu) {
+  var maintenant = Date.now(), par = Object.create(null);
+  function prendre(liste) {
+    if (!Array.isArray(liste)) return;
+    liste.forEach(function(x) {
+      if (!x || typeof x !== 'object' || typeof x.k !== 'string') return;
+      var k = x.k.trim().toLowerCase().slice(0, 120), t = Number(x.t);
+      if (!k || !(isFinite(t) && t > 0)) return;
+      if (t > maintenant) t = maintenant;
+      if (!(k in par) || t > par[k]) par[k] = t;
+    });
+  }
+  prendre(existant); prendre(recu);
+  var g = par['*'] || 0;
+  var out = Object.keys(par).filter(function(k) { return k !== '*' && par[k] > g; })
+    .map(function(k) { return { k: k, t: par[k] }; })
+    .sort(function(a, b) { return (b.t - a.t) || (a.k < b.k ? -1 : 1); })
+    .slice(0, g ? NUT_MASQUES_MAX_ - 1 : NUT_MASQUES_MAX_);
+  return g ? [{ k: '*', t: g }].concat(out) : out;
+}
 function handleSaveProfile_(body) {
   try {
     /* ⭐⭐ S1 — L'IDENTITÉ VIENT DU JETON, PLUS DU PAYLOAD (16/09/2026).
@@ -1871,6 +1904,8 @@ function handleSaveProfile_(body) {
     // 🛡️ NUT-SECURISATION-P1 : plus de `_pa_` ici — rien de ce que le serveur avait ne part sans copie (voir _nutProtegerListe_).
     if (body.foodLog       !== undefined) profile.foodLog       = _nutProtegerListe_(existing, profile, 'foodLog',    body.foodLog,    email);
     if (body.savedFoods    !== undefined) profile.savedFoods    = _nutProtegerListe_(existing, profile, 'savedFoods', body.savedFoods, email);
+    // D-141 minimal : les masquages se FUSIONNENT avec ceux du compte (jamais un écrasement) ; champ absent = rien ne change.
+    if (body.hiddenFoods   !== undefined) profile.hiddenFoods   = _nutMasquesFusion_(profile.hiddenFoods, body.hiddenFoods);
     if (body.foodAiUses    !== undefined) profile.foodAiUses    = Math.max(parseInt(body.foodAiUses)||0, parseInt(profile.foodAiUses)||0);
     /* 🫙 LES TROIS POTS IA SÉPARÉS DE LA NUTRITION (19/09/2026, phase 3.1).
        ⛔ LA LISTE BLANCHE EST LA RAISON DE CES TROIS LIGNES : ce qu'elle ne nomme pas
@@ -4512,8 +4547,15 @@ function handleAdminRestore_(body) {
   }
   const email = (body.email || '').toLowerCase().trim();
   if (!email) return json_({status:'error', error:'email required'});
-  const data = body.data;
+  let data = body.data;
   if (!data || !data.profile) return json_({status:'error', error:'data.profile required'});
+
+  /* 🙈 D-141 minimal : une sauvegarde d'AVANT ne fait pas revenir un aliment masqué depuis. Les masquages du compte (dont `*`) sont
+     FUSIONNÉS à ceux de la sauvegarde (le plus tard gagne, un envoi plus court ou absent ne retire rien). Sur une COPIE du profil :
+     le fichier de sauvegarde reçu n'est pas modifié. Les autres champs (journal, favoris…) suivent le chemin de restauration d'avant. */
+  const _avant = loadUserData_(email);
+  const _masques = _nutMasquesFusion_(_avant && _avant.profile && _avant.profile.hiddenFoods, data.profile.hiddenFoods);
+  if (_masques.length) data = Object.assign({}, data, { profile: Object.assign({}, data.profile, { hiddenFoods: _masques }) });
 
   data.email = email;
   data.updatedAt = new Date().toISOString();
