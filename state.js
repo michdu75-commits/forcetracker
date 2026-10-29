@@ -290,7 +290,38 @@ function _nutDepart(masques, cle, nom){
   (Array.isArray(masques)?masques:[]).forEach(e=>{
     if(e && typeof e==='object' && (e.k==='*' || e.k===c || (n && e.k===n))) t=Math.max(t, +e.t||0);
   });
+  /* ⭐ B2 (29/10/2026) — LECTURE NORMALISÉE DES CLÉS `nom:…`, ET RIEN D'AUTRE. « Crème fraîche » masquée doit aussi masquer « Creme fraiche » :
+     les deux listes regroupaient avec deux règles différentes (accents, apostrophes, ponctuation, espaces). On compare donc la clé `nom:` de
+     l'aliment à celles qui sont ENREGISTRÉES, des deux côtés normalisées par `_afNorm` (le propriétaire, app.js).
+     ⛔ LECTURE SEULEMENT : aucune clé enregistrée ne change (même format, plafond de 300 inchangé, aucune migration) — un appareil resté sur
+        l'ancienne version lit et écrit la même liste. ⛔ Seules les clés `nom:…` sont normalisées : `id:…` (code-barres, `ciqual:…`), `*` et les
+        anciens noms nus (avant le 23/10) restent comparés À L'IDENTIQUE (boucle ci-dessus) — deux produits ne se confondent jamais par un nom (D-111).
+     ⛔ `_afNorm` vit dans app.js, chargé APRÈS ce fichier : s'il n'existe pas encore, on garde l'ancienne lecture (aucun effet au démarrage). */
+  const nc=_nutNomNormalise(c);
+  if(nc) t=Math.max(t, _nutMasquesNomIndex(masques)[nc]||0);
   return t;
+}
+/* 'nom:xxx' → 'nom:' + `_afNorm`(xxx) ; null si ce n'est pas une clé `nom:`, si `_afNorm` n'est pas encore là, ou si le nom normalisé est vide. */
+function _nutNomNormalise(k){
+  if(typeof k!=='string' || k.indexOf('nom:')!==0 || typeof _afNorm!=='function') return null;
+  const r=_afNorm(k.slice(4));
+  return r ? 'nom:'+r : null;
+}
+/* L'index de lecture des masquages `nom:` : clé normalisée → date la plus tardive. Calculé UNE fois par liste (la liste est remplacée, jamais
+   modifiée sur place : `_nutMasquesFusion`) — `_n2Propose` est appelé une fois par ligne du journal, normaliser 300 clés à chaque appel serait trop lent. */
+const _nutMasquesIdx=(typeof WeakMap==='function') ? new WeakMap() : null;
+function _nutMasquesNomIndex(masques){
+  const liste=Array.isArray(masques)?masques:[];
+  let c=_nutMasquesIdx ? _nutMasquesIdx.get(liste) : null;
+  if(c && c.n===liste.length) return c.idx;
+  const idx=Object.create(null);
+  liste.forEach(e=>{
+    if(!e || typeof e!=='object') return;
+    const k=_nutNomNormalise(e.k); if(!k) return;
+    idx[k]=Math.max(idx[k]||0, +e.t||0);
+  });
+  if(_nutMasquesIdx && liste.length) _nutMasquesIdx.set(liste, {n:liste.length, idx:idx});
+  return idx;
 }
 /* Les favoris qui restent proposés : un favori porte l'instant où il a été mis (`t`, depuis le 24/10) ; sans lui, il
    date d'avant — donc d'avant toute remise à zéro et tout « ✕ ». `cle` = la fonction d'identité de l'app (`_n2Cle`). */

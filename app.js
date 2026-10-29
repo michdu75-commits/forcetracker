@@ -2019,6 +2019,13 @@ function _n2Cle(x, norm){
   const s=(x && typeof x.sourceId==='string') ? x.sourceId.trim() : '', n=String((x && x.name)||'');
   return s ? 'id:'+s : 'nom:'+(norm ? norm(n) : n.trim().toLowerCase());
 }
+/* ⭐ B2 (29/10/2026) — LA CLÉ DE LECTURE : celle qui REGROUPE les propositions. `_n2Cle` (sans `norm`) reste la clé d'ÉCRITURE et de
+   masquage — le format enregistré dans `hiddenFoods`, qui ne change pas (même format, plafond de 300 inchangé, aucune migration).
+   Les deux listes (« Déjà noté par toi », « Mes aliments ») regroupent désormais avec la même règle : le nom d'un aliment SANS identifiant
+   est normalisé par `_afNorm` (accents, apostrophes, ponctuation, espaces) — « Crème fraîche » et « Creme fraiche » ne font qu'une
+   proposition. ⛔ L'identifiant (`id:…`, code-barres ou `ciqual:…`) reste comparé à l'identique : deux produits ne se confondent jamais par un
+   nom (D-111). `_afNorm` garde les chiffres : 5 % et 15 % restent deux aliments. Sans `_afNorm` (démarrage), on retombe sur `_n2Cle`. */
+function _n2CleLue(x){ return _n2Cle(x, (typeof _afNorm==='function') ? _afNorm : undefined); }
 /* Les fiches VÉRIFIÉES du journal, une par identifiant de produit — la plus récente : ce à quoi une référence non vérifiée
    du MÊME produit se compare (`_n2Incoherence`, cause « differe »). Lecture seule. */
 function _n2FichesVerifiees(){
@@ -5042,13 +5049,13 @@ function _buildFoodQuickItems(){
   }).map(f=>Object.assign(_itemListe(f),
     {portionWeightG:+f.portionWeightG>0?+f.portionWeightG:0, fav:true, _src:f, _ap:ap(f)}));
   const vus={};   // identité → listée (true : par une référence vérifiée ; false : par une qui ne l'est pas)
-  favs.forEach(f=>{ const k=_n2Cle(f._src); vus[k]=(vus[k]===true) || _n2Verifiee(f._ap); });
+  favs.forEach(f=>{ const k=_n2CleLue(f._src); vus[k]=(vus[k]===true) || _n2Verifiee(f._ap); });
   /* « ✕ » masque une IDENTITÉ depuis le 23/10 (`id:…`, `nom:…`) ; un NOM nu, écrit avant, masque encore tout ce qui le porte.
      NV2-FIAB (24/10) : c'est une date de départ (`_n2Propose`) — et la remise à zéro en est une, pour tout. */
   const recent=[], lignes=(S.foodLog||[]).filter(e=>e&&typeof e==='object').sort((a,b)=>b.ts-a.ts);
   for(let j=0; j<lignes.length && favs.length+recent.length<12; j++){
     const e=lignes[j], nom=String((e&&e.name)||'').toLowerCase(); if(!nom) continue;
-    const k=_n2Cle(e);
+    const k=_n2CleLue(e);
     if(!_n2Propose(e, e.ts) || vus[k]===true) continue;
     const a=ap(e), v=_n2Verifiee(a);
     if((k in vus) && !v) continue;         // déjà listé, et celle-ci n'est pas plus fiable
@@ -6516,7 +6523,7 @@ function _afSuggLocales(q, brut){
     if(!_n2Propose(e, e.ts)) return;
     const cle=_afNorm(e.name);
     if(!mots.length ? cle.indexOf(n)<0 : !_afRang(mots, cle)) return;
-    const k=_n2Cle(e, _afNorm); if(vus[k]===true) return;
+    const k=_n2CleLue(e); if(vus[k]===true) return;
     const v=_n2Verifiee(_n2Apercu(e, vf));
     if((k in vus) && !v) return;
     vus[k]=v; out.push(e);
@@ -11570,7 +11577,7 @@ let _nutRazSauve=null;   // la sauvegarde téléchargée dans CETTE session : sa
 function _nutRazEmpreinte(x){ const s=JSON.stringify(x===undefined?null:x); let h=5381; for(let i=0;i<s.length;i++) h=((h*33)^s.charCodeAt(i))>>>0; return h.toString(16)+'/'+s.length; }
 function _nutRazPerimetre(){
   const favs=_nutFavorisVivants(S.savedFoods, S.hiddenFoods, _n2Cle), ids=new Set();
-  (S.foodLog||[]).forEach(l=>{ if(l && l.name && _n2Propose(l, l.ts)) ids.add(_n2Cle(l).toLowerCase()); });
+  (S.foodLog||[]).forEach(l=>{ if(l && l.name && _n2Propose(l, l.ts)) ids.add(_n2CleLue(l).toLowerCase()); });
   let hab=0; try{ hab=_repasHabituels().length; }catch(e){}
   return {favoris:favs.length, aliments:ids.size, repas:hab, journal:(S.foodLog||[]).length, empreinteJournal:_nutRazEmpreinte(S.foodLog||[])};
 }
