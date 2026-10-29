@@ -1394,6 +1394,35 @@ function _n2FicheBc(){
      etat:(_afSrc&&_afSrc.etat)||null, libelle:String(_bcNutr.name||'')}));
 }
 
+/* 🔒 NUT-VERROU-01 (29/10/2026, décision de Michel) — UNE FICHE IDENTIFIÉE (CIQUAL, Open Food Facts, enseigne) EST VERROUILLÉE : seule la
+   quantité change, les calories et macros se recalculent TOUJOURS depuis la fiche. Le verrou vit à QUATRE niveaux : (1) ici, l'écran —
+   champs en lecture seule ; (2) les anciennes fonctions de correction (`_afSaisieValeur`, `_efSaisieValeur`, `_afCorrigerKcal`,
+   `_efCorrigerKcal`), qui ne font plus rien sur une fiche verrouillée même appelées sans bouton ; (3) le moteur, qui REFUSE toute
+   correction (`FICHE_VERROUILLEE`, nutrition-v2.js) ; (4) les reprises (favori, repas habituel, ajout rapide), dont le moteur ne reprend
+   plus les anciennes corrections. ⛔ Une fiche déclarée (tapée) ou estimée (IA) n'est PAS identifiée : son parcours est inchangé.
+   `pre` = 'af' (écran d'ajout : la fiche du bloc « Quantité ») ou 'ef' (modification : la fiche de la ligne). */
+function _n2VerrouEcran(pre){
+  const N=(typeof NUT2==='object'&&NUT2)?NUT2:null; if(!N || typeof N.verrouillee!=='function') return false;
+  try{
+    if(pre==='af') return !!(typeof _bcNutr==='object' && _bcNutr && N.verrouillee(_n2FicheBc()));
+    if(pre==='ef') return !!(_efR && _efR.fiche && N.verrouillee(_efR.fiche));
+  }catch(e){}
+  return false;
+}
+/* Les quatre champs en lecture seule tant que la fiche est verrouillée (et redevenus libres sinon) ; la valeur montrée est gardée pour
+   la rendre si un appel direct tente de la changer. */
+function _n2VerrouChamps(pre){
+  const v=_n2VerrouEcran(pre);
+  _N2_CHAMPS.forEach(c=>{
+    const el=document.getElementById(pre+'-'+c); if(!el) return;
+    el.readOnly=v; el.style.opacity=v?'0.78':'';
+    if(v) el.dataset.ref=el.value; else delete el.dataset.ref;
+  });
+  return v;
+}
+/* Un appel direct (sans bouton) a tenté de changer un champ verrouillé : le champ retrouve ce que la fiche donne. */
+function _n2VerrouRendre(el){ if(el && el.dataset && el.dataset.ref!==undefined) el.value=el.dataset.ref; }
+
 /* Montrer dans les 4 champs ce que le moteur a calculé.
    ⛔ Un champ absent s'affiche VIDE (« ? »), jamais 0 ; ⛔ un champ corrigé à la main garde sa correction (CR-2). */
 function _n2Afficher(pre, r, corr){
@@ -1402,6 +1431,7 @@ function _n2Afficher(pre, r, corr){
     if(corr && corr[c]) { el.value=corr[c].v; return; }
     el.value=(r && r.ok && (c in r.valeurs)) ? r.valeurs[c] : '';
   });
+  _n2VerrouChamps(pre);   // NUT-VERROU-01 : lecture seule si la fiche est identifiée (redevient libre sinon)
 }
 /* Lire les 4 champs : vide = INCONNU (clé absente), jamais 0. */
 function _n2LireChamps(pre){
@@ -1446,7 +1476,8 @@ function _n2Message(r){
     REPAS_ABSENT:'Choisis le repas — rien n\'a été ajouté.',
     NOM_ABSENT:'Donne un nom à l\'aliment.',
     DECLARE_INVALIDE:'Renseigne au moins les calories.',
-    FICHE_INVALIDE:'Cette fiche n\'a aucune valeur utilisable — recopie l\'étiquette pour 100 g.'
+    FICHE_INVALIDE:'Cette fiche n\'a aucune valeur utilisable — recopie l\'étiquette pour 100 g.',
+    FICHE_VERROUILLEE:'Les valeurs de cette fiche sont verrouillées : seule la quantité se modifie — rien n\'a été ajouté.'
   };
   return M[e] || ('Enregistrement refusé ('+(e||'?')+') — rien n\'a été ajouté.');
 }
@@ -1510,6 +1541,8 @@ function _afQtePosee(u){
    personne : elle les DÉCLARE (la fiche qui en sort est « déclarée », jamais « estimée » ni « source »). */
 function _afSaisieValeur(el){
   const c=(el && el.id) ? el.id.replace(/^af-/,'') : '';
+  /* 🔒 NUT-VERROU-01 : sur une fiche identifiée, une frappe (ou un appel direct) ne corrige rien et ne déclare rien. */
+  if(_N2_CHAMPS.indexOf(c)>=0 && _n2VerrouEcran('af')){ _n2VerrouRendre(el); _afCorr={}; _afMontrerCorr(); _afCoherence(); return; }
   if(_N2_CHAMPS.indexOf(c)>=0){
     if(typeof _bcNutr==='object' && _bcNutr && _afCalc){
       const s=String(el.value||'').trim(), v=parseInt(s,10);
@@ -1594,7 +1627,7 @@ function _n2EntreeEcran(nom, vals, bcActif){
     /* `pastillePortions` : la quantité vient de la pastille, aucun poids de portion n'a été DONNÉ — l'appelant ne s'en sert pas
        pour redéfinir un favori (relecture adverse du 22/10 : un toucher réécrivait le poids d'un favori sans ses valeurs). */
     return {ok:true, pastillePortions:prise, entree:Object.assign(e, {mode:'pesee', fiche:_n2FicheBc(), quantite:quantite,
-      corrections:_n2CorrectionsEcran(_afCorr)})};
+      corrections:_n2VerrouEcran('af') ? [] : _n2CorrectionsEcran(_afCorr)})};
   }
   const R=_afRef;
   if(R && R.fige){   // ② une reprise sans fiche de confiance : les valeurs telles quelles, une quantité posée
@@ -2276,6 +2309,8 @@ let _efValeursTapees=false;
 /* Une valeur retouchée dans la modification : sur une fiche, une correction gardée et tracée ; sinon, déclarée. */
 function _efSaisieValeur(el){
   const c=(el && el.id) ? el.id.replace(/^ef-/,'') : '';
+  /* 🔒 NUT-VERROU-01 : idem — rien n'est corrigé ni déclaré sur une fiche identifiée. */
+  if(_N2_CHAMPS.indexOf(c)>=0 && _n2VerrouEcran('ef')){ _n2VerrouRendre(el); _efCorr={}; _efCoherence(); return; }
   if(_N2_CHAMPS.indexOf(c)>=0 && _efR && _efR.fiche && _efCalc){
     const s=String(el.value||'').trim(), v=parseInt(s,10);
     if(s==='' || !isFinite(v) || v<0 || v===_efCalc[c]) delete _efCorr[c];
@@ -2369,6 +2404,7 @@ function _n2Badge(e){
   else if(n2.st==='declaree') m.push('déclaré');
   if(Array.isArray(n2.corr) && n2.corr.length) m.push('✏️ corrigé');
   if(Array.isArray(n2.no) && n2.no.indexOf('correction-a-revoir')>=0) m.push('à revoir');
+  if(Array.isArray(n2.no) && n2.no.indexOf('correction-ecartee')>=0) m.push('ancienne correction écartée');   // 🔒 NUT-VERROU-01 : gardée dans n2.hc
   return m.length ? ' · '+m.join(' · ') : '';
 }
 /* Ce qu'apporte une quantité d'un aliment de confiance, pour une macro — par le moteur (les idées « pour le reste »). */
@@ -5216,7 +5252,7 @@ function _favDepuisLigne(s){
       if(s.n2.pv) n2.pv=JSON.parse(JSON.stringify(s.n2.pv));
       /* D-103 : ses corrections aussi — sans elles, le favori d'une ligne corrigée n'était plus « fiable » (« 2 portions » sans
          gramme là où sa ligne dit « 2 portions (200 g) ») et « + Ajouter » réécrivait le calcul au lieu de la valeur corrigée. */
-      if(Array.isArray(s.n2.corr) && s.n2.corr.length) n2.corr=JSON.parse(JSON.stringify(s.n2.corr));
+      if(Array.isArray(s.n2.corr) && s.n2.corr.length && !(s.n2.f && s.n2.f.fiab==='source')) n2.corr=JSON.parse(JSON.stringify(s.n2.corr));   // 🔒 NUT-VERROU-01 : jamais sur une fiche identifiée
       fav.n2=n2;
     }
     return fav;
@@ -7020,6 +7056,9 @@ function openEditFood(id){
      quantité tombait à 0 et l'alerte ne partait jamais. *On ne peut pas lire ce qui est à
      l'écran avant qu'il y soit.* On ouvre, PUIS on mesure. */
   ov.classList.add('open');
+  /* 🔒 NUT-VERROU-01 : sur une fiche identifiée l'écran montre ce que la FICHE donne pour la quantité de la ligne (jamais une ancienne
+     correction) — ce qu'« Enregistrer » écrira est ce qui est affiché. La ligne enregistrée, elle, n'est pas touchée à l'ouverture. */
+  if(_n2VerrouEcran('ef')) _efApplyFiche();
   _efCoherence();                     // l'incohérence se voit À L'OUVERTURE, sans rien toucher
 }
 function _setEditFoodMeal(k){_editFoodMeal=k;_renderEditFoodMeals();}
@@ -7362,6 +7401,8 @@ function _kcalImpossible(pfx){
 }
 function _coherenceKcal(pfx, corrigeur){
   const el=document.getElementById(pfx+'-coherence'); if(!el) return;
+  const _verr=_n2VerrouEcran(pfx);   // 🔒 NUT-VERROU-01 : sur une fiche identifiée, l'avertissement se lit, mais « Mettre X kcal » n'existe pas
+  _n2VerrouChamps(pfx);
   /* ⚖️⛔⛔ ft-v1191 — L'AVERTISSEMENT ÉTAIT JUSTE, ET À 1 132 px SOUS L'ÉCRAN.
      Mesuré sur le cas de Michel (lentilles Raynal, 410 g) : la fiche fait **1 907 px** pour
      **775 px visibles**, et cet encadré apparaît à `top 1734` — pendant que le geste qui le
@@ -7487,7 +7528,7 @@ function _coherenceKcal(pfx, corrigeur){
       +'<b>'+plaf.plafond+' kcal au maximum.</b>'
       /* ⛔ On propose la valeur théorique, PAS le plafond : les grammes qui restent sont de l'eau
          dans l'immense majorité des aliments. C'est une proposition, elle se tape ou s'ignore. */
-      +'<button onclick="'+corrigeur+'('+plaf.theo+')" style="margin-top:6px;display:block;padding:7px 12px;border-radius:9px;border:1px solid var(--sep);background:var(--bg3);color:var(--t1);font-size:12.5px;font-weight:700;font-family:var(--font);cursor:pointer;">Mettre '+plaf.theo+' kcal</button>';
+      +(_verr ? '<div style="color:var(--t3);margin-top:6px;">Cette fiche est verrouillée : seule la quantité se modifie.</div>' : '<button onclick="'+corrigeur+'('+plaf.theo+')" style="margin-top:6px;display:block;padding:7px 12px;border-radius:9px;border:1px solid var(--sep);background:var(--bg3);color:var(--t1);font-size:12.5px;font-weight:700;font-family:var(--font);cursor:pointer;">Mettre '+plaf.theo+' kcal</button>');
     montrer(); return;
   }
   /* ⚠️ DEUX SEUILS, DEUX MÉTIERS — et ce n'est pas une incohérence à « harmoniser » (mesuré
@@ -7505,11 +7546,12 @@ function _coherenceKcal(pfx, corrigeur){
   el.innerHTML='⚠️ <b>'+Math.round(kcal)+' kcal</b> ne colle pas à ces macros : '
     +g('prot')+' g de protéines, '+g('carbs')+' g de glucides et '+g('fat')+' g de lipides '
     +'donnent <b>'+Math.round(theo)+' kcal</b>. '
-    +'<button onclick="'+corrigeur+'('+Math.round(theo)+')" style="margin-top:6px;display:block;padding:7px 12px;border-radius:9px;border:1px solid var(--sep);background:var(--bg3);color:var(--t1);font-size:12.5px;font-weight:700;font-family:var(--font);cursor:pointer;">Mettre '+Math.round(theo)+' kcal</button>';
+    +(_verr ? '<div style="color:var(--t3);margin-top:6px;">Cette fiche est verrouillée : seule la quantité se modifie.</div>' : '<button onclick="'+corrigeur+'('+Math.round(theo)+')" style="margin-top:6px;display:block;padding:7px 12px;border-radius:9px;border:1px solid var(--sep);background:var(--bg3);color:var(--t1);font-size:12.5px;font-weight:700;font-family:var(--font);cursor:pointer;">Mettre '+Math.round(theo)+' kcal</button>');
   montrer();
 }
 function _efCoherence(){ _coherenceKcal('ef','_efCorrigerKcal'); }
 function _efCorrigerKcal(v){
+  if(_n2VerrouEcran('ef')) return;   // 🔒 NUT-VERROU-01 : idem, dans la modification
   const el=document.getElementById('ef-kcal'); if(el)el.value=v;
   if(_efRef)_efRef.base.kcal=v;            // la référence suit, sinon un rescale la ferait revenir
   /* 🥗 V2 (jalon 4) — la jumelle de `_afCorrigerKcal` (R8) : sur une fiche, « Mettre X kcal » est une CORRECTION gardée
@@ -7965,6 +8007,7 @@ function _afOublierAliment(opts){
   try{ _afRepriseVide=null; }catch(e){}   // la reprise sans quantité ni valeurs appartient à l'aliment d'avant
   try{ _n2Cand=null; _n2CandRendre(); }catch(e){}   // NIDT : les candidats d'identité appartiennent, eux aussi, à l'aliment d'avant (R15)
   try{ _afMontrerCorr(); _bcMajUnite(); }catch(e){}
+  try{ _n2VerrouChamps('af'); }catch(e){}   // NUT-VERROU-01 : l'aliment d'avant n'est plus là, ses champs redeviennent libres
 }
 /* Décide de la source et (re)construit le bloc. ⚠️ Appelée seulement quand la SOURCE des valeurs
    change — estimation IA, ou sortie d'un champ (`onchange`, donc au blur). Jamais à chaque frappe :
@@ -8145,6 +8188,7 @@ function _afMajAncre(srcChange){
 }
 
 function _afCorrigerKcal(v){
+  if(_n2VerrouEcran('af')) return;   // 🔒 NUT-VERROU-01 : « Mettre X kcal » ne modifie jamais la référence d'une fiche identifiée
   const el=document.getElementById('af-kcal'); if(el)el.value=v;
   if(_afRef)_afRef.base.kcal=v;   // la référence suit, sinon un rescale ferait revenir l'ancien chiffre
   /* 🥗 V2 : sur une fiche, c'est une correction du calcul — gardée et tracée comme une frappe (CR-2). */
@@ -8178,7 +8222,7 @@ function saveEditFood(){
   if(R.fiche){
     const q=_efQteFiche(R, e);
     if(!q){ toast('Combien en as-tu mangé ? Tape une quantité supérieure à 0 — la ligne n\'a pas été modifiée.','error'); return; }
-    entree=Object.assign(base, {mode:'pesee', fiche:R.fiche, quantite:q, corrections:_n2CorrectionsEcran(_efCorr)});
+    entree=Object.assign(base, {mode:'pesee', fiche:R.fiche, quantite:q, corrections:_n2VerrouEcran('ef') ? [] : _n2CorrectionsEcran(_efCorr)});
   }else{
     const q=_efQteDeclaree(R, e);
     if(!q){ toast('Indique la quantité (en g ou en ml) — la ligne n\'a pas été modifiée.','error'); return; }

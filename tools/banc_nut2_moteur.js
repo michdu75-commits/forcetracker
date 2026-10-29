@@ -127,6 +127,12 @@ try { (() => {
                  origine: { saisie: 'ciqual', origine: 'ciqual' } };
   const ent = (o) => Object.assign({}, BASE, o);
   const PESEE = { mode: 'pesee', fiche: RIZ, quantite: { val: 150, unite: 'g' } };
+  /* 🔒 NUT-VERROU-01 (29/10/2026, décision de Michel) — une fiche IDENTIFIÉE (`fiab:'source'`, comme RIZ) n'accepte plus aucune correction :
+     le moteur la REFUSE (`FICHE_VERROUILLEE`). Le contrat des corrections tracées (CR-2) reste VRAI pour une fiche NON identifiée : ces
+     témoins (⑩ ⑪ ⑫, R ②, R ⑩) le vérifient donc sur la MÊME fiche présentée comme DÉCLARÉE (tapée) — valeurs identiques, aucune assertion
+     affaiblie ; le refus sur la fiche identifiée a son propre témoin (⑩b) et son banc (`tools/banc_nut_verrou.js`). */
+  const RIZ_DECL = geler({ base: 'g', p100: { kcal: 360, prot: 7.4, carbs: 79, fat: 0.6 }, source: 'utilisateur', fiab: 'declaree' });
+  const PESEE_DECL = { mode: 'pesee', fiche: RIZ_DECL, quantite: { val: 150, unite: 'g' } };
   essai('B-NV2-E ① une ligne pesée : champs de V1 (q, u, per100, sourceId, valeurs) + n2 (pesée, fiable)', () => {
     const r = N.ligneNouvelle(ent(PESEE)); const L = r.ligne;
     return r.ok && L.q === 150 && L.u === 'g' && J(L.per100) === J({ kcal: 360, prot: 7.4, carbs: 79, fat: 0.6 }) &&
@@ -183,19 +189,23 @@ try { (() => {
     return !r.ok && r.erreur === 'PORTION_SANS_LIBELLE' || J(r);
   });
   essai('B-NV2-E ⑩ ⭐ une correction à la main (30 g de protéines) est appliquée et TRACÉE (valeur calculée d\'avant : 11)', () => {
-    const r = N.ligneNouvelle(ent(Object.assign({ corrections: [{ c: 'prot', v: 30, le: 1761120000500 }] }, PESEE)));
+    const r = N.ligneNouvelle(ent(Object.assign({ corrections: [{ c: 'prot', v: 30, le: 1761120000500 }] }, PESEE_DECL)));
     return r.ok && r.ligne.prot === 30 && J(r.ligne.n2.corr) === J([{ c: 'prot', v: 30, avant: 11, le: 1761120000500 }]) &&
       r.ligne.n2.no.length === 0 && r.ligne.kcal === 540 || J(r);
   });
+  essai('B-NV2-E ⑩b ⭐⭐ NUT-VERROU-01 : la MÊME correction sur la fiche IDENTIFIÉE (CIQUAL) est REFUSÉE (FICHE_VERROUILLEE), aucune ligne', () => {
+    const r = N.ligneNouvelle(ent(Object.assign({ corrections: [{ c: 'prot', v: 30, le: 1761120000500 }] }, PESEE)));
+    return !r.ok && r.erreur === 'FICHE_VERROUILLEE' && !('ligne' in r) || J(r);
+  });
   essai('B-NV2-E ⑪ ⭐⭐ la quantité change (200 g) : la correction RESTE, le reste est recalculé, la ligne le signale', () => {
-    const r = N.ligneNouvelle(ent({ mode: 'pesee', fiche: RIZ, quantite: { val: 200, unite: 'g' },
+    const r = N.ligneNouvelle(ent({ mode: 'pesee', fiche: RIZ_DECL, quantite: { val: 200, unite: 'g' },
       corrections: [{ c: 'prot', v: 30, avant: 11, le: 1761120000500 }] }));
     return r.ok && r.ligne.prot === 30 && r.ligne.kcal === 720 && r.ligne.carbs === 158 &&
       r.ligne.n2.no.indexOf('correction-a-revoir') >= 0 && r.ligne.n2.corr[0].avant === 11 || J(r);
   });
   essai('B-NV2-E ⑫ ⛔ correction invalide (champ inconnu, négative, deux fois le même champ) : REFUS', () => {
     const r = [[{ c: 'sel', v: 1, le: 1 }], [{ c: 'prot', v: -1, le: 1 }], [{ c: 'prot', v: 1, le: 1 }, { c: 'prot', v: 2, le: 2 }]]
-      .map((c) => N.ligneNouvelle(ent(Object.assign({ corrections: c }, PESEE))));
+      .map((c) => N.ligneNouvelle(ent(Object.assign({ corrections: c }, PESEE_DECL))));
     return r.every((x) => !x.ok && x.erreur === 'CORRECTION_INVALIDE') || J(r);
   });
   essai('B-NV2-E ⑬ une ligne DÉCLARÉE (400 g, 800 kcal) : valeurs telles quelles, pas de fiche, macros inconnues ABSENTES', () => {
@@ -415,7 +425,7 @@ try { (() => {
 
   console.log('\n═══ B-NV2-R. CE QU\'UNE LIGNE PERMET DE REPRENDRE (jalon 4) — lecture seule ═══');
   const LV2 = N.ligneNouvelle(ent(PESEE)).ligne;
-  const LV2C = N.ligneNouvelle(ent(Object.assign({ corrections: [{ c: 'kcal', v: 560, le: 1761120001000 }] }, PESEE))).ligne;
+  const LV2C = N.ligneNouvelle(ent(Object.assign({ corrections: [{ c: 'kcal', v: 560, le: 1761120001000 }] }, PESEE_DECL))).ligne;
   const LV2P = N.ligneNouvelle(ent({ nom: 'Steak fictif', mode: 'pesee',
     fiche: { base: 'g', p100: { kcal: 129, prot: 20, carbs: 0, fat: 5 }, source: 'utilisateur', fiab: 'declaree' },
     quantite: { val: 2, unite: 'portion', origine: 'portion', portion: { libelle: 'steak', poids: 125, unite: 'g' } } })).ligne;
@@ -471,7 +481,7 @@ try { (() => {
 
   console.log('\n═══ B-NV2-P. PURETÉ : aucune entrée modifiée, même résultat à chaque appel ═══');
   essai('B-NV2-P ① le calcul et l\'écrivain ne touchent pas à ce qu\'on leur passe (entrées gelées, JSON identique)', () => {
-    const e = geler(JSON.parse(J(ent(Object.assign({ corrections: [{ c: 'prot', v: 30, le: 1 }] }, PESEE)))));
+    const e = geler(JSON.parse(J(ent(Object.assign({ corrections: [{ c: 'prot', v: 30, le: 1 }] }, PESEE_DECL)))));
     const av = J(e);
     N.calcule(e.fiche, e.quantite); N.ligneNouvelle(e);
     return J(e) === av || 'entrée modifiée';
@@ -481,9 +491,9 @@ try { (() => {
     const c = J(N.lireJournal(LISTE, ctx)), d = J(N.lireJournal(LISTE, ctx));
     return a === b && c === d || 'résultats différents';
   });
-  essai('B-NV2-P ③ le moteur n\'expose que ses 6 fonctions, gelé (rien ne peut le remplacer en cours de route)', () => {
+  essai('B-NV2-P ③ le moteur n\'expose que ses 7 fonctions (les 6 d\'origine + `verrouillee`, NUT-VERROU-01), gelé (rien ne peut le remplacer en cours de route)', () => {
     const k = Object.keys(N).sort().join(',');
-    return Object.isFrozen(N) && k === 'CHAMPS,VERSION,calcule,ficheVerifiee,ligneNouvelle,lireAncienne,lireJournal,reprise' || k;
+    return Object.isFrozen(N) && k === 'CHAMPS,VERSION,calcule,ficheVerifiee,ligneNouvelle,lireAncienne,lireJournal,reprise,verrouillee' || k;
   });
   essai('B-NV2-P ④ ⛔ le fichier ne lit ni écran, ni stockage, ni réseau, ni horloge (aucune de ces API dans son code)', () => {
     const src = fs.readFileSync(CIBLE, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');

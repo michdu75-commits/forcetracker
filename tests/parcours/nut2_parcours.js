@@ -340,14 +340,19 @@ async function ecran(t, b, PORT) {
   const p6a = ligne(L, p2.id);
   t('B-NV2P P6 ① ⭐ MODIFIER une ligne V2 : 200 g recalculés par la fiche (728 · 26 · 145 · 3), même identité, même place',
     g && !!p6a && memes(vals(p6a), A.pates200) && p6a.q === 200 && L.indexOf(p6a) === L.findIndex((x) => x.id === p2.id) && L.filter((x) => x.id === p2.id).length === 1, J(p6a));
-  /* (b) une correction à la main est gardée et tracée */
+  /* (b) 🔒 NUT-VERROU-01 (29/10/2026, décision de Michel) — CE TÉMOIN DISAIT L'INVERSE : « une correction à la main est gardée (700) et tracée »
+     sur une fiche CIQUAL. Une fiche IDENTIFIÉE est désormais verrouillée : le champ est en lecture seule et même une frappe forcée (ici :
+     lecture seule levée à la main puis événement `input`) ne corrige rien. La règle de la correction tracée (CR-2) reste testée sur les fiches
+     NON identifiées (banc du moteur ⑩ ⑪, P14 ⑤b, P15 ㉛). */
   g = await ouvrirModif(p2.id);
-  g = g && await taper(pg, '#ef-kcal', '700');
+  const p6ro = await pg.evaluate(() => document.getElementById('ef-kcal').readOnly);
+  await pg.evaluate(() => { const el = document.getElementById('ef-kcal'); el.readOnly = false; el.value = '700'; el.dispatchEvent(new Event('input', { bubbles: true })); });
+  const p6champ = await pg.evaluate(() => document.getElementById('ef-kcal').value);
   g = g && await enregistrer();
   L = await journal(pg);
   const p6b = ligne(L, p2.id);
-  t('B-NV2P P6 ② ⭐⭐ une CORRECTION À LA MAIN est gardée (700) et tracée avec le calcul d\'avant (728)',
-    g && !!p6b && p6b.kcal === 700 && p6b.n2.corr.length === 1 && p6b.n2.corr[0].c === 'kcal' && p6b.n2.corr[0].v === 700 && p6b.n2.corr[0].avant === 728, J(p6b && p6b.n2));
+  t('B-NV2P P6 ② ⭐⭐ 🔒 NUT-VERROU-01 : sur une fiche CIQUAL le champ est en lecture seule et une frappe forcée (700) ne corrige RIEN — l\'écran redit le calcul (728) et la ligne enregistrée est 728, sans correction',
+    g && p6ro === true && p6champ === '728' && !!p6b && p6b.kcal === 728 && p6b.n2.corr.length === 0, J({ p6ro, p6champ, n2: p6b && p6b.n2 }));
   /* (c) une ancienne ligne NON vérifiée : modifiée à la demande, sa copie d'origine est gardée */
   const L2avant = ligne(AV, 'nv2p-L2-00000002');
   g = await ouvrirModif('nv2p-L2-00000002');
@@ -663,17 +668,18 @@ async function ecran(t, b, PORT) {
       g && !!e1Apres && e1Apres.q === 90 && e1Apres.u === 'g' && e1Apres.kcal === 420 && e1Apres.n2.m === 'd' && !!e1Apres.n2.av && e1Apres.n2.av.q === 45, J(e1Apres));
 
     /* ③ « Mettre X kcal » sur une ligne À FICHE : l'écran et la ligne disent la même chose */
+    /* 🔒 NUT-VERROU-01 : une fiche IDENTIFIÉE ne se retouche plus — la frappe forcée (999) ne change rien, il n'y a donc plus d'écart à corriger ni
+       de bouton « Mettre X kcal » : l'écran dit déjà 205, le calcul de la fiche. */
     g = await ouvrirModif('nv2s-E2-00000002');
     const e2Prop = await champ('ef-prop');
-    g = g && await taper(pg, '#ef-kcal', '999');
+    await pg.evaluate(() => { const el = document.getElementById('ef-kcal'); el.readOnly = false; el.value = '999'; el.dispatchEvent(new Event('input', { bubbles: true })); });
     const e2Coh = await coherence('ef');
-    g = g && await clic(pg, '#ef-coherence button');
     await pause(pg, 200);
     const e2Ecran = await champ('ef-kcal');
     g = g && await enregistrer();
     const e2Apres = ligne(await journal(pg), 'nv2s-E2-00000002');
-    t('B-NV2P P13 ③ ⭐⭐ « Mettre 205 kcal » sur une ligne À FICHE : l\'écran ET la ligne disent 205 (jamais les 999 tapés) — 205 est le calcul de la fiche, aucune correction ne reste tracée',
-      g && e2Prop === '2' && e2Coh.vu && /Mettre 205 kcal/.test(e2Coh.txt) && e2Ecran === '205' && !!e2Apres && e2Apres.kcal === 205
+    t('B-NV2P P13 ③ ⭐⭐ 🔒 NUT-VERROU-01 : sur une ligne À FICHE IDENTIFIÉE, les 999 forcés ne s\'appliquent pas : pas d\'avertissement ni de « Mettre X kcal », l\'écran ET la ligne disent 205 (le calcul de la fiche), aucune correction ne reste tracée',
+      g && e2Prop === '2' && !e2Coh.vu && e2Ecran === '205' && !!e2Apres && e2Apres.kcal === 205
       && e2Apres.q === 2 && e2Apres.u === 'portion' && Array.isArray(e2Apres.n2.corr) && e2Apres.n2.corr.length === 0, J({ e2Prop, e2Coh, e2Ecran, e2Apres: e2Apres && e2Apres.n2 }));
 
     /* ④ le contrôle de masse lit la quantité de « Modifier » (`ef-q`), À LA FRAPPE */
@@ -805,7 +811,10 @@ async function ecran(t, b, PORT) {
       const err = [], L = [];
       const ecrire = (o) => { const r = NUT2.ligneNouvelle(o); if (r.ok) L.push(r.ligne); else err.push(o.nom + ':' + r.erreur); return r.ok ? r.ligne : null; };
       const pesee = (id, k, repas, nom, p100, q, extra) => Object.assign({ id: id, ts: Date.now() - 9e6 + k * 1000, date: J0(k), repas: repas, nom: nom,
-        origine: { saisie: 'code-tape', origine: 'off' }, mode: 'pesee', fiche: { base: 'g', p100: p100, cle: '3000000000' + id.slice(5, 7).replace('F', '5') + '01', source: 'off', fiab: 'source' },
+        origine: { saisie: 'code-tape', origine: 'off' }, mode: 'pesee', fiche: { base: 'g', p100: p100, cle: '3000000000' + id.slice(5, 7).replace('F', '5') + '01', source: 'off',
+          /* 🔒 NUT-VERROU-01 : une fiche IDENTIFIÉE refuse toute correction — la « Galette » (kcal corrigées à la main) est donc posée sur une fiche
+             DÉCLARÉE, le seul cas où une ligne corrigée peut encore se fabriquer ; ses témoins (P14 ⑤b ⑱, P15 ㉛ ㉝) gardent leurs assertions. */
+          fiab: (extra && extra.corrections) ? 'declaree' : 'source' },
         quantite: q }, extra || {});
       const riz3 = { val: 3, unite: 'portion', origine: 'portion', portion: { libelle: 'part', poids: 150, unite: 'g' } };
       /* F1 « Riz » — 3 parts de 150 g, deux jours de suite (un repas habituel) */
@@ -1361,7 +1370,7 @@ async function incident(t, b, PORT) {
       { k: 2, v1: { id: 'nv2u-B1-00000001', meal: 'collation', name: 'Barre P15 (test)', kcal: 230, carbs: 30, fat: 10, v: 1, saisie: 'manuel', origine: 'utilisateur',
                     q: 50, u: 'g', per100: null, sourceId: null, etat: null } },
       { k: 1, v2: { id: 'nv2u-G1-00000001', repas: 'diner', nom: 'Galette P15 (test)', origine: { saisie: 'code-tape', origine: 'off' }, mode: 'pesee',
-                    fiche: { base: 'g', p100: { kcal: 180, prot: 6, carbs: 30, fat: 4 }, cle: '3000000000504', source: 'off', fiab: 'source' },
+                    fiche: { base: 'g', p100: { kcal: 180, prot: 6, carbs: 30, fat: 4 }, cle: '3000000000504', source: 'off', fiab: 'declaree' },   // 🔒 NUT-VERROU-01 : déclarée, car une fiche identifiée refuse la correction
                     quantite: { val: 2, unite: 'portion', origine: 'portion', portion: { libelle: 'part', poids: 100, unite: 'g' } },
                     corrections: [{ c: 'kcal', v: 300, le: 1, avant: 360 }] } }]);
     const semees3 = await journal(pg);

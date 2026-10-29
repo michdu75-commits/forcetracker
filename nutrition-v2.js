@@ -52,6 +52,16 @@
      `codeDouteux` (code-barres lu sans clé vérifiée), `doute` (valeur signalée par une enseigne), `kcalDerivee`. */
   var TRACE_CLES = ['etat', 'methode', 'raison', 'brut', 'retenu', 'champ', 'champSource', 'confiance', 'origine'];
 
+  /* ═══ 🔒 NUT-VERROU-01 (29/10/2026, décision de Michel) — UNE FICHE IDENTIFIÉE EST VERROUILLÉE ═══
+     Une fiche identifiée (`fiab:'source'` : CIQUAL, Open Food Facts, fiche d'enseigne) fixe ses valeurs de référence : les calories et
+     macros consommées = fiche × quantité, JAMAIS une correction à la main. Seule la quantité varie.
+     ⛔ Ce n'est pas qu'un écran grisé : le moteur REFUSE (`FICHE_VERROUILLEE`) toute correction sur une fiche identifiée — un appel
+        direct, une reprise, un favori ne contournent rien. Une fiche DÉCLARÉE (tapée) ou ESTIMÉE (IA) n'est pas identifiée :
+        son parcours, dont la correction tracée (CR-2), est inchangé.
+     ⭐ Les anciennes corrections ne sont ni effacées ni réappliquées : à la prochaine modification de la ligne elles passent dans
+        l'historique additif `n2.hc` (borné), la ligne repart de la fiche et le dit (`n2.no` : `correction-ecartee`). */
+  var HC_MAX = 20;
+  function verrouillee(f) { return !!(f && typeof f === 'object' && f.fiab === 'source'); }
   function fini(x) { return typeof x === 'number' && isFinite(x); }
   function ko(code, detail) { return { ok: false, erreur: code, detail: detail || '' }; }
   function texte(x) { return typeof x === 'string' ? x.trim() : ''; }
@@ -160,10 +170,11 @@
       else n2.pv = { val: q.portion.poids, unite: 'ml' };
     }
 
-    var calc;
+    var calc, verrou = false;
     if (e.mode === 'pesee') {
       var f = e.fiche;
       if (!f || typeof f !== 'object') return ko('FICHE_ABSENTE');
+      verrou = verrouillee(f);
       if (!texte(f.source) || !FIABILITES[f.fiab]) return ko('FICHE_SANS_PROVENANCE');
       var r = calcule(f, q);
       if (!r.ok) return r;
@@ -201,6 +212,8 @@
     for (i = 0; i < CHAMPS.length; i++) { c = CHAMPS[i]; if (c in calc) finales[c] = calc[c]; }
     var corr = e.corrections;
     if (corr !== undefined && !Array.isArray(corr)) return ko('CORRECTION_INVALIDE');
+    /* 🔒 Une fiche identifiée ne reçoit AUCUNE correction : refus explicite, aucune ligne, aucun repli silencieux. */
+    if (verrou && corr && corr.length) return ko('FICHE_VERROUILLEE', String(corr[0] && corr[0].c));
     for (i = 0; corr && i < corr.length; i++) {
       var x = corr[i];
       if (!x || CHAMPS.indexOf(x.c) < 0 || !fini(x.v) || x.v < 0 || !fini(x.le) || vus[x.c]) return ko('CORRECTION_INVALIDE', String(x && x.c));
@@ -258,6 +271,19 @@
         else if (rp.n2.av && typeof rp.n2.av === 'object') av = JSON.parse(JSON.stringify(rp.n2.av));
       } catch (err) { return ko('REMPLACE_INVALIDE'); }
       if (av) n2.av = av;
+      /* 🔒 L'HISTORIQUE DES CORRECTIONS (additif) : celui de la ligne remplacée passe tel quel ; si la nouvelle ligne est sur une
+         fiche identifiée, les corrections que l'ancienne portait y entrent et la ligne repart de la fiche. Rien n'est effacé :
+         `n2.corr` d'avant est copié, `n2.av` (copie d'origine) et `n2.s` ne bougent pas. */
+      if (rp.n2 && typeof rp.n2 === 'object') {
+        var hs = [].concat(Array.isArray(rp.n2.hc) ? rp.n2.hc : [], verrou && Array.isArray(rp.n2.corr) ? rp.n2.corr : []), hc = [], h;
+        for (var hi = 0; hi < hs.length; hi++) {
+          h = hs[hi];
+          if (h && CHAMPS.indexOf(h.c) >= 0 && fini(h.v) && h.v >= 0) hc.push({ c: h.c, v: h.v, avant: fini(h.avant) ? h.avant : null, le: fini(h.le) ? h.le : null });
+        }
+        if (hc.length > HC_MAX) hc = hc.slice(hc.length - HC_MAX);
+        if (hc.length) n2.hc = hc;
+        if (verrou && Array.isArray(rp.n2.corr) && rp.n2.corr.length && n2.no.indexOf('correction-ecartee') < 0) n2.no.push('correction-ecartee');
+      }
     }
     L.n2 = n2;
     return { ok: true, ligne: L };
@@ -413,6 +439,10 @@
         x = n2.corr[i];
         if (x && CHAMPS.indexOf(x.c) >= 0 && fini(x.v)) corr.push({ c: x.c, v: x.v, avant: fini(x.avant) ? x.avant : null, le: fini(x.le) ? x.le : null });
       }
+      /* 🔒 Sur une fiche identifiée, les corrections d'avant le verrou ne sont PLUS reprises (elles ne peuvent pas modifier la
+         référence) : on rend la fiche et le NOMBRE de corrections écartées, la ligne enregistrée n'est pas touchée. */
+      if (verrouillee(fiche) && corr.length) return { ok: true, statut: 'v2', mode: n2.m, nom: nom, valeurs: valeurs, fiche: fiche, quantite: quantite,
+                                                      corrections: [], correctionsEcartees: corr.length };
       return { ok: true, statut: 'v2', mode: n2.m, nom: nom, valeurs: valeurs, fiche: fiche, quantite: quantite, corrections: corr };
     }
     var r = lireAncienne(l, ctx);
@@ -433,7 +463,7 @@
   }
 
   var NUT2 = { VERSION: VERSION, CHAMPS: CHAMPS.slice(), calcule: calcule, ligneNouvelle: ligneNouvelle,
-               lireAncienne: lireAncienne, lireJournal: lireJournal, ficheVerifiee: ficheVerifiee, reprise: reprise };
+               lireAncienne: lireAncienne, lireJournal: lireJournal, ficheVerifiee: ficheVerifiee, reprise: reprise, verrouillee: verrouillee };
   if (Object.freeze) { Object.freeze(NUT2.CHAMPS); Object.freeze(NUT2); }
   if (typeof module !== 'undefined' && module.exports) module.exports = NUT2;
   else racine.NUT2 = NUT2;
