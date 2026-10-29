@@ -1715,13 +1715,13 @@ function _nutVerrouRendre_(h, origine) {
   return h.ms;
 }
 /* 🚪🚪 NUT-SYNC-02 PHASE A — LA PORTE DE VERSION DU VOLET NUTRITION, **PAR COMPTE** (refaite le 02/11/2026, GO du Principal après son contrôle statique).
-   Le volet Nutrition (`foodLog`, `savedFoods`, `foodSupprimes`) ne se synchronise sûrement qu'avec un appareil qui sait LIRE un accusé : `foodLogV >= NUT_PROTOCOLE_MIN_` ET un `requestId` valide (« v3 »). Un envoi sans cela vient d'un ancien client
+   Le volet Nutrition (`foodLog`, `savedFoods`, `foodSupprimes` et, depuis D-141, les masquages `hiddenFoods`) ne se synchronise sûrement qu'avec un appareil qui sait LIRE un accusé : `foodLogV >= NUT_PROTOCOLE_MIN_` ET un `requestId` valide (« v3 »). Un envoi sans cela vient d'un ancien client
    (ft-v1263 et avant : `no-cors`, réponse jamais lue, aucune identité de suppression, journal du compte REMPLACÉ par l'instantané de l'appareil).
    ⛔ LA 1ʳᵉ VERSION LES REFUSAIT TOUS, PARTOUT, derrière une constante globale `NUT_COMPAT_STRICT_` — et présentait son contraire (`= false`) comme « le levier de retour arrière ». Deux fautes, retirées : ① refuser un compte qui n'a AUCUN appareil à jour coupait la
    sauvegarde serveur d'un téléphone sans qu'il puisse le savoir (il ne lit aucune réponse) ; ② `= false` n'était PAS sûr : il rouvrait la résurrection (une ancienne ligne SANS identité ne retrouve pas son entrée du registre — mesuré) et l'écrasement. Cette constante n'existe plus.
    LA RÈGLE, lue sous le verrou, selon l'ÉTAT DURABLE DU COMPTE (`_nutProtoDe_`) :
      · compte SANS état v3 : un envoi ancien est TOLÉRÉ — il n'y a ni registre, ni révision, ni mémoire d'opérations à violer, et le chemin est celui de la production d'avant (remplacement avec copie de sécurité, P1). Chaque envoi toléré est journalisé (des nombres) ;
-     · compte AVEC état v3 : le VOLET NUTRITION d'un envoi ancien (journal, favoris, suppressions) est REFUSÉ en entier et explicitement (`NUT_CLIENT_INCOMPATIBLE`, non réessayable) AVANT toute lecture ou écriture Nutrition ; TOUT LE RESTE de l'envoi — séances, records, pesées, réglages — est ENREGISTRÉ (règle d'or n°3). Rien n'est copié côté
+     · compte AVEC état v3 : le VOLET NUTRITION d'un envoi ancien (journal, favoris, suppressions, masquages) est REFUSÉ en entier et explicitement (`NUT_CLIENT_INCOMPATIBLE`, non réessayable) AVANT toute lecture ou écriture Nutrition ; TOUT LE RESTE de l'envoi — séances, records, pesées, réglages — est ENREGISTRÉ (règle d'or n°3). Rien n'est copié côté
        serveur : ce que l'appareil a saisi reste sur son téléphone et partira à sa mise à jour ;
      · un envoi qui se dit v3 (`foodLogV >= 3`) SANS `requestId` valide est refusé PARTOUT : il ne peut pas lire d'accusé.
    ⚠️ UN ANCIEN CLIENT NE LIT PAS CE REFUS (`no-cors`) : il n'affiche rien — et le seul message serveur qu'il lit au démarrage, le refus d'authentification, suspendrait TOUTE sa sauvegarde : on ne s'en sert surtout pas. Son seul signal est la mise à jour automatique de l'application.
@@ -1732,7 +1732,7 @@ var NUT_PROTOCOLE_MIN_ = 3;
 function _nutCompatibilite_(body, requestId) {
   var v = Number(body && body.foodLogV);
   var version = isFinite(v) ? v : 0;
-  var volet = !!body && (body.foodLog !== undefined || body.savedFoods !== undefined || body.foodSupprimes !== undefined);
+  var volet = !!body && (body.foodLog !== undefined || body.savedFoods !== undefined || body.foodSupprimes !== undefined || body.hiddenFoods !== undefined);   // D-141 : les masquages (`hiddenFoods`) sont du volet Nutrition — même porte, même suspension
   if (!volet) return { ok: true, version: version, volet: false };                 // rien de Nutrition dans cet envoi : rien à refuser
   return { ok: !!requestId && version >= NUT_PROTOCOLE_MIN_, version: version, volet: true };
 }
@@ -2042,6 +2042,39 @@ function _logHistShrink_(email, recues, enBase) {
   } catch (e) {}
 }
 
+/* 🙈 D-141 MINIMAL (29/10/2026, mission de Michel) — LES MASQUAGES NUTRITION (« ✕ ») SURVIVENT AU SERVEUR.
+   `hiddenFoods` = des DATES DE DÉPART {k, t} : `k` = l'identité d'un aliment (`id:…`, `nom:…`) ou `*` (la remise à zéro), `t` = l'instant
+   (ms). Avant ce lot, la liste blanche de `handleSaveProfile_` ne la nommait pas : elle partait du téléphone et était jetée ici.
+   ⭐ LA FUSION NE PEUT QUE MASQUER, jamais démasquer : par identité, le plus TARD gagne ; une entrée antérieure ou égale à `*` tombe ;
+      un envoi vide, plus court, plus ancien ou absent ne retire rien (un ancien téléphone, ou une sauvegarde d'avant, ne fait rien revenir).
+   ⛔ MÊME CONTRAT QUE LE CLIENT, à la lettre — c'est la copie serveur de `_nutMasquesNormaliser` (state.js), qu'il faut garder alignée (R2) :
+      clé = trim + minuscules + 120 caractères max (le client la tronque AVANT d'envoyer : ici, rien de plus) ; date invalide (non fini, ≤ 0)
+      ignorée ; date future ramenée à maintenant ; bornée à 300, `*` gardé en premier ; tri par date décroissante puis clé, donc le résultat ne
+      dépend pas de l'ordre des entrées. Les anciennes chaînes nues (d'avant le 23/10) ne sont PAS reconnues ici — le client ne les envoie jamais.
+   ⛔ Aucune normalisation du nom (`_afNorm` reste du client, B2) : `id:…` et `nom:…` ne se confondent jamais. Sans effet sur `foodLog`,
+      `savedFoods` et P1 : ce sont des propositions qu'on masque, pas des repas, et aucun favori n'est supprimé (la suppression à la
+      remise à zéro est un autre sujet). Dictionnaire sans prototype : une clé comme `__proto__` n'est qu'une clé. */
+var NUT_MASQUES_MAX_ = 300;
+function _nutMasquesFusion_(existant, recu) {
+  var maintenant = Date.now(), par = Object.create(null);
+  function prendre(liste) {
+    if (!Array.isArray(liste)) return;
+    liste.forEach(function(x) {
+      if (!x || typeof x !== 'object' || typeof x.k !== 'string') return;
+      var k = x.k.trim().toLowerCase().slice(0, 120), t = Number(x.t);
+      if (!k || !(isFinite(t) && t > 0)) return;
+      if (t > maintenant) t = maintenant;
+      if (!(k in par) || t > par[k]) par[k] = t;
+    });
+  }
+  prendre(existant); prendre(recu);
+  var g = par['*'] || 0;
+  var out = Object.keys(par).filter(function(k) { return k !== '*' && par[k] > g; })
+    .map(function(k) { return { k: k, t: par[k] }; })
+    .sort(function(a, b) { return (b.t - a.t) || (a.k < b.k ? -1 : 1); })
+    .slice(0, g ? NUT_MASQUES_MAX_ - 1 : NUT_MASQUES_MAX_);
+  return g ? [{ k: '*', t: g }].concat(out) : out;
+}
 function handleSaveProfile_(body) {
   var verrou = null;
   try {
@@ -2204,12 +2237,12 @@ function handleSaveProfile_(body) {
     if (body.dietNotes     !== undefined) profile.dietNotes     = _ps_(body.dietNotes,     profile.dietNotes);
     // 🛡️ NUT-SECURISATION-P1 : plus de `_pa_` ici — rien de ce que le serveur avait ne part sans copie (voir _nutProtegerListe_).
     /* 🗑️🔁 NUT-SYNC-01 FINAL — LE VOLET NUTRITION EST TOUT-OU-RIEN. Suppressions volontaires d'abord (union, jamais un retrait), puis journal (révisions, conflits, zone de récupération), puis
-       favoris — mais si une erreur survient (`NutSyncError` nommée, ou TOUTE erreur imprévue : NUT-SYNC-02 phase A) l'état d'AVANT est restitué en entier : jamais un profil Nutrition à moitié (le registre saturé n'en fait plus partie : une
+       favoris, puis masquages (`hiddenFoods`, D-141) — mais si une erreur survient (`NutSyncError` nommée, ou TOUTE erreur imprévue : NUT-SYNC-02 phase A) l'état d'AVANT est restitué en entier : jamais un profil Nutrition à moitié (le registre saturé n'en fait plus partie : une
        suppression sans place est DIFFÉRÉE entrée par entrée, voir `_nutSupprimesFusion_`)
        fusionné. ⚖️ Le reste du profil (séances, records, pesées…) est ENREGISTRÉ quand même — règle d'or n°3 : une saturation du registre Nutrition ne doit jamais empêcher la sauvegarde d'une
        séance. La réponse dit exactement ce qui a été refusé (`ok:false`, code, `profilEnregistre:true`). */
     var nutSortie = null, nutEchec = null, nutMarque = false;
-    const nutAvant = { foodSupprimes: profile.foodSupprimes, foodLog: profile.foodLog, savedFoods: profile.savedFoods, nutRev: profile.nutRev, nutOps: profile.nutOps };
+    const nutAvant = { foodSupprimes: profile.foodSupprimes, foodLog: profile.foodLog, savedFoods: profile.savedFoods, nutRev: profile.nutRev, nutOps: profile.nutOps, hiddenFoods: profile.hiddenFoods };
     const zoneAvant = (existing.recupNut === undefined) ? undefined : JSON.stringify(existing.recupNut);   // la zone de récupération fait partie de l'état d'avant (une erreur tardive peut l'avoir déjà touchée)
     const compat = _nutCompatibilite_(body, _requestId);
     if (compat.volet && _nutSuspendu_()) {
@@ -2224,10 +2257,13 @@ function handleSaveProfile_(body) {
       if (compat.volet && !compat.ok) Logger.log('[FT COMPAT] ancien client toléré : version ' + compat.version + ', compte sans état v3 — chemin d\'avant (remplacement avec copie de sécurité)');
       try {
         nutSortie = _nutSynchroniser_(body, profile, existing, email, _requestId);
+        /* 🙈 D-141 — LES MASQUAGES SONT DU VOLET NUTRITION (décision de Michel, 03/11/2026) : ils ne se FUSIONNENT que porte ouverte (jamais pour un envoi suspendu ou refusé, jamais par un ancien appareil sur un compte à état v3),
+           sous le même verrou, et sont RESTITUÉS avec le reste du volet si une erreur survient (instantané `nutAvant`). Fusion (jamais un écrasement) : un champ absent ne change rien — voir `_nutMasquesFusion_`. */
+        if (body.hiddenFoods !== undefined) profile.hiddenFoods = _nutMasquesFusion_(profile.hiddenFoods, body.hiddenFoods);
         nutMarque = compat.volet && compat.ok && !nutSortie.refus;       // le volet a été APPLIQUÉ par un client v3 (même sans rien changer) : le compte a un état v3
       } catch (nutErr) {
         /* ⚙️ NUT-SYNC-02 phase A — CONFINEMENT. Avant : une erreur imprévue du bloc Nutrition (autre qu'une erreur métier nommée) était RELANCÉE → `SERVER_ERROR`, RIEN n'était écrit, séances, records et pesées compris. Maintenant : quelle que soit
-           l'erreur, l'état d'avant du volet Nutrition est restitué (les cinq champs ET la zone de récupération), le reste du profil est enregistré, et la réponse dit `NUT_INTERNE` (réessayable, `profilEnregistre:true`).
+           l'erreur, l'état d'avant du volet Nutrition est restitué (les six champs — masquages D-141 compris — ET la zone de récupération), le reste du profil est enregistré, et la réponse dit `NUT_INTERNE` (réessayable, `profilEnregistre:true`).
            Réserve écrite : « sous réserve de réussite du stockage commun » — si l'écriture du compte elle-même échoue, tout échoue (une seule propriété, un seul point de validation). */
         nutEchec = (nutErr instanceof NutSyncError) ? nutErr : new NutSyncError('NUT_INTERNE', 'Erreur interne de la synchronisation Nutrition.', {});
         if (!(nutErr instanceof NutSyncError)) Logger.log('[FT NUT_INTERNE] ' + String(nutErr && nutErr.message || nutErr).replace(/[^\s@]+@[^\s@]+/g, '[adresse]').slice(0, 160));
@@ -4920,8 +4956,15 @@ function handleAdminRestore_(body) {
   }
   const email = (body.email || '').toLowerCase().trim();
   if (!email) return json_({status:'error', error:'email required'});
-  const data = body.data;
+  let data = body.data;
   if (!data || !data.profile) return json_({status:'error', error:'data.profile required'});
+
+  /* 🙈 D-141 minimal : une sauvegarde d'AVANT ne fait pas revenir un aliment masqué depuis. Les masquages du compte (dont `*`) sont
+     FUSIONNÉS à ceux de la sauvegarde (le plus tard gagne, un envoi plus court ou absent ne retire rien). Sur une COPIE du profil :
+     le fichier de sauvegarde reçu n'est pas modifié. Les autres champs (journal, favoris…) suivent le chemin de restauration d'avant. */
+  const _avant = loadUserData_(email);
+  const _masques = _nutMasquesFusion_(_avant && _avant.profile && _avant.profile.hiddenFoods, data.profile.hiddenFoods);
+  if (_masques.length) data = Object.assign({}, data, { profile: Object.assign({}, data.profile, { hiddenFoods: _masques }) });
 
   data.email = email;
   data.updatedAt = new Date().toISOString();
