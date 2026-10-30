@@ -435,10 +435,14 @@ module.exports.source = function (t, ROOT, fs, path) {
   const hors = appelants('_n2Reajouter');
   const RA2 = corps('_n2Reajouter'), AP = corps('_n2Apercu');
   const apObjet = /_n2Reajouter\([^;]*,\s*\{[^;]*\}\s*\)/.test(AP);
+  /* ↪️ 30/10/2026 (NUT-REF-HIST-02) : `_n2Reajouter` a désormais DEUX chemins qui écrivent — le groupe (en tête, garde « GROUPE_SANS_APERCU ») et la ligne seule (en queue). Le témoin porte sur
+     les DEUX : le PREMIER `if(apercu) return` précède le premier `_n2Enregistrer(`, ET le DERNIER `if(apercu) return` (celui de la ligne seule) précède le dernier `_n2Enregistrer(`.
+     Sans cela, la garde du groupe masquait un aperçu qui écrirait (mutation N18 survivante au 1ᵉʳ jet). */
   const iAp = RA2.search(/if\s*\(\s*apercu\s*\)\s*return\b/), iEnr = RA2.indexOf('_n2Enregistrer(');
+  const apAll = [...RA2.matchAll(/if\s*\(\s*apercu\s*\)\s*return\b/g)].map((x) => x.index), iApDern = apAll.length ? apAll[apAll.length - 1] : -1, iEnrDern = RA2.lastIndexOf('_n2Enregistrer(');
   t('B-NM6-C ② `_n2Reajouter` a exactement 3 appelants : _n2Apercu (l\'aperçu, qui ne peut pas écrire), quickAddFood, rejouerRepas',
-    JSON.stringify(hors) === JSON.stringify(['_n2Apercu', 'quickAddFood', 'rejouerRepas']) && apObjet && iAp > 0 && iEnr > iAp,
-    JSON.stringify({ hors: hors, apObjet: apObjet, iAp: iAp, iEnr: iEnr }));
+    JSON.stringify(hors) === JSON.stringify(['_n2Apercu', 'quickAddFood', 'rejouerRepas']) && apObjet && iAp > 0 && iEnr > iAp && apAll.length >= 2 && iEnrDern > iApDern,
+    JSON.stringify({ hors: hors, apObjet: apObjet, iAp: iAp, iEnr: iEnr, iApDern: iApDern, iEnrDern: iEnrDern }));
   /* ③ LA SEULE PORTE QUI LIT L'ÉCRAN pour en faire une LIGNE DU JOURNAL : `_n2EntreeEcran`, appelée par « Ajouter ».
      24/10 (NV2-FIAB, D-134) : un 2ᵉ appelant DÉCLARÉ, `majFavoriDepuisEcran` (« ⭐ Corriger ce favori ») — un geste DE l'écran,
      qui le lit par construction pour en faire un FAVORI, et n'écrit JAMAIS le journal (ni `_n2Enregistrer`, ni `S.foodLog`).
