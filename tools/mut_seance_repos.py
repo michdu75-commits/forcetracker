@@ -126,9 +126,13 @@ MUT = [
      [(LO, "// SEANCE-REPOS-01 : la nouvelle durée survit à une fermeture", "// SEANCE-REPOS-01 : durée")], 'OK'),
     ('M23 la pause n\'arrete plus le repos',
      [(LO, "    if(typeof stopRest==='function')stopRest();\n    persist();\n    _syncWktPauseUI();", "    persist();\n    _syncWktPauseUI();")], 'GARDE', 'C-REP-F5'),
+    # WORKOUT-CORE-01 (30/10/2026) : M24 et M28 RÉANCRÉES, même intention. La reprise n'installe plus deux intervalles
+    # (`restIv` à 250 ms + `_pillIv` à 500 ms) mais LE métronome unique via `_restArmer()` (CHR-03) : l'ancienne ancre n'existe
+    # plus. M24 retire donc l'armement (le dock est montré, rien ne tourne : la pilule ne s'affiche pas, C-REP-A3 rougit) ;
+    # M28 garde son geste (la reprise ne montre pas le dock), sur la ligne qui suit désormais `classList.add('show')`.
     ('M24 la reprise montre le dock sans relancer le tick',
-     [(LO, "  if(restIv)clearInterval(restIv);\n  restIv=setInterval(_restTick,250);\n  if(_pillIv)clearInterval(_pillIv);\n  _pillIv=setInterval(_updPill,500);\n  return true;",
-       "  if(_pillIv)clearInterval(_pillIv);\n  _pillIv=setInterval(_updPill,500);\n  return true;")], 'GARDE', 'C-REP-A3'),
+     [(LO, "  _restArmer();                  // … LE métronome (1 s, calé sur l'heure réelle de ce repos) — armé avant l'affichage, que la pastille lit\n",
+       "")], 'GARDE', 'C-REP-A3'),
     ('M25 [deguisee] le prereglage est range AVANT sa nouvelle duree',
      [(LO, "  restTot=sec;_restBeeped=false;_countdownSecs=new Set();\n" + MEM_PRESET, MEM_PRESET + "  restTot=sec;_restBeeped=false;_countdownSecs=new Set();\n")], 'GARDE', 'C-REP-D4'),
     ('M26 [deguisee] +15 s est range AVANT le recalcul du depart',
@@ -136,7 +140,7 @@ MUT = [
     ('M27 [deguisee] une valeur douteuse n\'est plus effacee (on sort sans stopRest)',
      [(LO, "  if(!lisible||!_wktEnCours()){ stopRest(); return false; }", "  if(!lisible||!_wktEnCours()){ return false; }")], 'GARDE', 'C-REP-G2'),
     ('M28 la reprise ne montre pas le dock',
-     [(LO, "  const bar=document.getElementById('rest-bar'); if(bar) bar.classList.add('show');\n  updRest(); _updPill();", "  updRest(); _updPill();")], 'GARDE', 'C-REP-A4'),
+     [(LO, "  const bar=document.getElementById('rest-bar'); if(bar) bar.classList.add('show');\n  _restVu.clear();", "  _restVu.clear();")], 'GARDE', 'C-REP-A4'),
     # D-102 : « au-dela de 15 min » n'est plus un texte FAUX (revue de l'avenant) — M29 remet donc une vraie mauvaise duree
     ('M29 l\'aide « ? » de Seance dit « 10 min apres la fin »',
      [(SC, "15 min après la fin, il s\\'arrête seul. <b>L\\'app se ferme", "10 min après la fin, il s\\'arrête seul. <b>L\\'app se ferme")], 'GARDE', 'C-REP-S5'),

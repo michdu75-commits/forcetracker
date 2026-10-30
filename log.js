@@ -280,7 +280,11 @@ document.addEventListener('visibilitychange',()=>{
      l'app depuis l'écran Coach ou Accueil ne rattrapait rien, et il fallait attendre le tick
      suivant — jusqu'à 250 ms de trop, mais surtout : c'est ce même chemin qui ouvre désormais
      le décompte quand les minuteurs ont été gelés. */
-  if(restIv)_restTick();
+  /* ⏱️ WORKOUT-CORE-01 (30/10/2026) : UN SEUL `_restTick()` sur l'heure réelle — aucun tic manqué n'est rejoué, donc aucune
+     rafale de vibrations ; seule la seconde en cours peut vibrer, et la fin une seule fois (`_restBeeped`). Puis on RECALE le
+     métronome : iOS l'a gelé en arrière-plan et sa phase au réveil n'est plus garantie. Si ce tic a arrêté le repos (15 min de
+     dépassement), `_restArmer` ne pose rien. */
+  if(restIv){ _restTick(); _restArmer(); }
 });
 
 /* ⏱️ LE CHRONO DÉMARRE À LA 1ʳᵉ SÉRIE VALIDÉE, PLUS À L'OUVERTURE (14/08/2026) ──────────
@@ -5582,7 +5586,23 @@ function _showSaveError(){
 // ─── REST TIMER ──────────────────────────────────────────────
 // Source de vérité : restStartTs (timestamp) + restTot (durée)
 let restIv=null,restTot=120,restStartTs=0;
-let _pillIv=null; // interval dédié pill hors écran séance
+/* ⏱️ WORKOUT-CORE-01 · CHR-03 (30/10/2026, GO de développement — docs/WORKOUT-CORE-01.md) — UN SEUL MÉTRONOME DE REPOS.
+   Avant : deux intervalles par repos — `restIv` à 250 ms (`_restTick`) et `_pillIv` à 500 ms (`_updPill`, qui refaisait ce que
+   `_restTick` faisait déjà) : ~6 réveils par seconde pour un affichage qui ne change qu'une fois par seconde (le temps restant
+   est un nombre ENTIER de secondes). `_pillIv` est supprimé ; `restIv` est le SEUL minuteur du repos, à 1 s, posé et retiré par
+   `_restArmer` / `_restDesarmer` et nulle part ailleurs (R2). ⛔ Le temps restant vient toujours de `_restLeft()` — l'horloge —,
+   jamais d'un compte de tics : un tic manqué (iPhone en veille) ne décale rien et n'est jamais « rattrapé ».
+   ⚠️ LE CALAGE (arbitrage du 30/10) : à 250 ms chaque seconde entière était lue quatre fois ; à 1 s, une seule. Or le tic tombait
+   PILE sur le changement de seconde (`restStartTs` est posé juste avant l'intervalle) : 1 ms d'avance de la minuterie sur
+   `Date.now()` suffit à lire la seconde d'avant — chiffre sauté ou doublé, vibration 5…1 manquée. Le tic est donc calé sur
+   « changement de seconde + 100 ms » : un armement PONCTUEL attend ce moment, puis installe l'intervalle (99 ms d'avance et
+   899 ms de retard tolérés). ⛔ Ce n'est PAS une garantie contre iOS, qui gèle les minuteurs d'une app en arrière-plan : au
+   retour, `visibilitychange` relit l'horloge et recale (voir l'écouteur, plus haut).
+   ⭐ Pendant le calage (moins d'une seconde), `restIv` porte l'armement ponctuel (`_restIvCale` le dit, pour le nettoyer avec
+   `clearTimeout`) : « `restIv` non nul ⇔ un repos est armé » reste vrai — la pastille, `renderLog`, le retour au premier plan
+   et les bancs le lisent ainsi depuis toujours. Le jeton `_restGen` rend périmé tout armement remplacé ou arrêté entre-temps. */
+let _restIvCale=false;   // true tant que `restIv` porte l'armement ponctuel du calage ; false quand c'est l'intervalle de 1 s
+let _restGen=0;          // jeton : change à chaque armement et à chaque arrêt — un rappel d'une autre génération ne fait rien
 let _restBeeped=false;
 let _restDoneCb=null;
 let _countdownSecs=new Set(); // secondes 5..1 déjà vibrées
@@ -5594,6 +5614,37 @@ function _restLeft(){
   if(!restStartTs)return 0;
   return restTot-Math.floor((Date.now()-restStartTs)/1000);
 }
+// ⏱️ WORKOUT-CORE-01 — retire le métronome, qu'il soit encore en calage (armement ponctuel) ou installé (intervalle).
+function _restDesarmer(){
+  _restGen++;                                                // tout rappel déjà programmé devient périmé
+  if(restIv){ if(_restIvCale) clearTimeout(restIv); else clearInterval(restIv); }
+  restIv=null; _restIvCale=false;
+}
+// ⏱️ WORKOUT-CORE-01 — (re)pose le métronome du repos en cours : d'abord un armement ponctuel jusqu'au prochain
+// « changement de seconde + 100 ms », puis l'intervalle de 1 s. Appelé là où le repos commence (`startRest`), reprend
+// (`_reposReprendre`), change de phase (`addRT`, `applyRestEdit`) et au retour au premier plan. Jamais d'armement sans repos.
+function _restArmer(){
+  _restDesarmer();                                           // aucun doublon : l'ancien minuteur part toujours d'abord
+  if(!restStartTs) return;                                   // pas de repos (ou arrêté) : rien à armer
+  const gen=_restGen;
+  const pos=((Date.now()-restStartTs)%1000+1000)%1000;       // ms écoulées dans la seconde en cours (≥ 0 même quand « +15 s » a mis le départ dans le futur)
+  _restIvCale=true;
+  restIv=setTimeout(function _restCaler(){
+    if(gen!==_restGen) return;                               // périmé : un arrêt ou un autre armement est passé entre-temps
+    restIv=null; _restIvCale=false;                          // l'armement ponctuel est consommé
+    if(!restStartTs) return;
+    restIv=setInterval(_restTick,1000);
+    _restTick();
+  },(1100-pos)%1000);
+}
+/* ✍️ WORKOUT-CORE-01 — ON N'ÉCRIT À L'ÉCRAN QUE CE QUI CHANGE. Le dock, la pastille et le décompte final réécrivaient chacune
+   de leurs valeurs à chaque tic (même texte, même couleur, même largeur) : chaque écriture invalide le style, et un texte
+   réécrit remplace son nœud. `_restVu` garde la DERNIÈRE valeur écrite par élément et par propriété (une quinzaine de clés
+   fixes : pas de fuite). ⚠️ Il est vidé là où ces éléments sont remis à zéro par d'autres lignes (`_stopRestTimerOnly`,
+   ouverture et fermeture du décompte, reprise au démarrage) : sinon il croirait l'écran à jour alors qu'il ne l'est plus. */
+const _restVu=new Map();
+function _vuTexte(el,cle,v){ if(!el||_restVu.get(cle)===v) return; _restVu.set(cle,v); el.textContent=v; }
+function _vuStyle(el,cle,prop,v){ if(!el||_restVu.get(cle)===v) return; _restVu.set(cle,v); el.style[prop]=v; }
 /* ⏹️ 15 MIN APRÈS LA FIN THÉORIQUE DU REPOS, IL EST ABANDONNÉ — APP OUVERTE OU FERMÉE (décision de Michel, 22/10/2026
    après-midi — SEANCE-REPOS-01, docs/SEANCE-REPOS-01.md).
    Repos de 2 min parti à 15 h 00 : décompte jusqu'à 15 h 02, dépassement affiché en négatif jusqu'à 15 h 17, abandonné et
@@ -5635,12 +5686,13 @@ function _updPill(){
   if(left<=-REST_DEPASSEMENT_MAX){pill.classList.remove('show');return;}
   const _dep=left<0, _abs=Math.abs(left);
   const m=Math.floor(_abs/60),s=_abs%60;
-  pillTime.textContent=(_dep?'+':'')+`${m}:${s.toString().padStart(2,'0')}`;
+  // WORKOUT-CORE-01 : mêmes valeurs qu'avant, écrites seulement quand elles changent (`_vuTexte` / `_vuStyle`).
+  _vuTexte(pillTime,'pill:txt',(_dep?'+':'')+`${m}:${s.toString().padStart(2,'0')}`);
   const pct=Math.max(0,Math.min(100,left/restTot*100));
-  pillFill.style.width=pct+'%';
+  _vuStyle(pillFill,'pill:w','width',pct+'%');
   const c=_dep?'var(--gold)':pct>50?'var(--sea)':pct>20?'var(--gold)':'var(--red)';   // D-085 : Cobalt pendant le repos
-  pillFill.style.background=c;
-  pill.style.borderColor=pct>50?'var(--sea-a2)':pct>20?'rgba(255,214,0,.4)':'rgba(255,106,115,.7)';
+  _vuStyle(pillFill,'pill:bg','background',c);
+  _vuStyle(pill,'pill:bd','borderColor',pct>50?'var(--sea-a2)':pct>20?'rgba(255,214,0,.4)':'rgba(255,106,115,.7)');
 }
 
 function _restTick(){
@@ -5661,7 +5713,10 @@ function _restTick(){
      LE REMÈDE : on ouvre le décompte dès qu'on se trouve DANS la fenêtre des 10 dernières
      secondes, quel que soit le tick qui nous y amène. `_cdownActive` empêche déjà la réouverture.
      ⚠️ On n'ouvre pas au-delà de 0 : un repos déjà terminé n'affiche pas un « GO » en retard —
-     le dépassement se lit sur le chrono en négatif (ft-v851), qui est le bon repère. */
+     le dépassement se lit sur le chrono en négatif (ft-v851), qui est le bon repère.
+     ⏱️ WORKOUT-CORE-01 (30/10/2026) : « le tick est à 250 ms, la valeur 10 passe quatre fois » n'est plus vrai — le tic est
+     à 1 s, calé sur « changement de seconde + 100 ms » (`_restArmer`) : chaque seconde passe UNE fois. Cette fenêtre reste
+     donc la garantie, et elle n'a jamais dépendu de la cadence. */
   if(left<=10&&left>0&&!_cdownActive&&restTot>10)_showRestCountdown();
   if(_cdownActive)_updateRestCountdown();
   // Décompte 5..1 : vibrations courtes (aucun son)
@@ -5768,10 +5823,17 @@ function _buildCdownTicks(){
     svg.appendChild(ln);
   }
 }
+/* ✍️ WORKOUT-CORE-01 — les 44 traits sont construits UNE fois (`_buildCdownTicks`, garde `data-ticks`) ; ils étaient en revanche
+   REPEINTS tous les 44 à chaque tic — et, après le GO, encore 44 à chaque tic tant que l'écran n'est pas touché (jusqu'à 15 min).
+   On ne repeint plus que les traits qui changent d'état. `_cdownLit` = le nombre de traits allumés À L'ÉCRAN ; -1 = inconnu
+   (ouverture du décompte) → tout repeindre une fois. Même dessin à chaque instant, mêmes couleurs (`_cdownTickColor`). */
+let _cdownLit=-1;
 function _paintCdownTicks(litCount){
   const svg=document.getElementById('rcd-svg');if(!svg)return;
   const ln=svg.querySelectorAll('line');
-  for(let i=0;i<ln.length;i++) ln[i].setAttribute('stroke', i<litCount?_cdownTickColor(i):'rgba(255,255,255,.09)');
+  const de=_cdownLit<0?0:Math.min(_cdownLit,litCount), a=_cdownLit<0?ln.length:Math.max(_cdownLit,litCount);
+  for(let i=de;i<a&&i<ln.length;i++) ln[i].setAttribute('stroke', i<litCount?_cdownTickColor(i):'rgba(255,255,255,.09)');
+  _cdownLit=litCount;
 }
 function _showRestCountdown(){
   if(_cdownActive)return;
@@ -5795,6 +5857,7 @@ function _showRestCountdown(){
      ft-v1073 : un état qui survit à son geste ment sur le suivant.* On le remet ici, à côté du
      fond, qui est là pour la même raison. */
   const _lab=document.getElementById('rcd-label'); if(_lab)_lab.textContent='';
+  _restVu.clear(); _cdownLit=-1;   // WORKOUT-CORE-01 : l'écran vient d'être remis à zéro à la main — tout réécrire au 1ᵉʳ rendu
   ov.style.display='block';
   _updateRestCountdown();
 }
@@ -5842,16 +5905,17 @@ function _updateRestCountdown(){
        s'écrit **dessous**, en petit. On ajoute une information, on n'en retire aucune.
        ⛔ RIEN PENDANT LA 1ʳᵉ SECONDE : afficher « +0 s » à l'instant du GO serait du bruit sur
        le seul moment où l'écran doit être lisible d'un coup d'œil. */
-    if(labelEl){labelEl.textContent="C'EST REPARTI";labelEl.style.color='rgba(255,255,255,.9)';}
-    if(numEl){numEl.textContent='GO';numEl.style.fontSize='80px';numEl.style.color='#fff';}
     /* ⚠️ IL VIT DANS LE LIBELLÉ, PAS DANS UN ÉLÉMENT À PART — trouvé À LA CAPTURE, invisible à
        tout test de chaîne : glissé après le « GO », il tombait **à gauche, par-dessus l'anneau**.
        Le texte était correct, sa POSITION ne l'était pas. Dans la ligne qui dit déjà « C'EST
        REPARTI », il est centré par construction et il se lit d'un trait. *Un élément de moins,
        c'est aussi une mise en page de moins à se tromper.* */
+    /* ✍️ WORKOUT-CORE-01 : le libellé était écrit deux fois par tic (« C'EST REPARTI », puis avec la durée) et le « GO » réécrit
+       à chaque tic tant que l'écran reste affiché. Même texte final, mêmes styles — écrits une fois, puis seulement s'ils changent. */
     const dep=-left;                                  // secondes écoulées depuis le GO
-    if(labelEl) labelEl.textContent = dep>=1
-      ? ("C'EST REPARTI · +"+_fmtDepassement(dep)) : "C'EST REPARTI";
+    _vuTexte(labelEl,'rcd-label:txt', dep>=1 ? ("C'EST REPARTI · +"+_fmtDepassement(dep)) : "C'EST REPARTI");
+    _vuStyle(labelEl,'rcd-label:col','color','rgba(255,255,255,.9)');
+    _vuTexte(numEl,'rcd-num:txt','GO'); _vuStyle(numEl,'rcd-num:fs','fontSize','80px'); _vuStyle(numEl,'rcd-num:col','color','#fff');
     _paintCdownTicks(0);
     return;
   }
@@ -5861,7 +5925,9 @@ function _updateRestCountdown(){
   const color=left<=3?'#FF3B30':left<=6?'#FF9500':'#28E070';
   // Police adaptée au nombre de chiffres : « 10 » (2 chiffres) plus petit pour
   // ne pas déborder sur l'anneau (retour Christophe) ; 1→9 restent bien gros.
-  if(numEl){numEl.textContent=left;numEl.style.fontSize=(left>=10?'82px':'110px');numEl.style.color=color;}
+  _vuTexte(numEl,'rcd-num:txt',String(left));
+  _vuStyle(numEl,'rcd-num:fs','fontSize',(left>=10?'82px':'110px'));
+  _vuStyle(numEl,'rcd-num:col','color',color);
 }
 // Tap sur l'overlay ou bouton Passer :
 // - pendant le décompte (avant 0) → skip anticipé = fin immédiate du repos (timer + pastille effacés)
@@ -5885,6 +5951,7 @@ function _closeRestCountdown(){
   const numEl=document.getElementById('rcd-num');
   if(labelEl){labelEl.textContent='REPRISE DANS';labelEl.style.color='';}
   if(numEl){numEl.style.fontSize='110px';numEl.style.color='#FF6C00';}
+  _restVu.clear();   // WORKOUT-CORE-01 : écran remis à zéro à la main — la mémoire des valeurs écrites ne vaut plus
   // Callback superset différé (avance à l'exo suivant) — exécuté à la fermeture de l'écran GO
   const _cb=_cdownPendingCb;_cdownPendingCb=null;
   if(_cb)try{_cb();}catch(e){}
@@ -5903,10 +5970,8 @@ function startRest(sec){
      seulement quand plusieurs séries d'un superset attendent leur question (24/09/2026). */
   _rirCible=Array.isArray(_rirPending)?(_rirPending.length>1?_rirPending:(_rirPending[0]||null)):_rirPending;
   _rirPending=null;
+  _restArmer();                  // WORKOUT-CORE-01 : LE métronome du repos (1 s, calé) — armé avant le 1ᵉʳ affichage, que la pastille lit
   updRest();_updPill();_renderRirRow();
-  restIv=setInterval(_restTick,250);
-  if(_pillIv)clearInterval(_pillIv);
-  _pillIv=setInterval(_updPill,500);
   _reposMemoriser();             // SEANCE-REPOS-01 : le repos est rangé dans la séance active (il survit à une fermeture)
   setTimeout(_dockDegager,80);   // UX SÉANCE : affichage seul — la série suivante ne reste pas sous le dock
 }
@@ -5952,7 +6017,8 @@ function updRest(){
   const dep=reste<0;
   const abs=Math.abs(reste);
   const m=Math.floor(abs/60),s=abs%60;
-  timeEl.textContent=(dep?'+':'')+`${m}:${s.toString().padStart(2,'0')}`;
+  // ✍️ WORKOUT-CORE-01 : chaque valeur ci-dessous est écrite seulement quand elle change (`_vuTexte` / `_vuStyle`) — mêmes valeurs.
+  _vuTexte(timeEl,'rest-time:txt',(dep?'+':'')+`${m}:${s.toString().padStart(2,'0')}`);
   /* 🏷️ LE « + » DOIT DIRE CE QU'IL EST (ft-v1030) — sans libellé, un chrono qui repart à
      « +0:12 » se lit comme un bug, ou pire comme un retard qu'on serait en train de prendre.
      ⛔ ET LE MOT COMPTE : « au-delà de ton repos max » informe ; « tu as dépassé » accuse. On
@@ -5966,28 +6032,28 @@ function updRest(){
      aurait tous effacés — en silence, sans erreur. *Un élément d'écran a un propriétaire ; on
      n'écrit pas dans celui d'un autre* (R2). */
   const overEl=document.getElementById('rest-over');
-  if(overEl) overEl.textContent = dep ? 'au-delà de ton repos max' : '';
+  _vuTexte(overEl,'rest-over:txt', dep ? 'au-delà de ton repos max' : '');
   // La barre, elle, reste bornée à 0 : une largeur négative n'a pas de sens.
   const pct=Math.max(0,Math.min(100,reste/restTot*100));
-  fillEl.style.width=pct+'%';
+  _vuStyle(fillEl,'rest-fill:w','width',pct+'%');
   /* 🎨 D-085 (Michel, 17/10) : le repos QUI COURT est en bleu séance (Cobalt) ; les paliers de fin (or, rouge) et le
      dépassement (or) sont inchangés — ils disent le temps qui reste, pas la séance. */
   const c=dep?'var(--gold)':pct>50?'var(--sea)':pct>20?'var(--gold)':'var(--red)';
   const bc=dep?'rgba(255,214,0,.45)':pct>50?'var(--sea-a2)':pct>20?'rgba(255,214,0,.3)':'rgba(255,45,85,.4)';
-  timeEl.style.color=c;fillEl.style.background=c;if(bar)bar.style.borderColor=bc;
+  _vuStyle(timeEl,'rest-time:col','color',c); _vuStyle(fillEl,'rest-fill:bg','background',c); _vuStyle(bar,'rest-bar:bd','borderColor',bc);
   /* 🏋️ UX SÉANCE (16/10) — le dock montre la même progression sur un ANNEAU, et le total réglé à côté de « Repos ».
      Affichage seul : mêmes `pct`, `c` et `restTot` que la barre ci-dessus (rien n'est recalculé ailleurs, R2). */
   const rg=document.getElementById('rest-ring');
-  if(rg){ rg.style.strokeDashoffset=String(100-pct); rg.style.stroke=c; }
+  _vuStyle(rg,'rest-ring:off','strokeDashoffset',String(100-pct)); _vuStyle(rg,'rest-ring:st','stroke',c);
   const tt=document.getElementById('rest-tot');
-  if(tt){ const a=Math.max(0,Math.round(restTot)||0); tt.textContent=' · '+Math.floor(a/60)+':'+String(a%60).padStart(2,'0'); }
+  if(tt){ const a=Math.max(0,Math.round(restTot)||0); _vuTexte(tt,'rest-tot:txt',' · '+Math.floor(a/60)+':'+String(a%60).padStart(2,'0')); }
 }
 
 // Arrête chrono + barre + pastille SANS fermer l'overlay décompte (utilisé au GO,
 // où l'overlay doit rester affiché — GO + flash — jusqu'au tap/Passer)
 function _stopRestTimerOnly(){
-  clearInterval(restIv);restIv=null;
-  clearInterval(_pillIv);_pillIv=null;
+  _restDesarmer();               // WORKOUT-CORE-01 : le métronome part, qu'il soit en calage ou installé (plus de `_pillIv`)
+  _restVu.clear();               // … et la mémoire des valeurs écrites : les lignes ci-dessous remettent l'écran à zéro
   restStartTs=0;
   _restBeeped=false;_restDoneCb=null;_countdownSecs=new Set();
   const bar=document.getElementById('rest-bar');
@@ -6074,11 +6140,9 @@ function _reposReprendre(){
   _restBeeped=_restLeft()<=0;                                   // déjà fini : ni vibration ni écran GO en retard
   _countdownSecs=new Set();
   const bar=document.getElementById('rest-bar'); if(bar) bar.classList.add('show');
+  _restVu.clear();               // WORKOUT-CORE-01 : écran neuf après un redémarrage — tout réécrire au 1ᵉʳ rendu
+  _restArmer();                  // … LE métronome (1 s, calé sur l'heure réelle de ce repos) — armé avant l'affichage, que la pastille lit
   updRest(); _updPill();
-  if(restIv)clearInterval(restIv);
-  restIv=setInterval(_restTick,250);
-  if(_pillIv)clearInterval(_pillIv);
-  _pillIv=setInterval(_updPill,500);
   return true;
 }
 let _afTimer=null;
@@ -6210,6 +6274,7 @@ function addRT(s){
   restStartTs=Date.now()-(restTot-newLeft)*1000;
   _reposMemoriser();             // SEANCE-REPOS-01 : −15 s / +15 s survivent à une fermeture
   updRest();
+  _restArmer();                  // WORKOUT-CORE-01 : le départ a bougé, donc les changements de seconde aussi — on recale le tic
 }
 // ⚠️ « Skip » doit HONORER l'avance en attente, pas la jeter (ft-v825). `stopRest()` remet
 // `_restDoneCb` à null : quelqu'un qui écourte son repos restait donc bloqué sur l'exercice
@@ -6241,6 +6306,7 @@ function applyRestEdit(){
     _reposMemoriser();           // SEANCE-REPOS-01 : « Régler » survit à une fermeture
     _closeRestCountdown();
     updRest();_updPill();
+    _restArmer();                // WORKOUT-CORE-01 : nouveau départ, nouveaux changements de seconde — on recale le tic
   }
   if(_restEx){S.exRestPref=S.exRestPref||{};S.exRestPref[_restEx]=total;persist();}
   _highlightRestPreset(total);

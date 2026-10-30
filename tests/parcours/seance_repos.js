@@ -70,7 +70,11 @@ async function ecran(t, b, PORT) {
   const nettoyer = X => X.pg.evaluate(() => { document.querySelectorAll('.overlay.open').forEach(o => o.classList.remove('open'));
     const ob = document.getElementById('onboarding'); if (ob) ob.style.display = 'none'; });
   const versSeance = async X => { await X.pg.evaluate(() => { goScreen('log', document.getElementById('nb-log')); renderLog(); }); await X.pg.waitForTimeout(250); };
-  const heure = async (X, t) => { await X.pg.clock.setFixedTime(new Date(t)); await X.pg.waitForTimeout(450); };   // ≥ un tick (250 ms)
+  /* ⏱️ WORKOUT-CORE-01 (30/10/2026) : l'attente couvre UN tic du métronome. Il est passé de 250 ms à 1 s (CHR-03 : un seul
+     minuteur, calé sur « changement de seconde + 100 ms ») — 450 ms ne garantissaient plus qu'un tic ait eu lieu. 1 250 ms = un
+     tic + 250 ms de marge. Seule l'ATTENTE change : chaque témoin lit toujours ce que le tic de l'app a produit (aucun appel
+     direct à `_restTick` ici, qui contournerait le minuteur qu'on veut éprouver). L'horloge reste simulée (`setFixedTime`). */
+  const heure = async (X, t) => { await X.pg.clock.setFixedTime(new Date(t)); await X.pg.waitForTimeout(1250); };   // ≥ un tic (1 s)
   // un « redémarrage » : la page repart de zéro (PWA tuée, rechargée) — on lit l'état AVANT tout geste, puis on va sur Séance
   const recharger = async (X, t) => { await X.pg.clock.setFixedTime(new Date(t)); await X.pg.reload(); await X.pg.waitForTimeout(1500);
     const auDemarrage = await lire(X); await nettoyer(X); await versSeance(X); return auDemarrage; };
