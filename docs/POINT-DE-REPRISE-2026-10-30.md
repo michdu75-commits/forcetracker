@@ -73,3 +73,37 @@ Données persistées ajoutées **0** · fichiers applicatifs touchés **1** (`ap
 2. **Périmètre de la frontière : `off` seulement.** Les fiches d'enseigne et CIQUAL non prouvées (table non chargée) restent re-notables ; si Michel veut la même règle pour elles, c'est une ligne dans `_n2FicheNonVerifiee`, avec un coût (fast-food, table CIQUAL hors ligne).
 3. **Pas de preuve en session** : une fiche OFF vue en ligne il y a une minute ne « prouve » pas la copie du journal (aucun cache) — la personne repasse par l'écran, qui la retrouve en ligne. Un cache mémoire de session serait un autre arbitrage (hors périmètre).
 4. À la publication : règle d'or 11 (point rouge, aide « ? », aide détaillée, diapo du Guide, pop-up probable : le geste « + Ajouter » d'un produit scanné change).
+
+---
+
+## PUBLICATION `ft-v1263` — constat final (30/10/2026)
+
+**Statut : PUBLIÉ ; vérification PUBLIQUE non faite depuis le conteneur (cause : `CONNECT tunnel failed, 403`).**
+
+| | |
+|---|---|
+| Lots intégrés | B2 (lecture normalisée des masquages) · NUT-VERROU-01 · NUT-REF-HIST-01 + correctif final + derniers correctifs (enseigne, CIQUAL contredit par la table, priorité `preuve:true`, reprise OFF en ligne) |
+| Master avant → après | `3d8d49ef` (ft-v1262) → `922c5d51` (avance rapide ; filiation vérifiée, aucun autre lot) |
+| Version | `ft-v1263` (`sw.js`) ; règle d'or 11 : point rouge `nutri-fiche-preuve`, aide « ? », aide détaillée, diapo du Guide ; **pas de pop-up** |
+| Déploiement | Pages **n°1363 réussi** (10:23:42 → 10:24:16 UTC) ; aucun autre workflow lancé ; `Code.js`/Apps Script @193 inchangés |
+| Point de restauration | branche `backup-prod-ft-v1262-avant-b2-b3-2026-10-29` = `3d8d49ef` (vérifiée avant le push) ; repère de version `stable-ft-v1263-2026-10-30` (branche : le proxy git refuse le push d'un tag) |
+| D-031 | classique `tools/passe_valide.sh` : **8 243 ✅ / 0 ❌**, 4 conditions vertes, arbre `922c5d51` |
+
+### Ce que la passe complète a trouvé (et que les bancs ciblés ne voyaient pas)
+Première passe : **8 206 ✅ / 37 ❌**. Deuxième : **8 241 / 2**. Troisième : **8 243 / 0**. Causes, par famille — **aucun témoin supprimé ni affaibli** :
+1. **Code (R2)** : la preuve d'enseigne dupliquait la construction de la fiche (`_ref100` 11 occurrences au lieu de 10, origine `marque` comptée deux fois) → `_n2MarqueRef`, une seule construction, les 9 portes de `_ref100` restent 9.
+2. **Fixture impossible** : un « blanc de poulet » à 110 kcal pour 23 g P + 2,4 g L (plancher 113,6) — l'app refuse désormais toute fiche sous le plancher énergétique, même de source ; fixture à 120 kcal.
+3. **Témoins réécrits au verrou (GO de Michel, NUT-VERROU-01)** : plus de correction à la main sur une fiche identifiée (champs en lecture seule) ; le nom d'un produit identifié ne change plus ; enregistrer sans rien changer dit « Rien n'a changé ». Chaque réécriture porte son motif dans `tests/parcours/runner.js`.
+4. **Preuve de source SIMULÉE (substitut documenté)** pour 11 blocs du runner qui éprouvent la *mécanique* d'une reprise sur des lignes OFF du journal (bloc Quantité, pastille « la dernière fois », recalcul, douane) : `PREUVE_ON_JS` / `PREUVE_OFF_JS`, posée par bloc, jamais globale. **La frontière réelle n'est PAS simulée** : `nut_ref_hist` (50 témoins) et `nut_recette_mobile` (18 témoins, aucune preuve simulée).
+
+### Limites (à lire)
+- **Site public non vérifié** : ni version servie, ni fichiers chargés, ni parcours fonctionnel sur l'URL publique. À constater par Michel : À propos → `ft-v1263`, puis le parcours « + » sur un ancien produit scanné. **Recette iPhone physique : non faite** (la recette automatisée est un iPhone *simulé*).
+- **Impact réel non mesuré** : aucune donnée réelle lue. Les anciennes lignes Open Food Facts ne se re-notent plus d'un tap (« à vérifier » + recherche en ligne) ; hors ligne, saisie personnelle.
+- Environnement : Chromium 1194 (celui attendu) pour la passe classique ; mutations rejouées sur copies.
+- Hors lot, inchangés : D-141, A3, `Code.js`/Apps Script/Supabase, Séance, Milo, données réelles.
+
+### Retour arrière (en 1 ligne)
+`git push origin +backup-prod-ft-v1262-avant-b2-b3-2026-10-29:master` (force-push de master vers `3d8d49ef`, à ne faire que sur décision de Michel), puis vérifier que Pages redéploie et que l'App affiche `ft-v1262`. Les données locales ne changent pas de forme (aucune clé nouvelle) : un retour arrière ne perd rien.
+
+### Compteurs règle d'or 17 (tout le lot, code applicatif uniquement, mesuré par `git diff --numstat 3d8d49ef 922c5d51`)
+Données persistées ajoutées **0** · fichiers applicatifs touchés **7** (`app.js` +370/−50, `nutrition-v2.js` +57/−2, `state.js` +31, `coach.js` +2, `constants.js` +2, `screens.js` +2, `sw.js` +1/−1) · lignes ajoutées − retirées : **+465 / −53 = +412** · anciens chemins supprimés/fusionnés **3** (`fiab:'source'` seul comme « vérifiée » ; copie du journal comme juge de `differe` ; double construction de la fiche d'enseigne).
