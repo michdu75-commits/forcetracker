@@ -1,8 +1,10 @@
 /* ═══════════════════════════════════════════════════════════════════════════════
-   ⚡ WORKOUT-CORE-01 · DOM-01/02 — LE RENDU CIBLÉ D'UNE SÉRIE (témoins DOM-T01 → DOM-T12, DOM-R1, DOM-S1 → DOM-S3) —
+   ⚡ WORKOUT-CORE-01 · DOM-01/02 — LE RENDU CIBLÉ D'UNE SÉRIE (témoins DOM-T01 → DOM-T13, DOM-R1, DOM-S1 → DOM-S3) —
    Claude N°2 (Séance), 30/10/2026, GO de développement (docs/WORKOUT-CORE-01.md).
-   ⚠️ PRÉPARÉ, JAMAIS EXÉCUTÉ À L'ÉCRITURE (GO TESTS non accordé) : seule la syntaxe a été vérifiée. Le premier passage dira si une
-   attente ou un sélecteur est à reprendre — à lire comme tel, pas comme une régression de l'app.
+   ⚠️ PRÉPARÉ sans exécution (GO DÉVELOPPEMENT du 30/10) ; EXÉCUTÉ au GO TESTS du 30/10. Ajouté ce jour-là : la matrice de la saisie
+   validée (DOM-T13a → f, les cas 1, 3, 5, 7 et 10 de l'ordre ; 2, 4, 6, 8, 9 sont DOM-T09b, T09c, T09a, T02, T09a) avec un espion
+   sur `upSet`. Elle a trouvé un VRAI défaut du lot (corrigé dans log.js, mutations D17/D18) : après une frappe, quitter le champ
+   validé émettait un `change` de plus — même valeur, mais un 2ᵉ `upSet`, donc une sauvegarde complète de plus.
    Ce que les témoins CONDUISENT : la vraie app servie en local ; de vrais champs de série (clic, frappe au clavier, « Entrée ») ;
    la coche ✓ déclenchée par un clic PROGRAMMATIQUE quand il faut garder le focus dans un autre champ — c'est ce que fait un toucher
    sur iPhone (un bouton touché ne prend pas le focus) et que Chromium ne reproduit pas avec un vrai clic ; les boutons de réserve
@@ -13,9 +15,14 @@
    sur place comparée AU CARACTÈRE PRÈS à la carte que le rendu global produit juste après.
    Ce qu'ils NE COUVRENT PAS : le clavier réel de l'iPhone (simulé : le champ garde le focus et `kbd-serie` reste — la recette sur
    iPhone reste obligatoire), le dessin à l'écran (rien n'est capturé), Milo, les calories (aucune règle de calcul touchée).
-   Rouge attendu sur `e2b942f3` (chaque validation reconstruisait `#wkt-exs`) : DOM-T01, DOM-T02, DOM-T03, DOM-T04, DOM-T09b,
-   DOM-T11, DOM-T12, DOM-R1, DOM-S1 ; DOM-T09a si le navigateur n'enregistre pas le champ détruit (à mesurer, comme DOM-T05 et
-   DOM-T09c). Les autres sont des non-régressions (verts avant comme après).
+   Rouge sur `e2b942f3`, MESURÉ le 30/10 (chaque validation reconstruisait `#wkt-exs`) : DOM-S1, S2, S3, T01, T02, T03, T04, R1,
+   T09a, T09b, T09c, T09d, T10 et T11 (par leur seule clause « sur place »), T12, T13a, T13b, T13c, T13d, T13f. ⭐ Ce que la base
+   y MONTRE : la série enregistrée « faite » d'abord avec l'ANCIENNE valeur (T09a, T09b, T13a, T13c) ; l'écran qui affiche 60 quand
+   le modèle a 62,5 (T09a, T13a, T13c, T13d, T13f) ; un champ vidé qui écrit 0 répétition dans une série validée (T09c) ; la saisie
+   d'une série VOISINE enregistrée sans avoir été validée (T02 : 65 kg) ; deux valeurs changées sans événement simplement perdues
+   (T13b) ; un 1RM resté celui de 60 × 8 sur une série à 0 kg (T13d). Verts sur la base : les non-régressions (T05, T06, T07, T07b,
+   T08, T13e, T13e2 — la règle de la suggestion grise est celle d'avant) et DOM-T01b, VIDE par construction sur la base (les deux
+   rendus y sont globaux) : il ne juge que le chemin sur place.
    ═══════════════════════════════════════════════════════════════════════════════ */
 'use strict';
 
@@ -35,7 +42,7 @@ async function ecran(t, b, PORT) {
     const cx = await b.newContext({ serviceWorkers: 'block', viewport: { width: 390, height: opts.h || 844 }, timezoneId: 'Europe/Paris',
       locale: 'fr-FR', hasTouch: true });
     await cx.route(u => !/^http:\/\/localhost:/.test(String(u)), rt => rt.abort());
-    const init = Object.assign({}, BASE, { ft4_wkt: JSON.stringify(opts.wkt || WKT()) });
+    const init = Object.assign({}, BASE, { ft4_wkt: JSON.stringify(opts.wkt || WKT()) }, opts.sessions ? { ft4_sessions: JSON.stringify(opts.sessions) } : {});
     await cx.addInitScript(`(()=>{try{ if(sessionStorage.getItem('_wd'))return; sessionStorage.setItem('_wd','1'); localStorage.clear();
       const D=${JSON.stringify(init)}; Object.keys(D).forEach(k=>localStorage.setItem(k,D[k])); }catch(e){} })();`);
     /* espions, posés AVANT tout script de l'app : vibrations ; chaque sauvegarde de `ft4_wkt` (les séries telles qu'enregistrées) ;
@@ -108,7 +115,9 @@ async function ecran(t, b, PORT) {
         valide: S.wkt.exs[0].sets[1].done, rmVoisin: (document.getElementById('trm-0-3') || {}).textContent, rmAttendu: '~' + fmt(bz(65, 8)) }; });
     t('DOM-T02 ⭐ champ VOISIN en cours de saisie (série 4, « 65 » tapé, pas encore enregistré) puis ✓ de la série 2 : c\'est le MÊME objet, il garde le focus, son texte et son aperçu de 1RM — et le modèle ne l\'a pas lu (on n\'enregistre que ce qu\'on valide)',
       r2.memeObjet && r2.valeur === '65' && r2.modele === 60 && r2.valide && r2.rempl === 0 && r2.rmVoisin === r2.rmAttendu, _det(r2));
-    t('DOM-T03 ⭐ … la sélection posée dans ce champ (caractères 0 à 1) est intacte', r2.sel[0] === 0 && r2.sel[1] === 1, _det(r2.sel));
+    // la sélection d'un champ DÉTRUIT reste lisible sur l'objet détaché (vert à tort sur la base, mesuré le 30/10) : c'est le MÊME champ, encore actif
+    t('DOM-T03 ⭐ … la sélection posée dans ce champ (caractères 0 à 1) est intacte — sur le même champ, toujours actif', r2.memeObjet && r2.sel[0] === 0 && r2.sel[1] === 1,
+      _det({ sel: r2.sel, memeObjet: r2.memeObjet }));
     t('DOM-T04 ⭐ … aucune raison de fermer le clavier : le champ actif reste un champ de série et `kbd-serie` (barre du bas masquée) reste posée — simulation Chromium, PAS l\'iPhone',
       r2.kbd && r2.champSerie, _det({ kbd: r2.kbd, champSerie: r2.champSerie }));
 
@@ -184,6 +193,133 @@ async function ecran(t, b, PORT) {
       r7.egal && _det(r7.modele) === _det([[[60, 8, false, 'N'], [60, 8, false, 'N'], [62.5, 8, true, 'N'], [60, 8, false, 'N']], [[100, 7, true, 'N'], [100, 5, true, 'N'], [100, 5, false, 'N']]]),
       _det(r7));
     t('DOM-T09z aucune erreur de page (bloc B)', X.errs.length === 0, X.errs.slice(0, 2).join(' | '));
+    await X.cx.close();
+  }
+
+  /* ── B bis. LA MATRICE DE LA SAISIE VALIDÉE (GO TESTS du 30/10, cas 1, 3, 5, 10 ; les cas 2, 4, 6, 8, 9 sont en B et en A) ──
+     Chaque cas suit AUSSI les appels à `upSet` (espion posé après le chargement) et chaque sauvegarde de `ft4_wkt` : aucune valeur
+     perdue, remplacée en silence ou rangée dans une autre série ; aucune sauvegarde « faite » avec l'ancienne valeur ; rien d'écrit
+     APRÈS le geste (ni 0, ni suggestion) ; pas un `upSet` de plus que les champs réellement changés. */
+  {
+    const X = await ouvrir();
+    await X.pg.evaluate(() => { window.__up = []; const u = window.upSet;
+      window.upSet = function (ei, si, f, v) { window.__up.push([ei, si, f, String(v)]); return u.apply(this, arguments); }; });
+    // l'état complet d'une série + ce qu'on a vu passer, sans rien changer
+    const lire = (ei, si) => X.pg.evaluate(([ei, si]) => { const s = S.wkt.exs[ei].sets[si], d = JSON.parse(localStorage.getItem('ft4_wkt') || 'null');
+      const lig = document.getElementById('sr-' + ei + '-' + si), inps = lig ? lig.querySelectorAll('.sinp') : [];
+      return { kg: s.kg, reps: s.reps, done: !!s.done, rm1: s.rm1, disque: d && d.exs ? [d.exs[ei].sets[si].kg, d.exs[ei].sets[si].reps, !!d.exs[ei].sets[si].done] : null,
+        affiche: [inps[0] ? inps[0].value : null, inps[1] ? inps[1].value : null], up: window.__up.slice(),
+        // toutes les sauvegardes où CETTE série est « faite » : ses valeurs
+        faits: window.__snaps.filter(x => x[ei] && x[ei][si] && x[ei][si].done).map(x => [x[ei][si].kg, x[ei][si].reps]),
+        autres: S.wkt.exs.map((e, a) => e.sets.map((z, b) => (a === ei && b === si) ? null : [z.kg, z.reps, !!z.done])) }; }, [ei, si]);
+    const remise = () => X.pg.evaluate(() => { stopRest(); if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+      window.__up.length = 0; window.__snaps.length = 0; });
+    // ce que la séance DOIT contenir, mis à jour après chaque cas : une autre série qui bouge = une valeur rangée au mauvais endroit
+    const ATTENDU = [[[60, 8, false], [60, 8, false], [60, 8, false], [60, 8, false]], [[100, 5, false], [100, 5, false], [100, 5, false]]];
+    const autresIntacts = (r, ei, si) => _det(r.autres) === _det(ATTENDU.map((e, a) => e.map((z, b) => (a === ei && b === si) ? null : z)));
+
+    // cas 1 — la CHARGE modifiée juste avant ✓, champ encore actif (aucun `change`) : « 67,5 » sur 60 pré-rempli, série 1
+    await remise();
+    await X.pg.locator('#sr-0-0 .sinp').nth(1).click(); await X.pg.keyboard.type('67,5'); await X.pg.waitForTimeout(80);
+    const c1 = await X.pg.evaluate(async () => { const champ = document.querySelectorAll('#sr-0-0 .sinp')[1], up0 = window.__up.length;
+      document.querySelector('#sr-0-0 .chk').click(); await new Promise(r => setTimeout(r, 300));
+      return { avantGeste: up0, memeChamp: document.querySelectorAll('#sr-0-0 .sinp')[1] === champ, focusRendu: document.activeElement !== champ }; });
+    await X.pg.waitForTimeout(600);
+    const r1 = await lire(0, 0);
+    t('DOM-T13a ⭐ cas 1 — charge « 67,5 » tapée sur 60 pré-rempli, ✓ touché champ ACTIF (aucun `change`) : 67,5 enregistré dès la 1ʳᵉ sauvegarde « faite », 1RM recalculé, un seul `upSet` (kg), affichage « 67.5 », rien d\'autre ne bouge',
+      c1.avantGeste === 0 && r1.kg === 67.5 && r1.reps === 8 && r1.done && r1.rm1 === await X.pg.evaluate(() => bz(67.5, 8)) && r1.faits.length >= 1
+      && r1.faits.every(f => f[0] === 67.5 && f[1] === 8) && _det(r1.up) === _det([[0, 0, 'kg', '67,5']]) && _det(r1.disque) === _det([67.5, 8, true])
+      && r1.affiche[1] === '67.5' && c1.memeChamp && c1.focusRendu && autresIntacts(r1, 0, 0), _det({ c1, r1 }));
+    ATTENDU[0][0] = [67.5, 8, true];
+
+    // cas 3 (strict) — les DEUX champs changés SANS AUCUN événement (ni input, ni change : le pire cas), puis ✓ — série 2
+    await remise();
+    const c3 = await X.pg.evaluate(async () => { const [rp, kg] = document.querySelectorAll('#sr-0-1 .sinp');
+      rp.value = '6'; kg.focus(); kg.value = '70';
+      document.querySelector('#sr-0-1 .chk').click(); await new Promise(r => setTimeout(r, 300));
+      return { memes: document.querySelectorAll('#sr-0-1 .sinp')[0] === rp && document.querySelectorAll('#sr-0-1 .sinp')[1] === kg }; });
+    await X.pg.waitForTimeout(900);    // laisse passer un éventuel `change` tardif ou l'avance automatique (700 ms)
+    const r3 = await lire(0, 1);
+    t('DOM-T13b ⭐ cas 3 (strict) — répétitions ET charge changées sans aucun événement, puis ✓ : 6 × 70 enregistrés, 1RM recalculé, EXACTEMENT deux `upSet` (reps, kg), toute sauvegarde « faite » porte 6 × 70, rien n\'est écrit après le geste',
+      r3.kg === 70 && r3.reps === 6 && r3.done && r3.rm1 === await X.pg.evaluate(() => bz(70, 6)) && r3.faits.length >= 1 && r3.faits.every(f => f[0] === 70 && f[1] === 6)
+      && _det(r3.up.map(x => x.join('|')).sort()) === _det(['0|1|kg|70', '0|1|reps|6']) && _det(r3.disque) === _det([70, 6, true]) && _det(r3.affiche) === _det(['6', '70'])
+      && c3.memes && autresIntacts(r3, 0, 1), _det({ c3, r3 }));
+    ATTENDU[0][1] = [70, 6, true];
+
+    // cas 3 (clavier réel) — répétitions tapées, puis on touche le champ KG (le `change` des répétitions part), « 72,5 », ✓ — série 3
+    await remise();
+    await X.pg.locator('#sr-0-2 .sinp').nth(0).click(); await X.pg.keyboard.type('9');
+    await X.pg.locator('#sr-0-2 .sinp').nth(1).click(); await X.pg.keyboard.type('72,5'); await X.pg.waitForTimeout(80);
+    const upAvant = await X.pg.evaluate(() => window.__up.slice());
+    await X.pg.evaluate(async () => { document.querySelector('#sr-0-2 .chk').click(); await new Promise(r => setTimeout(r, 300)); });
+    await X.pg.waitForTimeout(900);
+    const r3c = await lire(0, 2);
+    t('DOM-T13c ⭐ cas 3 (clavier réel) — « 9 » puis « 72,5 » : les répétitions partent par leur `change` (comme avant), la charge par la validation — deux `upSet` en tout, aucun doublon, 9 × 72,5 enregistrés et affichés',
+      _det(upAvant) === _det([[0, 2, 'reps', '9']]) && _det(r3c.up) === _det([[0, 2, 'reps', '9'], [0, 2, 'kg', '72,5']]) && r3c.kg === 72.5 && r3c.reps === 9 && r3c.done
+      && r3c.faits.length >= 1 && r3c.faits.every(f => f[0] === 72.5 && f[1] === 9) && _det(r3c.disque) === _det([72.5, 9, true]) && _det(r3c.affiche) === _det(['9', '72.5'])
+      && autresIntacts(r3c, 0, 2), _det({ upAvant, r3c }));
+    ATTENDU[0][2] = [72.5, 9, true];
+
+    // cas 5 — « 0 » tapé sur une charge pré-remplie (60), ✓ champ actif : 0 est une valeur, pas une case vide — série 4
+    await remise();
+    await X.pg.locator('#sr-0-3 .sinp').nth(1).click(); await X.pg.keyboard.type('0'); await X.pg.waitForTimeout(80);
+    await X.pg.evaluate(async () => { document.querySelector('#sr-0-3 .chk').click(); await new Promise(r => setTimeout(r, 300)); });
+    await X.pg.waitForTimeout(900);
+    const r5 = await lire(0, 3);
+    const g5 = await X.pg.evaluate(() => { renderExBlocks(); const i = document.querySelectorAll('#sr-0-3 .sinp'); return [i[0] ? i[0].value : null, i[1] ? i[1].value : null]; });
+    t('DOM-T13d ⭐ cas 5 — « 0 » tapé sur 60 pré-rempli puis ✓ : la charge enregistrée est 0 (la valeur tapée), un seul `upSet`, aucun 1RM inventé, rien ne la remplace après (ni 60, ni suggestion) ; l\'affichage est celui du rendu global',
+      r5.kg === 0 && r5.reps === 8 && r5.done && r5.rm1 === undefined && _det(r5.up) === _det([[0, 3, 'kg', '0']]) && r5.faits.length >= 1 && r5.faits.every(f => f[0] === 0 && f[1] === 8)
+      && _det(r5.disque) === _det([0, 8, true]) && _det(r5.affiche) === _det(g5) && autresIntacts(r5, 0, 3), _det({ r5, global: g5 }));
+    ATTENDU[0][3] = [0, 8, true];
+
+    // cas 10 — DÉ-validation pendant une saisie active : série 1 (faite à 67,5), « 75 » tapé dans sa charge, ✓ touché champ ACTIF
+    await X.pg.evaluate(() => { _expandedEx = 0; renderExBlocks(); });
+    await remise();
+    await X.pg.locator('#sr-0-0 .sinp').nth(1).click(); await X.pg.keyboard.type('75'); await X.pg.waitForTimeout(80);
+    const c10 = await X.pg.evaluate(async () => { const champ = document.querySelectorAll('#sr-0-0 .sinp')[1], r0 = window.__rempl;
+      document.querySelector('#sr-0-0 .chk').click(); await new Promise(r => setTimeout(r, 300));
+      const s = S.wkt.exs[0].sets[0];
+      return { done: !!s.done, kgModele: s.kg, memeChamp: document.querySelectorAll('#sr-0-0 .sinp')[1] === champ, focus: document.activeElement === champ,
+        valeur: champ.value, rempl: window.__rempl - r0, up: window.__up.slice() }; });
+    await X.pg.evaluate(() => { document.activeElement.blur(); });    // la personne quitte le champ : son `change` part, comme avant
+    await X.pg.waitForTimeout(300);
+    const r10 = await lire(0, 0);
+    t('DOM-T13f ⭐ cas 10 — dé-validation PENDANT la saisie (« 75 » tapé, champ actif) : la série repasse « à faire », le champ n\'est ni détruit ni réécrit (focus, « 75 »), puis en le quittant 75 entre dans CETTE série — aucune perte, aucune autre série touchée',
+      !c10.done && c10.memeChamp && c10.focus && c10.valeur === '75' && c10.rempl === 0 && (c10.kgModele === 67.5 || c10.kgModele === 75)
+      && r10.kg === 75 && !r10.done && _det(r10.up) === _det([[0, 0, 'kg', '75']]) && _det(r10.disque) === _det([75, 8, false])
+      && autresIntacts(r10, 0, 0), _det({ c10, r10 }));
+    t('DOM-T13z aucune erreur de page (bloc B bis)', X.errs.length === 0, X.errs.slice(0, 2).join(' | '));
+    await X.cx.close();
+  }
+
+  /* ── B ter. LA SUGGESTION GRISE N'EST PAS UNE VALEUR TAPÉE (cas 7) — et un « 0 » tapé ne laisse pas la place à la suggestion ── */
+  {
+    const PREV = [{ date: '2026-10-27', startHour: 18, duration: 3600, vol: 1170,
+      exs: [{ name: DC, sets: [{ kg: 65, reps: 6, type: 'N', done: true }, { kg: 65, reps: 6, type: 'N', done: true }, { kg: 65, reps: 6, type: 'N', done: true }] }] }];
+    const vide = () => ({ kg: 0, reps: 0, type: 'N', done: false });
+    const X = await ouvrir({ wkt: WKT({ exs: [{ name: DC, sets: [vide(), vide(), vide()] }] }), sessions: PREV });
+    const r = await X.pg.evaluate(async () => {
+      window.__up = []; const u = window.upSet;
+      window.upSet = function (ei, si, f, v) { window.__up.push([ei, si, f, String(v)]); return u.apply(this, arguments); };
+      const attendre = ms => new Promise(r => setTimeout(r, ms));
+      const i0 = document.querySelectorAll('#sr-0-0 .sinp');
+      const o = { ph: [i0[0].placeholder, i0[1].placeholder], val: [i0[0].value, i0[1].value] };
+      document.querySelector('#sr-0-0 .chk').click(); await attendre(300);
+      const s0 = S.wkt.exs[0].sets[0];
+      o.c7 = { kg: s0.kg, reps: s0.reps, done: !!s0.done, rm1: s0.rm1, attenduRm: bz(65, 6), up: window.__up.slice(),
+        affiche: [...document.querySelectorAll('#sr-0-0 .sinp')].map(x => x.value) };
+      stopRest(); window.__up.length = 0;
+      return o; });
+    // « 0 » tapé dans la charge VIDE de la série 2 (suggestion 65 en gris), ✓ champ actif
+    await X.pg.locator('#sr-0-1 .sinp').nth(1).click(); await X.pg.keyboard.type('0'); await X.pg.waitForTimeout(80);
+    const z = await X.pg.evaluate(async () => { document.querySelector('#sr-0-1 .chk').click(); await new Promise(r => setTimeout(r, 300));
+      const s = S.wkt.exs[0].sets[1]; return { kg: s.kg, reps: s.reps, done: !!s.done, rm1: s.rm1, up: window.__up.slice(), autre: S.wkt.exs[0].sets[2] }; });
+    t('DOM-T13e ⭐ cas 7 — série au modèle VIDE, suggestion grise 6 × 65 (la dernière fois), ✓ sans rien taper : la règle d\'avant s\'applique telle quelle (6 × 65, 1RM) et la saisie validée n\'a appelé AUCUN `upSet` — une suggestion n\'est pas une valeur tapée',
+      _det(r.ph) === _det(['6', '65']) && _det(r.val) === _det(['', '']) && r.c7.kg === 65 && r.c7.reps === 6 && r.c7.done && r.c7.rm1 === r.c7.attenduRm
+      && r.c7.up.length === 0 && _det(r.c7.affiche) === _det(['6', '65']), _det(r));
+    t('DOM-T13e2 cas 5 + 7 — « 0 » tapé dans une charge VIDE suggérée à 65 : 0 est gardé (pas la suggestion) ; les répétitions non tapées prennent la suggestion (6), comme avant ; la série 3 n\'est pas touchée',
+      z.kg === 0 && z.reps === 6 && z.done && z.rm1 === undefined && _det(z.up) === _det([[0, 1, 'kg', '0']]) && z.autre.kg === 0 && z.autre.reps === 0 && !z.autre.done, _det(z));
+    t('DOM-T13y aucune erreur de page (bloc B ter)', X.errs.length === 0, X.errs.slice(0, 2).join(' | '));
     await X.cx.close();
   }
 
