@@ -167,6 +167,12 @@ async function rejouerPdj(pg) {
   if (!m) return false;
   const ok = await clic(pg, '#' + m[1] + ' button[onclick$="\'petitdej\')"]');
   await pg.waitForTimeout(350);
+  /* ↪️ ADAPTÉ LE 30/10/2026 (NUT-REF-HIST-02, arbitrage CTO) — le repas habituel est « tout ou rien » : un aliment à vérifier ne s'écrit plus d'office, la personne CHOISIT. Ce témoin vérifie
+     que le rejeu écrit les lignes d'origine, jamais l'écran d'ajout : il prend donc le choix « Ajouter seulement les autres » — le même résultat qu'avant, devenu un geste. */
+  if (ok) {
+    const aut = await pg.evaluate((id) => { const b = [...document.querySelectorAll('#' + id + ' .hab-choix button')].find((x) => /seulement/i.test(x.textContent)); if (!b) return false; b.click(); return true; }, m[1]);
+    if (aut) await pg.waitForTimeout(450);
+  }
   return ok;
 }
 const journal = (pg) => pg.evaluate(() => JSON.parse(JSON.stringify(S.foodLog || [])));
@@ -352,11 +358,12 @@ module.exports.ecran = async function (t, b, PORT) {
       const g2 = ok && (await rejouerPdj(pg));
       const r2 = await pg.evaluate(() => { const s = (_afSrc && _afSrc.saisie) || null;
         window._foodLineId = window.__m6id; return { s, n: (S.foodLog || []).length }; });
-      const vuePanne = erreurs.some((x) => /panne injectée M6/.test(x));
+      /* ↪️ ADAPTÉ LE 30/10/2026 (NUT-REF-HIST-02) — le rejeu attrape désormais la faute dans SON `try` (au lieu de la laisser remonter) : elle se voit à un message « erreur technique »
+         et rien n'est écrit (la préparation précède toute écriture). La panne reste exigée VUE — erreur de page OU message — le témoin ne se contente pas d'une absence d'erreur. */
+      const vuePanne = erreurs.some((x) => /panne injectée M6/.test(x)) || /erreur technique/i.test(await dernierToast(pg));
       t('B-NM6-MQ ③ ⭐ une erreur au milieu du rejeu laisse la provenance de l\'écran intacte',
         g2 && vuePanne && r2.s === 'sentinelle-m6', JSON.stringify(r2) + ' · geste ' + g2 + ' · panne vue : ' + vuePanne);
-      console.log('  ℹ️ panne injectée au 2ᵉ aliment : ' + (r2.n - n0) + ' ligne(s) écrite(s) EN MÉMOIRE avant l\'erreur, non enregistrée(s) '
-        + '(comportement d\'avant, inchangé — hors périmètre M6)');
+      console.log('  ℹ️ panne injectée au 2ᵉ aliment : ' + (r2.n - n0) + ' ligne(s) écrite(s) (depuis NUT-REF-HIST-02 : la préparation précède toute écriture, donc 0 attendu)');
     } finally { await cx.close(); }
   }
   {

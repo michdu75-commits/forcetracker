@@ -433,6 +433,9 @@ async function ecran(t, b, PORT) {
   await pause(pg, 300);
   g = g && !!idMoments && await clic(pg, '#' + idMoments + ' button[onclick$="\'petitdej\')"]');
   await pause(pg, 350);
+  /* ↪️ ADAPTÉ LE 30/10/2026 (NUT-REF-HIST-02, arbitrage CTO) — « Tes repas habituels » est « tout ou rien » : un aliment à vérifier n'est plus écarté en silence, le repas ne s'écrit pas et la personne CHOISIT dans un panneau qui NOMME ce qui bloque. Ce témoin prouve que l'aliment valide est re-noté tel quel et que les autres sont nommés : il prend donc le choix « Ajouter seulement l'autre ». */
+  g = g && await pg.evaluate((id) => { const b = [...document.querySelectorAll('#' + id + ' .hab-choix button')].find((x) => /seulement/i.test(x.textContent)); if (!b) return false; b.click(); return true; }, idMoments);
+  await pause(pg, 450);
   L = await journal(pg);
   const p8 = neuves(L, avant8);
   const msg8 = (await toastsDepuis(pg)).slice(-1)[0] || '';
@@ -561,6 +564,8 @@ async function ecran(t, b, PORT) {
         n0 = S.foodLog.length; const m2 = []; window.toast = (m) => m2.push(String(m));
         try { if (h) rejouerRepas(h.sig, meal); } catch (e) { m2.push('ERR ' + e.message); }
         await d(250); window.toast = vt;
+        /* ↪️ ADAPTÉ LE 30/10/2026 (NUT-REF-HIST-02, arbitrage CTO) — « Tes repas habituels » est « tout ou rien » : un aliment à vérifier n'est plus écarté en silence, le repas ne s'écrit pas et la personne CHOISIT dans un panneau qui NOMME ce qui bloque. Le message est celui du toast OU du panneau de choix (qui nomme ce qui bloque). */
+        { const pan = [...document.querySelectorAll('.hab-choix')].map((x) => x.textContent).join(' '); if (pan) m2.push(pan); document.querySelectorAll('.hab-choix').forEach((x) => x.remove()); }
         const lr = S.foodLog.slice(n0).find((x) => x && x.name === nom) || null;
         out.ecrivains[k] = { trouve: i >= 0, habituel: !!h, ajout: champs(la), rejeu: champs(lr), demande: ecranOuvert,
                              msgAjout: m1.slice(-1)[0] || '', msgRejeu: m2.slice(-1)[0] || '' };
@@ -1207,7 +1212,9 @@ async function incident(t, b, PORT) {
     const hab = await carte(pg, 'Iso P15');
     const idsR = await ids(pg); await vider(pg);
     const gR = await rejouer(pg, 'Iso P15 (test)'); await pause(pg, 400);
-    const nR = neuves(await journal(pg), idsR), mR = await vider(pg);
+    /* ↪️ ADAPTÉ LE 30/10/2026 (NUT-REF-HIST-02, arbitrage CTO) — « Tes repas habituels » est « tout ou rien » : un aliment à vérifier n'est plus écarté en silence, le repas ne s'écrit pas et la personne CHOISIT dans un panneau qui NOMME ce qui bloque. Le message est celui du toast OU du panneau de choix. */
+    const panR = await pg.evaluate(() => { const t = [...document.querySelectorAll('.hab-choix')].map((x) => x.textContent).join(' '); document.querySelectorAll('.hab-choix').forEach((x) => x.remove()); return t; });
+    const nR = neuves(await journal(pg), idsR), mR = (await vider(pg)).concat(panR ? [panR] : []);
     t('B-NV2P P15 ④ ⛔⛔ « TES REPAS HABITUELS » : la copie qui contredit la fiche vérifiée n\'est PAS re-notée — rien n\'est écrit, et le message la nomme « à vérifier »',
       gR && nR.length === 0 && mR.some((m) => /à vérifier/i.test(m) && /Iso P15/.test(m)), J({ nR: nR.map(forme), mR }));
     t('B-NV2P P15 ⑤ ⭐ … et la carte le disait AVANT le geste : « 1 à vérifier », sans un total qui ne s\'écrirait pas (ni 156 kcal, ni 26 g)',

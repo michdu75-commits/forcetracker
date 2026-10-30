@@ -181,7 +181,7 @@ module.exports.ecran = async function ecran(t, b, PORT) {
   /* ↪️ RÉÉCRIT LE 30/10/2026 (NUT-REF-HIST-02, arbitrage CTO) — l'ancien R6 attendait l'AJOUT PARTIEL d'office (« le rejeu écrit exactement cet aliment ») : c'est le comportement que
      ce lot supprime. Le contrat est maintenant « tout ou rien » : rien n'est écrit tant que la personne n'a pas choisi ; l'ajout de l'aliment de la table SEUL reste possible, mais
      comme un GESTE (« Ajouter seulement l'autre »). Les garanties de sécurité ne baissent pas : elles montent (rien d'écrit sans décision). Texte d'avant : `git show e2b942f3:tests/parcours/nut_recette_mobile.js`. */
-  await E(() => { goScreen('s-nutrition'); renderFoodJournal(); }); await pause(300);   // les cartes « Tes repas habituels » sont affichées (le panneau se rattache à `hab-m-<rang>`)
+  await E(() => { renderFoodJournal(); }); await pause(300);   // les cartes « Tes repas habituels » sont affichées (le panneau se rattache à `hab-m-<rang>`)
   const avH = (await journal()).map((x) => x.id); const jH = JSON.stringify(await journal());
   await E((s) => { rejouerRepas(s, 'diner'); }, hab.sig); await pause(900);
   const nH0 = neuves(await journal(), avH);
