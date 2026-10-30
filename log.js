@@ -1679,6 +1679,66 @@ function renderExBlocks(){
   renderLogFinish();
   _renderEnteteSeance();
 }
+/* ⚡ WORKOUT-CORE-01 · DOM-01/02 (30/10/2026, GO de développement — docs/WORKOUT-CORE-01.md) — LE RENDU CIBLÉ D'UNE SÉRIE.
+   Valider une série ou répondre à la réserve (RIR) ne change pas la STRUCTURE de la séance — ni exercice, ni série en plus ou en
+   moins. `renderExBlocks()` remplaçait pourtant TOUT `#wkt-exs` : chaque champ de chaque exercice détruit puis recréé. Le champ où
+   l'on préparait la série suivante perdait son focus, sa sélection et son texte pas encore enregistré, et le clavier de l'iPhone se
+   fermait (DOM-02).
+   Ici on ne touche qu'à la carte de l'exercice : on fabrique sa version À JOUR avec le MÊME gabarit que le rendu global
+   (`_renderExHtml`, dans un <template> : contenu inerte, rien n'y est chargé ni exécuté) et on recopie sur les nœuds EXISTANTS ce
+   qui peut avoir changé — classes de chaque ligne (`done-row`, `set-cur`), coche ✓, 1RM, pastille N / É / X, méta de la carte —,
+   puis les deux résumés qui en dépendent, comme `renderExBlocks` (`renderLogFinish`, `_renderEnteteSeance`). Aucune règle
+   d'affichage n'est recopiée ici (R2) : si le gabarit change, ce chemin suit. Les gestionnaires restent ceux du HTML (`onclick=…`) :
+   aucun écouteur ajouté.
+   ⛔ Les champs des AUTRES séries ne sont jamais touchés (leur saisie en cours reste). Ceux de la série elle-même ne reçoivent la
+   valeur du modèle (celle que le rendu global aurait affichée) que s'ils n'ont PAS le focus.
+   Rend `false` — l'appelant reconstruit alors tout, comme avant — dès que le cas n'est pas ordinaire : exercice dans un groupe
+   (superset, drop, pyramide), dropset, mode « Grouper », carte repliée ou absente, nombre de séries changé depuis le geste
+   (`avant.n`), ligne manquante, ou colonne « Précédent » qui se réalignerait. */
+function updateWorkoutSetDOM(ei,si,avant){
+  try{
+    const ex=S.wkt&&S.wkt.exs&&S.wkt.exs[ei];
+    if(!ex||!ex.sets||_groupMode||ex.group||ex.dropset) return false;
+    const n=ex.sets.length;
+    if(!avant||avant.n!==n||si<0||si>=n) return false;
+    const carte=document.getElementById('ex-block-'+ei);
+    if(!carte||carte.classList.contains('ex-mini')||document.getElementById('sr-'+ei+'-'+n)) return false;
+    const t=document.createElement('template');
+    t.innerHTML=_renderExHtml(ei,false);
+    const neuf=t.content, lignes=[];
+    for(let k=0;k<n;k++){                                       // 1) tout vérifier avant de toucher à quoi que ce soit
+      const a=document.getElementById('sr-'+ei+'-'+k), b=neuf.getElementById('sr-'+ei+'-'+k);
+      if(!a||!b||!carte.contains(a)) return false;
+      const ap=a.querySelector('.sprev'), bp=b.querySelector('.sprev');
+      if((ap?ap.innerHTML:'')!==(bp?bp.innerHTML:'')) return false;
+      lignes.push([k,a,b]);
+    }
+    const actif=document.activeElement;
+    for(const [k,a,b] of lignes){                               // 2) recopier ce qui a changé, et rien d'autre
+      if(a.className!==b.className) a.className=b.className;
+      const ac=a.querySelector('.chk'), bc=b.querySelector('.chk');
+      if(ac&&bc){ if(ac.className!==bc.className) ac.className=bc.className; if(ac.textContent!==bc.textContent) ac.textContent=bc.textContent; }
+      // le 1RM de la SEULE série touchée : celui d'une autre série suit sa saisie en cours (`updateRMLive`), il ne revient pas au modèle
+      const ar=a.querySelector('.srm'), br=b.querySelector('.srm');
+      if(k===si&&ar&&br&&ar.textContent!==br.textContent) ar.textContent=br.textContent;
+      const at=a.querySelector('.stype'), bt=b.querySelector('.stype');
+      if(at&&bt){
+        ['title','aria-label'].forEach(x=>{ const v=bt.getAttribute(x); if(v!==null&&at.getAttribute(x)!==v) at.setAttribute(x,v); });
+        const as=at.firstElementChild, bs=bt.firstElementChild;
+        if(as&&bs){ if(as.className!==bs.className) as.className=bs.className; if(as.textContent!==bs.textContent) as.textContent=bs.textContent; }
+      }
+      if(k===si){
+        const ai=a.querySelectorAll('.sinp'), bi=b.querySelectorAll('.sinp');
+        for(let j=0;j<ai.length&&j<bi.length;j++) if(ai[j]!==actif&&ai[j].value!==bi[j].value) ai[j].value=bi[j].value;
+      }
+    }
+    const am=carte.querySelector('.ex-meta'), bm=neuf.querySelector('.ex-meta');
+    if(am&&bm&&am.textContent!==bm.textContent) am.textContent=bm.textContent;
+    if(typeof renderLogFinish==='function') renderLogFinish();
+    _renderEnteteSeance();
+    return true;
+  }catch(e){ return false; }                                    // au moindre doute : la reconstruction d'avant
+}
 // ⚠️ LA COLONNE « PRÉCÉDENT » DISAIT « 5×70 » SANS DIRE QUE C'ÉTAIT UN ÉCHAUFFEMENT (ft-v827).
 // Retour de Michel, capture à l'appui : « là il n'y a rien de marqué, on ne sait pas si c'est de
 // l'échauffement ou un exercice normal ». Et c'est le seul repère qu'on a EN SÉANCE pour savoir
@@ -1964,9 +2024,27 @@ const _REPOS_PRESETS=[30,45,60,90,120];
    (`this.value`), donc elle echappait a la recherche sur `.value`. C'est le champ le
    PLUS utilise de l'app : `parseFloat('62,5')` y rendait 62, la moitie du poids. */
 function upSet(ei,si,f,v){const s=S.wkt.exs[ei].sets[si];s[f]=numFR(v)||0;if(s.kg&&s.reps)s.rm1=bz(s.kg,s.reps);persist();}
+/* ⌨️ WORKOUT-CORE-01 (arbitrage du 30/10/2026) — CE QUI EST TAPÉ DANS LA SÉRIE QU'ON VALIDE EST CE QUI EST ENREGISTRÉ.
+   Les champs n'écrivent dans le modèle qu'à l'événement `change` (`upSet`, ci-dessus). Or il peut ne pas avoir eu lieu au moment du
+   geste : « Entrée » sur KG l'empêche (`preventDefault`), et sur iPhone toucher ✓ ne retire pas forcément le focus au champ.
+   `toggleSet` ne relit l'écran que si le modèle est VIDE : une valeur pré-remplie (programme, dernière fois) modifiée puis validée
+   aussitôt gardait l'ANCIENNE valeur — et la reconstruction de l'écran effaçait ensuite le champ tapé.
+   Au geste de VALIDATION, chaque champ de CETTE série dont le texte diffère de ce que le modèle affiche passe par `upSet`, exactement
+   comme l'aurait fait `change` : mêmes conversions (`numFR`), même 1RM, même sauvegarde — aucune règle nouvelle (R2).
+   ⛔ Un champ VIDE n'est pas une valeur tapée : il garde la règle existante de `toggleSet` (modèle vide → la suggestion grise ;
+   modèle rempli → le modèle). Vide, zéro (« 0 » est une valeur) et suggestion restent trois choses distinctes.
+   ⛔ Les champs des AUTRES séries ne sont jamais lus ici : on n'enregistre que ce que la personne valide. */
+function _saisieVersModele(ei,si,row){
+  const set=S.wkt.exs[ei].sets[si], inps=row.querySelectorAll('.sinp');
+  [['reps',inps[0]],['kg',inps[1]]].forEach(([f,inp])=>{
+    if(inp&&inp.value!==''&&inp.value!==String(set[f]||'')) upSet(ei,si,f,inp.value);
+  });
+}
 function toggleSet(ei,si){
   const set=S.wkt.exs[ei].sets[si];
   const row=document.getElementById(`sr-${ei}-${si}`);
+  const _avant={n:S.wkt.exs[ei].sets.length,done:!!set.done};   // WORKOUT-CORE-01 : l'état d'avant le geste, pour le rendu ciblé
+  if(row&&!set.done)_saisieVersModele(ei,si,row);                // WORKOUT-CORE-01 : ce qui est TAPÉ dans la série validée l'emporte
   if(row){const inps=row.querySelectorAll('.sinp');if(!set.reps&&inps[0])set.reps=parseInt(inps[0].value||inps[0].placeholder)||0;if(!set.kg&&inps[1])set.kg=numFR(inps[1].value||inps[1].placeholder)||0;}
   set.done=!set.done;if(set.kg&&set.reps)set.rm1=bz(set.kg,set.reps);
   // ── HORODATAGE DE LA SÉRIE (12/08/2026) ────────────────────────────────────────────
@@ -2201,7 +2279,20 @@ function toggleSet(ei,si){
     if(!isAbdo&&_REPOS_PRESETS.includes(sec))_highlightRestPreset(sec);else _highlightRestPreset(-1);
     if(navigator.vibrate)navigator.vibrate([50]);
   }
-  renderExBlocks();
+  /* ⚡ WORKOUT-CORE-01 · DOM-01/02 — la série ordinaire (hors groupe, hors dropset) se met à jour SUR PLACE (`updateWorkoutSetDOM`) ;
+     tout le reste garde la reconstruction d'avant. Un champ d'une AUTRE série garde son focus, sa sélection et sa saisie.
+     ⌨️ VALIDER une série dont un champ a le focus : la reconstruction détruisait ce champ, ce qui fermait le clavier — le geste
+     « j'ai fini cette série » garde ce comportement. La valeur tapée est déjà dans le modèle (`_saisieVersModele`) : le champ
+     affiche d'abord ce que le modèle retient (ce qu'aurait affiché la reconstruction), PUIS rend le focus — ainsi il ne peut pas
+     émettre un `change` tardif (un champ vidé écrirait 0 dans une série déjà validée). « Entrée » sur KG pose ensuite le focus sur la
+     série suivante (`confirmSetAndNext`, inchangé). DÉ-valider ne touche pas au champ actif : la saisie continue. */
+  const _actif=document.activeElement;
+  if(!_avant.done&&row&&_actif&&row.contains(_actif)&&_estChampSerie(_actif)){
+    const _j=[].indexOf.call(row.querySelectorAll('.sinp'),_actif);
+    if(_j===0||_j===1)_actif.value=String(set[_j?'kg':'reps']||'');
+    _actif.blur();
+  }
+  if(!updateWorkoutSetDOM(ei,si,_avant))renderExBlocks();
 }
 function cycleType(ei,si){
   const s=S.wkt.exs[ei].sets[si];
@@ -6243,10 +6334,15 @@ function _rirQuestionHtml(c,avecNom){
 function setRir(ei,si,n){
   const set=S.wkt&&S.wkt.exs&&S.wkt.exs[ei]&&S.wkt.exs[ei].sets[si];
   if(!set) return;
+  const _avant={n:S.wkt.exs[ei].sets.length,done:!!set.done};   // WORKOUT-CORE-01 : pour le rendu ciblé
   if(n==='X'){ set.type='X'; delete set.rir; delete set.rirV; }
   else if(n===null){ if(set.type==='X') set.type='N'; delete set.rir; delete set.rirV; }
   else{ if(set.type==='X') set.type='N'; set.rir=Math.max(0,Math.min(RIR_MAX,Math.round(+n)||0)); set.rirV=RIR_V; }
-  persist(); _renderRirRow(); renderExBlocks();
+  // WORKOUT-CORE-01 · DOM-01/02 : seule la pastille N / X de la série change à l'écran — mise à jour sur place, sans détruire le
+  // champ où l'on prépare peut-être la série suivante pendant le repos. Groupe (superset…) ou dropset : la ligne d'avant, telle quelle.
+  // (La carte est mise à jour avant la sauvegarde : elle ne lit que le modèle, déjà modifié ci-dessus.)
+  if(updateWorkoutSetDOM(ei,si,_avant)){ persist(); _renderRirRow(); }
+  else{ persist(); _renderRirRow(); renderExBlocks(); }
   if(navigator.vibrate)navigator.vibrate(30);
 }
 let _cexMusclesP=[],_cexMusclesS=[],_cexImg=null,_editingCustomExName=null;
