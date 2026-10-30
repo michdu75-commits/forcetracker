@@ -428,6 +428,26 @@ async function ecran(t, b, PORT) {
     await X.cx.close();
   }
   {
+    /* le `change` DIFFÉRÉ — un navigateur qui l'émettrait APRÈS le départ du champ (non vérifié sur iPhone ; Chromium l'émet pendant
+       `blur()`) — sur le chemin de RECONSTRUCTION (dropset ↑ : le rendu ciblé refuse) : le champ quitté doit déjà porter la valeur
+       retenue, sinon ce `change` tardif écrit 0 dans la série validée. C'est ce que garde la ligne visée par la mutation D09, qui
+       survivait (sur le chemin ordinaire, le rendu ciblé réécrit le champ juste après). */
+    const X = await ouvrir({ wkt: WKT({ exs: [{ name: DC, sets: [S8(60, 8), S8(66, 8), S8(72.5, 8)], dropset: { paliers: 3, pct: 10, direction: 'up' } }] }) });
+    await X.pg.locator('#sr-0-0 .sinp').nth(0).click(); await X.pg.keyboard.press('Backspace'); await X.pg.waitForTimeout(80);
+    const r = await X.pg.evaluate(async () => {
+      const champ = document.querySelectorAll('#sr-0-0 .sinp')[0], vide = champ.value, r0 = window.__rempl;
+      document.querySelector('#sr-0-0 .chk').click(); await new Promise(r => setTimeout(r, 200));
+      const reconstruit = window.__rempl - r0 >= 1, detache = !document.contains(champ), affiche = champ.value;
+      champ.dispatchEvent(new Event('change'));                         // le `change` tardif, après la reconstruction
+      await new Promise(r => setTimeout(r, 50));
+      const s = S.wkt.exs[0].sets[0]; stopRest();
+      return { vide, reconstruit, detache, affiche, reps: s.reps, done: !!s.done }; });
+    t('DOM-T09e un `change` DIFFÉRÉ (navigateur qui l\'émettrait après le départ du champ — non vérifié sur iPhone) sur le chemin de reconstruction (dropset ↑) : le champ vidé quitté portait déjà la valeur retenue — la série validée garde 8 répétitions, pas 0',
+      r.vide === '' && r.reconstruit && r.detache && r.affiche === '8' && r.reps === 8 && r.done, _det(r));
+    t('DOM-T09ez aucune erreur de page (bloc D, change différé)', X.errs.length === 0, X.errs.slice(0, 2).join(' | '));
+    await X.cx.close();
+  }
+  {
     const X = await ouvrir({ wkt: WKT({ exs: [Object.assign({ name: DC, sets: [S8(60, 8), S8(60, 8)] }, { group: 'g2', groupType: 'pyramid-up' }),
       Object.assign({ name: SQ, sets: [S8(100, 5), S8(100, 5)] }, { group: 'g2', groupType: 'pyramid-up' })] }) });
     const r11 = await X.pg.evaluate(async () => {

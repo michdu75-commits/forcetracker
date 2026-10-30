@@ -43,8 +43,10 @@ MUT = [
      [(LO, DESARME_ARM, "")], 'GARDE', 'CHR-T02b', 'chr'),
     ('W04 ni annulation ni jeton : un calage perime installe son intervalle apres stopRest',
      [(LO, ANNULE, "  if(restIv&&!_restIvCale) clearInterval(restIv);"), (LO, JETON, "")], 'GARDE', 'CHR-T02c', 'chr'),
-    ('W05 [equivalente] l\'armement ponctuel n\'est plus annule : le JETON seul empeche son effet',
-     [(LO, ANNULE, "  if(restIv&&!_restIvCale) clearInterval(restIv);")], 'OK', None, 'chr'),
+    # W05 etait classee [equivalente] (attendu OK) : FAUX, mesure au GO TESTS — l'ordre exige l'annulation ET le jeton ; sans
+    # annulation, 5 armements perimes restent en attente apres 5 startRest (sans effet grace au jeton), CHR-T02a les compte
+    ('W05 l\'armement ponctuel n\'est plus annule (le jeton seul empeche son effet) : les armements perimes restent en attente',
+     [(LO, ANNULE, "  if(restIv&&!_restIvCale) clearInterval(restIv);")], 'GARDE', 'CHR-T02a', 'chr'),
     ('W06 rattrapage au retour : les vibrations des secondes sautees sont rejouees',
      [(LO, VISIBLE, "  if(restIv){ for(let k=5;k>=1;k--){ if(_restLeft()<k&&_restLeft()>0&&!_countdownSecs.has(k)){ _countdownSecs.add(k); if(navigator.vibrate)navigator.vibrate(60); } } _restTick(); _restArmer(); }")],
      'GARDE', 'CHR-T06a', 'chr'),
@@ -74,9 +76,11 @@ MUT = [
     ('W17 [equivalente] le decompte ne vide plus la memoire a l\'OUVERTURE (sa fermeture le fait deja)',
      [(LO, "  _restVu.clear(); _cdownLit=-1;   // WORKOUT-CORE-01 : l'écran vient d'être remis à zéro à la main — tout réécrire au 1ᵉʳ rendu\n", "")],
      'OK', None, 'chr'),
+    # W18 SURVIVAIT au seuil global de CHR-T10b (~40 ecritures / 10 s, a la limite) : CHR-T10f compte les ecritures des elements
+    # du dock qui ne changent pas (0 exige)
     ('W18 textes reecrits a chaque tic (memoire desactivee)',
      [(LO, "function _vuTexte(el,cle,v){ if(!el||_restVu.get(cle)===v) return;", "function _vuTexte(el,cle,v){ if(!el) return;")],
-     'GARDE', 'CHR-T10b', 'chr'),
+     'GARDE', 'CHR-T10f', 'chr'),
     ('W19 les 44 traits repeints a chaque tic',
      [(LO, "  const de=_cdownLit<0?0:Math.min(_cdownLit,litCount), a=_cdownLit<0?ln.length:Math.max(_cdownLit,litCount);",
        "  const de=0, a=ln.length;")], 'GARDE', 'CHR-T10e', 'chr'),
@@ -116,8 +120,10 @@ MUT = [
     ('D08 [deguisee] un champ VIDE est pris pour une valeur (il ecrit 0)',
      [(LO, "    if(inp&&inp._ftTape&&inp.value!==''&&inp.value!==String(set[f]||'')) upSet(ei,si,f,inp.value);",
        "    if(inp&&inp._ftTape&&inp.value!==String(set[f]||'')) upSet(ei,si,f,inp.value);")], 'GARDE', 'DOM-T09c', 'dom'),
-    ('D09 [deguisee] le champ rend le focus sans afficher la valeur retenue (l\'ecran ment : vide, la serie garde 5)',
-     [(LO, "    if(_j===0||_j===1)_actif.value=String(set[_j?'kg':'reps']||'');\n", "")], 'GARDE', 'DOM-T09c', 'dom'),
+    # D09 SURVIVAIT avec DOM-T09c (chemin ordinaire : le rendu cible reecrit le champ juste apres) : la ligne protege le chemin de
+    # RECONSTRUCTION contre un `change` emis apres le depart du champ — DOM-T09e le simule (dropset vers le haut)
+    ('D09 [deguisee] le champ quitte ne porte pas la valeur retenue : un change differe ecrit 0 (chemin de reconstruction)',
+     [(LO, "    if(_j===0||_j===1)_actif.value=String(set[_j?'kg':'reps']||'');\n", "")], 'GARDE', 'DOM-T09e', 'dom'),
     ('D10 le champ de la serie validee garde le focus (clavier ouvert sur une serie finie)',
      [(LO, "    _actif.blur();\n", "")], 'GARDE', 'DOM-T09b', 'dom'),
     ('D11 la validation lit aussi les champs des AUTRES series',

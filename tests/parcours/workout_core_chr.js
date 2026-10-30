@@ -4,6 +4,9 @@
    ⚠️ PRÉPARÉ sans exécution (30/10, GO DÉVELOPPEMENT) ; EXÉCUTÉ au GO TESTS du 30/10 : 1ᵉʳ passage 30 OK / 2 rouges, deux
    défauts DES TÉMOINS, corrigés ici (CHR-T03b, CHR-T09a) ; et la base `e2b942f3` a montré que CHR-T05b/c/d comptaient toute
    écriture du chiffre, pas seulement ses CHANGEMENTS (corrigé : ils mesurent maintenant le retard d'affichage, leur promesse).
+   Campagne de mutations : W18 (« textes réécrits à chaque tic ») survivait au seuil global de CHR-T10b → CHR-T10f compte les
+   écritures des éléments qui ne changent pas (0 exigé). ⚠️ Les témoins de temps (CHR-T05, T09a, T10) supposent une machine NON
+   saturée : sous 3 navigateurs en parallèle sur 4 cœurs, CHR-T05c/d ont mesuré 429 et 734 ms (30/10) — jouer ce banc seul.
    Ce que les témoins CONDUISENT : la vraie app servie en local, de vrais repos (`startRest`), −15 s / +15 s (`addRT`), « Régler »
    (`applyRestEdit`), « Passer », le tap sur l'écran GO, la pause, « Vider », « Annuler la séance », « Terminer » (vrai bouton), une
    réouverture avec un repos rangé, le retour au premier plan (`visibilitychange`), la navigation vers Nutrition / Milo / Progrès.
@@ -17,7 +20,8 @@
    la BATTERIE (⛔ les compteurs sont des indicateurs sous Chromium Linux, jamais une mesure de batterie), le son (il n'y en a pas),
    `_wktChronoIv` (chrono de séance, hors périmètre : ses réveils sont comptés à part sous « (anonyme) », jamais jugés).
    Rouge attendu sur `e2b942f3` (deux intervalles, 250 ms et 500 ms), MESURÉ le 30/10 : CHR-T01, CHR-T02a, CHR-T02b, CHR-T09a,
-   CHR-T10a, CHR-T10b, CHR-T10c, CHR-T10d, CHR-T10e, CHR-S1, CHR-S4 (`_restArmer` n'existe pas) ; et, par leur SEULE clause
+   CHR-T10a, CHR-T10b, CHR-T10c, CHR-T10d, CHR-T10e, CHR-S1, CHR-S4 (`_restArmer` n'existe pas) — et CHR-T10f, ajouté ensuite
+   (la durée totale y est réécrite à chaque tic) ; et, par leur SEULE clause
    d'architecture (leurs clauses visibles sont vertes sur la base) : CHR-T04 (« un minuteur à 1 000 ms ») et CHR-T05a (« le
    métronome est réinstallé » — la simulation retire l'intervalle, la base ne le repose pas). Les autres sont des
    non-régressions (verts avant comme après).
@@ -62,10 +66,14 @@ async function ecran(t, b, PORT) {
       window.clearInterval=function(id){ reg.delete(id); return ci.call(window,id); };
       window.clearTimeout=function(id){ reg.delete(id); return ct.call(window,id); };
       try{ navigator.vibrate=function(p){ window.__vib.push(p); return true; }; }catch(e){}
-      window.__mut={dock:0,pill:0,cdown:0};
+      window.__mut={dock:0,pill:0,cdown:0,fixe:0};
       document.addEventListener('DOMContentLoaded',()=>{
+        /* « fixe » : les écritures reçues par les éléments du dock qui NE CHANGENT PAS pendant un repos tranquille (la durée totale,
+           « au-delà ») — elles doivent rester à 0 : on n'écrit que ce qui change (W18 survivait au seuil global de CHR-T10b) */
+        const fixe=x=>{ const t=x.target&&(x.target.nodeType===1?x.target:x.target.parentElement); return !!(t&&t.closest&&t.closest('#rest-tot,#rest-over')); };
         const obs=(id,k)=>{ const el=document.getElementById(id); if(!el) return;
-          new MutationObserver(r=>{ window.__mut[k]+=r.length; }).observe(el,{subtree:true,childList:true,characterData:true,attributes:true}); };
+          new MutationObserver(r=>{ window.__mut[k]+=r.length; if(k==='dock') r.forEach(x=>{ if(fixe(x)) window.__mut.fixe++; }); })
+            .observe(el,{subtree:true,childList:true,characterData:true,attributes:true}); };
         obs('rest-bar','dock'); obs('rest-pill','pill'); obs('ov-rest-countdown','cdown'); });
     })();`);
     const pg = await cx.newPage(); const errs = []; pg.on('pageerror', x => errs.push(String(x.message).slice(0, 160)));
@@ -350,6 +358,8 @@ async function ecran(t, b, PORT) {
       rev >= 8 && rev <= 12, _det(f));
     t('CHR-T10b ⭐ écritures du dock sur 10 s : ≤ 40 mutations (le chiffre, la barre, l\'anneau : ~3/s) — avant ce lot, 9 écritures à chaque tic, 4 tics/s',
       mu.dock <= 40, _det(mu));
+    t('CHR-T10f ⭐ ce qui ne change pas n\'est jamais réécrit : sur ces 10 s, la durée totale et « au-delà » reçoivent 0 écriture, pendant que le chiffre, lui, change (contrôle positif)',
+      mu.fixe === 0 && mu.dock >= 8, _det(mu));
     await X.pg.evaluate(() => goScreen('home'));
     const p0 = await compteurs(X); await X.pg.waitForTimeout(5000); const p1 = await compteurs(X);
     const mp = ecart(p0, p1, 'mut');
