@@ -2,8 +2,9 @@
 # -*- coding: utf-8 -*-
 """CONTROLE NEGATIF — WORKOUT-CORE-01 (Claude N°2, Seance, 30/10/2026) : les temoins CHR-* (et DOM-*) savent-ils ROUGIR ?
 
-[!!] PREPARE, JAMAIS EXECUTE A L'ECRITURE (GO TESTS non accorde le 30/10) : seules la syntaxe de ce fichier et l'UNICITE de
-     chaque ancre dans log.js ont ete verifiees. Le premier passage se fait sur GO TESTS, et pas avant.
+[!!] PREPARE sans execution (GO DEVELOPPEMENT du 30/10) ; EXECUTE au GO TESTS du 30/10. D17, D18, D19 ajoutees ce jour-la : elles
+     gardent la correction nee d'un rouge reproduit (DOM-T13a/c/d : un `change` emis en quittant le champ refaisait un `upSet`)
+     et le cas 7 de la matrice de saisie (une suggestion grise n'est pas une valeur tapee).
 [!!] DANS LA COPIE MUTEE : chaque mutation est appliquee a un ARBRE COPIE, jamais au depot (BUGS.md §60).
 Point de depart : 0 rouge sur l'arbre sain, mesure d'abord ; l'arbre sain est REJOUE a la fin (banc instable = campagne refusee).
 Les mutations [deguisee] cassent l'invariant sans toucher a la ligne evidente ; [negatif] et [equivalente] ne doivent PAS
@@ -29,6 +30,7 @@ DESARME_ARM = "  _restDesarmer();                                           // a
 JETON = "    if(gen!==_restGen) return;                               // périmé : un arrêt ou un autre armement est passé entre-temps\n"
 ANNULE = "  if(restIv){ if(_restIvCale) clearTimeout(restIv); else clearInterval(restIv); }"
 VISIBLE = "  if(restIv){ _restTick(); _restArmer(); }"
+NEUTRE = "    const _oc=_actif.onchange; _actif.onchange=null;   // le modèle a déjà cette valeur : le `change` émis en partant ne la réécrit pas\n"
 
 MUT = [
     # ── CHR-03 : un seul metronome, 1 s, cale ──────────────────────────────────────────────────────────────────────────
@@ -113,7 +115,7 @@ MUT = [
     ('D08 [deguisee] un champ VIDE est pris pour une valeur (il ecrit 0)',
      [(LO, "    if(inp&&inp.value!==''&&inp.value!==String(set[f]||'')) upSet(ei,si,f,inp.value);",
        "    if(inp&&inp.value!==String(set[f]||'')) upSet(ei,si,f,inp.value);")], 'GARDE', 'DOM-T09c', 'dom'),
-    ('D09 [deguisee] le champ rend le focus sans afficher la valeur retenue (un change tardif ecrit 0)',
+    ('D09 [deguisee] le champ rend le focus sans afficher la valeur retenue (l\'ecran ment : vide, la serie garde 5)',
      [(LO, "    if(_j===0||_j===1)_actif.value=String(set[_j?'kg':'reps']||'');\n", "")], 'GARDE', 'DOM-T09c', 'dom'),
     ('D10 le champ de la serie validee garde le focus (clavier ouvert sur une serie finie)',
      [(LO, "    _actif.blur();\n", "")], 'GARDE', 'DOM-T09b', 'dom'),
@@ -127,6 +129,14 @@ MUT = [
     ('D13 l\'en-tete (N / M series) ne suit plus la validation',
      [(LO, "    if(typeof renderLogFinish==='function') renderLogFinish();\n    _renderEnteteSeance();\n    return true;",
        "    if(typeof renderLogFinish==='function') renderLogFinish();\n    return true;")], 'GARDE', 'DOM-T01', 'dom'),
+    ('D17 le `change` emis en quittant le champ n\'est plus neutralise (un 2e upSet, une sauvegarde complete de plus)',
+     [(LO, NEUTRE, ""), (LO, "    _actif.onchange=_oc;\n", "")], 'GARDE', 'DOM-T13a', 'dom'),
+    ('D18 [deguisee] le gestionnaire est remis AVANT de quitter le champ (meme lignes, mauvais ordre)',
+     [(LO, "    _actif.blur();\n    _actif.onchange=_oc;\n", "    _actif.onchange=_oc;\n    _actif.blur();\n")], 'GARDE', 'DOM-T13a', 'dom'),
+    ('D19 [deguisee] la suggestion grise d\'un champ vide est prise pour une valeur tapee (deux upSet de plus)',
+     [(LO, "    if(inp&&inp.value!==''&&inp.value!==String(set[f]||'')) upSet(ei,si,f,inp.value);",
+       "    const v=inp?(inp.value||inp.placeholder):''; if(inp&&v!==''&&v!==String(set[f]||'')) upSet(ei,si,f,v);")],
+     'GARDE', 'DOM-T13e', 'dom'),
     ('D14 [negatif] un commentaire du rendu cible est reformule',
      [(LO, "// au moindre doute : la reconstruction d'avant", "// en cas de doute : reconstruction")], 'OK', None, 'dom'),
 ]

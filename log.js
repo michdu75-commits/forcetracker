@@ -2283,14 +2283,19 @@ function toggleSet(ei,si){
      tout le reste garde la reconstruction d'avant. Un champ d'une AUTRE série garde son focus, sa sélection et sa saisie.
      ⌨️ VALIDER une série dont un champ a le focus : la reconstruction détruisait ce champ, ce qui fermait le clavier — le geste
      « j'ai fini cette série » garde ce comportement. La valeur tapée est déjà dans le modèle (`_saisieVersModele`) : le champ
-     affiche d'abord ce que le modèle retient (ce qu'aurait affiché la reconstruction), PUIS rend le focus — ainsi il ne peut pas
-     émettre un `change` tardif (un champ vidé écrirait 0 dans une série déjà validée). « Entrée » sur KG pose ensuite le focus sur la
-     série suivante (`confirmSetAndNext`, inchangé). DÉ-valider ne touche pas au champ actif : la saisie continue. */
+     affiche d'abord ce que le modèle retient (ce qu'aurait affiché la reconstruction), PUIS rend le focus — un champ vidé ne peut
+     donc pas écrire 0 dans une série déjà validée. ⚠️ MESURÉ au GO TESTS (DOM-T13a/c/d, Chromium) : après une FRAPPE, quitter le
+     champ émet quand même un `change` — avec la valeur affichée, donc la même, mais c'est un 2ᵉ `upSet`, donc une sauvegarde
+     complète de plus (`persist` réécrit tout l'historique). Le gestionnaire `onchange` est retiré le temps de `blur()` (le `change`
+     y part de façon synchrone), puis remis. « Entrée » sur KG pose ensuite le focus sur la série suivante (`confirmSetAndNext`,
+     inchangé). DÉ-valider ne touche pas au champ actif : la saisie continue, son `change` partira quand on le quittera. */
   const _actif=document.activeElement;
   if(!_avant.done&&row&&_actif&&row.contains(_actif)&&_estChampSerie(_actif)){
     const _j=[].indexOf.call(row.querySelectorAll('.sinp'),_actif);
     if(_j===0||_j===1)_actif.value=String(set[_j?'kg':'reps']||'');
+    const _oc=_actif.onchange; _actif.onchange=null;   // le modèle a déjà cette valeur : le `change` émis en partant ne la réécrit pas
     _actif.blur();
+    _actif.onchange=_oc;
   }
   if(!updateWorkoutSetDOM(ei,si,_avant))renderExBlocks();
 }
