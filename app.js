@@ -1564,17 +1564,39 @@ function _n2LireChamps(pre){
 function _n2Enregistrer(entree, porte){
   const N=(typeof NUT2==='object'&&NUT2)?NUT2:null;
   if(!N) return {ok:false, erreur:'MOTEUR_ABSENT'};
-  /* FINALISATION : ne changer QUE le repas d'une fiche identifiée ne recalcule rien — le moteur rend la ligne d'avant, son repas en plus. */
-  const r=entree.repasSeul ? N.changerRepas(entree.remplace, entree.repas) : N.ligneNouvelle(entree);
-  if(!r.ok) return r;
-  if(!entree.repasSeul){ try{ _douaneLigne(r.ligne, porte); }catch(e){} }
+  /* ⭐ NUT-REF-HIST-02 (arbitrage CTO, 30/10) — L'ÉCRIVAIN UNIQUE ACCEPTE AUSSI UN GROUPE (un tableau d'entrées), et c'est ce qui rend « tout ou rien »
+     démontrable sans retour arrière. Trois temps, dans cet ordre, et le premier est le seul qui peut échouer :
+       ① VALIDER TOUT — chaque entrée passe par le moteur (`NUT2.ligneNouvelle`, pur) ; une seule entrée refusée et la fonction RENDS SANS AVOIR RIEN FAIT :
+         ni douane, ni carnet, ni journal. Un groupe n'accepte ni `repasSeul`, ni `remplace` (ce sont des modifications, pas des ajouts) ni un identifiant déjà
+         présent au journal ou répété dans le groupe (un double appui rejoue les mêmes identités : refusé ici, au niveau de l'écrivain, pas seulement à l'écran) ;
+       ② LA DOUANE, seulement quand tout est validé (elle compte dans son carnet : aucun compteur ne bouge pour un groupe refusé) ;
+       ③ UNE SEULE insertion dans le journal — un seul appel, après lequel il ne reste rien qui puisse échouer.
+     Une entrée seule suit EXACTEMENT le même chemin (un groupe de un) : le comportement des trois appelants d'origine ne bouge pas.
+     ⛔ Ce n'est PAS une transaction distribuée : `persist()` et la synchronisation distante se font APRÈS, par l'appelant, et ne sont pas atomiques avec elle. */
+  const groupe=Array.isArray(entree), entrees=groupe?entree:[entree];
+  if(!entrees.length) return {ok:false, erreur:'GROUPE_VIDE'};
+  const vus=groupe ? new Set((S.foodLog||[]).map(l=>l&&l.id)) : null;
+  const rs=[];
+  for(let k=0;k<entrees.length;k++){
+    const e=entrees[k];
+    if(groupe){
+      if(!e || e.repasSeul || e.remplace) return {ok:false, erreur:'GROUPE_INVALIDE', rang:k};
+      if(vus.has(e.id)) return {ok:false, erreur:'ID_EXISTANT', rang:k};
+      vus.add(e.id);
+    }
+    /* FINALISATION : ne changer QUE le repas d'une fiche identifiée ne recalcule rien — le moteur rend la ligne d'avant, son repas en plus. */
+    const r=e.repasSeul ? N.changerRepas(e.remplace, e.repas) : N.ligneNouvelle(e);
+    if(!r.ok) return groupe ? Object.assign({}, r, {rang:k}) : r;
+    rs.push(r);
+  }
+  rs.forEach((r,k)=>{ if(!entrees[k].repasSeul){ try{ _douaneLigne(r.ligne, porte); }catch(e){} } });
   if(!S.foodLog) S.foodLog=[];
-  if(entree.remplace){
+  if(!groupe && entree.remplace){
     const i=S.foodLog.indexOf(entree.remplace);
     if(i<0) return {ok:false, erreur:'LIGNE_INTROUVABLE'};
-    S.foodLog[i]=r.ligne;
-  }else S.foodLog.push(r.ligne);
-  return r;
+    S.foodLog[i]=rs[0].ligne;
+  }else S.foodLog.push(...rs.map(r=>r.ligne));
+  return groupe ? {ok:true, lignes:rs.map(r=>r.ligne)} : rs[0];
 }
 
 /* Ce que la personne lit quand le moteur refuse — une phrase par cause, jamais un code. */
@@ -1591,6 +1613,7 @@ function _n2Message(r){
     FICHE_INVALIDE:'Cette fiche n\'a aucune valeur utilisable — recopie l\'étiquette pour 100 g.',
     FICHE_VERROUILLEE:'Les valeurs de cette fiche sont verrouillées : seule la quantité se modifie — rien n\'a été ajouté.',
     NOM_VERROUILLE:'Le nom d\'un produit identifié ne change pas : seuls la quantité et le repas se modifient — rien n\'a été ajouté.',
+    ID_EXISTANT:'Ces aliments viennent déjà d\'être ajoutés — rien n\'a été ajouté une deuxième fois.',
     HISTORIQUE_PLEIN:'L\'historique des anciennes corrections de cette ligne est plein : aucune trace n\'est effacée, donc rien n\'a été ajouté. Pour repartir de la fiche, supprime la ligne puis ajoute-la de nouveau.'
   };
   return M[e] || ('Enregistrement refusé ('+(e||'?')+') — rien n\'a été ajouté.');
@@ -1882,7 +1905,7 @@ function _n2Reprendre(src, saisie, choixSid){
        étiquette), des champs libres pour une saisie PERSONNELLE : ni ses macros douteuses ni son identité n'y entrent. */
     _afRepriseVide=bloquee ? {nom:String(R.nom||'').trim(), etat:'', texte:R.ficheSuspecte
         ? _N2_REF_SUSPECTE+' Tape tes propres valeurs, ou retrouve le produit (recherche, scan) quand la connexion revient.'
-        : _N2_REF_NON_VERIFIEE}
+        : _N2_REF_NON_VERIFIEE, bloquee:true}   // NUT-REF-HIST-02 : `bloquee` — l'ancienne saisie A des valeurs, mais on ne les recopie pas (le message ne dit plus le contraire)
       : (_N2_CHAMPS.some(c=>(+R.valeurs[c])>0) ? null : {nom:String(R.nom||'').trim(), etat:''});
     _afMajAncre(true);
     if(_sid && _afSrc && !bloquee) _afSrc.sourceId=_sid.slice(0,32);   // NV2-FIAB : l'identité du produit suit (jamais une fiche)
@@ -2155,6 +2178,21 @@ function _n2Reajouter(src, repas, date, porte, apercu){
      référence qui contredit la fiche vérifiée de son produit se dit « à vérifier », et « + Ajouter » / « Tes repas habituels »
      ne la recalculent pas en silence. La fiche retrouvée par l'identité ne sert QUE dans l'écran (`_n2Reprendre`), où la
      personne voit les valeurs et confirme par « Ajouter ». */
+  /* ⭐ NUT-REF-HIST-02 — UN GROUPE (tableau) : « le repas habituel, tout ou rien ». Chaque aliment est PRÉPARÉ par ce même chemin (mode `preparer` : l'entrée complète,
+     identité réelle, rien d'écrit), puis l'ensemble n'est remis à l'écrivain unique qu'à une condition : AUCUN aliment bloqué, incomplet ou refusé. Sinon rien n'est
+     écrit et le détail est rendu (`refus`). Le contrôle est refait ICI, au moment d'écrire : un état qui a changé depuis l'écran se voit, il n'est pas supposé. */
+  if(Array.isArray(src)){
+    if(apercu) return {ok:false, erreur:'GROUPE_SANS_APERCU'};
+    if(!src.length) return {ok:false, erreur:'GROUPE_VIDE'};
+    const vf=_n2FichesVerifiees(), prets=[], refus=[], t0=Date.now();
+    src.forEach((s1,k)=>{
+      const p=_n2Reajouter(s1, repas, date, porte, {verifiees:vf, preparer:true});
+      if(p && p.ok && !p.raison && p.entree){ p.entree.ts=t0+k; prets.push(p.entree); }   // `ts` distincts : deux lignes d'un même geste ne se confondent pas
+      else refus.push({k:k, nom:String((s1&&s1.name)||''), res:p});
+    });
+    if(refus.length) return {ok:false, groupe:true, refus:refus};
+    return _n2Enregistrer(prets, porte);
+  }
   const R=_n2Reprise(src);
   if(!R || !R.ok) return R || {ok:false, erreur:'REPRISE_INVALIDE'};
   /* ⛔ LA FRONTIÈRE `non_verifiee` : avant tout identifiant, toute ligne, toute écriture. L'aperçu garde sa signalisation « à vérifier »
@@ -2164,7 +2202,7 @@ function _n2Reajouter(src, repas, date, porte, apercu){
     return apercu ? {ok:true, ligne:null, R:R, raison:raison} : {ok:false, incoherente:true, raison:raison};
   }
   if(!R.quantite) return {ok:false, aCompleter:true};
-  const id=apercu ? 'apercu-00000000' : _foodLineId(); if(!id) return {ok:false, erreur:'ID_INVALIDE'};
+  const id=(apercu && !apercu.preparer) ? 'apercu-00000000' : _foodLineId(); if(!id) return {ok:false, erreur:'ID_INVALIDE'};
   const e={id:id, ts:Date.now(), date:date, repas:repas, nom:String(R.nom||'').slice(0,80),
            origine:{saisie:'liste', origine:'reprise'}, quantite:Object.assign({}, R.quantite, {origine:'proposee'})};
   if(R.fiche){
@@ -2180,7 +2218,7 @@ function _n2Reajouter(src, repas, date, porte, apercu){
   }
   const L=N.ligneNouvelle(e); if(!L.ok) return L;
   const raison=_n2Incoherence(src, R, L.ligne, apercu && apercu.verifiees);
-  if(apercu) return {ok:true, ligne:L.ligne, R:R, raison:raison};
+  if(apercu) return apercu.preparer ? {ok:true, ligne:L.ligne, R:R, raison:raison, entree:e} : {ok:true, ligne:L.ligne, R:R, raison:raison};
   if(raison) return {ok:false, incoherente:true, raison:raison};
   return _n2Enregistrer(e, porte);
 }
@@ -4562,38 +4600,116 @@ function _douaneRemiseAZero(){
    (R29 — quand l'erreur touche la personne, on demande).
    ⭐ R13 : `meal` est un argument OPTIONNEL, comme `refTs` en ft-v1017. Sans lui, le
    comportement d'origine est intact — donc aucun appelant existant ne change de sens. */
-function rejouerRepas(sig, meal){
-  const r=_repasHabituels().find(x=>x.sig===sig);
+/* ═══ NUT-REF-HIST-02 (30/10/2026, arbitrage CTO) — « TES REPAS HABITUELS » : TOUT OU RIEN, ET UN CHOIX EXPLICITE ═══
+   Avant : chaque aliment était re-noté l'un après l'autre ; un aliment bloqué (ancienne fiche non vérifiée, suspecte, ou sans quantité) était laissé de côté et
+   les autres AJOUTÉS — un repas partiel que personne n'avait demandé, et, sur une panne technique entre deux aliments, des lignes déjà poussées.
+   Maintenant, trois temps :
+     ① PRÉPARER, en lecture seule (`_n2Apercu`, pur : il n'écrit rien, ne compte rien à la douane, ne touche pas au journal) ;
+     ② si tout est admissible → ÉCRIRE ; sinon AUCUNE ÉCRITURE : un panneau pose le choix (réparer · ajouter seulement les admissibles · annuler) ;
+     ③ ÉCRIRE par `_n2Reajouter` sur un GROUPE : il re-prépare chaque aliment (un état qui a changé depuis l'écran se voit), puis remet l'ensemble à l'écrivain
+        unique en UN SEUL appel — validation intégrale d'abord, douane ensuite, une seule insertion. `persist()` et la synchro se font APRÈS, et ne sont pas
+        atomiques avec elle (la sauvegarde distante n'est pas présentée comme telle).
+   `choix` : `'autres'` = la personne a choisi d'ajouter SEULEMENT les aliments admissibles (l'ajout partiel est devenu un geste, plus un effet de bord). */
+let _habEnCours=0;   // l'instant du dernier rejeu lancé : le chargement CIQUAL est asynchrone, un double appui ne doit pas lancer deux ajouts (périme au bout de 15 s)
+let _habDernier={cle:'', t:0};   // le dernier ajout RÉUSSI (repas · moment · choix) : le même geste répété dans la même seconde est un double appui, pas un deuxième repas
+function rejouerRepas(sig, meal, choix){
+  const hab=_repasHabituels(), idx=hab.findIndex(x=>x.sig===sig), r=hab[idx];
   if(!r){toast('Repas introuvable','error');return;}
+  if(_habEnCours && Date.now()-_habEnCours<15000) return;
   /* Le moment choisi d'abord ; à défaut celui où le repas est habituellement noté. */
   const ok=(typeof FOOD_MEALS!=='undefined') && FOOD_MEALS.some(m=>m.k===meal);
   const moment=ok?meal:r.meal;
-  /* 🥗 V2 (jalon 4) — chaque aliment est RE-NOTÉ par le moteur, depuis SA ligne d'origine, jamais depuis l'écran
-     d'ajout (D-094, NUT-M6-REJEU-01 : le défaut M6 est fermé par construction — aucune lecture d'écran ici).
-     ⛔ Un aliment sans quantité valide n'est PAS complété : il n'est pas ajouté, et le message le nomme. */
+  const cle=sig+'|'+moment+'|'+(choix||'');
+  if(_habDernier.cle===cle && Date.now()-_habDernier.t<900) return;   // double appui : déjà fait
+  _habEnCours=Date.now();
+  /* 🥗 V2 (jalon 4) — chaque aliment est RE-NOTÉ par le moteur, depuis SA ligne d'origine, jamais depuis l'écran d'ajout
+     (D-094, NUT-M6-REJEU-01 : le défaut M6 est fermé par construction — aucune lecture d'écran ici). */
   _n2Apres(r.items, ()=>{
-    /* ⭐⭐ INCIDENT DU 23/10 — un aliment qui ne peut pas être re-noté tel qu'il s'affiche (`_n2Incoherence`) n'est pas recopié
-       en silence : il n'est pas ajouté, et le message le nomme « à vérifier » (mesuré : la copie à 26 g de protéines d'un
-       produit dont le scan juste en donne 35 se recopiait à chaque tap). La carte l'annonçait avant le geste (`_habApercu`). */
-    const ajoutes=[], aCompleter=[], aVerifier=[], refus=[];
-    r.items.forEach(e=>{
-      const x=_n2Reajouter(e, moment, _journalJourActif(), 'rejouerRepas');
-      if(x.ok) ajoutes.push(e.name); else if(x.aCompleter) aCompleter.push(e.name); else if(x.incoherente) aVerifier.push(e.name); else refus.push(e.name);
-    });
-    if(ajoutes.length){
+    try{
+      const court=n=>String(n||'').slice(0,30);
+      /* ① PRÉPARER — lecture seule. */
+      const vf=_n2FichesVerifiees(), bons=[], bloques=[];
+      r.items.forEach(e=>{
+        const a=_n2Apercu(e, vf);
+        if(a.ok && !a.raison && a.ligne) bons.push(e); else bloques.push({nom:String((e&&e.name)||''), a:a});
+      });
+      /* ② UN ALIMENT BLOQUÉ : RIEN N'EST ÉCRIT sans une décision. */
+      if(bloques.length && choix!=='autres'){ _habChoix(idx, r, moment, bons, bloques); return; }
+      const aEcrire=bloques.length ? bons : r.items;
+      if(!aEcrire.length){ toast('Rien n\'a été ajouté.','info'); return; }
+      /* ③ ÉCRIRE — le groupe entier ou rien. */
+      const x=_n2Reajouter(aEcrire, moment, _journalJourActif(), 'rejouerRepas');
+      if(!x.ok){
+        toast(x.groupe ? 'Rien n\'a été ajouté — ce repas a changé depuis l\'écran (à vérifier : '+x.refus.map(f=>court(f.nom)).join(', ')+'). Touche-le de nouveau.' : _n2Message(x),'info');
+        return;
+      }
+      _habDernier={cle:cle, t:Date.now()};
       persist();
       if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
       renderFoodJournal();
       try{ if(typeof renderNutrition==='function')renderNutrition(); }catch(e){}
-    }
-    const mi=(typeof _foodMealInfo==='function')?_foodMealInfo(moment):null;
-    const reste=aCompleter.concat(refus), court=n=>String(n||'').slice(0,30);
-    toast((ajoutes.length ? ajoutes.length+' aliment'+(ajoutes.length>1?'s':'')+' ajouté'+(ajoutes.length>1?'s':'')+(mi&&mi.lbl?' — '+mi.lbl:'')+' 🍽️'
-                          : 'Rien n\'a été ajouté')
-          +(aVerifier.length?' · à vérifier (ses valeurs se contredisent, rien de recopié) : '+aVerifier.map(court).join(', '):'')
-          +(reste.length?' · à noter à la main (quantité inconnue) : '+reste.map(court).join(', '):''),
-          (reste.length||aVerifier.length)?'info':'success');
+      const mi=(typeof _foodMealInfo==='function')?_foodMealInfo(moment):null, n=aEcrire.length;
+      toast(n+' aliment'+(n>1?'s':'')+' ajouté'+(n>1?'s':'')+(mi&&mi.lbl?' — '+mi.lbl:'')+' 🍽️'
+            +(bloques.length?' · non ajouté (à vérifier) : '+bloques.map(b=>court(b.nom)).join(', '):''),
+            bloques.length?'info':'success');
+    }catch(err){
+      toast('Rien n\'a été ajouté (erreur technique) — réessaie.','error');
+    }finally{ _habEnCours=0; }
   });
+}
+/* Le conteneur de la carte du repas, retrouvé SANS lire un attribut `onclick` : `hab-m-<rang>` est l'identifiant que le rendu pose à chaque carte, le rang est celui du repas
+   dans `_repasHabituels()` (le rendu et ce code lisent la MÊME fonction), et on VÉRIFIE avant de s'en servir — le conteneur existe, c'est bien un `.hab-moments`, et la
+   carte qui le précède affiche bien les aliments de CE repas. Sinon : `null`, et l'appelant n'écrit rien. */
+function _habConteneur(idx, r){
+  if(!(idx>=0) || !r || !Array.isArray(r.items) || !r.items.length) return null;
+  const c=document.getElementById('hab-m-'+idx);
+  if(!c || !c.classList || !c.classList.contains('hab-moments')) return null;
+  const carte=c.previousElementSibling, txt=carte ? String(carte.textContent||'') : '';
+  return r.items.every(e=>txt.indexOf(String((e&&e.name)||''))>=0) ? c : null;
+}
+/* Le panneau de décision : rattaché au conteneur, créé par le DOM (aucun `onclick` en texte, aucune signature dans un attribut), jamais d'écriture à l'ouverture ni à la fermeture. */
+function _habChoix(idx, r, moment, bons, bloques){
+  const court=n=>String(n||'').slice(0,30), pl=bloques.length>1;
+  const resume='Rien n\'a été ajouté. '+bloques.length+' aliment'+(pl?'s':'')+' de ce repas '+(pl?'sont':'est')+' à vérifier : '+bloques.map(b=>court(b.nom)).join(', ')+'.';
+  const c=_habConteneur(idx, r);
+  if(!c){ toast(resume+' Rouvre « Tes repas habituels » pour choisir.','info'); return; }
+  c.querySelectorAll('.hab-choix').forEach(x=>x.remove());
+  const box=document.createElement('div');
+  box.className='hab-choix'; box.setAttribute('role','group');
+  box.style.cssText='margin-top:9px;padding:10px;border-radius:10px;background:var(--bg3);border:1px solid var(--red);';
+  const msg=document.createElement('div');
+  msg.style.cssText='font-size:12.5px;color:var(--t1);line-height:1.4;margin-bottom:9px;';
+  msg.textContent=resume+(bons.length ? ' '+bons.length+' autre'+(bons.length>1?'s peuvent':' peut')+' être ajouté'+(bons.length>1?'s':'')+' si tu le choisis.' : '');
+  box.appendChild(msg);
+  const bouton=(txt, action, rouge)=>{
+    const b=document.createElement('button');
+    b.type='button'; b.textContent=txt;
+    b.style.cssText='display:block;width:100%;min-height:44px;margin-top:6px;padding:10px 12px;border-radius:9px;border:1px solid '+(rouge?'var(--red)':'var(--sep)')
+      +';background:'+(rouge?'var(--red)':'var(--bg2)')+';color:'+(rouge?'#fff':'var(--t1)')+';font-size:13px;font-weight:700;font-family:var(--font);cursor:pointer;touch-action:manipulation;';
+    b.addEventListener('click', ()=>{ box.querySelectorAll('button').forEach(x=>{ x.disabled=true; }); box.remove(); action(); });   // un seul appui possible
+    box.appendChild(b);
+  };
+  bouton('🔧 Réparer « '+court(bloques[0].nom)+' »', ()=>_habReparer(r.sig, moment), true);
+  if(bons.length) bouton('Ajouter seulement '+(bons.length>1?'les '+bons.length+' autres':'l\'autre'), ()=>rejouerRepas(r.sig, moment, 'autres'), false);
+  bouton('Annuler', ()=>{}, false);
+  c.appendChild(box);
+  c.style.display='block';
+}
+/* « Réparer » : le parcours existant — l'écran d'ajout, la reprise du premier aliment bloqué (nom prérempli, valeurs et quantité à saisir, aucune ancienne valeur
+   recopiée), puis les contrôles habituels. Rien n'est écrit ici, ni avant, ni en annulant l'écran. */
+function _habReparer(sig, moment){
+  const r=_repasHabituels().find(x=>x.sig===sig);
+  if(!r){ toast('Repas introuvable','error'); return; }
+  const vf=_n2FichesVerifiees();
+  const e=r.items.find(it=>{ const a=_n2Apercu(it, vf); return !(a.ok && !a.raison && a.ligne); });
+  if(!e){ toast('Plus rien à réparer : touche le repas pour l\'ajouter.','info'); return; }
+  openAddFood();
+  if(typeof setFoodMeal==='function' && typeof FOOD_MEALS!=='undefined' && FOOD_MEALS.some(m=>m.k===moment)) setFoodMeal(moment);
+  try{ _afOublierAliment(); }catch(x){}
+  _n2Apres([e], ()=>{
+    if(!_n2Reprendre(e,'liste')) return;
+    toast('Répare « '+String(e.name||'').slice(0,30)+' » : tape ses valeurs et sa quantité, puis « Ajouter ». Rien n\'a été ajouté — les autres aliments du repas non plus.','info');
+  }, true);
 }
 /* ⏰ LE CHOIX DU MOMENT — un dépliage, pas une pop-up (ft-v1052).
    ⛔ PAS D'OVERLAY, exprès : une modale de plus imposerait un chemin de fermeture à déclarer
@@ -5381,7 +5497,7 @@ function quickFillFood(i){
     _afFavSource=it.fav ? it._src : null; _afFavMontrer();   // NV2-FIAB : un favori repris peut se corriger
     /* D-101 ① / D-103 : rien n'est pré-rempli — la quantité se CHOISIT (« Pré-rempli » disait le contraire). */
     const pas=['af-bc-last','af-prop-pastille'].some(id=>{ const b=document.getElementById(id); return !!b && b.offsetParent!==null; });
-    if(_afRepriseVide){ toast(_N2_VIDE,'info'); return; }
+    if(_afRepriseVide){ toast(_afRepriseVide.bloquee ? _afRepriseVide.texte : _N2_VIDE,'info'); return; }   // NUT-REF-HIST-02 : une fiche bloquée DIT sa vraie raison, pas « ni quantité ni valeurs »
     toast('Repris — choisis la quantité ('+(pas?'touche la pastille ou tape-la':'tape-la')+'), puis « Ajouter au journal » ✅','info');
   }, true);   // NIDT : la table CIQUAL d'abord si le nom a un candidat CIQUAL dans le journal
 }
@@ -5405,7 +5521,7 @@ function quickAddFood(i){
        sur elle : la personne y voit les valeurs, choisit, et confirme par « Ajouter » — rien n'est écrit sans ce geste. */
     if(!r.ok && r.incoherente){
       quickFillFood(i);
-      toast('⚠️ À vérifier — « '+String(it.name||'').slice(0,40)+' » : '+r.raison.texte+'. Rien n\'a été ajouté : vérifie les valeurs (ou scanne le produit), puis « Ajouter ».','info');
+      toast('⚠️ À vérifier — « '+String(it.name||'').slice(0,40)+' » : '+String(r.raison.texte||'').replace(/[.\s]+$/,'')+'. Rien n\'a été ajouté : vérifie les valeurs (ou scanne le produit), puis « Ajouter ».','info');
       return;
     }
     if(!r.ok){ toast(_n2Message(r),'error'); return; }

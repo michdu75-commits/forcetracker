@@ -178,11 +178,23 @@ module.exports.ecran = async function ecran(t, b, PORT) {
   /* ── ⑥ REPAS HABITUEL ── */
   await fermer();
   const hab = await E(() => { const r = _repasHabituels(); return { n: r.length, sig: r[0] && r[0].sig, items: r[0] && r[0].items.map((x) => x.name), carte: r[0] ? _habApercu(r[0], _n2FichesVerifiees()) : null }; });
-  const avH = (await journal()).map((x) => x.id);
+  /* ↪️ RÉÉCRIT LE 30/10/2026 (NUT-REF-HIST-02, arbitrage CTO) — l'ancien R6 attendait l'AJOUT PARTIEL d'office (« le rejeu écrit exactement cet aliment ») : c'est le comportement que
+     ce lot supprime. Le contrat est maintenant « tout ou rien » : rien n'est écrit tant que la personne n'a pas choisi ; l'ajout de l'aliment de la table SEUL reste possible, mais
+     comme un GESTE (« Ajouter seulement l'autre »). Les garanties de sécurité ne baissent pas : elles montent (rien d'écrit sans décision). Texte d'avant : `git show e2b942f3:tests/parcours/nut_recette_mobile.js`. */
+  await E(() => { goScreen('s-nutrition'); renderFoodJournal(); }); await pause(300);   // les cartes « Tes repas habituels » sont affichées (le panneau se rattache à `hab-m-<rang>`)
+  const avH = (await journal()).map((x) => x.id); const jH = JSON.stringify(await journal());
   await E((s) => { rejouerRepas(s, 'diner'); }, hab.sig); await pause(900);
+  const nH0 = neuves(await journal(), avH);
+  const pan = await E(() => { const c = document.getElementById('hab-m-0'); const bx = c && c.querySelector('.hab-choix'); return bx ? [...bx.querySelectorAll('button')].map((x) => x.textContent) : null; });
+  t('B-NRM R6a ⭐⭐ repas habituel (aliment de la table + ancien scan OFF) : la carte annonce l\'aliment de la table SEUL dans ses totaux et 1 « à vérifier » ; le toucher n\'écrit RIEN et pose le choix (Réparer · Ajouter seulement l\'autre · Annuler)',
+    hab.n >= 1 && hab.carte && hab.carte.n === 1 && hab.carte.aVerifier === 1 && nH0.length === 0 && !!pan && pan.length === 3, J({ hab, pan }));
+  await E(() => { const bs = document.querySelectorAll('#hab-m-0 .hab-choix button'); bs[bs.length - 1].click(); }); await pause(200);
+  t('B-NRM R6b ⭐ « Annuler » : le journal est identique à l\'octet', JSON.stringify(await journal()) === jH, '');
+  await E((s) => { rejouerRepas(s, 'diner'); }, hab.sig); await pause(700);
+  await E(() => { const bs = document.querySelectorAll('#hab-m-0 .hab-choix button'); bs[1].click(); }); await pause(900);
   const nH = neuves(await journal(), avH), th = await dernier();
-  t('B-NRM R6 ⭐⭐ repas habituel (aliment de la table + ancien scan OFF) : la carte annonce l\'aliment de la table SEUL dans ses totaux et 1 « à vérifier » ; le rejeu écrit exactement cet aliment, une seule fois, et dit en une phrase que l\'autre est à vérifier',
-    hab.n >= 1 && hab.carte && hab.carte.n === 1 && hab.carte.aVerifier === 1 && nH.length === 1 && nH[0].sourceId === SID_CIQ && /à vérifier/.test(th), J({ hab, nH: nH.map((x) => [x.name, vals(x)]), th }));
+  t('B-NRM R6c ⭐⭐ « Ajouter seulement l\'autre » : exactement l\'aliment de la table, une seule fois, et le message dit que l\'autre est à vérifier',
+    nH.length === 1 && nH[0].sourceId === SID_CIQ && /à vérifier/.test(th), J({ nH: nH.map((x) => [x.name, vals(x)]), th }));
 
   /* ── ⑦ MODIFIER : quantité et repas ── */
   await fermer();
