@@ -44,7 +44,7 @@ const t=(n,c,x)=>{c?(ok++,console.log('  ✅ '+n)):(ko++,console.log('  ❌ '+n+
    donc la preuve est simulée ici pour eux — comme le ferait la réponse en ligne. Honnêtement : c'est un SUBSTITUT, documenté. La frontière réelle (sans simulation)
    est éprouvée par tests/parcours/nut_ref_hist.js (50 témoins, 48 mutations) et tests/parcours/nut_recette_mobile.js (18 témoins, aucune preuve simulée).
    ⛔ Posée AVANT le bloc, retirée APRÈS pour les blocs qui partagent la page `p` ; jamais globale. */
-const PREUVE_ON_JS='(()=>{ if(!window.__n2PreuveOrig){ window.__n2PreuveOrig=window._n2PreuveSource; window._n2PreuveSource=function(f,sid){ return (/^\\d{2,14}$/.test(String(sid||"").trim()) || (!String(sid||"").trim() && f && f.source==="off")) ? true : window.__n2PreuveOrig.apply(this,arguments); }; } })()';
+const PREUVE_ON_JS='(()=>{ if(!window.__n2PreuveOrig){ window.__n2PreuveOrig=window._n2PreuveSource; window._n2PreuveSource=function(f,sid){ return (/^(off:)?\\d{2,14}$/.test(String(sid||"").trim()) || (!String(sid||"").trim() && f && f.source==="off")) ? true : window.__n2PreuveOrig.apply(this,arguments); }; } })()';
 const PREUVE_OFF_JS='(()=>{ if(window.__n2PreuveOrig){ window._n2PreuveSource=window.__n2PreuveOrig; window.__n2PreuveOrig=null; } })()';
 
 /* ⛔ SEC-04 (décision de Michel, 19/10/2026) : un module qui plante devient un KO IDENTIFIÉ, les suivants continuent, et la
@@ -37127,6 +37127,7 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
   await pg.goto('http://localhost:'+PORT+'/index.html');
   await pg.waitForTimeout(2300);
 
+  await pg.evaluate(PREUVE_ON_JS);   // NUT-REF-HIST-01 : preuve de source SIMULÉE (S1 porte « off:1234567890 », D-101 ⑩) — voir PREUVE_ON_JS
   const X=await pg.evaluate(async()=>{
    try{
     const o={};
