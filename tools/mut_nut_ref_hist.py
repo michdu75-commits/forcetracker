@@ -106,7 +106,7 @@ MUT = [
     ('R44 la frontiere ignore la contradiction de la table',
      [(A, " || R.controleReference.contredite===true;", " || false;")], S('P20b'), 'GARDE'),
     ('R45 une copie contredite n est plus remplacee par la table a l ecran',
-     [(A, " && !(R0.controleReference && R0.controleReference.contredite))) return R0;", "))) return R0;")], S('P20c'), 'GARDE'),
+     [(A, " && !(R0.controleReference && R0.controleReference.contredite))) return R0;", ")) return R0;")], S('P20c'), 'GARDE'),
     ('R46 la reponse d un AUTRE code-barres est appliquee a la reprise',
      [(A, "  if(p && p.code && String(p.code).replace(/^0+/,'')!==String(ean).replace(/^0+/,'')){", "  if(false && p && p.code){")], S('P9j'), 'GARDE'),
     ('R47 l ecart avec l ancienne saisie et l ancienne quantite ne sont plus transmis a la reprise en ligne',
