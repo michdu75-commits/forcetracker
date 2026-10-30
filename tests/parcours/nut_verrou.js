@@ -336,7 +336,10 @@ module.exports.ecran = async function ecran(t, b, PORT) {
   /* FINALISATION (ex-CONSTAT P17b, tranché par Michel) : un produit identifié dont l'énergie est NON_RESOLU est VERROUILLÉ aussi — il garde son avertissement
      de fiabilité (« estimée »), et la sortie est dite : choisir un autre produit, ou une saisie personnelle. */
   await E(() => { _afOublierAliment(); }); await pg.waitForTimeout(250);
-  const exc = await E(() => { const l = (S.foodLog || []).find((x) => x.id === 'nvv-K-00000010'); _n2Reprendre(l, 'historique'); document.getElementById('af-bc-grams').value = '40'; _afCoherence();
+  /* NUT-REF-HIST-01 : une ANCIENNE ligne à énergie impossible (celle de K) n'est plus reprise comme fiche — elle a son propre écran (banc nut_ref_hist).
+     Le cas décrit ici est celui d'un produit qu'Open Food Facts REND maintenant (un scan) : sa fiche vient de la source, elle est identifiée, donc verrouillée. */
+  const exc = await E(async () => { window._offFetchProduct = async () => ({ product_name_fr: 'Énergie douteuse (scan)', brands: '', quantity: '', code: '3000000000314', nutriments: { 'energy-kcal_100g': 40, proteins_100g: 20, fat_100g: 10 } });   // sans glucides : le résolveur ne peut pas dériver l'énergie → NON_RESOLU
+    openAddFood(); await _lookupBarcode('3000000000314', 'scan', false); document.getElementById('af-bc-grams').value = '40'; _afCoherence();
     const el = document.getElementById('af-coherence');
     return { etat: _bcNutr && _bcNutr.fiab && _bcNutr.fiab.etat, fiab: _n2FicheBc().fiab, source: _n2FicheBc().source, ro: ['kcal', 'prot', 'carbs', 'fat'].map((c) => document.getElementById('af-' + c).readOnly), verr: _n2VerrouEcran('af'),
       avert: !!el && el.style.display !== 'none' && /ne sait pas laquelle croire/.test(el.textContent), bouton: !!el && /Mettre .* kcal/.test(el.innerHTML), sortie: !!el && /autre produit/.test(el.textContent) && /verrouillée/.test(el.textContent) }; });

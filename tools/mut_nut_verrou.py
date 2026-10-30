@@ -59,7 +59,7 @@ MUT = [
     ('V21 l ecran d ajout ne reconnait plus la fiche verrouillee',
      [(A, "    if(pre==='af') return !!(typeof _bcNutr==='object' && _bcNutr && N.verrouillee(_n2FicheBc()));", "    if(pre==='af') return false;")], S('P14', 'P15', 'P16', 'P18'), 'GARDE'),
     ('V22 la modification ne reconnait plus la fiche verrouillee',
-     [(A, "    if(pre==='ef') return !!(_efR && _efR.fiche && N.verrouillee(_efR.fiche));", "    if(pre==='ef') return false;")], S('P1', 'P2', 'P3'), 'GARDE'),
+     [(A, "    if(pre==='ef') return !!(_efR && ((_efR.fiche && N.verrouillee(_efR.fiche)) || _efR.ficheSuspecte));", "    if(pre==='ef') return false;")], S('P1', 'P2', 'P3'), 'GARDE'),
     ('V23 le changement de produit ne deverrouille plus les champs (reset de l ecran d ajout)',
      [(A, "    el.readOnly=v; el.style.opacity=v?'0.78':'';\n    if(v) el.dataset.ref=el.value; else delete el.dataset.ref;", "    el.readOnly=true; el.style.opacity=v?'0.78':'';\n    if(v) el.dataset.ref=el.value; else delete el.dataset.ref;")], S('P19', 'P10', 'P12'), 'GARDE'),
     # ── FINALISATION (29/10) ──

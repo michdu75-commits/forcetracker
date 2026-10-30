@@ -230,16 +230,27 @@ async function ecranFiab(t, b, PORT) {
     const av = (await journal(pg)).map((x) => x.id);
     g = g && await clic(pg, '#af-quick-list button[onclick="quickAddFood(' + f.i + ')"]'); await pause(pg, 700);
     const rien = neuves(await journal(pg), av).length === 0;
-    const st = await pg.evaluate(() => ({ ouvert: document.getElementById('ov-add-food').classList.contains('open'), bc: !!_bcNutr,
+    const st = await pg.evaluate(() => ({ ouvert: document.getElementById('ov-add-food').classList.contains('open'), bc: !!_bcNutr, fige: !!(_afRef && _afRef.fige),
       nom: (document.getElementById('af-bc-name') || {}).textContent || '',
       past: (() => { const x = document.getElementById('af-bc-last'); return x && x.offsetParent !== null ? x.textContent : ''; })() }));
-    g = g && await clic(pg, '#af-bc-last'); await pause(pg, 250); const v = await ecran(pg);
-    await ajouter(pg); const l = neuves(await journal(pg), av)[0] || null;
     t('B-NFIAB T02 ⑥ (T10) ⛔ RÈGLE A (D-111) : dans la liste, la ligne vérifiée « 155 kcal · pour 40 g · P 35 » reste visible et le favori à 26 g se dit « ⚠️ à vérifier » ; « + Ajouter » sur lui n\'écrit RIEN et ouvre l\'écran',
       g && /^155 kcal · pour 40 g · P 35 · G 1 · L 1$/.test(nb(ver.txt)) && /^156 kcal · pour 40 g · P 26 · G 1 · L 1 · ⚠️ à vérifier/.test(nb(f.txt))
       && rien && st.ouvert, J({ M, rien, st }));
-    t('B-NFIAB T02 ⑥b (T10) ⭐⭐ DANS L\'ÉCRAN, LA MÊME FICHE ET LA MÊME QUANTITÉ DONNENT LE MÊME RÉSULTAT : la fiche de son code-barres est retrouvée, l\'écran dit « ta saisie disait 156 kcal · P 26 pour 40 g », « 40 g » proposé (pas posé), puis « Ajouter » écrit 155·35·1·1 par la fiche',
-      g && st.bc && /fiche du produit retrouvée par son code-barres/.test(st.nom) && /ta saisie disait 156 kcal · P 26 pour 40 g/.test(st.nom) && /40\s*g/.test(st.past)
+    t('B-NFIAB T02 ⑥b (NUT-REF-HIST-01) ⭐⭐ HORS LIGNE, UNE AUTRE LIGNE DU JOURNAL N\'EST PAS UNE PREUVE : la ligne vérifiée « 155 kcal » du même code-barres ne sert PLUS de fiche à l\'écran (pas de calcul sur une copie), l\'écran reste sur la saisie figée, rien n\'est écrit',
+      g && !st.bc && st.fige && rien, J({ st, rien }));
+    await fin(o); }
+  /* ② c bis — EN LIGNE : la fiche vient d'Open Food Facts (la source indépendante), et c'est elle qui fait le calcul. */
+  { const o = await ouvrir(b, PORT, fixture('t02c2', [V2_ISO], [FAV_ISO_ID]), { produits: { [EAN_ISO]: OFF_ISO } }); const pg = o.pg;
+    let g = o.ok && await ouvrirAjout(pg);
+    const M = await mesAliments(pg), f = M.find((x) => x.fav) || {};
+    const av = (await journal(pg)).map((x) => x.id);
+    g = g && await clic(pg, '#af-quick-list button[onclick="quickAddFood(' + f.i + ')"]'); await pause(pg, 1200);
+    const st = await pg.evaluate(() => ({ bc: !!_bcNutr, nom: (document.getElementById('af-bc-name') || {}).textContent || '',
+      past: (() => { const x = document.getElementById('af-bc-last'); return x && x.offsetParent !== null ? x.textContent : ''; })() }));
+    g = g && await clic(pg, '#af-bc-last'); await pause(pg, 250); const v = await ecran(pg);
+    await ajouter(pg); const l = neuves(await journal(pg), av)[0] || null;
+    t('B-NFIAB T02 ⑥c (NUT-REF-HIST-01) ⭐⭐ EN LIGNE, LA MÊME FICHE ET LA MÊME QUANTITÉ DONNENT LE MÊME RÉSULTAT : la fiche de son code-barres est retrouvée CHEZ OPEN FOOD FACTS, l\'écran dit « ta saisie disait 156 kcal · P 26 pour 40 g », « 40 g » proposé (pas posé), puis « Ajouter » écrit 155·35·1·1 par la fiche',
+      g && st.bc && /fiche retrouvée par son code-barres/.test(st.nom) && /ta saisie disait 156 kcal · P 26 pour 40 g/.test(st.nom) && /40\s*g/.test(st.past)
       && v === T(A.iso40) && !!l && memes(vals(l), A.iso40) && l.q === 40 && l.sourceId === EAN_ISO && l.n2.m === 'p' && l.n2.f.fiab === 'source', J({ st, v, l }));
     await fin(o); }
 
@@ -1521,13 +1532,14 @@ async function identiteFiab(t, b, PORT) {
     await fin(o); }
 
   /* ═══ I — ISOLAT, SAISIE SANS QUANTITÉ NI VALEURS : LA FICHE EST DANS LE JOURNAL (ligne V2 vérifiée), AUCUN RÉSEAU NÉCESSAIRE ═══ */
-  { const o = await ouvrir(b, PORT, fixture('nidt-i', [V2_ISO, ISO_ZERO]), null); const pg = o.pg;
+  { const o = await ouvrir(b, PORT, fixture('nidt-i', [V2_ISO, ISO_ZERO]), { produits: { [EAN_ISO]: OFF_ISO } }); const pg = o.pg;
     let g = o.ok && await ouvrirAjout(pg);
     const ok1 = await ouvrirLigne(pg, ISO_ZERO.id), pn = await panneau(pg), b0 = await brut(pg);
-    const ch = await choisir(pg, 0), s2 = await etat(pg); g = g && await taper(pg, '#af-bc-grams', 35); const v35 = await ecran(pg), b1 = await brut(pg);
-    t('B-NIDT I ① ⭐ UNE SAISIE SANS QUANTITÉ NI VALEURS (« zéro ») PROPOSE LE PRODUIT IDENTIFIÉ DE MÊME NOM : « Produit code-barres 3000000000700 · 388,5 kcal/100 g » (fiche vérifiée DU JOURNAL — aucun réseau) ; choisi, 35 g = 136·31·1·1, aucune quantité n\'était posée, rien d\'écrit',
-      g && ok1 && pn.vu && pn.boutons.length === 1 && /^✅ Produit code-barres 3000000000700 · 388,5 kcal\/100 g noté 1 fois/.test(pn.boutons[0]) && ch && s2.bc
-      && /fiche du produit choisie par toi/.test(s2.nom) && s2.grams === '' && v35 === T(A.iso35) && b1 === b0, J({ pn, s2, v35 }));
+    const ch = await choisir(pg, 0, 600); let s2 = await etat(pg); for (let k = 0; k < 24 && !s2.bc; k++) { await pause(pg, 250); s2 = await etat(pg); }
+    g = g && await taper(pg, '#af-bc-grams', 35); const v35 = await ecran(pg), b1 = await brut(pg);
+    t('B-NIDT I ① ⭐ UNE SAISIE SANS QUANTITÉ NI VALEURS (« zéro ») PROPOSE LE PRODUIT IDENTIFIÉ DE MÊME NOM : « Produit code-barres 3000000000700 · fiche à récupérer en ligne » (NUT-REF-HIST-01 : la copie d\'une ligne du journal n\'est pas la fiche du produit) ; choisi, la fiche vient D\'OPEN FOOD FACTS : 35 g = 136·31·1·1, aucune quantité n\'était posée, rien d\'écrit',
+      g && ok1 && pn.vu && pn.boutons.length === 1 && /^✅ Produit code-barres 3000000000700 · fiche à récupérer en ligne noté 1 fois/.test(pn.boutons[0]) && ch && s2.bc
+      && /fiche retrouvée par son code-barres/.test(s2.nom) && s2.grams === '' && v35 === T(A.iso35) && b1 === b0, J({ pn, s2, v35 }));
     const av = (await journal(pg)).map((x) => x.id); await ajouter(pg); const L = await journal(pg), l = neuves(L, av)[0] || null;
     t('B-NIDT I ② la ligne écrite : 35 g, 136·31·1·1, le code-barres, la fiche 388,5·88·2,8·3,3, « pesée / fiable » — l\'ancienne saisie à 0 INTACTE',
       neuves(L, av).length === 1 && !!l && l.q === 35 && memes(vals(l), A.iso35) && memes(l.per100, ISO_P100) && l.sourceId === EAN_ISO && l.n2.m === 'p' && l.n2.f.fiab === 'source'
@@ -1535,21 +1547,25 @@ async function identiteFiab(t, b, PORT) {
     await fin(o); }
 
   /* ═══ S — RATATOUILLE : DEUX PRODUITS IDENTIFIÉS PORTENT CE NOM → CHOIX EXPLICITE, AUCUN PRÉ-CHOISI ═══ */
-  { const o = await ouvrir(b, PORT, fixture('nidt-s', [RAT_A, RAT_B1, RAT_B2, RAT_OLD]), null); const pg = o.pg;
+  const OFF_RAT = (ean, k, p, g, l) => ({ status: 1, product: { code: ean, product_name_fr: RAT, quantity: k, product_quantity_unit: 'g', nutriments: { 'energy-kcal_100g': p, proteins_100g: g, carbohydrates_100g: l[0], fat_100g: l[1] } } });
+  const PROD_RAT = { [EAN_RA]: OFF_RAT(EAN_RA, '250 g', 85, 1.5, [7, 5]), [EAN_RB]: OFF_RAT(EAN_RB, '200 g', 219, 3, [20, 10]) };
+  { const o = await ouvrir(b, PORT, fixture('nidt-s', [RAT_A, RAT_B1, RAT_B2, RAT_OLD]), { produits: PROD_RAT }); const pg = o.pg;
     let g = o.ok && await ouvrirAjout(pg);
     const ok1 = await ouvrirLigne(pg, RAT_OLD.id), pn = await panneau(pg), s1 = await etat(pg), b0 = await brut(pg);
     const presse = await pg.evaluate(() => [...document.querySelectorAll('#af-cand-row [aria-pressed="true"], #af-cand-row .on, #af-cand-row .sel')].length);
-    t('B-NIDT S ① ⭐ PLUSIEURS CANDIDATS = UN CHOIX EXPLICITE, AUCUN PRÉ-CHOISI : « Plusieurs fiches identifiées portent ce nom » ; le plus noté d\'abord (219 kcal/100 g, noté 2 fois) puis l\'autre (85 kcal/100 g, noté 1 fois) ; l\'écran reste sur l\'ancienne saisie, aucun bouton enfoncé, rien d\'écrit',
+    t('B-NIDT S ① ⭐ PLUSIEURS CANDIDATS = UN CHOIX EXPLICITE, AUCUN PRÉ-CHOISI : « Plusieurs fiches identifiées portent ce nom » ; le plus noté d\'abord (noté 2 fois) puis l\'autre (noté 1 fois), chacun avec « fiche à récupérer en ligne » (NUT-REF-HIST-01) ; l\'écran reste sur l\'ancienne saisie, aucun bouton enfoncé, rien d\'écrit',
       g && ok1 && pn.vu && /Plusieurs fiches identifiées portent ce nom dans ton journal/.test(pn.texte) && pn.boutons.length === 2
-      && /3000000000755 · 219 kcal\/100 g noté 2 fois/.test(pn.boutons[0]) && /3000000000748 · 85 kcal\/100 g noté 1 fois/.test(pn.boutons[1]) && presse === 0 && !s1.bc && s1.fige && b0 === (await brut(pg)), J({ pn, s1, presse }));
+      && /3000000000755 · fiche à récupérer en ligne noté 2 fois/.test(pn.boutons[0]) && /3000000000748 · fiche à récupérer en ligne noté 1 fois/.test(pn.boutons[1]) && presse === 0 && !s1.bc && s1.fige && b0 === (await brut(pg)), J({ pn, s1, presse }));
     g = g && await taper(pg, '#af-prop', '200');                              // la quantité est tapée AVANT de choisir la fiche : elle survit au choix (D-101 ⑧/⑨)
-    const ch = await choisir(pg, 0), s2 = await etat(pg), vB = await ecran(pg);
+    const ch = await choisir(pg, 0, 600); let s2 = await etat(pg); for (let k = 0; k < 24 && !s2.bc; k++) { await pause(pg, 250); s2 = await etat(pg); }
+    const vB = await ecran(pg);
     const av = (await journal(pg)).map((x) => x.id); await ajouter(pg); const L1 = await journal(pg), lB = neuves(L1, av)[0] || null;
     t('B-NIDT S ② le produit choisi (le 1ᵉʳ) donne ses valeurs, la quantité tapée AVANT le choix est gardée : 200 g = 438·6·40·20, ligne écrite avec SON code-barres et SON pour-100 g (219 · 3 · 20 · 10)',
-      g && ch && s2.bc && /fiche du produit choisie par toi/.test(s2.nom) && /ta quantité \(200 g\) est gardée/.test(s2.nom) && s2.grams === '200' && vB === '438/6/40/20'
+      g && ch && s2.bc && /fiche retrouvée par son code-barres/.test(s2.nom) && /ta quantité \(200 g\) est gardée/.test(s2.nom) && s2.grams === '200' && vB === '438/6/40/20'
       && !!lB && lB.sourceId === EAN_RB && memes(lB.per100, { kcal: 219, prot: 3, carbs: 20, fat: 10 }) && memes(vals(lB), { kcal: 438, prot: 6, carbs: 40, fat: 20 }), J({ s2, vB, lB }));
     g = g && await refermer(pg); const ok3 = await ouvrirLigne(pg, RAT_OLD.id), pn3 = await panneau(pg);
-    const ch3 = await choisir(pg, 1); g = g && await taper(pg, '#af-bc-grams', 200); const vA = await ecran(pg);
+    const ch3 = await choisir(pg, 1, 600); let s3 = await etat(pg); for (let k = 0; k < 24 && !s3.bc; k++) { await pause(pg, 250); s3 = await etat(pg); }
+    g = g && await taper(pg, '#af-bc-grams', 200); const vA = await ecran(pg);
     const av2 = (await journal(pg)).map((x) => x.id); await ajouter(pg); const L2 = await journal(pg), lA = neuves(L2, av2)[0] || null;
     t('B-NIDT S ③ ⭐ L\'AUTRE PRODUIT SE CHOISIT AUSSI (le 2ᵉ bouton) — la même ancienne saisie, une autre fiche : 200 g = 170·3·14·10, SON code-barres, SON pour-100 g (85 · 1,5 · 7 · 5) ; l\'ancienne saisie INTACTE',
       g && ok3 && pn3.boutons.length === 2 && ch3 && vA === '170/3/14/10' && !!lA && lA.sourceId === EAN_RA && memes(lA.per100, { kcal: 85, prot: 1.5, carbs: 7, fat: 5 })

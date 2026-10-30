@@ -1326,6 +1326,67 @@ function _n2Ctx(){
   }
   return {ciqual:(code)=>(_n2CiqIdx && _n2CiqIdx[String(code)])||null};
 }
+/* ═══ 🛡️ NUT-REF-HIST-01 (30/10/2026, ordre de Michel) — UNE ANCIENNE FICHE ERRONÉE NE SERT PLUS À RECALCULER UNE NOUVELLE SAISIE ═══
+   `fiab:'source'` est la provenance DÉCLARÉE d'une ancienne ligne, pas la preuve que son pour-100 g est juste (mesuré : 65 kcal pour 20 g de
+   protéines et 4 g de lipides, « fiable », rendue comme fiche d'identité d'un code-barres et utilisée pour recalculer et pour juger d'autres saisies).
+   · `_n2ControlerReference(fiche, preuveSource)` rend {etat:'suspect'|'non_verifiee'|'admissible', raison}. SUSPECT = démontré impossible : valeur
+     négative / non finie, énergie sous le plancher 4×P + 9×L (même tolérance, dérivée de la précision des chiffres, que le résolveur : `_nrjPlancher`),
+     masse qui ne tient pas dans 100 g (`_masseImpossibleVals`). ⛔ Jamais « suspect » parce que les calories s'écartent de 4P + 4G + 9L : fibres, polyols,
+     alcool et règles d'étiquetage l'expliquent — cette formule est indicative, pas une preuve. ⛔ Cohérent ne veut PAS dire exact : sans preuve de source,
+     le meilleur état est `non_verifiee`.
+   · `preuveSource` vient d'une vérification INDÉPENDANTE fournie par l'appelant (`_n2PreuveSource` : la table CIQUAL, par identifiant) — jamais de
+     `fiche.fiab`, de `n2.f`, d'une autre ligne ni d'un favori de même `sourceId` : plusieurs copies de la même erreur ne font pas plusieurs preuves.
+     Une source indépendante fait foi sur l'arithmétique (l'entrée « Cola sans sucres » de la table CIQUAL, 0 kcal pour 0,1 g de P et de L, serait sinon
+     « suspecte » : 1 entrée sur 3 484).
+   · `_n2Reprise(ligne)` est l'UNIQUE lecteur de la fiche d'une ancienne ligne : une fiche suspecte n'est jamais rendue (`fiche:null`, `ficheSuspecte`), la
+     ligne et ses valeurs enregistrées restent telles quelles, simplement elles ne servent plus à recalculer. Toutes les portes (reprise, « + Ajouter »,
+     repas habituel, favori, « Modifier ») passent par lui : aucune ne contourne les autres.
+   · La fiche COHÉRENTE de la propre ligne continue de servir à cette ligne (« Modifier » la quantité d'une ligne OFF, hors ligne) — mais ne passe JAMAIS
+     d'une ligne à l'autre sans preuve indépendante (`_n2FicheIdentite`, `_n2FichesVerifiees`). */
+const _N2_REF_SUSPECTE='Ancienne fiche non vérifiée. Les valeurs enregistrées sont conservées, mais ne peuvent pas servir à recalculer une nouvelle quantité.';
+function _n2ControlerReference(fiche, preuveSource){
+  const p=fiche && fiche.p100;
+  if(!p || typeof p!=='object') return {etat:'suspect', raison:'fiche_absente'};
+  let n=0;
+  for(const c of _N2_CHAMPS){
+    const x=p[c]; if(x===undefined || x===null) continue;
+    if(typeof x!=='number' || !isFinite(x) || x<0) return {etat:'suspect', raison:'valeur_invalide'};
+    n++;
+  }
+  if(!n) return {etat:'suspect', raison:'fiche_absente'};
+  if(typeof p.kcal!=='number') return {etat:'non_verifiee', raison:'energie_absente'};   // des calories absentes ne sont pas un zéro
+  if(!preuveSource){
+    const k=p.kcal, pr=(typeof p.prot==='number')?p.prot:0, f=(typeof p.fat==='number')?p.fat:0;
+    if(k>0){ if(_nrjPlancher(k, pr, f)) return {etat:'suspect', raison:'energie_impossible'}; }
+    else if(pr>0 || f>0){   // 0 kcal est un vrai zéro seulement sans protéines ni lipides
+      const tol=_nrjPrecision(k)+4*_nrjPrecision(pr)+9*_nrjPrecision(f);
+      if(k+tol<4*pr+9*f) return {etat:'suspect', raison:'energie_impossible'};
+    }
+    if(fiche.base==='g' && ['prot','carbs','fat'].every(c=>typeof p[c]==='number') && _masseImpossibleVals(100, p.prot, p.carbs, p.fat))
+      return {etat:'suspect', raison:'masse_impossible'};
+    return {etat:'non_verifiee', raison:'source_non_confirmee'};
+  }
+  return {etat:'admissible'};
+}
+/* La preuve INDÉPENDANTE d'une fiche d'ancienne ligne : la table CIQUAL, par identifiant, qui redonne exactement ses valeurs. Open Food Facts n'a pas
+   de copie locale : sa preuve est la réponse EN LIGNE du code-barres (`_n2RetrouverEnLigne`), jamais une ligne du journal. */
+function _n2PreuveSource(fiche, sid){
+  const m=/^ciqual:(\d+)$/.exec(String(sid||'').trim());
+  if(!m || !fiche || !fiche.p100) return false;
+  const r=_n2Ctx().ciqual(m[1]); if(!r) return false;
+  return _N2_CHAMPS.every(c=>{
+    const a=fiche.p100[c], b=r[c], ta=(typeof a==='number' && isFinite(a)), tb=(typeof b==='number' && isFinite(b) && b>=0);
+    return ta===tb && (!ta || a===b);
+  });
+}
+function _n2Reprise(l){
+  const N=(typeof NUT2==='object'&&NUT2)?NUT2:null; if(!N) return null;
+  const R=N.reprise(l, _n2Ctx());
+  if(!R || !R.ok || !R.fiche) return R;
+  const c=_n2ControlerReference(R.fiche, _n2PreuveSource(R.fiche, l && l.sourceId));
+  if(c.etat!=='suspect') return R;
+  return Object.assign({}, R, {fiche:null, statut:'non-verifiee', corrections:[], ficheSuspecte:{raison:c.raison}});
+}
 /* ⭐ NUT-CIQ-HL-01 (Claude Principal, 25/10 soir — sa sonde C2k) — POURQUOI une ancienne ligne ne se recalcule pas. Une ligne
    CIQUAL (`ciqual:…`) dont la TABLE n'a pas pu être chargée (hors ligne : `data/ciqual.json` se télécharge à la demande, il n'est
    pas dans le cache — R30) n'est pas « sans fiche » : c'est sa RÉFÉRENCE qui manque, pour l'instant. L'écran disait « cet ancien
@@ -1405,7 +1466,7 @@ function _n2VerrouEcran(pre){
   const N=(typeof NUT2==='object'&&NUT2)?NUT2:null; if(!N || typeof N.verrouillee!=='function') return false;
   try{
     if(pre==='af') return !!(typeof _bcNutr==='object' && _bcNutr && N.verrouillee(_n2FicheBc()));
-    if(pre==='ef') return !!(_efR && _efR.fiche && N.verrouillee(_efR.fiche));
+    if(pre==='ef') return !!(_efR && ((_efR.fiche && N.verrouillee(_efR.fiche)) || _efR.ficheSuspecte));   // NUT-REF-HIST-01 : une fiche suspecte verrouille aussi (seul le repas se change)
   }catch(e){}
   return false;
 }
@@ -1704,13 +1765,13 @@ function _n2Reprendre(src, saisie, choixSid){
   /* ⭐ NIDT (27/10) : `choixSid` = l'identité que la PERSONNE vient de choisir parmi les candidats de son journal (`_n2ChoisirCandidat`) —
      la fiche se charge alors à la SOURCE (table CIQUAL, ou fiche vérifiée / Open Food Facts du code-barres), jamais depuis les
      anciennes valeurs de la ligne. Sans choix, rien ne change. */
-  const R=_n2RepriseIdentite(N.reprise(src, _n2Ctx()), choixSid ? {sourceId:choixSid} : src, !!choixSid); if(!R.ok) return false;
+  const R=_n2RepriseIdentite(_n2Reprise(src), choixSid ? {sourceId:choixSid} : src, !!choixSid); if(!R.ok) return false;
   const _sid=(src && typeof src.sourceId==='string') ? src.sourceId.trim() : '', _ean=/^\d{8,14}$/.test(_sid) ? _sid : '';
   const _eanChoisi=(choixSid && /^\d{8,14}$/.test(choixSid)) ? choixSid : '';   // NIDT : la fiche du code-barres choisi se cherche en ligne
   const _jeton=++_n2RechJeton;
   const set=(id,v)=>{const el=document.getElementById(id); if(el) el.value=v;};
   set('af-desc', R.nom||'');
-  _N2_CHAMPS.forEach(c=>set('af-'+c, (c in R.valeurs)?R.valeurs[c]:''));
+  _N2_CHAMPS.forEach(c=>set('af-'+c, (c in R.valeurs && !R.ficheSuspecte)?R.valeurs[c]:''));   // NUT-REF-HIST-01 : les macros d'une fiche suspecte ne sont pas recopiées
   const row=document.getElementById('af-bc-row');
   const q=R.quantite;
   if(R.fiche){
@@ -1758,7 +1819,7 @@ function _n2Reprendre(src, saisie, choixSid){
     if(row) row.style.display='block';
     _bcQsrc(null);
     _bcMontrerTotal(0);
-  }else if(!q){
+  }else if(!q || R.ficheSuspecte){
     /* Sans quantité utilisable (aucune, ou une portion sans poids), il n'y a pas de couple « valeurs / quantité » à
        garder : l'écran redevient une saisie à la main PRÉ-REMPLIE. La personne dit pour quel poids valent ces valeurs
        (l'app ne le devine pas), puis ce qu'elle a mangé — et le moteur calcule (ft-v1051 « il faut que je puisse mettre
@@ -1768,9 +1829,12 @@ function _n2Reprendre(src, saisie, choixSid){
     _afSetSrc({saisie:saisie, origine:'reprise'});
     _afRef=null;
     /* Retour de Claude Principal (25/10) : sans aucune valeur non plus, l'écran le dit et donne les issues (`_afMajVide`). */
-    _afRepriseVide=_N2_CHAMPS.some(c=>(+R.valeurs[c])>0) ? null : {nom:String(R.nom||'').trim(), etat:''};
+    /* NUT-REF-HIST-01 : une fiche SUSPECTE donne le même écran qu'une saisie vide — la phrase de la règle, les trois issues (retrouver, scanner,
+       étiquette), des champs libres pour une saisie PERSONNELLE : ni ses macros douteuses ni son identité n'y entrent. */
+    _afRepriseVide=R.ficheSuspecte ? {nom:String(R.nom||'').trim(), etat:'', texte:_N2_REF_SUSPECTE+' Tape tes propres valeurs, ou retrouve le produit (recherche, scan) quand la connexion revient.'}
+      : (_N2_CHAMPS.some(c=>(+R.valeurs[c])>0) ? null : {nom:String(R.nom||'').trim(), etat:''});
     _afMajAncre(true);
-    if(_sid && _afSrc) _afSrc.sourceId=_sid.slice(0,32);   // NV2-FIAB : l'identité du produit suit (jamais une fiche)
+    if(_sid && _afSrc && !R.ficheSuspecte) _afSrc.sourceId=_sid.slice(0,32);   // NV2-FIAB : l'identité du produit suit (jamais une fiche)
     if(_ean || _eanChoisi) _n2RetrouverEnLigne(_ean || _eanChoisi, _jeton, saisie, 0, R.nom||'');
   }else{
     _bcNutr=null; if(row) row.style.display='none'; _bcQsrc(null); _bcMontrerTotal(0);
@@ -1882,7 +1946,7 @@ let _afRepriseVide=null;
 const _N2_VIDE='Cette ancienne saisie n\'a ni quantité ni valeurs : rien ne se calcule à partir d\'elle. Retrouve l\'aliment, scanne son code-barres ou saisis son étiquette — ou tape ses valeurs.';
 function _afMajVide(){
   const el=document.getElementById('af-prop-row'); if(!el || !_afRepriseVide) return;
-  el.innerHTML='<div style="font-size:11.5px;color:var(--t2);line-height:1.45;">'+_escFood(_N2_VIDE)+'</div>'+_n2IssuesHtml(_afRepriseVide.etat);
+  el.innerHTML='<div style="font-size:11.5px;color:var(--t2);line-height:1.45;">'+_escFood(_afRepriseVide.texte||_N2_VIDE)+'</div>'+_n2IssuesHtml(_afRepriseVide.etat);
   el.style.display='block';
 }
 function _afPropPoserFige(origine){
@@ -2029,7 +2093,7 @@ function _n2Reajouter(src, repas, date, porte, apercu){
      référence qui contredit la fiche vérifiée de son produit se dit « à vérifier », et « + Ajouter » / « Tes repas habituels »
      ne la recalculent pas en silence. La fiche retrouvée par l'identité ne sert QUE dans l'écran (`_n2Reprendre`), où la
      personne voit les valeurs et confirme par « Ajouter ». */
-  const R=N.reprise(src, _n2Ctx()); if(!R.ok) return R;
+  const R=_n2Reprise(src); if(!R.ok) return R;
   if(!R.quantite) return {ok:false, aCompleter:true};
   const id=apercu ? 'apercu-00000000' : _foodLineId(); if(!id) return {ok:false, erreur:'ID_INVALIDE'};
   const e={id:id, ts:Date.now(), date:date, repas:repas, nom:String(R.nom||'').slice(0,80),
@@ -2092,8 +2156,8 @@ function _n2FichesVerifiees(){
     if(sid && _n2Propose(x, fav ? x.t : x.ts)) (refs[sid]=refs[sid]||[]).push({x:x, fav:fav}); return sid; };
   (S.foodLog||[]).forEach(l=>{
     const sid=ranger(l, false); if(!sid) return;
-    const R=N.reprise(l, _n2Ctx()); if(!R.ok || !R.fiche || R.fiche.fiab!=='source') return;
-    if(!o[sid] || (+l.ts||0)>o[sid].ts) o[sid]={fiche:R.fiche, ts:+l.ts||0, date:l.date, id:l.id};
+    const R=_n2Reprise(l); if(!R.ok || !R.fiche || R.fiche.fiab!=='source') return;   // NUT-REF-HIST-01 : une fiche suspecte n'est jamais « vérifiée »
+    if(!o[sid] || (+l.ts||0)>o[sid].ts) o[sid]={fiche:R.fiche, ts:+l.ts||0, date:l.date, id:l.id, preuve:_n2PreuveSource(R.fiche, sid)};   // `preuve:false` = une simple copie du journal
   });
   (S.savedFoods||[]).forEach(f=>ranger(f, true));
   return o;
@@ -2112,11 +2176,15 @@ function _n2FicheIdentite(src){
     const r=_n2Ctx().ciqual(m[1]); if(!r) return null;
     const p100={}; _N2_CHAMPS.forEach(c=>{ const x=r[c]; if(typeof x==='number' && isFinite(x) && x>=0) p100[c]=x; });
     if(!Object.keys(p100).length) return null;
-    return {base:'g', p100:p100, cle:sid, source:'ciqual', fiab:'source', etat:null, libelle:String(r.nom||''),
-            version:'CIQUAL-'+((typeof _ciqual==='object'&&_ciqual&&_ciqual.version)||'2025')};
+    const F={base:'g', p100:p100, cle:sid, source:'ciqual', fiab:'source', etat:null, libelle:String(r.nom||''),
+             version:'CIQUAL-'+((typeof _ciqual==='object'&&_ciqual&&_ciqual.version)||'2025')};
+    return _n2ControlerReference(F, true).etat==='suspect' ? null : F;   // la table fait foi (preuve) ; seule une valeur invalide l'écarte
   }
+  /* NUT-REF-HIST-01 : un code-barres ne retrouve plus sa fiche dans le JOURNAL — une autre ligne de même `sourceId` n'est pas une preuve
+     indépendante (plusieurs copies de la même erreur ne font pas plusieurs preuves). Sa fiche vient d'Open Food Facts, en ligne
+     (`_n2RetrouverEnLigne`) ; hors ligne l'ancienne ligne reste telle quelle. */
   const v=_n2FichesVerifiees()[sid];
-  return v ? v.fiche : null;
+  return (v && v.preuve) ? v.fiche : null;
 }
 /* La reprise d'un aliment DANS L'ÉCRAN, complétée par la fiche de son IDENTITÉ quand il n'en a pas de confiance — la personne
    voit les valeurs recalculées, l'écran dit ce que disait sa saisie, et rien ne s'écrit sans « Ajouter ». ⛔ Jamais hors de
@@ -2180,8 +2248,8 @@ function _n2CandDecrire(c){
     const tableOK=!!(typeof _ciqual==='object' && _ciqual && Array.isArray(_ciqual.a)), r=tableOK ? _n2Ctx().ciqual(m[1]) : null;
     return {type:'ciqual', code:m[1], tableOK:tableOK, dispo:!!r, nomFiche:r ? String(r.nom||'') : '', kcal:r ? r.kcal : null};
   }
-  const v=_n2FichesVerifiees()[c.sid], p=(v && v.fiche && v.fiche.p100) || null;
-  return {type:'ean', code:c.sid, tableOK:true, dispo:!!v, nomFiche:'', kcal:p ? p.kcal : null};
+  const v=_n2FichesVerifiees()[c.sid], ok=!!(v && v.preuve), p=(ok && v.fiche && v.fiche.p100) || null;   // NUT-REF-HIST-01 : la copie d'une ligne n'est pas annoncée comme la fiche du produit
+  return {type:'ean', code:c.sid, tableOK:true, dispo:ok, nomFiche:'', kcal:p ? p.kcal : null};
 }
 function _n2CandRendre(){
   const el=document.getElementById('af-cand-row'); if(!el) return;
@@ -2296,7 +2364,9 @@ function _n2Contradiction(src, v, vf){
    ⛔ Une valeur corrigée à la main sur une fiche n'est pas une incohérence : elle fait partie de la ligne (CR-2). ⛔ Une ligne
    sans fiche ni code-barres n'est pas « incohérente » faute de preuve : elle est « non vérifiée », et le dit (`_n2Badge`). */
 function _n2Incoherence(src, R, L, verifiees){
-  const N=NUT2, C=N.CHAMPS, v=R.valeurs, q=R.quantite; if(!q) return null;
+  const N=NUT2, C=N.CHAMPS, v=R.valeurs, q=R.quantite;
+  if(R.ficheSuspecte) return {code:'suspecte', texte:_N2_REF_SUSPECTE};   // NUT-REF-HIST-01 : posé AVANT tout retour anticipé (« une fiche existe »)
+  if(!q) return null;
   const qt=_n2QteTexte(q, false);
   if(R.fiche){
     const d=!!L && C.some(c=>(c in L)!==(c in v) || ((c in L) && L[c]!==v[c]));
@@ -2392,6 +2462,7 @@ function _efLigneTelleQuelle(){
   const dire=h=>{ if(nt){ nt.innerHTML=h; nt.style.display=h?'block':'none'; nt.style.outline=''; } };
   _efAbandonVu=''; if(bt) bt.textContent='✅ Enregistrer';
   const R=_efR, e=(S.foodLog||[]).find(x=>x&&x.id===_editFoodId);
+  if(R && R.ficheSuspecte && e){ dire('⚠️ <b>'+_escFood(_N2_REF_SUSPECTE)+'</b> Seul le repas se change ; pour une autre quantité, retrouve le produit (recherche, scan) ou crée ta propre saisie.'); return; }
   if(!R || !R.fiche || !e || !_n2VerrouEcran('ef')){ dire(''); return; }
   const q=_efQteFiche(R, e), corriges=R.correctionsEcartees>0;
   const calc=(q && NUT2.calcule(R.fiche, q)) || {ok:false};
@@ -2439,7 +2510,7 @@ function _n2LigneValeurs(v, pour, ref){
    La quantité est celle qu'un « + Ajouter » reprendrait, par le formateur unique (D-103 : « 3 portions (450 g) » seulement si le
    poids d'une portion est fiable). Elle remplace `_n2QteListe`, qui disait la même chose pour les deux mêmes listes (R2). */
 function _n2TexteProposition(src, a){
-  const R=(a && a.R) || ((typeof NUT2==='object'&&NUT2)?NUT2.reprise(src, _n2Ctx()):null);
+  const R=(a && a.R) || _n2Reprise(src);
   const q=R && R.ok && R.quantite;
   const v=(a && a.ok && !a.raison && a.ligne) ? a.ligne : (src||{});
   const pour=q ? 'pour '+_escFood(_n2QteTexte(q, _n2PortionFiable(R))) : 'quantité à préciser';
@@ -4698,7 +4769,7 @@ function _mesAliments(max){
     vus[k]=1;
     /* 🥗 V2 : le pour-100 g d'une idée vient d'une fiche de CONFIANCE (moteur), jamais d'une fiche notée
        non vérifiée (M1 : un pour-100 g fabriqué ne doit plus nourrir aucun calcul). */
-    const _R=(typeof NUT2==='object'&&NUT2)?NUT2.reprise(e, _n2Ctx()):null;
+    const _R=_n2Reprise(e);
     const _f=(_R && _R.ok && _R.fiche && _R.fiche.base==='g') ? _R.fiche : null;
     out.push({name:n, kcal:kcal, prot:prot, carbs:carbs, fat:fat,
               per100:_f?_f.p100:null, _fiche:_f, fav:!!fav, freq:(freq[k]||0)});
@@ -7046,7 +7117,7 @@ function openEditFood(id){
   /* 🥗 V2 : un repas absent reste ABSENT (jamais rangé d'office en déjeuner, D-050) — la personne le choisit. */
   _editFoodId=id; _editFoodMeal=e.meal||null;
   /* 🥗 V2 (jalon 4) : ce que la ligne permet, lu par le moteur (fiche de confiance ou non, quantité valide ou non). */
-  _efR=(typeof NUT2==='object'&&NUT2)?NUT2.reprise(e, _n2Ctx()):null; if(_efR && !_efR.ok) _efR=null;
+  _efR=_n2Reprise(e); if(_efR && !_efR.ok) _efR=null;   // NUT-REF-HIST-01 : le lecteur unique (une fiche suspecte n'est jamais rendue)
   _efCorr={}; _efCalc=null; _efValeursTapees=false; _efAbandonVu='';
   if(_efR) _efR.corrections.forEach(x=>{ if(e[x.c]===x.v) _efCorr[x.c]={v:x.v, avant:x.avant, le:x.le}; });
   _efUniteDecl=(_efR && _efR.quantite) ? _efR.quantite.unite : 'g';
@@ -7114,6 +7185,7 @@ function openEditFood(id){
   /* 🔒 NUT-VERROU-01 : sur une fiche identifiée l'écran montre la ligne TELLE QU'ENREGISTRÉE tant que la quantité ne change pas (rien n'est
      recalculé en silence, y compris une ancienne correction), et la FICHE × la nouvelle quantité dès qu'elle change (`_efLigneTelleQuelle`). */
   if(_n2VerrouEcran('ef')) _efApplyFiche();
+  _efLigneTelleQuelle();              // NUT-REF-HIST-01 : une fiche suspecte le dit dès l'ouverture
   _efCoherence();                     // l'incohérence se voit À L'OUVERTURE, sans rien toucher
 }
 function _setEditFoodMeal(k){_editFoodMeal=k;_renderEditFoodMeals();}
@@ -7251,7 +7323,7 @@ function _efQtyRender(){
   const val=(q && q.unite===_efUniteDecl) ? q.val : '';
   el.innerHTML='<div style="margin-bottom:12px;">'+tete('Quantité', 'indique combien tu en as mangé')
     +'<div style="display:flex;gap:6px;margin-bottom:7px;">'+onglet('g','⚖️ En grammes')+onglet('ml','🥛 En ml')+(portionOk?onglet('portion','🍽️ En portions'):'')+'</div>'
-    +'<input id="ef-q" type="text" inputmode="decimal" step="any" value="'+val+'" placeholder="'+(_efUniteDecl==='portion'?'nombre de portions':'quantité en '+_efUniteDecl)+'" oninput="_efCoherence()" style="'+style+'">'
+    +'<input id="ef-q" type="text" inputmode="decimal" step="any" value="'+val+'" placeholder="'+(_efUniteDecl==='portion'?'nombre de portions':'quantité en '+_efUniteDecl)+'"'+((_efR && _efR.ficheSuspecte)?' readonly':'')+' oninput="_efCoherence()" style="'+style+'">'
     +note((portionOk && _efUniteDecl==='portion' ? _efPortionNote(q, null)+' ' : '')
       +'Les valeurs sont celles notées : elles ne sont <b>pas recalculées</b> '+(_n2CiqualAbsente(e.sourceId)   // NUT-CIQ-HL-01
         ? 'pour l\'instant — sa référence CIQUAL n\'est pas disponible (la table n\'a pas pu être chargée : hors ligne ?). Si la quantité change, corrige-les.'
@@ -7458,6 +7530,7 @@ function _coherenceKcal(pfx, corrigeur){
   const el=document.getElementById(pfx+'-coherence'); if(!el) return;
   const _verr=_n2VerrouEcran(pfx);   // 🔒 NUT-VERROU-01 : sur une fiche identifiée, l'avertissement se lit, mais « Mettre X kcal » n'existe pas
   _n2VerrouChamps(pfx);
+  if(pfx==='ef' && _efR && _efR.ficheSuspecte){ el.style.display='none'; el.innerHTML=''; return; }   // NUT-REF-HIST-01 : la note de l'écran dit déjà tout
   /* ⚖️⛔⛔ ft-v1191 — L'AVERTISSEMENT ÉTAIT JUSTE, ET À 1 132 px SOUS L'ÉCRAN.
      Mesuré sur le cas de Michel (lentilles Raynal, 410 g) : la fiche fait **1 907 px** pour
      **775 px visibles**, et cet encadré apparaît à `top 1734` — pendant que le geste qui le
@@ -8268,9 +8341,22 @@ function saveEditFood(){
      d'origine intégrale (`n2.av`), une ligne V2 ses corrections tracées (`n2.corr`) — rien n'est perdu.
      ⛔ Le moteur refuse ce qui ne tient pas (pas de quantité > 0, repas absent, portion sans poids) : la ligne
      n'est alors PAS modifiée (le garde de NUT-JOURNAL-QTY-GUARD-01 est gardé, et élargi à toutes les lignes). */
-  const R=_efR || ((typeof NUT2==='object'&&NUT2)?NUT2.reprise(e, _n2Ctx()):null);
+  const R=_efR || _n2Reprise(e);
   if(!R || !R.ok){ toast('Ligne illisible — elle n\'a pas été modifiée.','error'); return; }
   const verr=!!(R.fiche && NUT2.verrouillee(R.fiche));   // 🔒 NUT-VERROU-01 : une fiche identifiée (CIQUAL, Open Food Facts, enseigne)
+  /* 🛡️ NUT-REF-HIST-01 — UNE LIGNE À FICHE SUSPECTE : ses valeurs enregistrées restent, rien n'en est recalculé ni retouché ; seul le repas se change. */
+  if(R.ficheSuspecte){
+    if(!_editFoodMeal){ toast('Choisis le repas — la ligne n\'a pas été modifiée.','error'); return; }
+    if(_editFoodMeal!==e.meal){
+      const rm=_n2Enregistrer({repasSeul:true, remplace:e, repas:_editFoodMeal},'saveEditFood');
+      if(!rm.ok){ toast(_n2Message(rm).replace('rien n\'a été ajouté','la ligne n\'a pas été modifiée'),'error'); return; }
+      persist(); if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
+    }
+    const ovs=document.getElementById('ov-edit-food'); if(ovs)ovs.classList.remove('open');
+    renderFoodJournal();
+    toast(_editFoodMeal!==e.meal ? 'Modifié ✅' : _N2_REF_SUSPECTE,'info');
+    return;
+  }
   /* 🔒 FINALISATION — NE CHANGER QUE LE REPAS d'une fiche identifiée : la ligne reste telle quelle (valeurs enregistrées, ancienne correction
      comprise), seul le repas change. Rien n'est recalculé : le repas appartient à la ligne du journal, pas au produit. */
   if(verr){

@@ -85,6 +85,8 @@ module.exports.ecran = async function ecran(t, b, PORT) {
   t('B-NRH C7 ⭐ masse impossible en grammes (60 + 30 + 20 = 110 g pour 100 g) : suspecte ; en ml la somme ne prouve rien (densité inconnue)', c7.etat === 'suspect' && c7.raison === 'masse_impossible' && c7b.etat !== 'suspect', J([c7, c7b]));
   const c8 = await ctl(F({ kcal: 100, prot: 5, carbs: 20, fat: 1 }), false);
   t('B-NRH C8 ⭐ JAMAIS rejetée parce que les calories diffèrent de 4P + 4G + 9L (fibres, polyols, alcool, étiquetage : 100 kcal pour 5 · 20 · 1 → 109 « calculées ») : la formule est indicative, pas une preuve', c8.etat !== 'suspect', J(c8));
+  const c8b = await ctl(F({ kcal: 83, prot: 0.1, carbs: 2.6, fat: 0 }), false), c8c = await ctl(F({ kcal: 70, prot: 0, carbs: 0, fat: 0 }), false);
+  t('B-NRH C8b ⭐ idem pour l\'ALCOOL et les polyols : un vin à 83 kcal pour 0,1 · 2,6 · 0 g (la formule en donne 11) et 70 kcal sans aucune macro ne sont pas suspects — l\'énergie PLUS HAUTE que la formule n\'est jamais une preuve d\'erreur', c8b.etat !== 'suspect' && c8c.etat !== 'suspect', J([c8b, c8c]));
   const c9 = await ctl(F({ kcal: 0, prot: 0.1, carbs: 0, fat: 0.1 }, 'g'), true), c9b = await ctl(F({ kcal: 0, prot: 0.1, carbs: 0, fat: 0.1 }, 'g'), false);
   t('B-NRH C9 ⭐ une SOURCE indépendante fait foi sur l\'arithmétique : l\'entrée « Cola sans sucres » de la table CIQUAL (0 kcal · 0,1 · 0,1 — plancher 1,3, tolérance 1,15) reste admissible AVEC preuve ; la même copie sans preuve est suspecte', c9.etat === 'admissible' && c9b.etat === 'suspect', J([c9, c9b]));
 
@@ -95,6 +97,9 @@ module.exports.ecran = async function ecran(t, b, PORT) {
   t('B-NRH P2 ⭐⭐ une copie COHÉRENTE d\'un code-barres n\'est pas non plus une fiche d\'identité (une autre ligne du journal n\'est pas une preuve indépendante) ; elle reste connue comme simple copie (`preuve:false`)', idC.fiche === null && idC.preuve === false, J(idC));
   const idY = await E(([a, b2]) => ({ a: _n2FicheIdentite({ sourceId: a }), b: _n2FicheIdentite({ sourceId: b2 }), cand: _n2Candidats({ name: 'Yaourt nature (test)' }).map((c) => c.sid).sort() }), [EAN_Y1, EAN_Y2]);
   t('B-NRH P3 ⭐ deux produits de MÊME NOM et de deux codes-barres ne sont jamais confondus : aucune fiche n\'est empruntée de l\'un à l\'autre, et les deux restent deux candidats distincts', idY.a === null && idY.b === null && J(idY.cand) === J([EAN_Y1, EAN_Y2]), J(idY));
+
+  const cd = await E((s0) => { const d = _n2CandDecrire({ sid: s0 }); return { dispo: d.dispo, kcal: d.kcal }; }, EAN_C);
+  t('B-NRH P3b ⭐ la proposition d\'un candidat « code-barres » (NIDT) n\'annonce plus comme « fiche du produit » la copie d\'une ligne du journal : pas de kcal/100 g affichés, « fiche à récupérer en ligne »', cd.dispo === false && cd.kcal === null, J(cd));
 
   /* ── ③ L'ÉCRAN D'AJOUT : reprise d'un ancien scan du même code-barres ── */
   const ouvrirAjout = async () => { await E(() => { openAddFood(); }); await pg.waitForTimeout(250); };
@@ -132,7 +137,7 @@ module.exports.ecran = async function ecran(t, b, PORT) {
   const apresR = await ligne('nrh-S1-00000001'); const attS = JSON.parse(JSON.stringify(avantS)); attS.meal = 'diner';
   t('B-NRH P12 ⭐ le REPAS seul se change : la ligne est identique à l\'octet sauf le repas (valeurs, fiche, identité, correction : rien ne bouge)', J(apresR) === J(attS), J(apresR));
   await ouvrirEf('nrh-C1-00000003');
-  await E(() => { const g = document.getElementById('ef-grams'); g.value = '150'; _efApplyFiche(); saveEditFood(); }); await pg.waitForTimeout(350);
+  await E(() => { const g = document.getElementById('ef-grams'); if (g) { g.value = '150'; _efApplyFiche(); saveEditFood(); } }); await pg.waitForTimeout(350);
   const apresC = await ligne('nrh-C1-00000003');
   t('B-NRH P13 ⭐ parcours conforme inchangé : la quantité de la ligne COHÉRENTE se modifie comme avant (150 g → 194 kcal par sa propre fiche)', apresC.q === 150 && apresC.kcal === 194, J(apresC));
 
@@ -140,10 +145,10 @@ module.exports.ecran = async function ecran(t, b, PORT) {
   await ouvrirAjout();
   await E(() => { window._offFetchProduct = async () => null; });
   await E(() => { const l = (S.foodLog || []).find((x) => x.id === 'nrh-S1-00000001'); _n2Reprendre(l, 'historique'); }); await pg.waitForTimeout(350);
-  const ecr = await E(() => ({ desc: document.getElementById('af-desc').value, kcal: document.getElementById('af-kcal').value, sid: !!(_afSrc && _afSrc.sourceId), ro: ['kcal', 'prot', 'carbs', 'fat'].map((c) => document.getElementById('af-' + c).readOnly),
+  const ecr = await E(() => ({ desc: document.getElementById('af-desc').value, kcal: document.getElementById('af-kcal').value, sid: !!(_afSrc && _afSrc.sourceId), fige: !!(_afRef && _afRef.fige), cle: !!(_afRef && _afRef.cle), pastille: !!document.getElementById('af-prop-pastille'), ro: ['kcal', 'prot', 'carbs', 'fat'].map((c) => document.getElementById('af-' + c).readOnly),
     texte: (document.getElementById('ov-add-food') || document.body).innerText.slice(0, 4000) }));
-  t('B-NRH P14 ⭐⭐ reprise de la ligne à fiche impossible : l\'écran dit « Ancienne fiche non vérifiée », ne recopie PAS ses macros douteuses, n\'emporte pas son identité, et laisse les champs libres pour une saisie personnelle',
-    /Ancienne fiche non vérifiée/.test(ecr.texte) && ecr.kcal === '' && ecr.sid === false && J(ecr.ro) === J([false, false, false, false]), J({ desc: ecr.desc, kcal: ecr.kcal, sid: ecr.sid, ro: ecr.ro, dit: /Ancienne fiche non vérifiée/.test(ecr.texte) }));
+  t('B-NRH P14 ⭐⭐ reprise de la ligne à fiche impossible : l\'écran dit « Ancienne fiche non vérifiée », ne recopie PAS ses macros douteuses, n\'emporte pas son identité, ne propose PAS « la dernière fois » (pas de chemin « figé » qui re-noterait ses valeurs), et laisse les champs libres pour une saisie personnelle',
+    /Ancienne fiche non vérifiée/.test(ecr.texte) && ecr.kcal === '' && ecr.sid === false && ecr.fige === false && ecr.cle === false && ecr.pastille === false && J(ecr.ro) === J([false, false, false, false]), J({ fige: ecr.fige, cle: ecr.cle, pastille: ecr.pastille, desc: ecr.desc, kcal: ecr.kcal, sid: ecr.sid, ro: ecr.ro, dit: /Ancienne fiche non vérifiée/.test(ecr.texte) }));
   const nS0 = await E(() => (S.foodLog || []).length);
   await E(() => { const d = document.getElementById('af-desc'); d.value = 'Mon skyr perso 150 g'; d.dispatchEvent(new Event('input', { bubbles: true })); d.dispatchEvent(new Event('change', { bubbles: true }));
     [['kcal', '160'], ['prot', '25'], ['carbs', '4'], ['fat', '5']].forEach(([c, v]) => { const el = document.getElementById('af-' + c); el.value = v; el.dispatchEvent(new Event('input', { bubbles: true })); el.dispatchEvent(new Event('change', { bubbles: true })); }); });
