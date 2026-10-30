@@ -88,6 +88,7 @@ Données persistées ajoutées **0** · fichiers applicatifs touchés **1** (`ap
 | Déploiement | Pages **n°1363 réussi** (10:23:42 → 10:24:16 UTC) ; aucun autre workflow lancé ; `Code.js`/Apps Script @193 inchangés |
 | Point de restauration | branche `backup-prod-ft-v1262-avant-b2-b3-2026-10-29` = `3d8d49ef` (vérifiée avant le push) ; repère de version `stable-ft-v1263-2026-10-30` (branche : le proxy git refuse le push d'un tag) |
 | D-031 | classique `tools/passe_valide.sh` : **8 243 ✅ / 0 ❌**, 4 conditions vertes, arbre `922c5d51` |
+| Mutations rejouées sur `922c5d51` (après le dernier refactor) | `tools/mut_nut_ref_hist.py` **48/48 tuées** · `tools/mut_nut_verrou.py` **42/42 tuées** (aucune survivante) |
 
 ### Ce que la passe complète a trouvé (et que les bancs ciblés ne voyaient pas)
 Première passe : **8 206 ✅ / 37 ❌**. Deuxième : **8 241 / 2**. Troisième : **8 243 / 0**. Causes, par famille — **aucun témoin supprimé ni affaibli** :
