@@ -2033,11 +2033,17 @@ function upSet(ei,si,f,v){const s=S.wkt.exs[ei].sets[si];s[f]=numFR(v)||0;if(s.k
    comme l'aurait fait `change` : mêmes conversions (`numFR`), même 1RM, même sauvegarde — aucune règle nouvelle (R2).
    ⛔ Un champ VIDE n'est pas une valeur tapée : il garde la règle existante de `toggleSet` (modèle vide → la suggestion grise ;
    modèle rempli → le modèle). Vide, zéro (« 0 » est une valeur) et suggestion restent trois choses distinctes.
-   ⛔ Les champs des AUTRES séries ne sont jamais lus ici : on n'enregistre que ce que la personne valide. */
+   ⛔ Les champs des AUTRES séries ne sont jamais lus ici : on n'enregistre que ce que la personne valide.
+   ⛔ TAPÉE = le champ a reçu une FRAPPE (`_ftTape`, posé par l'événement `input`, que tout geste de saisie émet — clavier, dictée,
+   correction — et qu'un script qui change `.value` n'émet pas). Un modèle changé par le CODE sans redessiner l'écran garde donc sa
+   valeur : l'ancien texte affiché ne la remplace pas en silence (GO TESTS du 30/10, `session_integrity` T1). ⚠️ Pas `defaultValue` :
+   app.js le recopie à chaque frappe (astuce iOS « Voulez-vous annuler la saisie ? »), mesuré. Consommée ici, la marque retombe. */
+document.addEventListener('input',e=>{ if(_estChampSerie(e.target)) e.target._ftTape=true; },true);
 function _saisieVersModele(ei,si,row){
   const set=S.wkt.exs[ei].sets[si], inps=row.querySelectorAll('.sinp');
   [['reps',inps[0]],['kg',inps[1]]].forEach(([f,inp])=>{
-    if(inp&&inp.value!==''&&inp.value!==String(set[f]||'')) upSet(ei,si,f,inp.value);
+    if(inp&&inp._ftTape&&inp.value!==''&&inp.value!==String(set[f]||'')) upSet(ei,si,f,inp.value);
+    if(inp) inp._ftTape=false;
   });
 }
 function toggleSet(ei,si){

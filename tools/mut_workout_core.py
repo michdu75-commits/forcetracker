@@ -2,9 +2,10 @@
 # -*- coding: utf-8 -*-
 """CONTROLE NEGATIF — WORKOUT-CORE-01 (Claude N°2, Seance, 30/10/2026) : les temoins CHR-* (et DOM-*) savent-ils ROUGIR ?
 
-[!!] PREPARE sans execution (GO DEVELOPPEMENT du 30/10) ; EXECUTE au GO TESTS du 30/10. D17, D18, D19 ajoutees ce jour-la : elles
-     gardent la correction nee d'un rouge reproduit (DOM-T13a/c/d : un `change` emis en quittant le champ refaisait un `upSet`)
-     et le cas 7 de la matrice de saisie (une suggestion grise n'est pas une valeur tapee).
+[!!] PREPARE sans execution (GO DEVELOPPEMENT du 30/10) ; EXECUTE au GO TESTS du 30/10. D17 a D21 ajoutees ce jour-la : elles
+     gardent les deux corrections nees d'un rouge reproduit (DOM-T13a/c/d : un `change` emis en quittant le champ refaisait un
+     `upSet` ; session_integrity T1 : l'ancien texte affiche ecrasait un modele change par le code) et le cas 7 de la matrice de
+     saisie (une suggestion grise n'est pas une valeur tapee).
 [!!] DANS LA COPIE MUTEE : chaque mutation est appliquee a un ARBRE COPIE, jamais au depot (BUGS.md §60).
 Point de depart : 0 rouge sur l'arbre sain, mesure d'abord ; l'arbre sain est REJOUE a la fin (banc instable = campagne refusee).
 Les mutations [deguisee] cassent l'invariant sans toucher a la ligne evidente ; [negatif] et [equivalente] ne doivent PAS
@@ -113,8 +114,8 @@ MUT = [
      [(LO, "  if(row&&!set.done)_saisieVersModele(ei,si,row);                // WORKOUT-CORE-01 : ce qui est TAPÉ dans la série validée l'emporte\n", "")],
      'GARDE', 'DOM-T09b', 'dom'),
     ('D08 [deguisee] un champ VIDE est pris pour une valeur (il ecrit 0)',
-     [(LO, "    if(inp&&inp.value!==''&&inp.value!==String(set[f]||'')) upSet(ei,si,f,inp.value);",
-       "    if(inp&&inp.value!==String(set[f]||'')) upSet(ei,si,f,inp.value);")], 'GARDE', 'DOM-T09c', 'dom'),
+     [(LO, "    if(inp&&inp._ftTape&&inp.value!==''&&inp.value!==String(set[f]||'')) upSet(ei,si,f,inp.value);",
+       "    if(inp&&inp._ftTape&&inp.value!==String(set[f]||'')) upSet(ei,si,f,inp.value);")], 'GARDE', 'DOM-T09c', 'dom'),
     ('D09 [deguisee] le champ rend le focus sans afficher la valeur retenue (l\'ecran ment : vide, la serie garde 5)',
      [(LO, "    if(_j===0||_j===1)_actif.value=String(set[_j?'kg':'reps']||'');\n", "")], 'GARDE', 'DOM-T09c', 'dom'),
     ('D10 le champ de la serie validee garde le focus (clavier ouvert sur une serie finie)',
@@ -134,9 +135,13 @@ MUT = [
     ('D18 [deguisee] le gestionnaire est remis AVANT de quitter le champ (meme lignes, mauvais ordre)',
      [(LO, "    _actif.blur();\n    _actif.onchange=_oc;\n", "    _actif.onchange=_oc;\n    _actif.blur();\n")], 'GARDE', 'DOM-T13a', 'dom'),
     ('D19 [deguisee] la suggestion grise d\'un champ vide est prise pour une valeur tapee (deux upSet de plus)',
-     [(LO, "    if(inp&&inp.value!==''&&inp.value!==String(set[f]||'')) upSet(ei,si,f,inp.value);",
-       "    const v=inp?(inp.value||inp.placeholder):''; if(inp&&v!==''&&v!==String(set[f]||'')) upSet(ei,si,f,v);")],
+     [(LO, "    if(inp&&inp._ftTape&&inp.value!==''&&inp.value!==String(set[f]||'')) upSet(ei,si,f,inp.value);",
+       "    const v=inp?(inp.value||inp.placeholder):''; if(inp&&(inp._ftTape||!inp.value)&&v!==''&&v!==String(set[f]||'')) upSet(ei,si,f,v);")],
      'GARDE', 'DOM-T13e', 'dom'),
+    ('D20 [deguisee] la preuve de frappe est ignoree : l\'ancien texte affiche ecrase un modele change par le code (session_integrity T1)',
+     [(LO, "if(inp&&inp._ftTape&&inp.value!==''", "if(inp&&inp.value!==''")], 'GARDE', 'DOM-T13g', 'dom'),
+    ('D21 la marque de frappe ne retombe pas apres usage (un texte deja enregistre ecrase un modele change ensuite par le code)',
+     [(LO, "    if(inp) inp._ftTape=false;\n", "")], 'GARDE', 'DOM-T13h', 'dom'),
     ('D14 [negatif] un commentaire du rendu cible est reformule',
      [(LO, "// au moindre doute : la reconstruction d'avant", "// en cas de doute : reconstruction")], 'OK', None, 'dom'),
 ]
