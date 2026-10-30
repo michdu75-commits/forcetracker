@@ -172,6 +172,20 @@ module.exports.ecran = async function ecran(t, b, PORT) {
   const frais = await E(() => { const gr = document.getElementById('af-bc-grams'); if (gr) { gr.value = '150'; _bcQtyPose = true; _bcApplyGrams(); } return { bc: !!_bcNutr, kcal: document.getElementById('af-kcal').value, verr: _n2VerrouEcran('af') }; });
   t('B-NRH P9g ⭐⭐ la réponse Open Food Facts obtenue EN LIGNE pour ce même code-barres redonne le calcul (la source indépendante) : 150 g = 194 kcal, fiche identifiée donc verrouillée', frais.bc === true && frais.kcal === '194' && frais.verr === true, J(frais));
 
+  /* ── reprise OFF EN LIGNE : l'écart avec l'ancienne saisie est DIT, et une réponse d'un AUTRE produit est refusée ── */
+  const OFFC = (kcal, code) => ({ product_name_fr: 'Skyr cohérent (source)', brands: 'Test', quantity: '150 g', code: code, nutriments: { 'energy-kcal_100g': kcal, proteins_100g: 20, carbohydrates_100g: 2, fat_100g: 5 } });
+  await ouvrirAjout();
+  await E((o) => { window._offFetchProduct = async () => o; }, OFFC(140, '3000000000402'));
+  await E(() => { const l = (S.foodLog || []).find((x) => x.id === 'nrh-C1-00000003'); _n2Reprendre(l, 'historique'); }); await pg.waitForTimeout(900);
+  const ecartOff = await E(() => ({ bc: !!_bcNutr, kcal100: _bcNutr && _bcNutr.kcal100, nom: (document.getElementById('af-bc-name') || {}).textContent || '', last: (() => { const x = document.getElementById('af-bc-last'); return x && x.offsetParent !== null ? x.textContent : ''; })(), n: S.foodLog.length }));
+  t('B-NRH P9i ⭐⭐ reprise d\'un ancien produit scanné : sa fiche est retrouvée EN LIGNE par le code-barres (140 kcal/100 g) et l\'écran DIT l\'écart avec l\'ancienne saisie (« ta saisie disait 129 kcal »), propose l\'ancienne quantité (100 g) sans la poser, et n\'écrit rien', ecartOff.bc === true && ecartOff.kcal100 === 140 && /fiche retrouvée par son code-barres/.test(ecartOff.nom) && /ta saisie disait 129 kcal/.test(ecartOff.nom) && /100\s*g/.test(ecartOff.last) && ecartOff.n === 11, J(ecartOff));
+  await ouvrirAjout();
+  await E((o) => { window._offFetchProduct = async () => o; }, OFFC(129, '3999999999999'));
+  await E(() => { const l = (S.foodLog || []).find((x) => x.id === 'nrh-C1-00000003'); _n2Reprendre(l, 'historique'); }); await pg.waitForTimeout(900);
+  const autre = await E(() => ({ bc: !!_bcNutr, kcal: document.getElementById('af-kcal').value, etat: (document.getElementById('af-retrouver-etat') || {}).textContent || '', libre: !document.getElementById('af-kcal').readOnly }));
+  t('B-NRH P9j ⭐⭐ une réponse Open Food Facts qui porte un AUTRE code-barres n\'est PAS appliquée (« ne correspond pas ») : pas de fiche, champs libres pour une saisie personnelle', autre.bc === false && autre.kcal === '' && /ne correspond pas/.test(autre.etat) && autre.libre === true, J(autre));
+  await E(() => { window._offFetchProduct = async () => null; });
+
   /* ── ⑤ « MODIFIER » ── */
   const ouvrirEf = async (id) => { await E(() => { document.querySelectorAll('.overlay.open').forEach((o) => o.classList.remove('open')); }); await E((i) => { openEditFood(i); }, id); await pg.waitForTimeout(450); };
   const champsEf = () => E(() => ({ v: ['kcal', 'prot', 'carbs', 'fat'].map((c) => document.getElementById('ef-' + c).value), ro: ['kcal', 'prot', 'carbs', 'fat'].map((c) => document.getElementById('ef-' + c).readOnly),
@@ -230,6 +244,14 @@ module.exports.ecran = async function ecran(t, b, PORT) {
   const enLigne = await E(() => { const gr = document.getElementById('af-bc-grams'); if (gr) gr.value = '150'; _bcQtyPose = true; _bcApplyGrams(); return { bc: !!_bcNutr, kcal100: _bcNutr && _bcNutr.kcal100, kcal: document.getElementById('af-kcal').value, verr: _n2VerrouEcran('af') }; });
   t('B-NRH P16 ⭐⭐ OFF VÉRIFIÉ À LA SOURCE (réponse du code-barres, 110 kcal/100 g) : le calcul est conservé — 150 g → 165 kcal, fiche identifiée donc verrouillée', enLigne.bc === true && enLigne.kcal100 === 110 && enLigne.kcal === '165' && enLigne.verr === true, J(enLigne));
 
+  const indispo = await E(() => { const sv = _ciqual, svIx = _n2CiqIdx; _ciqual = null; _n2CiqIdx = null;   // la table n'est pas disponible (hors ligne)
+    const tableChargee = typeof _ciqual === 'object' && !!_ciqual && Array.isArray(_ciqual.a);
+    const l = { id: 'nrh-QI-0000001', meal: 'collation', name: 'Table absente (test)', kcal: 150, prot: 10, carbs: 20, fat: 3, q: 100, u: 'g', per100: { kcal: 150, prot: 10, carbs: 20, fat: 3 }, v: 1, saisie: 'recherche', origine: 'ciqual', sourceId: 'ciqual:20000', etat: null, date: today(), ts: 1760000990000,
+      n2: { s: 1, m: 'p', st: 'fiable', qo: 'tapee', manque: [], no: [], corr: [], f: { src: 'ciqual', ver: null, fiab: 'source', base: 'g' } } };
+    const R = _n2Reprise(l); const r = _n2Reajouter(l, 'dejeuner', today(), 'apercu-test', { verifiees: undefined });
+    return { tableChargee: tableChargee, etat: R.controleReference && R.controleReference.etat, contredite: !!(R.controleReference && R.controleReference.contredite), preuve: _n2PreuveSource(R.fiche, l.sourceId), rea: r.ok, verifiee: _n2Verifiee(r), restaure: (_ciqual = sv, _n2CiqIdx = svIx, true) }; });
+  t('B-NRH P17a ⭐ (B) table CIQUAL INDISPONIBLE : aucune preuve n\'est fabriquée (ni « vérifiée », ni « contredite »), et la ligne continue de fonctionner comme avant (hors ligne)', indispo.tableChargee === false && indispo.etat === 'non_verifiee' && indispo.contredite === false && indispo.preuve === false && indispo.rea === true && indispo.verifiee === false, J(indispo));
+
   /* ── ⑧ CIQUAL par identifiant ── */
   await E(() => _ciqualCharger()); await pg.waitForTimeout(300);
   const ciq = await E(() => { const r = _ciqual.a.find((x) => x[3] > 50 && x[4] > 5 && x[6] > 1); const sid = 'ciqual:' + r[0];
@@ -240,6 +262,47 @@ module.exports.ecran = async function ecran(t, b, PORT) {
     S.foodLog.pop();
     return { fiche: !!fiche, ctrl: ctrl.etat, avecFiche: !!(R && R.fiche), rea: rea.ok, kcal: rea.ligne ? rea.ligne.kcal : null, attendu: Math.round(r[3] * 1.5) }; });
   t('B-NRH P17 ⭐⭐ CIQUAL avec identifiant vérifiable (table chargée) : la fiche est « admissible » (preuve = la table), la ligne garde sa fiche et se recalcule comme avant', ciq.fiche && ciq.ctrl === 'admissible' && ciq.avecFiche === true && ciq.rea === true && ciq.kcal === ciq.attendu, J(ciq));
+
+  /* ── A · B · C : les bases LOCALES prouvent (enseigne, CIQUAL) ; une copie contredite par la table ne devient pas fiable ── */
+  const tables = await E(async () => {
+    await _marquesCharger();
+    const hier = today(); let ts = 1760001000000;
+    const mk = (id, nom, sid, p100, src, q) => ({ id: id, meal: 'collation', name: nom, kcal: Math.round(p100.kcal * q / 100), prot: Math.round(p100.prot * q / 100), carbs: Math.round(p100.carbs * q / 100), fat: Math.round(p100.fat * q / 100), q: q, u: 'g', per100: p100, v: 1, saisie: 'recherche', origine: src, sourceId: sid, etat: null, date: hier, ts: ts++,
+      n2: { s: 1, m: 'p', st: 'fiable', qo: 'tapee', manque: [], no: [], corr: [], f: { src: src, ver: null, fiab: 'source', base: 'g' } } });
+    const out = {};
+    /* A — une fiche d'ENSEIGNE présente et identique dans la base locale */
+    const a = _marques.a.find((x) => !x[8] && x[3] > 100 && x[4] > 5 && x[6] > 3); const sidM = ('marque:' + a[0] + ':' + a[1]).slice(0, 32);
+    const pM = _per100De(_ref100(a[1] + ' · ' + a[0], a[3], a[4], a[5], a[6], { origine: 'marque' }));
+    const Mok = mk('nrh-MK-0000001', 'Enseigne juste (test)', sidM, pM, 'marque', 200);
+    const Mold = mk('nrh-MK-0000002', 'Enseigne juste (test)', sidM, Object.assign({}, pM, { kcal: pM.kcal + 25 }), 'marque', 200);   // la copie plus RÉCENTE, aux valeurs douteuses
+    Mold.ts = Mok.ts + 5000;
+    S.foodLog.push(Mok, Mold);
+    const fM = _n2Reprise(Mok).fiche;
+    out.A = { preuve: _n2PreuveSource(fM, sidM), verifiee: _n2Verifiee(_n2Apercu(Mok)), copieVerifiee: _n2Verifiee(_n2Apercu(Mold)),
+      liste: _buildFoodQuickItems().filter((it) => (it._src || it).sourceId === sidM).map((it) => ({ id: (it._src || it).id, ver: _n2Verifiee(it._ap) })) };
+    S.foodLog = S.foodLog.filter((x) => x.id !== Mok.id && x.id !== Mold.id);
+    /* B / C — CIQUAL : une copie qui DIFFÈRE de la table, cohérente avec elle-même */
+    await _ciqualCharger();
+    const r = _ciqual.a.find((x) => x[3] > 80 && x[4] > 5 && x[6] > 1 && x[5] >= 0); const sidC = 'ciqual:' + r[0];
+    const pC = { kcal: r[3], prot: r[4], carbs: r[5], fat: r[6] };
+    const Qok = mk('nrh-QK-0000001', 'Aliment table juste (test)', sidC, pC, 'ciqual', 150);
+    const Qdiv = mk('nrh-QK-0000002', 'Aliment table juste (test)', sidC, Object.assign({}, pC, { kcal: pC.kcal + 40, fat: pC.fat + 3 }), 'ciqual', 150);   // cohérente (marge d'énergie), mais PAS la table
+    Qdiv.ts = Qok.ts + 5000;
+    S.foodLog.push(Qok, Qdiv);
+    const Rd = _n2Reprise(Qdiv), Rk = _n2Reprise(Qok);
+    const n0 = S.foodLog.length; const rea = _n2Reajouter(Qdiv, 'dejeuner', today(), 'test', null); const reaOk = _n2Reajouter(Qok, 'dejeuner', today(), 'apercu-test', { verifiees: undefined });
+    out.B = { contredite: !!(Rd.controleReference && Rd.controleReference.contredite), etat: Rd.controleReference && Rd.controleReference.etat, okEtat: Rk.controleReference && Rk.controleReference.etat, okContredite: !!(Rk.controleReference && Rk.controleReference.contredite),
+      reaOk: rea.ok, reaCode: rea.raison && rea.raison.code, n: S.foodLog.length === n0, verifiee: _n2Verifiee(_n2Apercu(Qdiv)), okRea: reaOk.ok, okVerifiee: _n2Verifiee(_n2Apercu(Qok)) };
+    const o = _n2FichesVerifiees()[sidC]; out.C = { id: o && o.id, preuve: o && o.preuve, attendu: Qok.id };
+    openAddFood(); _n2Reprendre(Qdiv, 'historique');
+    out.B2 = { kcal100: _bcNutr && _bcNutr.kcal100, table: pC.kcal, copie: pC.kcal + 40, nom: (document.getElementById('af-bc-name') || {}).textContent || '' };
+    S.foodLog = S.foodLog.filter((x) => x.id !== Qok.id && x.id !== Qdiv.id);
+    return out; });
+  t('B-NRH P20a ⭐⭐ (A) une fiche d\'ENSEIGNE identique à sa base locale est PROUVÉE (identité + valeurs de la table) : « vérifiée » dans l\'aperçu, et dans « Mes aliments » elle ne disparaît pas derrière une copie plus récente aux valeurs douteuses', tables.A.preuve === true && tables.A.verifiee === true && tables.A.copieVerifiee === false && tables.A.liste.some((x) => x.id === 'nrh-MK-0000001' && x.ver === true), J(tables.A));
+  t('B-NRH P20b ⭐⭐ (B) une ancienne copie CIQUAL qui DIFFÈRE de la table (mais cohérente avec elle-même) n\'est pas fiable : contredite par la table, « + Ajouter » refusé (`source_non_confirmee`), jamais « vérifiée » ; la copie authentique reste admissible et utilisable',
+    tables.B.contredite === true && tables.B.reaOk === false && tables.B.reaCode === 'source_non_confirmee' && tables.B.n === true && tables.B.verifiee === false && tables.B.okEtat === 'admissible' && tables.B.okContredite === false && tables.B.okRea === true && tables.B.okVerifiee === true, J(tables.B));
+  t('B-NRH P20c ⭐⭐ (B) reprise à l\'écran de cette copie contredite : la fiche vient de la TABLE par identifiant (pas de la copie), et l\'écran le dit', tables.B2.kcal100 === tables.B2.table && tables.B2.kcal100 !== tables.B2.copie && /fiche CIQUAL retrouvée par son identifiant/.test(tables.B2.nom), J(tables.B2));
+  t('B-NRH P20d ⭐⭐ (C) une copie récente SANS preuve ne supplante pas une fiche plus ancienne AVEC preuve dans les fiches vérifiées du journal', tables.C.id === tables.C.attendu && tables.C.preuve === true, J(tables.C));
 
   /* ── ⑨ ANCIENNES CORRECTIONS ET HISTORIQUE ── */
   const aprs = await E(() => JSON.stringify([S.foodLog, S.savedFoods || [], S.hiddenFoods || []]));

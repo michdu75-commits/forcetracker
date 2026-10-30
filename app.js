@@ -1368,16 +1368,43 @@ function _n2ControlerReference(fiche, preuveSource){
   }
   return {etat:'admissible'};
 }
-/* La preuve INDÉPENDANTE d'une fiche d'ancienne ligne : la table CIQUAL, par identifiant, qui redonne exactement ses valeurs. Open Food Facts n'a pas
-   de copie locale : sa preuve est la réponse EN LIGNE du code-barres (`_n2RetrouverEnLigne`), jamais une ligne du journal. */
-function _n2PreuveSource(fiche, sid){
-  const m=/^ciqual:(\d+)$/.exec(String(sid||'').trim());
-  if(!m || !fiche || !fiche.p100) return false;
-  const r=_n2Ctx().ciqual(m[1]); if(!r) return false;
+/* LA RÉFÉRENCE INDÉPENDANTE D'UN IDENTIFIANT : la ligne de la table LOCALE qui porte cet identifiant (`ciqual:NNNN` → la table CIQUAL ; `marque:Enseigne:Nom` → la
+   base d'enseignes). Rend null si la table n'est pas chargée (hors ligne : aucune preuve n'est fabriquée), si l'identifiant est inconnu ou AMBIGU (deux lignes
+   pour le même identifiant tronqué à 32 car. : ce n'est pas une preuve). Open Food Facts n'a pas de copie locale : sa preuve est la réponse EN LIGNE du code-barres. */
+let _n2MarqueIdx=null, _n2MarqueIdxDe=null;
+function _n2RefTable(sid){
+  sid=String(sid||'').trim();
+  const m=/^ciqual:(\d+)$/.exec(sid);
+  if(m){ const r=_n2Ctx().ciqual(m[1]); return r ? {type:'ciqual', p100:{kcal:r.kcal, prot:r.prot, carbs:r.carbs, fat:r.fat}, nom:String(r.nom||'')} : null; }
+  if(sid.indexOf('marque:')===0 && typeof _marques==='object' && _marques && Array.isArray(_marques.a)){
+    if(_n2MarqueIdxDe!==_marques){
+      const ix=Object.create(null); _marques.a.forEach(a=>{ const k=('marque:'+a[0]+':'+a[1]).slice(0,32); (ix[k]=ix[k]||[]).push(a); });
+      _n2MarqueIdx=ix; _n2MarqueIdxDe=_marques;
+    }
+    const l=_n2MarqueIdx[sid]; if(!l || l.length!==1) return null;
+    const a=l[0];
+    /* les valeurs telles que l'app les enregistre pour une fiche d'enseigne (le même constructeur que `_afSuggPrendreMarque`, énergie dérivée comprise) */
+    return {type:'marque', p100:_per100De(_ref100(a[1]+' · '+a[0], a[3], a[4], a[5], a[6], {origine:'marque'})), nom:a[1]+' · '+a[0]};
+  }
+  return null;
+}
+function _n2MemesValeurs(p100, ref){
   return _N2_CHAMPS.every(c=>{
-    const a=fiche.p100[c], b=r[c], ta=(typeof a==='number' && isFinite(a)), tb=(typeof b==='number' && isFinite(b) && b>=0);
+    const a=p100 && p100[c], b=ref && ref[c], ta=(typeof a==='number' && isFinite(a)), tb=(typeof b==='number' && isFinite(b) && b>=0);
     return ta===tb && (!ta || a===b);
   });
+}
+/* La preuve INDÉPENDANTE d'une fiche d'ancienne ligne : sa table locale, par identifiant, redonne EXACTEMENT ses valeurs. */
+function _n2PreuveSource(fiche, sid){
+  if(!fiche || !fiche.p100) return false;
+  const ref=_n2RefTable(sid);
+  return !!ref && _n2MemesValeurs(fiche.p100, ref.p100);
+}
+/* La table, elle, DIT autre chose que la copie : une copie cohérente avec elle-même ne devient pas fiable pour autant (NUT-REF-HIST-01, B). */
+function _n2Contredite(fiche, sid){
+  if(!fiche || !fiche.p100) return false;
+  const ref=_n2RefTable(sid);
+  return !!ref && !_n2MemesValeurs(fiche.p100, ref.p100);
 }
 function _n2Reprise(l){
   const N=(typeof NUT2==='object'&&NUT2)?NUT2:null; if(!N) return null;
@@ -1388,8 +1415,9 @@ function _n2Reprise(l){
     return Object.assign({}, R, {fiche:null, statut:'non-verifiee', corrections:[], ficheSuspecte:{raison:c.raison}, controleReference:c});
   /* `controleReference` : le verdict du contrôle, EN MÉMOIRE seulement (jamais écrit : aucun champ persistant, `R.statut` et la ligne ne bougent pas).
      `non_verifiee` garde `R.fiche` — elle sert à l'unique exception (« Modifier » la quantité de SA PROPRE ligne) — mais ne crée jamais une
-     nouvelle ligne : voir `_n2FicheNonVerifiee`. */
-  return Object.assign({}, R, {controleReference:c});
+     nouvelle ligne : voir `_n2FicheNonVerifiee`. `contredite` : la TABLE locale (CIQUAL, enseigne) dit autre chose que la copie. */
+  const ctl=_n2Contredite(R.fiche, l && l.sourceId) ? Object.assign({}, c, {contredite:true}) : c;
+  return Object.assign({}, R, {controleReference:ctl});
 }
 /* ⛔ LA FRONTIÈRE (correctif final de NUT-REF-HIST-01, Michel, 30/10) — une ancienne fiche OFFEN FOOD FACTS cohérente mais SANS preuve
    indépendante (`non_verifiee`) ne crée JAMAIS une ligne automatiquement : ni « + Ajouter », ni repas habituel, ni favori, ni reprise à
@@ -1400,7 +1428,9 @@ function _n2Reprise(l){
    relèvent pas. */
 const _N2_REF_NON_VERIFIEE='Ancienne fiche non vérifiée. Retrouve le produit en ligne avant de le réutiliser, ou saisis personnellement ses valeurs.';
 function _n2FicheNonVerifiee(R){
-  return !!(R && R.fiche && R.fiche.source==='off' && R.controleReference && R.controleReference.etat==='non_verifiee');
+  if(!(R && R.fiche && R.controleReference)) return false;
+  /* ① une fiche OFF sans preuve indépendante ; ② une copie que la TABLE locale (CIQUAL, enseigne) contredit — cohérente avec elle-même, mais pas la source */
+  return (R.fiche.source==='off' && R.controleReference.etat==='non_verifiee') || R.controleReference.contredite===true;
 }
 /* ⭐ NUT-CIQ-HL-01 (Claude Principal, 25/10 soir — sa sonde C2k) — POURQUOI une ancienne ligne ne se recalcule pas. Une ligne
    CIQUAL (`ciqual:…`) dont la TABLE n'a pas pu être chargée (hors ligne : `data/ciqual.json` se télécharge à la demande, il n'est
@@ -1854,7 +1884,8 @@ function _n2Reprendre(src, saisie, choixSid){
       : (_N2_CHAMPS.some(c=>(+R.valeurs[c])>0) ? null : {nom:String(R.nom||'').trim(), etat:''});
     _afMajAncre(true);
     if(_sid && _afSrc && !bloquee) _afSrc.sourceId=_sid.slice(0,32);   // NV2-FIAB : l'identité du produit suit (jamais une fiche)
-    if(_ean || _eanChoisi) _n2RetrouverEnLigne(_ean || _eanChoisi, _jeton, saisie, 0, R.nom||'');
+    /* l'ancienne quantité est PROPOSÉE (jamais posée) et l'écart avec l'ancienne saisie est dit si la fiche en ligne diffère */
+    if(_ean || _eanChoisi) _n2RetrouverEnLigne(_ean || _eanChoisi, _jeton, saisie, (q && (q.unite==='g' || q.unite==='ml')) ? q.val : 0, R.nom||'', q && q.unite, R.valeurs);
   }else{
     _bcNutr=null; if(row) row.style.display='none'; _bcQsrc(null); _bcMontrerTotal(0);
     _afSetSrc({saisie:saisie, origine:'reprise'});
@@ -2054,6 +2085,11 @@ async function _n2RetrouverEnLigne(ean, jeton, saisie, qDer, nom, uDer, vAnc){
   let p=null; try{ p=await _offFetchProduct(ean); }catch(e){ p=null; }
   const ov=document.getElementById('ov-add-food');
   if(jeton!==_n2RechJeton || (ov && !ov.classList.contains('open')) || _afNomCourant()!==String(nom||'').trim()) return false;
+  /* NUT-REF-HIST-01 : la réponse doit être celle de CE code-barres — jamais une fiche d'un autre produit appliquée à la reprise. */
+  if(p && p.code && String(p.code).replace(/^0+/,'')!==String(ean).replace(/^0+/,'')){
+    _n2EtatRetrouver('Le produit trouvé ne correspond pas à ce code-barres : scanne-le, retrouve-le, ou saisis ta propre fiche.');
+    return false;
+  }
   const n=(p && p.nutriments) || {}, num=x=>typeof x==='number' && isFinite(x);
   if(!p || !['energy-kcal_100g','energy_100g','proteins_100g','carbohydrates_100g','fat_100g'].some(k=>num(n[k]))){
     _n2EtatRetrouver(p ? 'La fiche de ce produit n\'a aucune valeur : saisis son étiquette (pour 100 g).'
@@ -2188,7 +2224,9 @@ function _n2FichesVerifiees(){
   (S.foodLog||[]).forEach(l=>{
     const sid=ranger(l, false); if(!sid) return;
     const R=_n2Reprise(l); if(!R.ok || !R.fiche || R.fiche.fiab!=='source') return;   // NUT-REF-HIST-01 : une fiche suspecte n'est jamais « vérifiée »
-    if(!o[sid] || (+l.ts||0)>o[sid].ts) o[sid]={fiche:R.fiche, ts:+l.ts||0, date:l.date, id:l.id, preuve:_n2PreuveSource(R.fiche, sid)};   // `preuve:false` = une simple copie du journal
+    const preuve=_n2PreuveSource(R.fiche, sid), ts=+l.ts||0;
+    /* NUT-REF-HIST-01 (C) : une fiche AVEC preuve passe toujours avant une fiche sans preuve, même plus récente ; à preuve égale, la plus récente. `preuve:false` = une simple copie du journal. */
+    if(!o[sid] || (preuve && !o[sid].preuve) || (preuve===o[sid].preuve && ts>o[sid].ts)) o[sid]={fiche:R.fiche, ts:ts, date:l.date, id:l.id, preuve:preuve};
   });
   (S.savedFoods||[]).forEach(f=>ranger(f, true));
   return o;
@@ -2214,6 +2252,11 @@ function _n2FicheIdentite(src){
   /* NUT-REF-HIST-01 : un code-barres ne retrouve plus sa fiche dans le JOURNAL — une autre ligne de même `sourceId` n'est pas une preuve
      indépendante (plusieurs copies de la même erreur ne font pas plusieurs preuves). Sa fiche vient d'Open Food Facts, en ligne
      (`_n2RetrouverEnLigne`) ; hors ligne l'ancienne ligne reste telle quelle. */
+  if(sid.indexOf('marque:')===0){   // une fiche d'enseigne : la base locale, par identifiant (jamais une autre ligne)
+    const ref=_n2RefTable(sid); if(!ref) return null;
+    const F={base:'g', p100:ref.p100, cle:sid, source:'marque', fiab:'source', etat:null, libelle:ref.nom};
+    return _n2ControlerReference(F, true).etat==='suspect' ? null : F;
+  }
   const v=_n2FichesVerifiees()[sid];
   return (v && v.preuve) ? v.fiche : null;
 }
@@ -2224,11 +2267,11 @@ function _n2FicheIdentite(src){
 function _n2RepriseIdentite(R0, src, choix){
   /* NIDT : `choix` = l'identité vient d'un CHOIX de la personne (`_n2ChoisirCandidat`) — elle remplace alors même une fiche seulement
      déclarée / estimée de la ligne (celle-ci n'est pas la source), jamais une fiche de confiance posée par l'écrivain V2 d'un scan. */
-  if(!R0 || !R0.ok || (R0.fiche && !choix)) return R0;
+  if(!R0 || !R0.ok || (R0.fiche && !choix && !(R0.controleReference && R0.controleReference.contredite))) return R0;   // NUT-REF-HIST-01 : une copie contredite par la table est remplacée par la table
   const F=_n2FicheIdentite(src); if(!F) return R0;
   const q=R0.quantite, qOK=!!q && (q.unite==='g' || q.unite==='ml') && NUT2.calcule(F, q).ok;
   return Object.assign({}, R0, {fiche:F, parIdentite:true, parChoix:!!choix, corrections:[], quantite:qOK ? q : null,
-                                controleReference:_n2ControlerReference(F, F.source==='ciqual')});   // la fiche d'identité vient de la table (preuve), jamais d'une copie
+                                controleReference:_n2ControlerReference(F, F.source==='ciqual' || F.source==='marque')});   // la fiche d'identité vient de la table (preuve), jamais d'une copie
 }
 
 /* ═══ 🔗 NIDT (27/10/2026, GO de Michel) — RÉUTILISER UN ANCIEN ALIMENT QUI A PERDU SON IDENTITÉ : LE MÊME NOM, DÉJÀ IDENTIFIÉ DANS TON JOURNAL ═══
