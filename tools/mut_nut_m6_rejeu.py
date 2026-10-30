@@ -23,16 +23,16 @@ RA_FIN = "  return _n2Enregistrer(e, porte);"
 RA_QVIDE = "  if(!R.quantite) return {ok:false, aCompleter:true};"
 RA_FICHE = "  if(R.fiche){\n    e.mode='pesee'; e.fiche=R.fiche;"
 RA_TETE = "function _n2Reajouter(src, repas, date, porte, apercu){\n"
-RJ_TETE = "function rejouerRepas(sig, meal){\n"
-RJ_MSG = "+(reste.length?' · à noter à la main (quantité inconnue) : '+reste.map(court).join(', '):''),"
+RJ_TETE = "function rejouerRepas(sig, meal, choix){\n"   # 30/10/2026 (NUT-REF-HIST-02) : 3e parametre 'choix'
+RJ_MSG = "' · non ajouté (à vérifier) : '+bloques.map(b=>court(b.nom)).join(', ')"   # 30/10/2026 : le message du repas habituel (tout ou rien) nomme ce qui n'a pas été ajouté
 # 23/10/2026 (incident des reprises, D-111) — `_n2Apercu` MONTRE ce que « + Ajouter » ecrirait, par la MEME construction :
 #    il passe l'argument d'apercu, et `_n2Reajouter` rend la ligne AVANT tout `_n2Enregistrer`.
 AP_DEF = "function _n2Apercu(src, verifiees){ return _n2Reajouter(src, 'apercu', today(), 'apercu', {verifiees:verifiees}); }"
-RA_QUEUE = "  if(apercu) return {ok:true, ligne:L.ligne, R:R, raison:raison};\n  if(raison) return {ok:false, incoherente:true, raison:raison};\n  return _n2Enregistrer(e, porte);\n"
-CIQ = "  if(!(lignes||[]).some(_n2BesoinCiqual)) return suite();"
+RA_QUEUE = "  if(apercu) return apercu.preparer ? {ok:true, ligne:L.ligne, R:R, raison:raison, entree:e} : {ok:true, ligne:L.ligne, R:R, raison:raison};\n  if(raison) return {ok:false, incoherente:true, raison:raison};\n  return _n2Enregistrer(e, porte);\n"
+CIQ = "  if(!(lignes||[]).some(l=>_n2BesoinCiqual(l, avecCand))) return suite();"   # re-ancre (le parametre 'avecCand' existait deja sur master)
 FIGE_GARDE = "  const f=document.getElementById('af-prop'); if(f && garde) f.value=garde;"
 AF_LIT = "  const _en=_n2EntreeEcran(name, _vals, !!(_bcRow && _bcRow.style.display!=='none' && _bcNutr));"
-PUSH = "  }else S.foodLog.push(r.ligne);"
+PUSH = "  }else S.foodLog.push(...rs.map(r=>r.ligne));"   # 30/10/2026 : insertion groupee
 MF_TETE = "function majFavoriDepuisEcran(){\n"
 
 S = lambda *c: ['B-NM6-S ' + x for x in c]
@@ -41,7 +41,7 @@ C = lambda *c: ['B-NM6-C ' + x for x in c]
 MUT = [
     ('N1 le rejeu prend la provenance de l\'ecran', [(A, RA_ORIG, RA_ORIG.replace("origine:{saisie:'liste', origine:'reprise'}", "origine:_n2Provenance()"))],
      S('S0') + C('④'), 'GARDE'),
-    ('N2 le rejeu emporte la trace de fiabilite de l\'ecran', [(A, RA_FIN, "  return _n2Enregistrer(Object.assign(e, _n2Extras()), porte);")],
+    ('N2 le rejeu emporte la trace de fiabilite de l\'ecran', [(A, "  const L=N.ligneNouvelle(e); if(!L.ok) return L;\n  const raison=_n2Incoherence", "  Object.assign(e, _n2Extras());\n  const L=N.ligneNouvelle(e); if(!L.ok) return L;\n  const raison=_n2Incoherence")],
      S('S4') + C('④'), 'GARDE'),
     ('N3 le rejeu prend les grammes du bloc « Quantite »', [(A, RA_ORIG, RA_ORIG.replace("{origine:'proposee'})};",
         "{origine:'proposee'}, (typeof _bcNutr==='object'&&_bcNutr&&numFR((document.getElementById('af-bc-grams')||{}).value)>0)?{val:numFR(document.getElementById('af-bc-grams').value)}:{})};"))],
@@ -56,21 +56,21 @@ MUT = [
     ('N10 l\'oracle : la source du yaourt est semee a 120 g (l\'oracle attend 125 g, ecrit a la main)',
      [(B, "{ name: 'Yaourt (test)', kcal: 75, prot: 5, carbs: 6, fat: 3, q: 125, u: 'g', per100:",
           "{ name: 'Yaourt (test)', kcal: 75, prot: 5, carbs: 6, fat: 3, q: 120, u: 'g', per100:")], S('S0', 'S6'), 'GARDE'),
-    ('N11 le message du rejeu ne nomme plus les aliments non completes', [(A, RJ_MSG, "+(reste.length?' · à noter à la main':''),")], S('S0'), 'GARDE'),
+    ('N11 le message du rejeu ne nomme plus les aliments non completes', [(A, RJ_MSG, "' · non ajouté (à vérifier)'")], S('S0'), 'GARDE'),
     ('N12 une ancienne ligne CIQUAL n\'attend plus la table (reprise figee avant toute recherche)', [(A, CIQ, "  return suite();")],
      S('S1') + ['B-NM6-A A1'], 'GARDE'),
     ('N13 reprise figee : la quantite tapee s\'efface au redessin', [(A, FIGE_GARDE, "  const f=document.getElementById('af-prop');")], ['B-NM6-A A2b'], 'GARDE'),
     ('N14 « ferme par defaut » : « Ajouter » ne lit plus le bloc « Quantite »', [(A, AF_LIT, "  const _en=_n2EntreeEcran(name, _vals, false);")],
      ['B-NM6-A A1', 'B-NM6-A A4'], 'GARDE'),
-    ('N15 un champ d\'ecran descend dans la ligne enregistree', [(A, PUSH, "  }else S.foodLog.push(Object.assign(r.ligne, porte==='rejouerRepas'?{ecran:false}:{}));")],
+    ('N15 un champ d\'ecran descend dans la ligne enregistree', [(A, PUSH, "  }else S.foodLog.push(...rs.map(r=>Object.assign(r.ligne, porte==='rejouerRepas'?{ecran:false}:{})));")],
      ['B-NM6-MQ ①'] + S('S0'), 'GARDE'),
     # 22/10 (fin du jalon 4) : Q ② a été réécrit sur l'écran V2 (une reprise SANS quantité ouvre la saisie à la main, le
     # poids DEMANDÉ dans `af-poids`) — sa mutation : une quantité est posée quand même (celle du riz, 150).
     ('N16 l\'ajout rapide d\'un aliment SANS quantite ouvre l\'ecran avec une quantite posee (150, celle du riz)',
      # 24/10 (NV2-FIAB) : deux lignes (l'identite du produit suit, sa fiche se cherche en ligne) s'intercalent avant `}else{` ;
      # l'ancre s'arrete donc sur la premiere d'entre elles — la mutation est la meme : une quantite posee a l'ouverture.
-     [(A, "    _afRef=null;\n    _afMajAncre(true);\n    if(_sid && _afSrc)",
-       "    _afRef=null;\n    _afMajAncre(true);\n    { const p=document.getElementById('af-poids'); if(p) p.value='150'; }\n    if(_sid && _afSrc)")],
+     [(A, "    _afMajAncre(true);\n    if(_sid && _afSrc && !bloquee)",
+       "    _afMajAncre(true);\n    { const p=document.getElementById('af-poids'); if(p) p.value='150'; }\n    if(_sid && _afSrc && !bloquee)")],
      ['B-NM6-Q ②'], 'GARDE'),
     ('N17 l\'apercu ne passe plus l\'argument d\'apercu (il ECRIRAIT la ligne qu\'il montre)',
      [(A, AP_DEF, AP_DEF.replace(", {verifiees:verifiees});", ");"))], C('②'), 'GARDE'),
