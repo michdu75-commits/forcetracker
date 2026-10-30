@@ -4613,7 +4613,7 @@ function _douaneRemiseAZero(){
 let _habEnCours=0;   // l'instant du dernier rejeu lancé : le chargement CIQUAL est asynchrone, un double appui ne doit pas lancer deux ajouts (périme au bout de 15 s)
 let _habDernier={cle:'', t:0};   // le dernier ajout RÉUSSI (repas · moment · choix) : le même geste répété dans la même seconde est un double appui, pas un deuxième repas
 let _habNonConfirme={};   // clé du geste (repas · moment · choix) → identités des lignes INSÉRÉES dont l'enregistrement local durable n'a pas pu être confirmé — un nouveau geste les RETENTE, il ne les ré-insère pas (une table, pas une case : deux repas peuvent attendre en même temps)
-const _HAB_MSG_NON_DURABLE='Repas ajouté à l\'écran, mais l\'enregistrement local durable n\'est PAS confirmé (stockage du téléphone). Ne le ré-ajoute pas : touche-le de nouveau pour retenter l\'enregistrement.';
+const _HAB_MSG_NON_DURABLE='Repas ajouté à l\'écran, mais l\'enregistrement local durable n\'est PAS confirmé (stockage du téléphone) : si tu fermes l\'application maintenant, il sera perdu. Ne le ré-ajoute pas : touche-le de nouveau pour retenter l\'enregistrement.';
 /* ⭐ NUT-REF-HIST-02 · MICRO-CORRECTION A1 — TROIS ÉTATS QU'ON NE CONFOND PLUS, parce que le message n'est pas le même :
      ① AVANT l'insertion (préparation, écriture refusée ou en panne) : aucune ligne n'existe → « Rien n'a été ajouté » est vrai ;
      ② l'insertion est CONSTATÉE (`_n2Reajouter` a rendu `ok` avec ses lignes — ou, si une exception est tombée, le journal a grandi) : les lignes EXISTENT ;
@@ -4665,21 +4665,39 @@ function rejouerRepas(sig, meal, choix){
     if(inserees) _habApresInsertion(cle, inserees, moment, bloques);
   });
 }
-/* Les lignes sont-elles DANS le stockage local ? On relit la clé du journal et on cherche leurs identités. Mode démo : rien n'est écrit PAR CONCEPTION, ce n'est pas une panne. */
-function _habDurable(ids){
+/* Les lignes sont-elles DANS le stockage local, FIDÈLES à ce qu'elles sont en mémoire ? On relit la clé du journal et, pour chaque ligne, on exige : UNE seule ligne de cette
+   identité, et les champs qui font la valeur du repas IDENTIQUES (jour, moment, nom, quantité, unité, calories, protéines, glucides, lipides, identité de produit, pour-100 g).
+   Une identité présente avec d'autres chiffres, deux lignes de la même identité, une ancienne version, un stockage illisible → PAS confirmé. L'ordre des lignes, `ts` et les
+   métadonnées du moteur (`n2`…) ne comptent pas : ce sont des détails volatils, pas la valeur nutritionnelle. `lignes` = les lignes EN MÉMOIRE (l'état courant, ce que `persist()` écrit).
+   Mode démo : rien n'est écrit PAR CONCEPTION, ce n'est pas une panne.
+   ⚠️ Ce que cela PROUVE : à l'instant de la relecture, le stockage contient ces lignes à l'identique pour ces champs. Ce que cela ne prouve PAS : que le stockage les gardera (le navigateur peut
+   purger), ni que les AUTRES clés écrites par la même sauvegarde (favoris, masquages…) ont été écrites — `persist()` les écrit une à une et s'arrête à la première panne. */
+const _HAB_CHAMPS=['date','meal','name','q','u','kcal','prot','carbs','fat','sourceId'];
+function _habDurable(lignes){
   try{
     if(window._demoMode) return true;
-    const lus=new Set((JSON.parse(localStorage.getItem('ft4_foodlog')||'[]')||[]).map(l=>l&&l.id));
-    return ids.every(i=>lus.has(i));
+    const lus=JSON.parse(localStorage.getItem('ft4_foodlog')||'[]');
+    if(!Array.isArray(lus)) return false;
+    const par={};
+    lus.forEach(l=>{ if(l && l.id!==undefined && l.id!==null) (par[l.id]=par[l.id]||[]).push(l); });
+    const nul=x=>(x===undefined||x===null) ? null : x;
+    return (lignes||[]).length>0 && lignes.every(m=>{
+      if(!m) return false;
+      const c=par[m.id];
+      if(!c || c.length!==1) return false;
+      return _HAB_CHAMPS.every(k=>nul(m[k])===nul(c[0][k])) && JSON.stringify(nul(m.per100))===JSON.stringify(nul(c[0].per100));
+    });
   }catch(e){ return false; }
 }
+/* Les lignes d'un geste, telles qu'elles sont AUJOURD'HUI en mémoire (une ligne modifiée ou supprimée depuis l'insertion est lue dans son état courant). */
+function _habCourantes(ids){ return ids.map(i=>(S.foodLog||[]).find(l=>l&&l.id===i)).filter(Boolean); }
 /* Tout ce qui suit une insertion CONFIRMÉE : chaque étape dans son `try`, aucune ne peut défaire ni masquer l'ajout, aucune n'insère. La synchro distante
    n'est ni attendue ni annoncée (elle part en différé, sans confirmation ici). */
 function _habApresInsertion(cle, lignes, moment, bloques){
   const ids=lignes.map(l=>l&&l.id), n=lignes.length, court=x=>String(x||'').slice(0,30);
   _habDernier={cle:cle, t:Date.now()};
   try{ persist(); }catch(e){}
-  const durable=_habDurable(ids);
+  const durable=_habDurable(_habCourantes(ids));
   try{ if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced(); }catch(e){}
   let rendu=true;
   try{ renderFoodJournal(); }catch(e){ rendu=false; }
@@ -4695,14 +4713,14 @@ function _habApresInsertion(cle, lignes, moment, bloques){
    les lignes ne sont plus là (supprimées par la personne) n'a plus rien à confirmer. */
 function _habPurger(){
   Object.keys(_habNonConfirme).forEach(k=>{
-    const presentes=_habNonConfirme[k].filter(i=>(S.foodLog||[]).some(l=>l&&l.id===i));
+    const presentes=_habCourantes(_habNonConfirme[k]);
     if(!presentes.length || _habDurable(presentes)) delete _habNonConfirme[k];
   });
 }
 /* Nouvelle tentative après une sauvegarde non confirmée : on ne ré-insère RIEN, on retente de sauvegarder les lignes qui existent encore. Rend `true` si elle a traité le geste. */
 function _habReessayer(cle){
   const ids=_habNonConfirme[cle]; if(!ids) return false;
-  const presentes=ids.filter(i=>(S.foodLog||[]).some(l=>l&&l.id===i));
+  const presentes=_habCourantes(ids);
   if(!presentes.length){ delete _habNonConfirme[cle]; return false; }   // elles ne sont plus là (supprimées) : un nouveau geste est un vrai nouvel ajout
   try{ persist(); }catch(e){}
   if(_habDurable(presentes)){
