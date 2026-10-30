@@ -17811,6 +17811,8 @@ console.log('\n-- CLXII. Le favori demande le moment de la journée (ft-v1052) -
                mk(j(2),'collation2','Iso zero protein (ASL)',156,35)];
     persist();
     const h3=_repasHabituels();
+    /* ↪️ 30/10/2026 (NUT-REF-HIST-02) : le même repas au même moment, rejoué dans la seconde (④), est un DOUBLE APPUI pour le rejeu. Ici l'horloge du banc est FIGÉE (`Date.now()` ne bouge pas) et le journal est remis à zéro entre les deux : ce n'est pas un geste de la personne. On referme donc la fenêtre anti-double-appui, comme le temps le ferait. */
+    _habDernier={cle:'',t:0};
     rejouerRepas(h3[0].sig,'brunch_de_noel'); await d(200);
     o.inconnu={meals:[...new Set(auj().map(e=>e.meal))]};
     S.foodLog=[]; persist();

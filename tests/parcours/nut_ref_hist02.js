@@ -473,6 +473,27 @@ module.exports.ecran = async function ecran(t, b, PORT) {
   t('B-NRH2 A1-T06 ⭐ le post-traitement : sauvegarde → RELECTURE du stockage (`persist()` avale ses erreurs, il ne lève rien) → rendu, chaque étape dans son `try` ; le message d\'échec de sauvegarde ne parle jamais de synchronisation',
     iPe > 0 && iDu > iPe && iRe > iDu && (AP.match(/try\{/g) || []).length >= 4 && !/synchronis/i.test(MSG), J([iPe, iDu, iRe]));
 
+  /* ═══ F10 — deux témoins ajoutés après la 1ʳᵉ campagne de mutations (M03 et M09 survivaient : le garde existait, aucun témoin dynamique ne le touchait) ═══ */
+  await charger(['Y']);
+  const hY2 = await hab('Riz H02 groupe');
+  const avant11c = await snap(); const c11c = await carnet();
+  await E(() => {
+    /* la préparation du 2ᵉ aliment REFUSE alors que l'aperçu de l'écran l'avait accepté (l'état a changé entre-temps) : on le provoque en rendant à `_n2Reajouter` une réponse « à compléter » */
+    window.__rj = window._n2Reajouter; window.__kp = 0;
+    window._n2Reajouter = function (src, repas, date, porte, apercu) { if (apercu && apercu.preparer && ++window.__kp === 2) return { ok: false, aCompleter: true }; return window.__rj.apply(this, arguments); };
+  });
+  await jouer(hY2.sig, 'collation2');
+  await E(() => { window._n2Reajouter = window.__rj; });
+  t('B-NRH2 N11b ⭐⭐ un aliment refusé À LA PRÉPARATION du groupe (alors que l\'écran l\'avait accepté) : AUCUNE ligne écrite, carnet de la douane inchangé, et le message dit que le repas a changé',
+    (await snap()) === avant11c && (await carnet()) === c11c && /a changé depuis l'écran/.test(await dernier()), J({ toast: await dernier(), kp: await E(() => window.__kp) }));
+  await charger(['M']);
+  const gM = await E(() => { openAddFood(); try { _renderFoodQuickList(); } catch (e) {} return (_afQuickItems || []).findIndex((it) => it.name === 'Skyr H02 bloque'); });
+  await razToasts();
+  await E((i) => { quickFillFood(i); }, gM); await pause(700);
+  const tM = await dernier();
+  await E(() => { try { closeAddFood(); } catch (e) {} });
+  t('B-NRH2 N17 ⭐ « Mes aliments » → un ancien scan à vérifier est repris : le message dit la VRAIE raison (« ancienne fiche non vérifiée »), pas « ni quantité ni valeurs » (cette saisie A des valeurs, on ne les recopie pas)',
+    gM >= 0 && /Ancienne fiche non vérifiée/.test(tM) && !/ni quantité ni valeurs/.test(tM), J({ gM, tM }));
   t('B-NRH2 N15 aucune erreur JavaScript pendant tout le banc (hors les fautes injectées exprès, qui sont attrapées par l\'application)', erreurs.filter((e) => !/faute injectée|en panne|APRÈS l'insertion|illisible|quota|inaccessible/i.test(e)).length === 0, J(erreurs));
   await cx.close();
 };
