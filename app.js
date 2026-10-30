@@ -1372,6 +1372,8 @@ function _n2ControlerReference(fiche, preuveSource){
    base d'enseignes). Rend null si la table n'est pas chargée (hors ligne : aucune preuve n'est fabriquée), si l'identifiant est inconnu ou AMBIGU (deux lignes
    pour le même identifiant tronqué à 32 car. : ce n'est pas une preuve). Open Food Facts n'a pas de copie locale : sa preuve est la réponse EN LIGNE du code-barres. */
 let _n2MarqueIdx=null, _n2MarqueIdxDe=null;
+/* UNE seule façon de construire la fiche d'une enseigne (R2) : la proposition « marque » ET la preuve de la table passent ici — jamais deux copies de la même loi (`_ref100`, une porte). */
+function _n2MarqueRef(a){ return _ref100(a[1]+' · '+a[0], a[3], a[4], a[5], a[6], {origine:'marque'}); }
 function _n2RefTable(sid){
   sid=String(sid||'').trim();
   const m=/^ciqual:(\d+)$/.exec(sid);
@@ -1384,7 +1386,7 @@ function _n2RefTable(sid){
     const l=_n2MarqueIdx[sid]; if(!l || l.length!==1) return null;
     const a=l[0];
     /* les valeurs telles que l'app les enregistre pour une fiche d'enseigne (le même constructeur que `_afSuggPrendreMarque`, énergie dérivée comprise) */
-    return {type:'marque', p100:_per100De(_ref100(a[1]+' · '+a[0], a[3], a[4], a[5], a[6], {origine:'marque'})), nom:a[1]+' · '+a[0]};
+    return {type:'marque', p100:_per100De(_n2MarqueRef(a)), nom:a[1]+' · '+a[0]};
   }
   return null;
 }
@@ -6561,7 +6563,7 @@ function _afSuggPrendreMarque(i){
   /* 🧹 ft-v1180 — RESET puis HYDRATATION : on oublie l'aliment PRÉCÉDENT avant de poser celui-ci (proposition marque). */
   const qPose=_n2QteRepriseAvantFiche();   // D-101 ⑧/⑨ : relevée AVANT que l'aliment d'avant s'oublie
   try{ _afOublierAliment(); }catch(e){}
-  _bcNutr=_ref100(a[1]+' · '+a[0], a[3], a[4], a[5], a[6], {origine:'marque'});
+  _bcNutr=_n2MarqueRef(a);
   const sid=('marque:'+a[0]+':'+a[1]).slice(0,32);
   _offRemplirFormulaire({serving_quantity:a[7]||0, nutriments:{}}, sid, 'marque', false, 'marque');
   const dit=_n2ReposerQte(qPose);   // avant `attendu` : ce que l'écran montre, quantité comprise

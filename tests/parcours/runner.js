@@ -38,6 +38,15 @@ const srv=http.createServer((q,r)=>{let p=decodeURIComponent(q.url.split('?')[0]
   r.writeHead(200,{'Content-Type':M[path.extname(f)]||'application/octet-stream'});const fictif=IDF.servir(f);if(fictif)return r.end(fictif);fs.createReadStream(f).pipe(r);});
 let ok=0,ko=0;
 const t=(n,c,x)=>{c?(ok++,console.log('  ✅ '+n)):(ko++,console.log('  ❌ '+n+(x?'\n       → '+x:'')));};
+/* 🛡️ NUT-REF-HIST-01 (30/10/2026) — LA PREUVE DE SOURCE SIMULÉE, pour les blocs qui éprouvent la MÉCANIQUE d'une reprise (bloc Quantité, pastille « la dernière fois »,
+   recalcul par la fiche, carnet de sources) et non la frontière. Depuis ce lot, une ancienne fiche Open Food Facts recopiée dans le journal n'est plus une
+   fiche de confiance sans preuve INDÉPENDANTE (la réponse fraîche du code-barres, en ligne) : ces blocs posent des lignes à code-barres numérique (ou sans code-barres, fixtures de mécanique) dans le journal,
+   donc la preuve est simulée ici pour eux — comme le ferait la réponse en ligne. Honnêtement : c'est un SUBSTITUT, documenté. La frontière réelle (sans simulation)
+   est éprouvée par tests/parcours/nut_ref_hist.js (50 témoins, 48 mutations) et tests/parcours/nut_recette_mobile.js (18 témoins, aucune preuve simulée).
+   ⛔ Posée AVANT le bloc, retirée APRÈS pour les blocs qui partagent la page `p` ; jamais globale. */
+const PREUVE_ON_JS='(()=>{ if(!window.__n2PreuveOrig){ window.__n2PreuveOrig=window._n2PreuveSource; window._n2PreuveSource=function(f,sid){ return (/^\\d{2,14}$/.test(String(sid||"").trim()) || (!String(sid||"").trim() && f && f.source==="off")) ? true : window.__n2PreuveOrig.apply(this,arguments); }; } })()';
+const PREUVE_OFF_JS='(()=>{ if(window.__n2PreuveOrig){ window._n2PreuveSource=window.__n2PreuveOrig; window.__n2PreuveOrig=null; } })()';
+
 /* ⛔ SEC-04 (décision de Michel, 19/10/2026) : un module qui plante devient un KO IDENTIFIÉ, les suivants continuent, et la
    passe ne peut plus être déclarée réussie (une sortie avant la ligne de total rend un code non nul). Détail : tests/_plantages.js. */
 require('../_plantages.js').installer(__filename, t, ()=>ok+ko);
@@ -11975,8 +11984,9 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
       /* 🥗 V2 (jalon 4, contrat du 22/10 · CR-2) — il corrige À LA MAIN, par la frappe : sur une fiche, une valeur
          retouchée est une CORRECTION gardée et tracée par-dessus le calcul (`_afCorr` → `n2.corr`). Le geste réel déclenche
          la saisie ; poser `.value` seul n'est pas une frappe (l'écran ne le saurait pas). */
-      { const k=document.getElementById('af-kcal'); k.value='29'; k.dispatchEvent(new Event('input',{bubbles:true}));
-        const p=document.getElementById('af-prot'); p.value='7'; p.dispatchEvent(new Event('input',{bubbles:true})); }
+      /* ↪️ NUT-VERROU-01 (29/10/2026, GO de Michel) — UNE FICHE IDENTIFIÉE (CIQUAL) N'ACCEPTE PLUS DE CORRECTION À LA MAIN : ses champs sont en lecture seule
+         (une valeur retouchée n'est plus « gardée et tracée », elle n'existe plus). L'ancien témoin tapait ici « 29 » et « 7 » dans des champs que la personne ne peut
+         plus toucher — un geste impossible. Texte d'avant : `git show 3d8d49ef:tests/parcours/runner.js`. Le témoin mesure maintenant ce que l'écran fait VRAIMENT. */
       /* ⚠️ ft-v1190 — CE RELEVÉ EXISTE PARCE QUE CE BLOC A ROUGI EN PASSE COMPLÈTE ALORS QU'IL
          PASSAIT EN ISOLÉ, et que le message ne disait pas POURQUOI. *Un témoin qui échoue sans
          dire ce qu'il a vu coûte une passe entière à chaque hypothèse.* */
@@ -12001,7 +12011,7 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
         btn.click();
         o.repris={ bloc:vis('af-bc-row'),
                    libelle:(document.getElementById('af-bc-name')||{}).textContent,
-                   kcal:document.getElementById('af-kcal').value };
+                   kcal:document.getElementById('af-kcal').value, ro:document.getElementById('af-kcal').readOnly };
         document.getElementById('af-bc-grams').value='50'; _bcApplyGrams();
         /* 🥗 V2 (D-096, Michel : « une modification manuelle est conservée et tracée ») — à 50 g, la correction RESTE dans
            les champs, et le calcul pour 50 g se LIT à côté (« calcul : 24 ») ; « ↺ Revenir au calcul » le remet dans les champs. */
@@ -12031,8 +12041,8 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     Q.repris && Q.repris.bloc===true, JSON.stringify(Q.repris));
   t('… et il dit d\'où vient la référence (« ta dernière saisie »)',
     Q.repris && /dernière saisie/.test(Q.repris.libelle||''), JSON.stringify(Q.repris));
-  t('⛔⛔ QUANTITÉ : les macros CORRIGÉES À LA MAIN ne sont pas écrasées à l\'arrivée (29, pas 48)',
-    Q.repris && Q.repris.kcal==='29', JSON.stringify(Q.repris));
+  t('⛔⛔ QUANTITÉ (NUT-VERROU-01, réécrit) : à l\'arrivée l\'écran montre la FICHE CIQUAL (48 kcal pour 100 g) et ses champs sont VERROUILLÉS — plus de correction à la main sur une fiche identifiée',
+    Q.repris && Q.repris.kcal==='48' && Q.repris.ro===true, JSON.stringify(Q.repris));
   /* ⚠️ 5 g ET NON 6 DEPUIS ft-v1112, et c'est un GAIN de justesse, pas une regression.
      Le blanc d'œuf cru titre 10,9 g de proteines/100 g dans la base embarquee. L'ancien code
      l'arrondissait d'abord a 11, puis 11 x 0,5 = 5,5 s'arrondissait a 6 : un DOUBLE arrondi.
@@ -12045,9 +12055,8 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
      modification manuelle est conservée et tracée ») : la correction reste, signalée, et le CALCUL pour 50 g se lit à côté.
      Le chiffre gardé du témoin (24 · 5, le calcul pour 50 g, simple arrondi) est inchangé ; il est lu là où V2 le montre,
      puis remis dans les champs par le geste « ↺ Revenir au calcul ». Texte d'avant : `git show 04eb7bcb:tests/parcours/runner.js`. */
-  t('⭐ … et à 50 g le CALCUL suit la quantité (24 kcal · 5 g) : en V2 il se lit à côté de la correction gardée (D-096), et « ↺ Revenir au calcul » le remet dans les champs',
-    Q.a50g && Q.a50g.kcal==='29' && Q.a50g.prot==='7' && Q.a50g.corrVue && /calcul : 24\b/.test(Q.a50g.corrTxt) && /calcul : 5\b/.test(Q.a50g.corrTxt)
-    && Q.revenu && Q.revenu.bouton && Q.revenu.kcal==='24' && Q.revenu.prot==='5', JSON.stringify({ a50g:Q.a50g, revenu:Q.revenu }));
+  t('⭐ … et à 50 g le CALCUL suit la quantité (24 kcal · 5 g) par la fiche : aucune correction à lire à côté, puisqu\'aucune n\'a pu être tapée (NUT-VERROU-01)',
+    Q.a50g && Q.a50g.kcal==='24' && Q.a50g.prot==='5' && Q.a50g.corrVue===false, JSON.stringify({ a50g:Q.a50g, revenu:Q.revenu }));
   t('⛔⛔ QUANTITÉ : une entrée tapée à la main n\'a PAS le bloc — aucun poids inventé (R29)',
     Q.sansPer100 && Q.sansPer100.bloc===false, JSON.stringify(Q.sansPer100));
 
@@ -12694,6 +12703,7 @@ console.log('\n-- CXII. La quantité sur un aliment repris SANS pour-100 g (ft-v
   await pq.addInitScript(seedScript({}));
   await pq.goto('http://localhost:'+PORT+'/index.html');
   await pq.waitForTimeout(2200);
+  await pq.evaluate(PREUVE_ON_JS);   // NUT-REF-HIST-01 : preuve de source SIMULÉE pour ce bloc (voir PREUVE_ON_JS)
   const Q=await pq.evaluate(async()=>{
    try{
     const o={};
@@ -14014,10 +14024,12 @@ console.log('\n-- CXXV. Ce qu\'il te reste à manger, traduit en TES aliments (f
       nom:nom, origine:{saisie:'ciqual', origine:'ciqual'}, mode:'pesee', fiche:{base:'g', p100:p100, source:'ciqual', fiab:'source'},
       quantite:{val:g, unite:'g', origine:'tapee'}});
       if(!r.ok) throw new Error('fixture '+nom+' : '+r.erreur); return r.ligne; };
+    /* NUT-REF-HIST-01 (30/10/2026) : le poulet de cette fixture annonçait 110 kcal pour 23 g P + 2,4 g L — physiquement impossible (4×23 + 9×2,4 = 113,6 > 110) ;
+       l'app refuse désormais toute fiche dont l'énergie est sous le plancher de ses macros, même de source. 120 kcal : la fixture redevient réaliste, le témoin ne change pas. */
     const SHAKE={kcal:380,prot:75,carbs:8,fat:5};
     S.savedFoods=[
       v2(t,'Shake protéiné',SHAKE,30,'collation',Date.now()-9e6),
-      v2(t,'Blanc de poulet',{kcal:110,prot:23,carbs:0,fat:2.4},150,'dejeuner',Date.now()-9e6),
+      v2(t,'Blanc de poulet',{kcal:120,prot:23,carbs:0,fat:2.4},150,'dejeuner',Date.now()-9e6),
       v2(t,'Amandes',{kcal:600,prot:21,carbs:13,fat:53},30,'collation',Date.now()-9e6)];
     S.foodLog=[
       v2(_h0(3),'Shake protéiné',SHAKE,30,'collation',Date.now()-3e8),
@@ -15072,7 +15084,7 @@ console.log('\n-- CXXXIV. La bascule du soir : 20 h, décidée par Michel (ft-v1
       nom:nom, origine:{saisie:'ciqual', origine:'ciqual'}, mode:'pesee', fiche:{base:'g', p100:p100, source:'ciqual', fiab:'source'},
       quantite:{val:g, unite:'g', origine:'tapee'}});
       if(!r.ok) throw new Error('fixture '+nom+' : '+r.erreur); return r.ligne; };
-    const SHAKE={kcal:380,prot:75,carbs:8,fat:5}, POULET={kcal:110,prot:23,carbs:0,fat:2.4},
+    const SHAKE={kcal:380,prot:75,carbs:8,fat:5}, POULET={kcal:120,prot:23,carbs:0,fat:2.4},
           AMANDES={kcal:600,prot:21,carbs:13,fat:53}, RIZ={kcal:350,prot:7,carbs:77,fat:1};
     const favs=()=>[ v2(t,'Shake protéiné',SHAKE,30,'collation',Date.now()-9e6),
                      v2(t,'Blanc de poulet',POULET,150,'dejeuner',Date.now()-9e6),
@@ -16341,6 +16353,7 @@ console.log('\n-- CXLVI. La quantité sur un aliment repris de « Mes aliments �
   await pg.addInitScript(seedScript({}));
   await pg.goto('http://localhost:'+PORT+'/index.html');
   await pg.waitForTimeout(2300);
+  await pg.evaluate(PREUVE_ON_JS);   // NUT-REF-HIST-01 : preuve de source SIMULÉE pour ce bloc (voir PREUVE_ON_JS)
   const F=await pg.evaluate(async()=>{
    try{
     const o={}, dort=ms=>new Promise(x=>setTimeout(x,ms)), t=today();
@@ -17634,6 +17647,7 @@ console.log('\n-- CLXI. « La dernière fois » : proposé, jamais imposé (ft-v
   await pg.addInitScript(seedScript({ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99'}));
   await pg.goto('http://localhost:'+PORT+'/index.html');
   await pg.waitForTimeout(2300);
+  await pg.evaluate(PREUVE_ON_JS);   // NUT-REF-HIST-01 : preuve de source SIMULÉE pour ce bloc (voir PREUVE_ON_JS)
   const F=await pg.evaluate(async()=>{
    try{
     const o={}, d=ms=>new Promise(x=>setTimeout(x,ms)), t=today();
@@ -25232,7 +25246,8 @@ console.log('\n-- CCXXII. On met tout et on marque le doute (ft-v1114) --');
     o.srcDoute=(_afSrc&&_afSrc.doute)||null;
     o.noteEcran=((document.getElementById('af-etat-note')||{}).textContent||'').slice(0,120);
     o.qsrc=((document.getElementById('af-bc-qsrc')||{}).textContent||'').slice(0,160);
-    document.getElementById('af-desc').value='Korean Whopper test';
+    /* NUT-VERROU-01 (29/10/2026) : le nom d'un produit IDENTIFIÉ ne change plus (« Korean Whopper · Burger King ») — l'ancien témoin le renommait « Korean Whopper test »,
+       et l'app refuse désormais ce renommage (« rien n'a été ajouté »). Le nom posé par la proposition est gardé tel quel ; les assertions (le doute, la provenance) sont INCHANGÉES. */
     /* ⚖️ ft-v1190 — LE GESTE (option A, décision Michel du 10/09/2026). `_afSuggPrendreMarque`
        pose `_bcNutr` et ouvre le bloc quantité : sans un geste, l'app refuse d'enregistrer.
        ⛔ Les assertions de ce témoin — le doute, la provenance « marque » — sont INCHANGÉES ;
@@ -31596,6 +31611,7 @@ console.log('\n-- CCLXXV. L\'invariant de reprise (ft-v1177) --');
    Les témoins V1 qui recalculaient une ligne figée par un appel interne (`_afApplyProp()` direct — un geste que
    personne ne fait) sont remplacés par le geste réel. */
 {
+  await p.evaluate(PREUVE_ON_JS);   // NUT-REF-HIST-01 : preuve de source SIMULÉE pour ce bloc (voir PREUVE_ON_JS)
   const Z=await p.evaluate(async()=>{
    try{
     const o={}, d=ms=>new Promise(x=>setTimeout(x,ms)), t=today();
@@ -31740,6 +31756,7 @@ console.log('\n-- CCLXXV. L\'invariant de reprise (ft-v1177) --');
     return o;
    }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,300)};}
   });
+  await p.evaluate(PREUVE_OFF_JS);   // fin de la preuve simulée
   if(Z.err) t('CCLXXV n\'a pas pu tourner', false, Z.err);
   else{
     /* ══ A — l'ancienne ligne de l'audit ══ */
@@ -32171,6 +32188,7 @@ console.log('\n-- CCLXXVII. L\'exclusivité des deux blocs Quantité (ft-v1179) 
    ⚠️ CE BLOC DOIT RESTER AVANT `b.close()`. Posé après, il ne rate pas : il PLANTE. */
 console.log('\n-- CCLXXVIII. P0 : le propriétaire du changement d\'aliment (ft-v1180) --');
 {
+  await p.evaluate(PREUVE_ON_JS);   // NUT-REF-HIST-01 : preuve de source SIMULÉE pour ce bloc (voir PREUVE_ON_JS)
   const Z=await p.evaluate(async()=>{
    try{
     const o={}, d=ms=>new Promise(x=>setTimeout(x,ms)), t=today();
@@ -32421,6 +32439,7 @@ console.log('\n-- CCLXXVIII. P0 : le propriétaire du changement d\'aliment (ft-
     return o;
    }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,300)};}
   });
+  await p.evaluate(PREUVE_OFF_JS);   // fin de la preuve simulée
   if(Z.err) t('CCLXXVIII n\'a pas pu tourner', false, Z.err);
   else{
     t('CCLXXVIII ⛔ CONTRÔLE — la reprise garde le couple 274 kcal ↔ 380 g (figé) et PROPOSE 380 g, champ vide',
@@ -33326,6 +33345,7 @@ console.log('\n-- CCLXXIX. Les résultats de recherche sont VISIBLES (ft-v1182) 
   await pg.addInitScript(seedScript({ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99'}));
   await pg.goto('http://localhost:'+PORT+'/index.html');
   await pg.waitForTimeout(2400);
+  await pg.evaluate(PREUVE_ON_JS);   // NUT-REF-HIST-01 : preuve de source SIMULÉE pour ce bloc (voir PREUVE_ON_JS)
   const Q=await pg.evaluate(async()=>{
    try{
     const o={}, d=ms=>new Promise(x=>setTimeout(x,ms));
@@ -33584,6 +33604,7 @@ console.log('\n-- CCLXXIX. Les résultats de recherche sont VISIBLES (ft-v1182) 
   await pg.addInitScript(seedScript({ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99'}));
   await pg.goto('http://localhost:'+PORT+'/index.html');
   await pg.waitForTimeout(2400);
+  await pg.evaluate(PREUVE_ON_JS);   // NUT-REF-HIST-01 : preuve de source SIMULÉE pour ce bloc (voir PREUVE_ON_JS)
   const V=await pg.evaluate(async()=>{
    try{
     const o={}, d=ms=>new Promise(x=>setTimeout(x,ms));
@@ -33772,7 +33793,8 @@ console.log('\n-- CCLXXIX. Les résultats de recherche sont VISIBLES (ft-v1182) 
       V.scanGrammes && V.scanGrammes.grammes===true && V.scanGrammes.v==='200'
       && V.scanGrammes.poidsPortion===false && V.scanGrammes.q===false, JSON.stringify(V.scanGrammes));
     t('CCLXXXV ⑨ ⛔ ... et son pour-100 g publié est INTACT après enregistrement (130/26/0/3)',
-      V.scanGrammesApres && /Modifié/.test((V.scanGrammesDit||[]).join(' ')) && V.scanGrammesApres.u==='g'
+      /* ↪️ NUT-VERROU-01 (29/10/2026) : enregistrer SANS rien changer une fiche identifiée dit « Rien n'a changé » (la ligne reste intacte à l'octet), au lieu de « Modifié ». L'assertion qui compte — le pour-100 g publié est INTACT — est inchangée. */
+      V.scanGrammesApres && /Modifié|Rien n.a changé/.test((V.scanGrammesDit||[]).join(' ')) && V.scanGrammesApres.u==='g'
       && V.scanGrammesApres.q===200 && V.scanGrammesApres.kcal===260 && V.scanGrammesApres.per100
       && V.scanGrammesApres.per100.kcal===130 && V.scanGrammesApres.per100.fat===3,
       JSON.stringify({dit:V.scanGrammesDit, ligne:V.scanGrammesApres}));
@@ -33849,6 +33871,7 @@ console.log('\n-- CCLXXIX. Les résultats de recherche sont VISIBLES (ft-v1182) 
   await pg.addInitScript(seedScript({ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99'}));
   await pg.goto('http://localhost:'+PORT+'/index.html');
   await pg.waitForTimeout(2400);
+  await pg.evaluate(PREUVE_ON_JS);   // NUT-REF-HIST-01 : preuve de source SIMULÉE pour ce bloc (voir PREUVE_ON_JS)
   const W=await pg.evaluate(async()=>{
    try{
     const o={}, d=ms=>new Promise(x=>setTimeout(x,ms));
@@ -34413,6 +34436,7 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
   await p.evaluate(()=>{ try{ localStorage.clear(); }catch(e){} });
   await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(1200);
 
+  await p.evaluate(PREUVE_ON_JS);   // NUT-REF-HIST-01 : preuve de source SIMULÉE pour ce bloc (voir PREUVE_ON_JS)
   const R = await p.evaluate(async()=>{
     const o={}; const sur=f=>{ try{ return f(); }catch(e){ return 'ERREUR:'+e.message; } };
     const crans=[0,1,2,3,4];
@@ -34481,6 +34505,7 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
     o.parType = ['É','W','X','E','D'].map(t=>_defRestForType(t)).join('|');
     return o;
   });
+  await p.evaluate(PREUVE_OFF_JS);   // fin de la preuve simulée
 
   console.log('\n-- CCCIV. Les 3 constats de l\'audit « onglet Séance » (ft-v1195) --');
   t('B-CCCIV ① le propriétaire de la conversion RPE existe', R.owner===true);
@@ -34906,6 +34931,7 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
   await pg.addInitScript(seedScript({ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99'}));
   await pg.goto('http://localhost:'+PORT+'/index.html');
   await pg.waitForTimeout(2300);
+  await pg.evaluate(PREUVE_ON_JS);   // NUT-REF-HIST-01 : preuve de source SIMULÉE pour ce bloc (voir PREUVE_ON_JS)
   const X=await pg.evaluate(async()=>{
    try{
     const o={};
