@@ -43,6 +43,21 @@ MUT = [
      [(A, "  const c=document.getElementById('hab-m-'+idx);\n  if(!c ||", "  const c=document.querySelector('[onclick*=\"hab-m-'+idx+'\"]');\n  if(!c ||")], S('N13'), 'GARDE'),
     ('M14 la validation du groupe ne passe plus avant la douane et l insertion (ordre inverse)',
      [(A, "    const r=e.repasSeul ? N.changerRepas(e.remplace, e.repas) : N.ligneNouvelle(e);\n    if(!r.ok) return groupe ? Object.assign({}, r, {rang:k}) : r;\n    rs.push(r);", "    const r=e.repasSeul ? N.changerRepas(e.remplace, e.repas) : N.ligneNouvelle(e);\n    if(!r.ok) return groupe ? Object.assign({}, r, {rang:k}) : r;\n    if(!e.repasSeul){ try{ _douaneLigne(r.ligne, porte); }catch(x){} }\n    rs.push(r);")], S('N10'), 'GARDE'),
+    ('M15 une exception apres l insertion n est plus lue dans le journal (le faux « Rien n a ete ajoute » revient)',
+     [(A, "      if(S.foodLog===journal0 && (S.foodLog||[]).length>n0) inserees=S.foodLog.slice(n0);", "      /* M15 */")], S('A1-T01c'), 'GARDE'),
+    ('M16 la sauvegarde durable n est plus relue (persist avale ses erreurs : la panne passe inapercue)',
+     [(A, "    return ids.every(i=>lus.has(i));", "    return true;")], S('A1-T02'), 'GARDE'),
+    ('M17 une nouvelle tentative ne retente plus la sauvegarde : elle re-insere (doublon)',
+     [(A, "  if(_habNonConfirme[cle] && _habReessayer(cle)) return;", "  /* M17 */")], S('A1-T04a'), 'GARDE'),
+    ('M18 une sauvegarde confirmee reste « en attente » (la table n est pas purgee par la tentative)',
+     [(A, "    _habPurger();\n    try{ renderFoodJournal(); }catch(e){}\n    toast('Enregistrement local", "    try{ renderFoodJournal(); }catch(e){}\n    toast('Enregistrement local")], S('A1-T04c'), 'GARDE'),
+    ('M19 apres un echec de rendu, le message dit a tort que rien n a ete ajoute',
+     [(A, "  if(!rendu){ toast(quoi+", "  if(!rendu){ toast('Rien n\\'a été ajouté — '+")], S('A1-T03'), 'GARDE'),
+    ('M20 la douane est deplacee APRES l insertion (correction A2 hors mandat : les temoins A2 doivent la voir)',
+     [(A, "  rs.forEach((r,k)=>{ if(!entrees[k].repasSeul){ try{ _douaneLigne(r.ligne, porte); }catch(e){} } });\n", ""),
+      (A, "  }else S.foodLog.push(...rs.map(r=>r.ligne));", "  }else S.foodLog.push(...rs.map(r=>r.ligne));\n  rs.forEach((r,k)=>{ if(!entrees[k].repasSeul){ try{ _douaneLigne(r.ligne, porte); }catch(e){} } });")], S('A2-T02', 'A2-T03'), 'GARDE'),
+    ('M21 un seul emplacement d attente : un 2e repas ecrase le 1er (ancienne conception)',
+     [(A, "  if(!durable){ _habNonConfirme[cle]=ids; toast(_HAB_MSG_NON_DURABLE,'error'); return; }", "  if(!durable){ _habNonConfirme={}; _habNonConfirme[cle]=ids; toast(_HAB_MSG_NON_DURABLE,'error'); return; }")], S('A1-T04b'), 'GARDE'),
 ]
 
 def banc(arbre):

@@ -4612,6 +4612,15 @@ function _douaneRemiseAZero(){
    `choix` : `'autres'` = la personne a choisi d'ajouter SEULEMENT les aliments admissibles (l'ajout partiel est devenu un geste, plus un effet de bord). */
 let _habEnCours=0;   // l'instant du dernier rejeu lancé : le chargement CIQUAL est asynchrone, un double appui ne doit pas lancer deux ajouts (périme au bout de 15 s)
 let _habDernier={cle:'', t:0};   // le dernier ajout RÉUSSI (repas · moment · choix) : le même geste répété dans la même seconde est un double appui, pas un deuxième repas
+let _habNonConfirme={};   // clé du geste (repas · moment · choix) → identités des lignes INSÉRÉES dont l'enregistrement local durable n'a pas pu être confirmé — un nouveau geste les RETENTE, il ne les ré-insère pas (une table, pas une case : deux repas peuvent attendre en même temps)
+const _HAB_MSG_NON_DURABLE='Repas ajouté à l\'écran, mais l\'enregistrement local durable n\'est PAS confirmé (stockage du téléphone). Ne le ré-ajoute pas : touche-le de nouveau pour retenter l\'enregistrement.';
+/* ⭐ NUT-REF-HIST-02 · MICRO-CORRECTION A1 — TROIS ÉTATS QU'ON NE CONFOND PLUS, parce que le message n'est pas le même :
+     ① AVANT l'insertion (préparation, écriture refusée ou en panne) : aucune ligne n'existe → « Rien n'a été ajouté » est vrai ;
+     ② l'insertion est CONSTATÉE (`_n2Reajouter` a rendu `ok` avec ses lignes — ou, si une exception est tombée, le journal a grandi) : les lignes EXISTENT ;
+        plus jamais « Rien n'a été ajouté » à partir d'ici, quoi qu'il arrive ensuite, et jamais de nouvelle insertion automatique, jamais de suppression ;
+     ③ APRÈS l'insertion (`_habApresInsertion`) : la sauvegarde locale, la synchro et le rendu sont des étapes séparées, chacune dans son `try`.
+   ⚠️ `persist()` AVALE ses propres erreurs (quota, stockage refusé : un message console ou un toast de quota, mais aucune exception ni valeur rendue) : un `try/catch`
+   autour d'elle ne verrait jamais une panne. La seule preuve d'un enregistrement durable est de RELIRE le stockage (`_habDurable`). */
 function rejouerRepas(sig, meal, choix){
   const hab=_repasHabituels(), idx=hab.findIndex(x=>x.sig===sig), r=hab[idx];
   if(!r){toast('Repas introuvable','error');return;}
@@ -4620,15 +4629,19 @@ function rejouerRepas(sig, meal, choix){
   const ok=(typeof FOOD_MEALS!=='undefined') && FOOD_MEALS.some(m=>m.k===meal);
   const moment=ok?meal:r.meal;
   const cle=sig+'|'+moment+'|'+(choix||'');
+  /* Une insertion déjà faite dont la sauvegarde durable n'est pas confirmée : on RETENTE la sauvegarde, on n'insère pas une deuxième fois. */
+  if(_habNonConfirme[cle] && _habReessayer(cle)) return;
   if(_habDernier.cle===cle && Date.now()-_habDernier.t<900) return;   // double appui : déjà fait
   _habEnCours=Date.now();
   /* 🥗 V2 (jalon 4) — chaque aliment est RE-NOTÉ par le moteur, depuis SA ligne d'origine, jamais depuis l'écran d'ajout
      (D-094, NUT-M6-REJEU-01 : le défaut M6 est fermé par construction — aucune lecture d'écran ici). */
   _n2Apres(r.items, ()=>{
+    const journal0=S.foodLog, n0=(journal0||[]).length, bloques=[];
+    let inserees=null;   // posé UNIQUEMENT quand l'insertion est constatée
     try{
       const court=n=>String(n||'').slice(0,30);
       /* ① PRÉPARER — lecture seule. */
-      const vf=_n2FichesVerifiees(), bons=[], bloques=[];
+      const vf=_n2FichesVerifiees(), bons=[];
       r.items.forEach(e=>{
         const a=_n2Apercu(e, vf);
         if(a.ok && !a.raison && a.ligne) bons.push(e); else bloques.push({nom:String((e&&e.name)||''), a:a});
@@ -4637,25 +4650,67 @@ function rejouerRepas(sig, meal, choix){
       if(bloques.length && choix!=='autres'){ _habChoix(idx, r, moment, bons, bloques); return; }
       const aEcrire=bloques.length ? bons : r.items;
       if(!aEcrire.length){ toast('Rien n\'a été ajouté.','info'); return; }
-      /* ③ ÉCRIRE — le groupe entier ou rien. */
+      /* ③ ÉCRIRE — le groupe entier ou rien. `ok` avec ses lignes = l'INSERTION EST CONFIRMÉE. */
       const x=_n2Reajouter(aEcrire, moment, _journalJourActif(), 'rejouerRepas');
       if(!x.ok){
         toast(x.groupe ? 'Rien n\'a été ajouté — ce repas a changé depuis l\'écran (à vérifier : '+x.refus.map(f=>court(f.nom)).join(', ')+'). Touche-le de nouveau.' : _n2Message(x),'info');
         return;
       }
-      _habDernier={cle:cle, t:Date.now()};
-      persist();
-      if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
-      renderFoodJournal();
-      try{ if(typeof renderNutrition==='function')renderNutrition(); }catch(e){}
-      const mi=(typeof _foodMealInfo==='function')?_foodMealInfo(moment):null, n=aEcrire.length;
-      toast(n+' aliment'+(n>1?'s':'')+' ajouté'+(n>1?'s':'')+(mi&&mi.lbl?' — '+mi.lbl:'')+' 🍽️'
-            +(bloques.length?' · non ajouté (à vérifier) : '+bloques.map(b=>court(b.nom)).join(', '):''),
-            bloques.length?'info':'success');
+      inserees=x.lignes;
     }catch(err){
-      toast('Rien n\'a été ajouté (erreur technique) — réessaie.','error');
+      /* Une exception : on REGARDE le journal, on ne suppose pas. Il a grandi → les lignes existent (on ne dira pas le contraire) ; sinon rien n'a été inséré. */
+      if(S.foodLog===journal0 && (S.foodLog||[]).length>n0) inserees=S.foodLog.slice(n0);
+      if(!inserees) toast('Rien n\'a été ajouté (erreur technique) — réessaie.','error');
     }finally{ _habEnCours=0; }
+    if(inserees) _habApresInsertion(cle, inserees, moment, bloques);
   });
+}
+/* Les lignes sont-elles DANS le stockage local ? On relit la clé du journal et on cherche leurs identités. Mode démo : rien n'est écrit PAR CONCEPTION, ce n'est pas une panne. */
+function _habDurable(ids){
+  try{
+    if(window._demoMode) return true;
+    const lus=new Set((JSON.parse(localStorage.getItem('ft4_foodlog')||'[]')||[]).map(l=>l&&l.id));
+    return ids.every(i=>lus.has(i));
+  }catch(e){ return false; }
+}
+/* Tout ce qui suit une insertion CONFIRMÉE : chaque étape dans son `try`, aucune ne peut défaire ni masquer l'ajout, aucune n'insère. La synchro distante
+   n'est ni attendue ni annoncée (elle part en différé, sans confirmation ici). */
+function _habApresInsertion(cle, lignes, moment, bloques){
+  const ids=lignes.map(l=>l&&l.id), n=lignes.length, court=x=>String(x||'').slice(0,30);
+  _habDernier={cle:cle, t:Date.now()};
+  try{ persist(); }catch(e){}
+  const durable=_habDurable(ids);
+  try{ if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced(); }catch(e){}
+  let rendu=true;
+  try{ renderFoodJournal(); }catch(e){ rendu=false; }
+  try{ if(typeof renderNutrition==='function')renderNutrition(); }catch(e){}
+  if(!durable){ _habNonConfirme[cle]=ids; toast(_HAB_MSG_NON_DURABLE,'error'); return; }
+  _habPurger();   // le stockage répond : tout ce qui attendait (ce geste, ou un autre) est maintenant relu et confirmé
+  const mi=(typeof _foodMealInfo==='function')?_foodMealInfo(moment):null;
+  const quoi=n+' aliment'+(n>1?'s':'')+' ajouté'+(n>1?'s':'')+(mi&&mi.lbl?' — '+mi.lbl:'');
+  if(!rendu){ toast(quoi+' et enregistré'+(n>1?'s':'')+', mais l\'affichage n\'a pas pu se rafraîchir : rouvre l\'écran.','info'); return; }
+  toast(quoi+' 🍽️'+(bloques.length?' · non ajouté (à vérifier) : '+bloques.map(b=>court(b.nom)).join(', '):''), bloques.length?'info':'success');
+}
+/* Les gestes dont la sauvegarde attendait et que le stockage relit maintenant : on les retire de la table (jamais on ne retire une ligne du journal). Un geste dont
+   les lignes ne sont plus là (supprimées par la personne) n'a plus rien à confirmer. */
+function _habPurger(){
+  Object.keys(_habNonConfirme).forEach(k=>{
+    const presentes=_habNonConfirme[k].filter(i=>(S.foodLog||[]).some(l=>l&&l.id===i));
+    if(!presentes.length || _habDurable(presentes)) delete _habNonConfirme[k];
+  });
+}
+/* Nouvelle tentative après une sauvegarde non confirmée : on ne ré-insère RIEN, on retente de sauvegarder les lignes qui existent encore. Rend `true` si elle a traité le geste. */
+function _habReessayer(cle){
+  const ids=_habNonConfirme[cle]; if(!ids) return false;
+  const presentes=ids.filter(i=>(S.foodLog||[]).some(l=>l&&l.id===i));
+  if(!presentes.length){ delete _habNonConfirme[cle]; return false; }   // elles ne sont plus là (supprimées) : un nouveau geste est un vrai nouvel ajout
+  try{ persist(); }catch(e){}
+  if(_habDurable(presentes)){
+    _habPurger();
+    try{ renderFoodJournal(); }catch(e){}
+    toast('Enregistrement local confirmé — ce repas était déjà ajouté, rien n\'a été ajouté une deuxième fois.','success');
+  }else toast(_HAB_MSG_NON_DURABLE,'error');
+  return true;
 }
 /* Le conteneur de la carte du repas, retrouvé SANS lire un attribut `onclick` : `hab-m-<rang>` est l'identifiant que le rendu pose à chaque carte, le rang est celui du repas
    dans `_repasHabituels()` (le rendu et ce code lisent la MÊME fonction), et on VÉRIFIE avant de s'en servir — le conteneur existe, c'est bien un `.hab-moments`, et la
