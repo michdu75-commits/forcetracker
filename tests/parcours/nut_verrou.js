@@ -245,6 +245,10 @@ async function ouvrirPage(b, PORT) {
   await pg.addInitScript(BASE_FIX.replace('__LIGNES__', J(LIGNES)));
   await pg.goto('http://localhost:' + PORT + '/index.html');
   await pg.waitForTimeout(1500);
+  /* 🛡️ NUT-REF-HIST-01 (correctif final, 30/10) — preuve indépendante SIMULÉE pour les codes-barres de test (3000000000…) : ce banc éprouve le VERROU des fiches identifiées
+     (champs, nom, quantité, repas, historique) sur des lignes dont la fiche a été prise à la source ; la règle « sans preuve, une ancienne fiche OFF ne crée plus de
+     ligne » a son propre banc (tests/parcours/nut_ref_hist.js). */
+  await pg.evaluate(() => { const o = window._n2PreuveSource; window._n2PreuveSource = function (f, sid) { return /^3000000000\d+$/.test(String(sid || '').trim()) ? true : o.apply(this, arguments); }; });
   await pg.evaluate(() => { document.querySelectorAll('.overlay.open').forEach((o) => o.classList.remove('open')); });
   return { cx, pg, erreurs };
 }

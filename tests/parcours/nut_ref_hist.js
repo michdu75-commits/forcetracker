@@ -32,6 +32,8 @@ const LIGNES = [
   v2('nrh-Y1-00000006', 'Yaourt nature (test)', EAN_Y1, { kcal: 60, prot: 4, carbs: 6, fat: 2 }, 125),
   v2('nrh-Y2-00000007', 'Yaourt nature (test)', EAN_Y2, { kcal: 95, prot: 5, carbs: 10, fat: 4 }, 125),
   ancien('nrh-Y3-00000008', 'Yaourt nature (test)', EAN_Y1, 75, 5, 8, 3, 125),
+  /* L3 : une saisie du MÊME code-barres que C1 dont les valeurs diffèrent (180 kcal pour 100 g au lieu de 129) */
+  ancien('nrh-L3-00000011', 'Skyr contredit (test)', EAN_C, 180, 20, 2, 5, 100),
   /* D1 : une fiche DÉCLARÉE par la personne (ses propres valeurs pour 100 g) — elle ne prétend à aucune source : hors de la frontière */
   v2('nrh-D1-00000009', 'Maison déclarée (test)', null, { kcal: 200, prot: 10, carbs: 20, fat: 8 }, 50,
     { origine: 'utilisateur', saisie: 'manuel', n2: { s: 1, m: 'p', st: 'declaree', qo: 'tapee', manque: [], no: [], corr: [], f: { src: 'utilisateur', ver: null, fiab: 'declaree', base: 'g' } } }),
@@ -70,7 +72,7 @@ module.exports.ecran = async function ecran(t, b, PORT) {
   const E = (f, a) => pg.evaluate(f, a);
   const ligne = (id) => E((i) => JSON.parse(JSON.stringify((S.foodLog || []).find((x) => x && x.id === i) || null)), id);
   const avant = await E(() => JSON.stringify([S.foodLog, S.savedFoods || [], S.hiddenFoods || []]));
-  t('B-NRH P0 la page est prête avec 10 lignes inventées', (await E(() => (S.foodLog || []).length)) === 10);
+  t('B-NRH P0 la page est prête avec 11 lignes inventées', (await E(() => (S.foodLog || []).length)) === 11);
   const ctl = (fiche, preuve) => E(([f, p]) => (typeof _n2ControlerReference === 'function') ? _n2ControlerReference(f, p) : { etat: 'ABSENT', raison: 'fonction absente' }, [fiche, preuve]);
   const F = (p100, base) => ({ base: base || 'g', p100: p100, source: 'off', fiab: 'source' });
 
@@ -119,6 +121,9 @@ module.exports.ecran = async function ecran(t, b, PORT) {
   const incN = await E(() => { const l = (S.foodLog || []).find((x) => x.id === 'nrh-N-00000005'); const a = _n2Apercu(l); return { ok: a.ok, raison: a.raison && a.raison.code }; });
   t('B-NRH P6 ⭐⭐ l\'incident du 25/10 : la saisie JUSTE (129 kcal pour 100 g) du même produit n\'est plus déclarée « à vérifier » par la fiche impossible (65) — une copie erronée ne juge plus personne', incN.raison !== 'differe', J(incN));
 
+  const incL3 = await E(() => { const l = (S.foodLog || []).find((x) => x.id === 'nrh-L3-00000011'); const a = _n2Apercu(l); return { code: a.raison && a.raison.code }; });
+  t('B-NRH P6b ⭐ une simple COPIE du journal (la ligne cohérente non prouvée du même code-barres) ne juge pas une autre saisie « différente de la fiche vérifiée » (cause `differe`) : elle exige une preuve indépendante', incL3.code !== 'differe', J(incL3));
+
   /* ── ④ L'ancienne ligne à fiche impossible, ses propres portes ── */
   const reaS = await E(() => { const l = (S.foodLog || []).find((x) => x.id === 'nrh-S1-00000001'); const n0 = S.foodLog.length; const r = _n2Reajouter(l, 'dejeuner', today(), 'test', null); const ap = _n2Apercu(l); return { ok: r.ok, incoherente: r.incoherente === true, code: r.raison && r.raison.code, texte: r.raison && r.raison.texte, n0: n0, n1: S.foodLog.length, apOk: ap.ok, apCode: ap.raison && ap.raison.code }; });
   t('B-NRH P7 ⭐⭐ « + Ajouter » / repas habituel / aperçu d\'une ligne à fiche impossible : RIEN n\'est écrit, la liste dit « à vérifier » avec la phrase de la règle (ancienne fiche non vérifiée…)',
@@ -141,7 +146,7 @@ module.exports.ecran = async function ecran(t, b, PORT) {
       apOk: ap.ok, apLigne: ap.ligne, apCode: ap.raison && ap.raison.code, favOk: rf.ok, favCode: rf.raison && rf.raison.code, habOk: rh.ok, habCode: rh.raison && rh.raison.code, apFavCode: apF.raison && apF.raison.code,
       verifiee: _n2Verifiee(ap), carte: { n: hab.n, kcal: hab.kcal, aVerifier: hab.aVerifier }, txt: txt, identique: snap() === s0, n: S.foodLog.length }; });
   t('B-NRH P9 ⭐⭐ (CORRIGÉ : l\'ancien P9 affirmait le contraire) une ancienne fiche OFF COHÉRENTE (129 · 20 · 2 · 5) SANS preuve indépendante : « + Ajouter » est REFUSÉ — `ok:false`, `raison.code:source_non_confirmee`, la phrase de la règle — et `S.foodLog`, les favoris et les masquages sont identiques à l\'octet (aucun identifiant généré, aucune ligne)',
-    reaC.ok === false && reaC.incoherente === true && reaC.aCompleter === false && reaC.code === 'source_non_confirmee' && reaC.texte === FR && reaC.identique === true && reaC.n === 10, J(reaC));
+    reaC.ok === false && reaC.incoherente === true && reaC.aCompleter === false && reaC.code === 'source_non_confirmee' && reaC.texte === FR && reaC.identique === true && reaC.n === 11, J(reaC));
   t('B-NRH P9b ⭐⭐ le favori et le repas habituel de la même ligne : MÊME refus (aucune autre porte)', reaC.favOk === false && reaC.favCode === 'source_non_confirmee' && reaC.habOk === false && reaC.habCode === 'source_non_confirmee', J(reaC));
   t('B-NRH P9c ⭐⭐ l\'APERÇU garde sa signalisation « à vérifier » sans fabriquer de ligne ni de fausse validation : `ok:true` avec `raison`, `ligne:null`, pas « vérifiée », « à vérifier » dans la liste, et la carte du repas habituel ne compte PAS ses calories (0 kcal, 1 à vérifier)',
     reaC.apOk === true && reaC.apLigne === null && reaC.apCode === 'source_non_confirmee' && reaC.apFavCode === 'source_non_confirmee' && reaC.verifiee === false && /à vérifier/.test(reaC.txt) && reaC.carte.n === 0 && reaC.carte.kcal === 0 && reaC.carte.aVerifier === 1, J({ apOk: reaC.apOk, apLigne: reaC.apLigne, verifiee: reaC.verifiee, txt: reaC.txt, carte: reaC.carte }));
@@ -149,6 +154,8 @@ module.exports.ecran = async function ecran(t, b, PORT) {
     const out = {}; const test = (id) => { const l = (S.foodLog || []).find((x) => x.id === id); const n0 = S.foodLog.length; const r = _n2Reajouter(l, 'dejeuner', today(), 'test', null); if (r.ok) S.foodLog.pop(); return { ok: r.ok, code: r.raison && r.raison.code, aCompleter: r.aCompleter === true, n0: n0 }; };
     out.declaree = test('nrh-D1-00000009'); out.enseigne = test('nrh-M1-00000010'); return out; });
   t('B-NRH P9d ⭐ HORS de la frontière, rien ne change : une fiche DÉCLARÉE par la personne et une fiche d\'ENSEIGNE se re-notent comme avant (elles ne prétendent pas être une fiche Open Food Facts)', hors.declaree.ok === true && hors.enseigne.ok === true, J(hors));
+  const ver = await E(() => ({ nv: _n2Verifiee({ ok: true, R: { fiche: { fiab: 'source', source: 'off' }, controleReference: { etat: 'non_verifiee' } } }), adm: _n2Verifiee({ ok: true, R: { fiche: { fiab: 'source', source: 'ciqual' }, controleReference: { etat: 'admissible' } } }), seul: _n2Verifiee({ ok: true, R: { fiche: { fiab: 'source', source: 'off' } } }) }));
+  t('B-NRH P9h ⭐ `_n2Verifiee` (badge « vérifiée », priorité dans « Mes aliments ») n\'accepte plus `fiab:\'source\'` seul : il exige un contrôle `admissible`', ver.nv === false && ver.seul === false && ver.adm === true, J(ver));
   await ouvrirAjout();
   await E(() => { window._offFetchProduct = async () => null; });
   const contourne = await E(() => { const l = (S.foodLog || []).find((x) => x.id === 'nrh-C1-00000003'); const ok = _n2Reprendre(l, 'historique');
@@ -156,9 +163,10 @@ module.exports.ecran = async function ecran(t, b, PORT) {
   t('B-NRH P9e ⭐⭐ AUCUN CONTOURNEMENT par l\'écran d\'ajout : reprendre cette ancienne fiche n\'hydrate PAS le bloc « Quantité » (pas de `_bcNutr`), ne recopie ni ses macros ni son identité, ne propose pas « la dernière fois », dit la phrase de la règle et laisse une saisie personnelle',
     contourne.ok === true && contourne.bc === false && contourne.kcal === '' && contourne.prot === '' && contourne.sid === false && contourne.fige === false && contourne.pastille === false && contourne.ref === null && /Retrouve le produit en ligne avant de le réutiliser, ou saisis personnellement ses valeurs/.test(contourne.texte), J({ bc: contourne.bc, kcal: contourne.kcal, sid: contourne.sid, fige: contourne.fige, pastille: contourne.pastille, ref: contourne.ref }));
   await ouvrirAjout();
-  const viaListe = await E(() => { _renderFoodQuickList(); const i = (_afQuickItems || []).findIndex((it) => it.name === 'Skyr cohérent (test)'); const n0 = S.foodLog.length; if (i < 0) return { i: i }; quickAddFood(i); return { i: i, n0: n0, n1: S.foodLog.length, bc: !!_bcNutr, kcal: document.getElementById('af-kcal').value, ouvert: document.getElementById('ov-add-food').classList.contains('open') }; });
+  const viaListe = await E(() => { const c1 = (S.foodLog || []).find((x) => x.id === 'nrh-C1-00000003'); _afQuickItems = [Object.assign(_itemListe(c1), { fav: false, _src: c1, _ap: _n2Apercu(c1) })]; const n0 = S.foodLog.length; quickAddFood(0);
+    return { n0: n0, n1: S.foodLog.length, bc: !!_bcNutr, kcal: document.getElementById('af-kcal').value, ouvert: document.getElementById('ov-add-food').classList.contains('open') }; });
   await pg.waitForTimeout(300);
-  t('B-NRH P9f ⭐ « + » de « Mes aliments » (`quickAddFood`) sur cette ligne : rien n\'est écrit, l\'écran s\'ouvre sans fiche empruntée', viaListe.i >= 0 && viaListe.n1 === viaListe.n0 && viaListe.bc === false && viaListe.kcal === '' && viaListe.ouvert === true, J(viaListe));
+  t('B-NRH P9f ⭐ « + » de « Mes aliments » (`quickAddFood`) sur cette ligne : rien n\'est écrit, l\'écran s\'ouvre sans fiche empruntée', viaListe.n1 === viaListe.n0 && viaListe.bc === false && viaListe.kcal === '' && viaListe.ouvert === true, J(viaListe));
   await E(() => { window._offFetchProduct = async () => ({ product_name_fr: 'Skyr cohérent (source)', brands: 'Test', quantity: '150 g', code: '3000000000402', nutriments: { 'energy-kcal_100g': 129, proteins_100g: 20, carbohydrates_100g: 2, fat_100g: 5 } }); });
   await E(() => { const l = (S.foodLog || []).find((x) => x.id === 'nrh-C1-00000003'); _afOublierAliment(); _n2Reprendre(l, 'historique'); }); await pg.waitForTimeout(900);
   const frais = await E(() => { const gr = document.getElementById('af-bc-grams'); if (gr) { gr.value = '150'; _bcQtyPose = true; _bcApplyGrams(); } return { bc: !!_bcNutr, kcal: document.getElementById('af-kcal').value, verr: _n2VerrouEcran('af') }; });
@@ -187,14 +195,14 @@ module.exports.ecran = async function ecran(t, b, PORT) {
   const avF = await E(() => JSON.stringify([S.foodLog.length, S.savedFoods || [], S.hiddenFoods || []]));
   await E(() => { const g = document.getElementById('ef-grams'); if (g) { g.value = '150'; _efApplyFiche(); } });
   const n1Note = (await note()).replace(/\s+/g, ' ').trim();
-  await E(() => { saveEditFood(); }); await pg.waitForTimeout(350);
-  const apresC = await ligne('nrh-C1-00000003');
+  await E(() => { window.__mdf = 0; const o = window._majDefFavori; window._majDefFavori = function (x) { window.__mdf++; return o.apply(this, arguments); }; saveEditFood(); window._majDefFavori = o; }); await pg.waitForTimeout(350);
+  const apresC = await ligne('nrh-C1-00000003'); const mdf = await E(() => window.__mdf);
   const apF = await E(() => ({ n: S.foodLog.length, fav: JSON.stringify([S.savedFoods || [], S.hiddenFoods || []]), badge: _n2Badge((S.foodLog || []).find((x) => x.id === 'nrh-C1-00000003')),
     preuve: (_n2FichesVerifiees()['3000000000402'] || {}).preuve, rea: (() => { const r = _n2Reajouter((S.foodLog || []).find((x) => x.id === 'nrh-C1-00000003'), 'dejeuner', today(), 'test', null); return { ok: r.ok, code: r.raison && r.raison.code }; })() }));
   t('B-NRH P13a ⭐ l\'ancienne fiche cohérente ouverte dans « Modifier » (quantité inchangée) dit : ' + NV_0, n0Note === NV_0, J(n0Note));
   t('B-NRH P13b ⭐⭐ dès que la quantité change (150 g), l\'avertissement EXACT de la règle s\'affiche dans `#ef-abandon` (aucune nouvelle fenêtre)', n1Note === NV_Q, J(n1Note));
-  t('B-NRH P13 ⭐⭐ (RENFORCÉ) l\'exception : « Modifier » 100 g → 150 g recalcule SA PROPRE ligne (194 kcal par sa propre fiche) — même `id`, même nombre de lignes au journal, la note `reprise-non-verifiee` est posée, le badge dit « non vérifié », favoris et masquages intacts',
-    apresC.id === 'nrh-C1-00000003' && apresC.q === 150 && apresC.kcal === 194 && apF.n === JSON.parse(avF)[0] && (apresC.n2.no || []).indexOf('reprise-non-verifiee') >= 0 && /non vérifié/.test(apF.badge) && apF.fav === J([JSON.parse(avF)[1], JSON.parse(avF)[2]]), J({ apresC: apresC.n2, apF: apF }));
+  t('B-NRH P13 ⭐⭐ (RENFORCÉ) l\'exception : « Modifier » 100 g → 150 g recalcule SA PROPRE ligne (194 kcal par sa propre fiche) — même `id`, même nombre de lignes au journal, la note `reprise-non-verifiee` est posée, le badge dit « non vérifié », favoris et masquages intacts (aucune mise à jour de favori depuis cette fiche)',
+    apresC.id === 'nrh-C1-00000003' && apresC.q === 150 && apresC.kcal === 194 && apF.n === JSON.parse(avF)[0] && (apresC.n2.no || []).indexOf('reprise-non-verifiee') >= 0 && /non vérifié/.test(apF.badge) && apF.fav === J([JSON.parse(avF)[1], JSON.parse(avF)[2]]) && mdf === 0, J({ apresC: apresC.n2, apF: apF, mdf: mdf }));
   t('B-NRH P13c ⭐⭐ AUCUNE PROMOTION : la ligne modifiée ne devient pas une fiche vérifiée (`preuve` reste faux dans les fiches du journal) et reste REFUSÉE par « + Ajouter » (`source_non_confirmee`)', apF.preuve === false && apF.rea.ok === false && apF.rea.code === 'source_non_confirmee', J(apF));
 
   /* ── ⑥ ENTRÉE PERSONNELLE INDÉPENDANTE, hors ligne ── */

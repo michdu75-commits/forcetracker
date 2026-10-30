@@ -119,6 +119,9 @@ async function appareil(b, PORT, X, etat, tok, tag, plus) {   // `plus` : un sto
   await pg.addInitScript(`(()=>{try{ if(sessionStorage.getItem('${tag}'))return; sessionStorage.setItem('${tag}','1'); localStorage.clear();
     const D=${J(stock)}; Object.keys(D).forEach(k=>localStorage.setItem(k,D[k]));}catch(e){}})();`);
   await pg.goto('http://localhost:' + PORT + '/index.html'); await pause(pg, 3500);
+  /* 🛡️ NUT-REF-HIST-01 (correctif final, 30/10) — preuve indépendante SIMULÉE pour les codes-barres de test : ce banc éprouve les jumelles « liste / + Ajouter » sur des
+     lignes dont la fiche a été prise à la source ; la règle « sans preuve, une ancienne fiche OFF ne crée plus de ligne » a son banc (nut_ref_hist.js). */
+  await pg.evaluate(() => { const o = window._n2PreuveSource; window._n2PreuveSource = function (f, sid) { return /^3000000000\d+$/.test(String(sid || '').trim()) ? true : o.apply(this, arguments); }; });
   await pg.evaluate(() => { document.querySelectorAll('.overlay.open').forEach(o => o.classList.remove('open')); });
   return { cx, pg, st, erreurs };
 }
@@ -148,7 +151,7 @@ const journalApp = pg => pg.evaluate(() => JSON.parse(JSON.stringify(S.foodLog |
 /* Une synchro EXPLICITE : la synchro différée en attente (4 s, `_cloudSyncDebounced`) est annulée d'abord — sinon elle peut partir
    au milieu du scénario et brouiller l'ordre (mesuré le 23/10 sur un scénario à deux appareils, hors dépôt). */
 const synchroniser = async pg => { await pg.evaluate(() => { try { clearTimeout(_syncTimer); } catch (e) {} _cloudSync(); }); await pause(pg, 1300); };
-const redemarrer = async pg => { await pg.reload(); await pause(pg, 4200); await pg.evaluate(() => { document.querySelectorAll('.overlay.open').forEach(o => o.classList.remove('open')); }); };
+const redemarrer = async pg => { await pg.reload(); await pause(pg, 4200); await pg.evaluate(() => { const o = window._n2PreuveSource; window._n2PreuveSource = function (f, sid) { return /^3000000000\d+$/.test(String(sid || '').trim()) ? true : o.apply(this, arguments); }; }); /* preuve simulée, voir ouvrir() */ await pg.evaluate(() => { document.querySelectorAll('.overlay.open').forEach(o => o.classList.remove('open')); }); };
 async function restaurer(pg) {                                 // le bouton « 🔄 Restaurer mon compte depuis le cloud » du Profil
   await pg.evaluate(() => { window.__restoreAvant = (S.savedFoods || []).length; openRestoreAccount(); }); await pause(pg, 350);
   await pg.evaluate(() => doRestoreAccount()); await pause(pg, 1400);

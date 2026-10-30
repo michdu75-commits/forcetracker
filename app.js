@@ -1384,8 +1384,23 @@ function _n2Reprise(l){
   const R=N.reprise(l, _n2Ctx());
   if(!R || !R.ok || !R.fiche) return R;
   const c=_n2ControlerReference(R.fiche, _n2PreuveSource(R.fiche, l && l.sourceId));
-  if(c.etat!=='suspect') return R;
-  return Object.assign({}, R, {fiche:null, statut:'non-verifiee', corrections:[], ficheSuspecte:{raison:c.raison}});
+  if(c.etat==='suspect')
+    return Object.assign({}, R, {fiche:null, statut:'non-verifiee', corrections:[], ficheSuspecte:{raison:c.raison}, controleReference:c});
+  /* `controleReference` : le verdict du contrôle, EN MÉMOIRE seulement (jamais écrit : aucun champ persistant, `R.statut` et la ligne ne bougent pas).
+     `non_verifiee` garde `R.fiche` — elle sert à l'unique exception (« Modifier » la quantité de SA PROPRE ligne) — mais ne crée jamais une
+     nouvelle ligne : voir `_n2FicheNonVerifiee`. */
+  return Object.assign({}, R, {controleReference:c});
+}
+/* ⛔ LA FRONTIÈRE (correctif final de NUT-REF-HIST-01, Michel, 30/10) — une ancienne fiche OFFEN FOOD FACTS cohérente mais SANS preuve
+   indépendante (`non_verifiee`) ne crée JAMAIS une ligne automatiquement : ni « + Ajouter », ni repas habituel, ni favori, ni reprise à
+   l'écran (qui n'hydrate pas le bloc « Quantité » avec elle). Elle sert à UNE chose : modifier la quantité de SA PROPRE ligne
+   (`saveEditFood`), avec avertissement visible, sans acquérir de statut vérifié.
+   La frontière vise la source `off` — la seule dont la copie du journal est une copie d'une base EN LIGNE qu'on peut retrouver (le code-barres) ;
+   une fiche DÉCLARÉE par la personne, une fiche d'ENSEIGNE (table livrée avec l'app) et une fiche CIQUAL (table locale, preuve = la table) n'en
+   relèvent pas. */
+const _N2_REF_NON_VERIFIEE='Ancienne fiche non vérifiée. Retrouve le produit en ligne avant de le réutiliser, ou saisis personnellement ses valeurs.';
+function _n2FicheNonVerifiee(R){
+  return !!(R && R.fiche && R.fiche.source==='off' && R.controleReference && R.controleReference.etat==='non_verifiee');
 }
 /* ⭐ NUT-CIQ-HL-01 (Claude Principal, 25/10 soir — sa sonde C2k) — POURQUOI une ancienne ligne ne se recalcule pas. Une ligne
    CIQUAL (`ciqual:…`) dont la TABLE n'a pas pu être chargée (hors ligne : `data/ciqual.json` se télécharge à la demande, il n'est
@@ -1771,10 +1786,12 @@ function _n2Reprendre(src, saisie, choixSid){
   const _jeton=++_n2RechJeton;
   const set=(id,v)=>{const el=document.getElementById(id); if(el) el.value=v;};
   set('af-desc', R.nom||'');
-  _N2_CHAMPS.forEach(c=>set('af-'+c, (c in R.valeurs && !R.ficheSuspecte)?R.valeurs[c]:''));   // NUT-REF-HIST-01 : les macros d'une fiche suspecte ne sont pas recopiées
+  /* NUT-REF-HIST-01 : une fiche SUSPECTE, ou OFF `non_verifiee` (la frontière), n'hydrate PAS le bloc « Quantité » : écran de saisie personnelle. */
+  const bloquee=!!R.ficheSuspecte || _n2FicheNonVerifiee(R);
+  _N2_CHAMPS.forEach(c=>set('af-'+c, (c in R.valeurs && !bloquee)?R.valeurs[c]:''));   // les macros d'une fiche bloquée ne sont pas recopiées
   const row=document.getElementById('af-bc-row');
   const q=R.quantite;
-  if(R.fiche){
+  if(R.fiche && !bloquee){
     const f=R.fiche, p=f.p100;
     /* Le pour-100 g de la fiche passe par le constructeur unique (`_ref100`) : recopié TEL QUEL (`normaliser:false`),
        avec une origine de la personne — le résolveur ne réécrit jamais une reprise, il la classe seulement. */
@@ -1819,7 +1836,7 @@ function _n2Reprendre(src, saisie, choixSid){
     if(row) row.style.display='block';
     _bcQsrc(null);
     _bcMontrerTotal(0);
-  }else if(!q || R.ficheSuspecte){
+  }else if(!q || bloquee){
     /* Sans quantité utilisable (aucune, ou une portion sans poids), il n'y a pas de couple « valeurs / quantité » à
        garder : l'écran redevient une saisie à la main PRÉ-REMPLIE. La personne dit pour quel poids valent ces valeurs
        (l'app ne le devine pas), puis ce qu'elle a mangé — et le moteur calcule (ft-v1051 « il faut que je puisse mettre
@@ -1831,10 +1848,12 @@ function _n2Reprendre(src, saisie, choixSid){
     /* Retour de Claude Principal (25/10) : sans aucune valeur non plus, l'écran le dit et donne les issues (`_afMajVide`). */
     /* NUT-REF-HIST-01 : une fiche SUSPECTE donne le même écran qu'une saisie vide — la phrase de la règle, les trois issues (retrouver, scanner,
        étiquette), des champs libres pour une saisie PERSONNELLE : ni ses macros douteuses ni son identité n'y entrent. */
-    _afRepriseVide=R.ficheSuspecte ? {nom:String(R.nom||'').trim(), etat:'', texte:_N2_REF_SUSPECTE+' Tape tes propres valeurs, ou retrouve le produit (recherche, scan) quand la connexion revient.'}
+    _afRepriseVide=bloquee ? {nom:String(R.nom||'').trim(), etat:'', texte:R.ficheSuspecte
+        ? _N2_REF_SUSPECTE+' Tape tes propres valeurs, ou retrouve le produit (recherche, scan) quand la connexion revient.'
+        : _N2_REF_NON_VERIFIEE}
       : (_N2_CHAMPS.some(c=>(+R.valeurs[c])>0) ? null : {nom:String(R.nom||'').trim(), etat:''});
     _afMajAncre(true);
-    if(_sid && _afSrc && !R.ficheSuspecte) _afSrc.sourceId=_sid.slice(0,32);   // NV2-FIAB : l'identité du produit suit (jamais une fiche)
+    if(_sid && _afSrc && !bloquee) _afSrc.sourceId=_sid.slice(0,32);   // NV2-FIAB : l'identité du produit suit (jamais une fiche)
     if(_ean || _eanChoisi) _n2RetrouverEnLigne(_ean || _eanChoisi, _jeton, saisie, 0, R.nom||'');
   }else{
     _bcNutr=null; if(row) row.style.display='none'; _bcQsrc(null); _bcMontrerTotal(0);
@@ -2079,8 +2098,13 @@ function _n2EtiquetteFige(){
 }
 
 /* ⭐ RE-NOTER TEL QUEL un aliment déjà noté (ajout rapide, repas habituel) — sans ouvrir ni lire l'écran (D-094).
-   Rend {ok, ligne} · {ok:false, aCompleter:true} (pas de quantité valide) · {ok:false, incoherente:true, raison} ·
-   {ok:false, erreur}.
+   RETOURS (un seul sens chacun — les appelants testent `aCompleter` AVANT `incoherente`, ne jamais poser les deux) :
+     · {ok:true, ligne}                         écrite (ou, avec `apercu`, {ok:true, ligne, R, raison:null} : ce qui SERAIT écrit) ;
+     · {ok:true, ligne:null, R, raison}         APERÇU seulement : ne peut pas être re-notée telle quelle — aucune ligne fabriquée, « à vérifier » ;
+     · {ok:false, aCompleter:true}              pas de quantité valide : l'écran s'ouvre et la demande ;
+     · {ok:false, incoherente:true, raison}     ne peut pas être re-notée TELLE QU'ELLE S'AFFICHE, rien d'écrit — `raison` = {code, texte},
+                                                code ∈ perime · impossible · fiche · differe · contredit · suspecte · source_non_confirmee ;
+     · {ok:false, erreur}                       refus du moteur.
    ⭐⭐ INCIDENT DU 23/10 (mission de Michel : *« les valeurs affichées avant l'ajout doivent être exactement celles
    enregistrées »*) — avec `apercu`, la MÊME entrée passe au moteur SANS être enregistrée : c'est ce que « Mes aliments »,
    « Déjà noté par toi » et la carte d'une habitude AFFICHENT (`_n2Apercu`). Une construction, deux usages : l'affichage et
@@ -2093,7 +2117,14 @@ function _n2Reajouter(src, repas, date, porte, apercu){
      référence qui contredit la fiche vérifiée de son produit se dit « à vérifier », et « + Ajouter » / « Tes repas habituels »
      ne la recalculent pas en silence. La fiche retrouvée par l'identité ne sert QUE dans l'écran (`_n2Reprendre`), où la
      personne voit les valeurs et confirme par « Ajouter ». */
-  const R=_n2Reprise(src); if(!R.ok) return R;
+  const R=_n2Reprise(src);
+  if(!R || !R.ok) return R || {ok:false, erreur:'REPRISE_INVALIDE'};
+  /* ⛔ LA FRONTIÈRE `non_verifiee` : avant tout identifiant, toute ligne, toute écriture. L'aperçu garde sa signalisation « à vérifier »
+     (`ligne:null` : aucune ligne fabriquée, aucune calorie comptée dans les totaux d'une carte). */
+  if(_n2FicheNonVerifiee(R)){
+    const raison={code:'source_non_confirmee', texte:_N2_REF_NON_VERIFIEE};
+    return apercu ? {ok:true, ligne:null, R:R, raison:raison} : {ok:false, incoherente:true, raison:raison};
+  }
   if(!R.quantite) return {ok:false, aCompleter:true};
   const id=apercu ? 'apercu-00000000' : _foodLineId(); if(!id) return {ok:false, erreur:'ID_INVALIDE'};
   const e={id:id, ts:Date.now(), date:date, repas:repas, nom:String(R.nom||'').slice(0,80),
@@ -2119,7 +2150,7 @@ function _n2Reajouter(src, repas, date, porte, apercu){
    vérifiées du journal (`_n2FichesVerifiees`), calculées une fois pour toute une liste. */
 function _n2Apercu(src, verifiees){ return _n2Reajouter(src, 'apercu', today(), 'apercu', {verifiees:verifiees}); }
 /* « Vérifiée » : re-notée par une fiche SOURCE (Open Food Facts, CIQUAL, enseigne), et rien à redire. */
-function _n2Verifiee(a){ return !!(a && a.ok && !a.raison && a.R && a.R.fiche && a.R.fiche.fiab==='source'); }
+function _n2Verifiee(a){ return !!(a && a.ok && !a.raison && a.R && a.R.fiche && a.R.fiche.fiab==='source' && a.R.controleReference && a.R.controleReference.etat==='admissible'); }   // NUT-REF-HIST-01 : `fiab:'source'` seul n'est pas une preuve
 /* Ce que la liste dit d'une référence, à côté de ses valeurs : l'étiquette que porterait la ligne écrite (`_n2Badge`), ou
    « ⚠️ à vérifier » si elle ne peut pas être re-notée telle qu'elle s'affiche. */
 function _n2Marque(a){ return (!a || !a.ok) ? '' : (a.raison ? ' · ⚠️ à vérifier' : _n2Badge(a.ligne)); }
@@ -2196,7 +2227,8 @@ function _n2RepriseIdentite(R0, src, choix){
   if(!R0 || !R0.ok || (R0.fiche && !choix)) return R0;
   const F=_n2FicheIdentite(src); if(!F) return R0;
   const q=R0.quantite, qOK=!!q && (q.unite==='g' || q.unite==='ml') && NUT2.calcule(F, q).ok;
-  return Object.assign({}, R0, {fiche:F, parIdentite:true, parChoix:!!choix, corrections:[], quantite:qOK ? q : null});
+  return Object.assign({}, R0, {fiche:F, parIdentite:true, parChoix:!!choix, corrections:[], quantite:qOK ? q : null,
+                                controleReference:_n2ControlerReference(F, F.source==='ciqual')});   // la fiche d'identité vient de la table (preuve), jamais d'une copie
 }
 
 /* ═══ 🔗 NIDT (27/10/2026, GO de Michel) — RÉUTILISER UN ANCIEN ALIMENT QUI A PERDU SON IDENTITÉ : LE MÊME NOM, DÉJÀ IDENTIFIÉ DANS TON JOURNAL ═══
@@ -2381,7 +2413,7 @@ function _n2Incoherence(src, R, L, verifiees){
     return {code:'fiche', texte:'ses valeurs ne correspondent pas à la fiche pour 100 g notée avec elles'};
   const sid=(src && typeof src.sourceId==='string') ? src.sourceId.trim() : '';
   const fv=sid ? (verifiees || _n2FichesVerifiees())[sid] : null;
-  if(fv && fv.id!==src.id && N.calcule(fv.fiche, q).ok && ecart(fv.fiche.p100))
+  if(fv && fv.preuve===true && fv.id!==src.id && N.calcule(fv.fiche, q).ok && ecart(fv.fiche.p100))   // NUT-REF-HIST-01 : une simple copie du journal ne juge jamais une autre saisie
     return {code:'differe', texte:'ta fiche vérifiée de ce produit (du '+String(fv.date||'').split('-').reverse().slice(0,2).join('/')+') donne d\'autres valeurs pour '+qt};
   const contr=_n2Contradiction(src, v, verifiees);       // NV2-FIAB (24/10) : deux saisies du même produit qui se contredisent
   if(contr) return {code:'contredit', texte:contr};
@@ -2467,21 +2499,27 @@ function _efLigneTelleQuelle(){
   const q=_efQteFiche(R, e), corriges=R.correctionsEcartees>0;
   const calc=(q && NUT2.calcule(R.fiche, q)) || {ok:false};
   const f=x=>Number.isFinite(x)?x:'?';
+  /* ⚠️ L'EXCEPTION DE LA FRONTIÈRE (Michel, 30/10) : une ancienne fiche OFF `non_verifiee` ne sert qu'à modifier la quantité de SA PROPRE ligne — et le dit,
+     en tête de ce qu'on lit, dans l'élément existant (aucune fenêtre). Le texte de la règle est EXACT. */
+  const nv=_n2FicheNonVerifiee(R);
+  const dit=(h, change)=>dire(nv ? (change ? _N2_NV_QTE : _N2_NV_GARDE)+(h ? ' '+h : '') : h);
   if(q && _efQteIdentique(R, q)){
     _N2_CHAMPS.forEach(c=>{ const el=document.getElementById('ef-'+c); if(el) el.value=Number.isFinite(e[c])?e[c]:''; });
     _n2VerrouChamps('ef'); _efCoherence();
     const ref=(calc.ok && calc.valeurs)?calc.valeurs.kcal:null;
-    dire(corriges ? '🔒 Cette ligne avait été <b>corrigée à la main</b> avant le verrouillage : <b>'+f(e.kcal)+' kcal</b> enregistrées'
+    dit(corriges ? '🔒 Cette ligne avait été <b>corrigée à la main</b> avant le verrouillage : <b>'+f(e.kcal)+' kcal</b> enregistrées'
       +(Number.isFinite(ref)?' au lieu de <b>'+ref+' kcal</b> avec la fiche':'')+'. Rien n\'est recalculé tant que la quantité ne change pas ; si tu la changes, la ligne repart de la fiche '
-      +'(l\'ancienne correction reste dans son historique).' : '');
+      +'(l\'ancienne correction reste dans son historique).' : '', false);
     return;
   }
-  if(!corriges || !calc.ok){ dire(''); return; }
-  if(!_N2_CHAMPS.some(c=>(Number.isFinite(e[c])?e[c]:null)!==(c in calc.valeurs?calc.valeurs[c]:null))){ dire(''); return; }
-  dire('⚠️ Cette ligne avait été <b>corrigée à la main</b>. Avec cette quantité, elle repart de la fiche : <b>'+f(e.kcal)+' → '+f(calc.valeurs.kcal)+' kcal</b>'
+  if(!corriges || !calc.ok){ dit('', true); return; }
+  if(!_N2_CHAMPS.some(c=>(Number.isFinite(e[c])?e[c]:null)!==(c in calc.valeurs?calc.valeurs[c]:null))){ dit('', true); return; }
+  dit('⚠️ Cette ligne avait été <b>corrigée à la main</b>. Avec cette quantité, elle repart de la fiche : <b>'+f(e.kcal)+' → '+f(calc.valeurs.kcal)+' kcal</b>'
     +' (P '+f(e.prot)+' → '+f(calc.valeurs.prot)+' · G '+f(e.carbs)+' → '+f(calc.valeurs.carbs)+' · L '+f(e.fat)+' → '+f(calc.valeurs.fat)+'). '
-    +'L\'ancienne correction est <b>abandonnée</b> — elle reste gardée dans l\'historique de la ligne. Il te sera demandé de confirmer.');
+    +'L\'ancienne correction est <b>abandonnée</b> — elle reste gardée dans l\'historique de la ligne. Il te sera demandé de confirmer.', true);
 }
+const _N2_NV_QTE='⚠️ <b>Fiche nutritionnelle non vérifiée.</b> Ce recalcul utilise les anciennes valeurs de cet aliment, qui peuvent être incorrectes. Il modifiera uniquement cette ligne de ton journal. Les valeurs ne seront pas considérées comme vérifiées et ne pourront pas être réutilisées automatiquement ailleurs.';
+const _N2_NV_GARDE='⚠️ Ancienne fiche nutritionnelle non vérifiée. Ses valeurs sont conservées.';
 
 /* ── Le journal : une valeur inconnue se dit « ? », et la ligne dit d'où viennent ses chiffres ── */
 function _n2Val(x){ return (x===undefined || x===null || x==='') ? '?' : x; }
@@ -8344,6 +8382,7 @@ function saveEditFood(){
   const R=_efR || _n2Reprise(e);
   if(!R || !R.ok){ toast('Ligne illisible — elle n\'a pas été modifiée.','error'); return; }
   const verr=!!(R.fiche && NUT2.verrouillee(R.fiche));   // 🔒 NUT-VERROU-01 : une fiche identifiée (CIQUAL, Open Food Facts, enseigne)
+  const nonVerifiee=_n2FicheNonVerifiee(R);                // ⚠️ NUT-REF-HIST-01 : la seule exception de la frontière (voir `_n2FicheNonVerifiee`)
   /* 🛡️ NUT-REF-HIST-01 — UNE LIGNE À FICHE SUSPECTE : ses valeurs enregistrées restent, rien n'en est recalculé ni retouché ; seul le repas se change. */
   if(R.ficheSuspecte){
     if(!_editFoodMeal){ toast('Choisis le repas — la ligne n\'a pas été modifiée.','error'); return; }
@@ -8389,6 +8428,9 @@ function saveEditFood(){
     const q=_efQteFiche(R, e);
     if(!q){ toast('Combien en as-tu mangé ? Tape une quantité supérieure à 0 — la ligne n\'a pas été modifiée.','error'); return; }
     entree=Object.assign(base, {mode:'pesee', fiche:R.fiche, quantite:q, corrections:verr ? [] : _n2CorrectionsEcran(_efCorr)});
+    /* ⚠️ La frontière : la ligne modifiée REMPLACE la même entrée (`remplace`, même id), garde la note que Nutrition V2 connaît déjà
+       (`_n2Badge` dit « non vérifié ») et n'acquiert aucun statut de confiance. */
+    if(nonVerifiee) entree.notes=['reprise-non-verifiee'];
     /* 🔒 FINALISATION — UNE ANCIENNE CORRECTION QU'ON ABANDONNE SE CONFIRME : si les chiffres enregistrés vont changer parce que la ligne repart de
        la fiche, la note (`_efLigneTelleQuelle`) les a déjà montrés ; le 1ᵉʳ « Enregistrer » ne fait que demander la confirmation, le 2ᵉ écrit. */
     if(verr && R.correctionsEcartees>0){
@@ -8442,7 +8484,7 @@ function saveEditFood(){
   if(!entree.repas){ toast('Choisis le repas — la ligne n\'a pas été modifiée.','error'); return; }
   const r=_n2Enregistrer(entree,'saveEditFood');
   if(!r.ok){ toast(_n2Message(r).replace('rien n\'a été ajouté','la ligne n\'a pas été modifiée'),'error'); return; }
-  _majDefFavori(r.ligne);   // 🏷️ ft-v1186 — le favori ne garde pas une définition périmée
+  if(!nonVerifiee) _majDefFavori(r.ligne);   // 🏷️ ft-v1186 — le favori ne garde pas une définition périmée ; ⚠️ jamais depuis une fiche non vérifiée
   persist(); if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
   const ov=document.getElementById('ov-edit-food'); if(ov)ov.classList.remove('open');
   renderFoodJournal();

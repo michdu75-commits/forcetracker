@@ -138,6 +138,11 @@ async function ouvrir(b, PORT, fix, off, opt) {
   await pg.goto('http://localhost:' + PORT + '/index.html'); await pause(pg, 1500);
   await pg.evaluate(() => { document.querySelectorAll('.overlay.open').forEach((o) => o.classList.remove('open'));
     window.__toasts = []; const v = window.toast; window.toast = function (m) { window.__toasts.push(String(m)); try { return v.apply(this, arguments); } catch (e) {} }; });
+  /* 🛡️ NUT-REF-HIST-01 (correctif final, 30/10) — `opt.preuve` : la preuve indépendante des codes-barres de test (3000000000…) est SIMULÉE, comme le ferait la réponse
+     en ligne d'Open Food Facts. Une ancienne ligne ne porte aucune trace d'une vérification faite à la source (rien n'est stocké en plus), et la règle est devenue :
+     sans preuve, une ancienne fiche OFF ne crée plus de ligne. Les tests qui éprouvent une référence « vérifiée par la source » la demandent ; ceux qui éprouvent
+     la frontière (sans preuve) ne la demandent pas — voir aussi tests/parcours/nut_ref_hist.js. */
+  if (opt && opt.preuve) await pg.evaluate(() => { const o = window._n2PreuveSource; window._n2PreuveSource = function (f, sid) { return /^3000000000\d+$/.test(String(sid || '').trim()) ? true : o.apply(this, arguments); }; });
   const ok = (await clic(pg, '#nb-nutrition')) && (await pause(pg, 350), await clic(pg, '#ntab-journal'));
   await pause(pg, 250);
   return { cx, pg, erreurs, sorties, servis, ok };
@@ -224,7 +229,7 @@ async function ecranFiab(t, b, PORT) {
      ⛔ RÈGLE A DE D-111 (Michel, 24/10 : « conserver la règle A ») : dans la LISTE, rien n'est recalculé en silence — la ligne
      vérifiée reste visible, le favori se dit « à vérifier », « + Ajouter » n'écrit rien et ouvre l'écran. ⭐ DANS L'ÉCRAN, la
      fiche de son code-barres est retrouvée (D-130), l'écran dit ce que disait la saisie, et c'est « Ajouter » qui écrit. */
-  { const o = await ouvrir(b, PORT, fixture('t02c', [V2_ISO], [FAV_ISO_ID]), null); const pg = o.pg;
+  { const o = await ouvrir(b, PORT, fixture('t02c', [V2_ISO], [FAV_ISO_ID]), null, { preuve: true }); const pg = o.pg;
     let g = o.ok && await ouvrirAjout(pg);
     const M = await mesAliments(pg), f = M.find((x) => x.fav) || {}, ver = M.find((x) => !x.fav && x.sid === EAN_ISO) || {};
     const av = (await journal(pg)).map((x) => x.id);
@@ -236,6 +241,15 @@ async function ecranFiab(t, b, PORT) {
     t('B-NFIAB T02 ⑥ (T10) ⛔ RÈGLE A (D-111) : dans la liste, la ligne vérifiée « 155 kcal · pour 40 g · P 35 » reste visible et le favori à 26 g se dit « ⚠️ à vérifier » ; « + Ajouter » sur lui n\'écrit RIEN et ouvre l\'écran',
       g && /^155 kcal · pour 40 g · P 35 · G 1 · L 1$/.test(nb(ver.txt)) && /^156 kcal · pour 40 g · P 26 · G 1 · L 1 · ⚠️ à vérifier/.test(nb(f.txt))
       && rien && st.ouvert, J({ M, rien, st }));
+    await fin(o); }
+  /* ② c ter — HORS LIGNE ET SANS PREUVE : la même fixture, mais rien ne prouve la fiche du journal. */
+  { const o = await ouvrir(b, PORT, fixture('t02c3', [V2_ISO], [FAV_ISO_ID]), null); const pg = o.pg;
+    let g = o.ok && await ouvrirAjout(pg);
+    const M = await mesAliments(pg), f = M.find((x) => x.fav) || {};
+    const av = (await journal(pg)).map((x) => x.id);
+    g = g && await clic(pg, '#af-quick-list button[onclick="quickAddFood(' + f.i + ')"]'); await pause(pg, 700);
+    const rien = neuves(await journal(pg), av).length === 0;
+    const st = await pg.evaluate(() => ({ ouvert: document.getElementById('ov-add-food').classList.contains('open'), bc: !!_bcNutr, fige: !!(_afRef && _afRef.fige) }));
     t('B-NFIAB T02 ⑥b (NUT-REF-HIST-01) ⭐⭐ HORS LIGNE, UNE AUTRE LIGNE DU JOURNAL N\'EST PAS UNE PREUVE : la ligne vérifiée « 155 kcal » du même code-barres ne sert PLUS de fiche à l\'écran (pas de calcul sur une copie), l\'écran reste sur la saisie figée, rien n\'est écrit',
       g && !st.bc && st.fige && rien, J({ st, rien }));
     await fin(o); }
@@ -374,7 +388,7 @@ async function ecranFiab(t, b, PORT) {
     await fin(o); }
 
   /* ═══ T09 — LES 8 CHEMINS DE SAISIE, LEURS SOURCES SÉPARÉES (recherche OFF, favori, manuel, étiquette, IA) ═══ */
-  { const o = await ouvrir(b, PORT, fixture('t09', [V2_ISO]), { produits: { [EAN_ISO]: OFF_ISO }, recherche: [OFF_ISO.product] }); const pg = o.pg;
+  { const o = await ouvrir(b, PORT, fixture('t09', [V2_ISO]), { produits: { [EAN_ISO]: OFF_ISO }, recherche: [OFF_ISO.product] }, { preuve: true }); const pg = o.pg;
     let g = o.ok && await ouvrirAjout(pg);
     /* ② recherche Open Food Facts par nom */
     g = g && await taper(pg, '#af-desc', 'iso zero'); await pg.evaluate(() => { try { _afSuggInput(); } catch (e) {} });
@@ -675,7 +689,7 @@ async function ecranFiab(t, b, PORT) {
         origine: { saisie: 'camera-code-local', origine: 'off' }, mode: 'pesee', fiche: { base: 'g', p100: { kcal: 129, prot: 21, carbs: 0, fat: 5 }, cle: EAN_STK,
         source: 'off', fiab: 'source', etat: 'tel-que-vendu' }, quantite: { val: 200, unite: 'g', origine: 'tapee' } }).ligne;
       const FAUX = DECL('nfiab-e2b-fausse-01', 0.5, { kcal: 130, prot: 22, carbs: 0, fat: 6 });
-      const o = await ouvrir(b, PORT, fixture('e2b6', [SCAN, FAUX], [], RAZ(1)), null); const pg = o.pg;
+      const o = await ouvrir(b, PORT, fixture('e2b6', [SCAN, FAUX], [], RAZ(1)), null, { preuve: true }); const pg = o.pg;
       const g = o.ok && await ouvrirAjout(pg);
       const M = steak(await mesAliments(pg));
       const ap = await pg.evaluate((id) => { const e = (S.foodLog || []).find((x) => x && x.id === id); const a = _n2Apercu(e, _n2FichesVerifiees());

@@ -205,6 +205,12 @@ async function ouvrir(b, PORT, fix, off) {
   await pg.addInitScript(fix || fixture());
   await pg.goto('http://localhost:' + PORT + '/index.html');
   await pause(pg, 1500);
+  /* 🛡️ NUT-REF-HIST-01 (correctif final, 30/10) — LA PREUVE INDÉPENDANTE EST SIMULÉE ICI, EXPRESSÉMENT. Ce banc éprouve la MÉCANIQUE de reprise (portions, pastilles,
+     jumelles, dédoublonnage, « vérifiée » / « à vérifier ») sur des lignes V2 dont la fiche a été prise À LA SOURCE ; or une ancienne ligne ne porte aucune
+     trace de cette vérification (elle n'est pas stockée : aucun champ nouveau) et la règle est devenue : sans preuve indépendante, une ancienne fiche Open Food
+     Facts ne crée plus de ligne. On pose donc la preuve pour les codes-barres de test (3000000000…), comme le ferait la réponse en ligne d'Open Food Facts. La
+     FRONTIÈRE elle-même — sans cette preuve — est éprouvée par tests/parcours/nut_ref_hist.js. */
+  await pg.evaluate(() => { const o = window._n2PreuveSource; window._n2PreuveSource = function (f, sid) { return /^3000000000\d+$/.test(String(sid || '').trim()) ? true : o.apply(this, arguments); }; });
   await pg.evaluate(() => { document.querySelectorAll('.overlay.open').forEach((o) => o.classList.remove('open')); });
   const ok = (await clic(pg, '#nb-nutrition')) && (await pause(pg, 400), await clic(pg, '#ntab-journal'));
   await pause(pg, 250);

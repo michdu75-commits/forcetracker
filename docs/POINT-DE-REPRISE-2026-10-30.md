@@ -40,3 +40,36 @@
 
 ## 6. Prochaine opération (sur GO de Michel)
 Arbitrer le point 1 → D-031 sur arbre figé → publication (B2 + verrou + NUT-REF-HIST-01, `ft-v1263`) avec aide/guide → recette iPhone. D-141 et A3 : lots séparés.
+
+---
+
+## ADDENDUM — CORRECTIF FINAL : la frontière `non_verifiee` est fermée (ordre de Michel, 30/10, après le NO-GO sur P9)
+
+> **Remplace l'arbitrage n° 1 ci-dessus** (« mode actuel ou strict ») : Michel a tranché. Le texte d'avant est gardé tel quel.
+
+### Décision
+Une ancienne fiche OFF **cohérente mais sans preuve indépendante** (`controleReference.etat === 'non_verifiee'`) **ne crée plus jamais une ligne automatiquement**. Une seule exception : **modifier la quantité de SA PROPRE ligne** historique (`saveEditFood`), avertissement explicite, sans statut vérifié.
+
+### Code (`app.js` seul — `nutrition-v2.js`, `Code.js`, serveur, Supabase, données : intacts)
+- **`_n2Reprise`** attache `controleReference` (le verdict, **en mémoire seulement** : aucun champ persistant, `R.statut` inchangé). `R.fiche` est conservée pour `non_verifiee` (elle sert à l'exception). Suspecte : comportement inchangé.
+- **`_n2FicheNonVerifiee(R)`** = la frontière : source **`off`** + verdict `non_verifiee`. *Choix de périmètre* : une fiche **déclarée** par la personne, une fiche d'**enseigne** (table livrée avec l'app) et une fiche **CIQUAL** (table locale) n'en relèvent pas — sinon « + Ajouter » de tout ce qui n'est pas Open Food Facts serait cassé (témoin P9d). Le ticket dit « ancienne fiche OFF ».
+- **`_n2Reajouter`** : la garde est posée **immédiatement après `_n2Reprise` et avant `_foodLineId()`, `ligneNouvelle` et `_n2Enregistrer`**. Retours clarifiés (commentaire de la fonction) : écriture `{ok:true, ligne}` · aperçu bloqué `{ok:true, ligne:null, R, raison}` (« à vérifier », aucune calorie comptée) · quantité absente `{ok:false, aCompleter:true}` · refus `{ok:false, incoherente:true, raison:{code:'source_non_confirmee', texte}}` · moteur `{ok:false, erreur}`. ⚠️ **Écart au pseudo-code du ticket** : je ne pose **pas** `aCompleter:true` en plus d'`incoherente` — `quickAddFood` et `rejouerRepas` testent `aCompleter` AVANT `incoherente` et diraient « Combien en as-tu mangé ? » au lieu de « à vérifier » (témoin P9).
+- **`_n2Reprendre`** : une fiche suspecte **ou** OFF `non_verifiee` n'hydrate pas `_bcNutr` — même écran de saisie personnelle (champs vides, aucune identité, pas de « la dernière fois », phrase de la règle, recherche en ligne proposée par `_n2RetrouverEnLigne`). Le choix CIQUAL vérifié (`_n2RepriseIdentite`, preuve = la table) et la réponse OFF fraîche restent autorisés (P9g, P16, P17).
+- **« Modifier »** : `_efLigneTelleQuelle` affiche, dans `#ef-abandon` (aucune nouvelle fenêtre), « ⚠️ Ancienne fiche nutritionnelle non vérifiée. Ses valeurs sont conservées. » puis, dès que la quantité change, le texte exact de la règle ; `saveEditFood` écrit **la même entrée** (même `id`), pose `notes:['reprise-non-verifiee']` (le badge existant dit « non vérifié »), **n'appelle pas** `_majDefFavori`, ne promeut rien (P13, P13a-c). Les lignes à fiche **suspecte** restent non recalculables.
+- **Lecteurs voisins** : `_n2Verifiee` exige `controleReference.etat === 'admissible'` (plus `fiab:'source'` seul) ; la cause `differe` de `_n2Incoherence` exige `fv.preuve === true` (une copie du journal ne juge plus une autre saisie).
+
+### Tests (aucun témoin rouge supprimé ; chaque attente changée porte son motif dans le fichier)
+- **`nut_ref_hist`** : **43 OK / 0** (31 verts + 10 rouges d'abord reproduits sur `29d614b4`, commit `624b178b`, puis les nouveaux P6b, P9h). **P9 retourné** (l'ancien affirmait « s'écrit comme avant ») : refus, `raison.code:'source_non_confirmee'`, `S.foodLog`/favoris/masquages identiques à l'octet ; P9b favori + repas habituel ; P9c aperçu `ligne:null`, carte du repas habituel 0 kcal / 1 à vérifier ; P9d hors frontière (déclarée, enseigne) inchangé ; P9e/P9f aucun contournement par l'écran d'ajout ni par `quickAddFood` ; P9g réponse OFF en ligne → calcul ; **P13 renforcé** (a/b/c : avertissement exact, même `id`, même nombre de lignes, note, badge, favoris intacts, aucune promotion, toujours refusé par « + Ajouter »).
+- **Mutations ciblées** `tools/mut_nut_ref_hist.py` : **40/40 tuées** (R01–R27 d'avant + R28–R40 de la frontière).
+- **Voisins** : `nut_verrou` 90/0 · `nut2_moteur` 71/0 · `nut2_parcours` 111/0 · `nut_b2` 51/0 · `nut_v2_p1_croise` 16/0 · `nut_m6_rejeu` 29/0 · `foodlog_restore` 35/0 · `nut_secu_p1` 82/0 · `nut_fiabilite` 140/0.
+- **Attentes adaptées, avec le pourquoi** : `nut2_parcours`, `nut_v2_p1_croise`, `nut_verrou` éprouvent la *mécanique* (portions, jumelles, dédoublonnage, verrou) sur des lignes dont la fiche a été prise à la source ; une ancienne ligne ne garde aucune trace de cette vérification (rien n'est stocké en plus), donc ces bancs **posent explicitement la preuve** pour leurs codes-barres de test (`_n2PreuveSource` surchargé dans la page, comme le ferait la réponse en ligne d'OFF) — la frontière sans preuve est éprouvée par `nut_ref_hist`. `nut_fiabilite` : 3 tests demandent la preuve (`opt.preuve`), et T02 ⑥b (hors ligne, sans preuve) a son propre bloc.
+- Non lancés : D-031 complète, `mut_nut2_parcours`, recette iPhone, mode avion réel.
+
+### Compteurs règle d'or 17 (ce correctif, code applicatif)
+Données persistées ajoutées **0** · fichiers applicatifs touchés **1** (`app.js`) · lignes **+62 / −20** · anciens chemins supprimés/fusionnés **2** (`fiab:'source'` seul comme « vérifiée » ; une copie du journal comme juge de `differe`).
+
+### Risques / à décider
+1. **Impact réel non mesuré** (aucune donnée réelle lue) : toutes les anciennes lignes OFF V2 « cohérentes » ne se re-notent plus d'un tap — « + Ajouter », favoris et repas habituels ouvrent l'écran de saisie personnelle (avec recherche en ligne). Les repas habituels contenant des produits scannés afficheront « à vérifier » tant que le produit n'est pas retrouvé en ligne. Une sonde en lecture seule sur l'export dirait combien de lignes sont touchées.
+2. **Périmètre de la frontière : `off` seulement.** Les fiches d'enseigne et CIQUAL non prouvées (table non chargée) restent re-notables ; si Michel veut la même règle pour elles, c'est une ligne dans `_n2FicheNonVerifiee`, avec un coût (fast-food, table CIQUAL hors ligne).
+3. **Pas de preuve en session** : une fiche OFF vue en ligne il y a une minute ne « prouve » pas la copie du journal (aucun cache) — la personne repasse par l'écran, qui la retrouve en ligne. Un cache mémoire de session serait un autre arbitrage (hors périmètre).
+4. À la publication : règle d'or 11 (point rouge, aide « ? », aide détaillée, diapo du Guide, pop-up probable : le geste « + Ajouter » d'un produit scanné change).
