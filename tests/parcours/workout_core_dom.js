@@ -18,9 +18,11 @@
    Ce qu'ils NE COUVRENT PAS : le clavier réel de l'iPhone (simulé : le champ garde le focus et `kbd-serie` reste — la recette sur
    iPhone reste obligatoire), le dessin à l'écran (rien n'est capturé), Milo, les calories (aucune règle de calcul touchée).
    Rouge sur `e2b942f3`, MESURÉ le 30/10 (chaque validation reconstruisait `#wkt-exs`) : DOM-S1, S2, S3, T01, T02, T03, T04, R1,
-   T09a, T09b, T09c, T09d, T10 et T11 (par leur seule clause « sur place »), T12, T13a, T13b, T13c, T13d, T13f. ⭐ Ce que la base
+   T09a, T09b, T09c, T09d, T09e, T10 et T11 (par leur seule clause « sur place »), T12, T13a, T13b, T13c, T13d, T13f — 21 sur 39.
+   Verts sur la base aussi, ajoutés ensuite : T13g et T13h (la base ne relisait pas l'écran quand le modèle était rempli) et T14
+   (le « + » ne bougeait pas non plus). ⭐ Ce que la base
    y MONTRE : la série enregistrée « faite » d'abord avec l'ANCIENNE valeur (T09a, T09b, T13a, T13c) ; l'écran qui affiche 60 quand
-   le modèle a 62,5 (T09a, T13a, T13c, T13d, T13f) ; un champ vidé qui écrit 0 répétition dans une série validée (T09c) ; la saisie
+   le modèle a 62,5 (T09a, T13a, T13c, T13d, T13f) ; un champ vidé qui écrit 0 répétition dans une série validée (T09c, T09e) ; la saisie
    d'une série VOISINE enregistrée sans avoir été validée (T02 : 65 kg) ; deux valeurs changées sans événement simplement perdues
    (T13b) ; un 1RM resté celui de 60 × 8 sur une série à 0 kg (T13d). Verts sur la base : les non-régressions (T05, T06, T07, T07b,
    T08, T13e, T13e2 — la règle de la suggestion grise est celle d'avant) et DOM-T01b, VIDE par construction sur la base (les deux

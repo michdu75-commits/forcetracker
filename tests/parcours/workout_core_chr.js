@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════════════════
-   ⏱️ WORKOUT-CORE-01 · CHR-03 — UN SEUL MÉTRONOME DE REPOS, À 1 s (témoins CHR-T01 → CHR-T10, CHR-S1 → CHR-S4) —
+   ⏱️ WORKOUT-CORE-01 · CHR-03 — UN SEUL MÉTRONOME DE REPOS, À 1 s (témoins CHR-T01 → CHR-T11, CHR-S1 → CHR-S5) —
    Claude N°2 (Séance), 30/10/2026, GO de développement (docs/WORKOUT-CORE-01.md).
    ⚠️ PRÉPARÉ sans exécution (30/10, GO DÉVELOPPEMENT) ; EXÉCUTÉ au GO TESTS du 30/10 : 1ᵉʳ passage 30 OK / 2 rouges, deux
    défauts DES TÉMOINS, corrigés ici (CHR-T03b, CHR-T09a) ; et la base `e2b942f3` a montré que CHR-T05b/c/d comptaient toute
@@ -20,8 +20,8 @@
    la BATTERIE (⛔ les compteurs sont des indicateurs sous Chromium Linux, jamais une mesure de batterie), le son (il n'y en a pas),
    `_wktChronoIv` (chrono de séance, hors périmètre : ses réveils sont comptés à part sous « (anonyme) », jamais jugés).
    Rouge attendu sur `e2b942f3` (deux intervalles, 250 ms et 500 ms), MESURÉ le 30/10 : CHR-T01, CHR-T02a, CHR-T02b, CHR-T09a,
-   CHR-T10a, CHR-T10b, CHR-T10c, CHR-T10d, CHR-T10e, CHR-S1, CHR-S4 (`_restArmer` n'existe pas) — et CHR-T10f, ajouté ensuite
-   (la durée totale y est réécrite à chaque tic) ; et, par leur SEULE clause
+   CHR-T10a, CHR-T10b, CHR-T10c, CHR-T10d, CHR-T10e, CHR-S1, CHR-S4 (`_restArmer` n'existe pas) — et, ajoutés ensuite, CHR-T10f
+   (la durée totale y est réécrite à chaque tic) et CHR-S5 (pas de `_restArmer` à exécuter) ; et, par leur SEULE clause
    d'architecture (leurs clauses visibles sont vertes sur la base) : CHR-T04 (« un minuteur à 1 000 ms ») et CHR-T05a (« le
    métronome est réinstallé » — la simulation retire l'intervalle, la base ne le repose pas). Les autres sont des
    non-régressions (verts avant comme après).
@@ -405,6 +405,35 @@ function source(t, ROOT, fs, path) {
   const nArm = (code.match(/(?<!function )_restArmer\(\)/g) || []).length;   // les APPELS, pas la déclaration
   t('CHR-S4 le métronome est (re)posé là où le repos commence, reprend ou change de phase — startRest, _reposReprendre, addRT, applyRestEdit — et au retour au premier plan ; jamais ailleurs',
     appels.length === 4 && /if\(restIv\)\{\s*_restTick\(\);\s*_restArmer\(\);\s*\}/.test(code) && nArm === 5, _det({ appels, nArm }));
+  /* CHR-S5 — LES BORNES DU CALAGE, exigées par l'ordre GO TESTS (« (1100 − pos) % 1000, en particulier pos = 100 ») : le VRAI
+     `_restArmer` / `_restDesarmer` de log.js, extraits et exécutés dans un bac à sable Node (aucun navigateur, horloge et minuteurs
+     simulés). Pour chaque position dans la seconde — 0, 1, 99, 100, 101, 550, 899, 900, 999, 1000, un départ dans le futur, 14:59
+     écoulées — le tic doit tomber à +100 ms, l'intervalle de 1 000 ms s'installer, et le rappel d'un armement PÉRIMÉ ne rien faire. */
+  {
+    const vm = require('vm');
+    const co = nom => { const a = log.indexOf('function ' + nom + '('); const b = log.indexOf('\n}', a); return a < 0 || b < 0 ? '' : log.slice(a, b + 2); };
+    const code = co('_restDesarmer') + '\n' + co('_restArmer');
+    const bornes = [];
+    for (const decal of [0, 1, 99, 100, 101, 550, 899, 900, 999, 1000, -1234, -100, 899100]) {
+      const T0 = 1800000000000; let ici = T0 + decal; const prog = [];
+      const ctx = { restIv: null, _restIvCale: false, _restGen: 0, restStartTs: T0, ticks: 0, iv: 0, Date: { now: () => ici },
+        _restTick() { ctx.ticks++; }, setTimeout(f, ms) { prog.push({ f, ms }); return 'to' + prog.length; },
+        clearTimeout() {}, clearInterval() {}, setInterval(f, ms) { ctx.iv = ms; return 'iv'; } };
+      let ok = false, d = null;
+      try {
+        vm.createContext(ctx); vm.runInContext(code + '\n_restArmer();', ctx);
+        d = prog[0].ms; ici += d; prog[0].f();
+        const pose = ctx.iv === 1000 && ctx.restIv === 'iv' && !ctx._restIvCale && ctx.ticks === 1;
+        vm.runInContext('_restArmer();', ctx); const n0 = ctx.ticks; prog[0].f();
+        const perime = ctx.ticks === n0 && ctx.restIv === 'to2';
+        prog[1].f();
+        ok = d >= 0 && d < 1000 && ((decal + d) % 1000 + 1000) % 1000 === 100 && pose && perime && ctx.ticks === n0 + 1;
+      } catch (e) { ok = false; }
+      bornes.push({ decal, d, ok });
+    }
+    t('CHR-S5 ⭐ bornes du calage `(1100 − pos) % 1000` (pos = 0, 1, 99, 100, 101, 550, 899, 900, 999, 1000, départ dans le futur, 14:59) : le tic tombe toujours à +100 ms, l\'intervalle de 1 s s\'installe, un rappel périmé ne fait rien — le vrai code, exécuté hors navigateur',
+      code.length > 100 && bornes.every(b => b.ok), _det(bornes.filter(b => !b.ok)));
+  }
 }
 
 module.exports = { ecran, source };
