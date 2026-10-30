@@ -1,8 +1,9 @@
 /* ═══════════════════════════════════════════════════════════════════════════════
    ⏱️ WORKOUT-CORE-01 · CHR-03 — UN SEUL MÉTRONOME DE REPOS, À 1 s (témoins CHR-T01 → CHR-T10, CHR-S1 → CHR-S4) —
    Claude N°2 (Séance), 30/10/2026, GO de développement (docs/WORKOUT-CORE-01.md).
-   ⚠️ PRÉPARÉ, JAMAIS EXÉCUTÉ À L'ÉCRITURE (GO TESTS non accordé) : seules la syntaxe et l'unicité des ancres de mutation ont été
-   vérifiées. Le premier passage dira si une attente est trop courte — à lire comme tel, pas comme une régression de l'app.
+   ⚠️ PRÉPARÉ sans exécution (30/10, GO DÉVELOPPEMENT) ; EXÉCUTÉ au GO TESTS du 30/10 : 1ᵉʳ passage 30 OK / 2 rouges, deux
+   défauts DES TÉMOINS, corrigés ici (CHR-T03b, CHR-T09a) ; et la base `e2b942f3` a montré que CHR-T05b/c/d comptaient toute
+   écriture du chiffre, pas seulement ses CHANGEMENTS (corrigé : ils mesurent maintenant le retard d'affichage, leur promesse).
    Ce que les témoins CONDUISENT : la vraie app servie en local, de vrais repos (`startRest`), −15 s / +15 s (`addRT`), « Régler »
    (`applyRestEdit`), « Passer », le tap sur l'écran GO, la pause, « Vider », « Annuler la séance », « Terminer » (vrai bouton), une
    réouverture avec un repos rangé, le retour au premier plan (`visibilitychange`), la navigation vers Nutrition / Milo / Progrès.
@@ -15,8 +16,11 @@
    Ce qu'ils NE COUVRENT PAS : l'iPhone réel (minuteurs gelés par iOS — simulé en retirant l'intervalle puis en reculant le départ),
    la BATTERIE (⛔ les compteurs sont des indicateurs sous Chromium Linux, jamais une mesure de batterie), le son (il n'y en a pas),
    `_wktChronoIv` (chrono de séance, hors périmètre : ses réveils sont comptés à part sous « (anonyme) », jamais jugés).
-   Rouge attendu sur `e2b942f3` (deux intervalles, 250 ms et 500 ms) : CHR-T01, CHR-T02a, CHR-T02b, CHR-T09a, CHR-T10a, CHR-T10b,
-   CHR-T10c, CHR-T10d, CHR-T10e, CHR-S1. Les autres sont des non-régressions (verts avant comme après).
+   Rouge attendu sur `e2b942f3` (deux intervalles, 250 ms et 500 ms), MESURÉ le 30/10 : CHR-T01, CHR-T02a, CHR-T02b, CHR-T09a,
+   CHR-T10a, CHR-T10b, CHR-T10c, CHR-T10d, CHR-T10e, CHR-S1, CHR-S4 (`_restArmer` n'existe pas) ; et, par leur SEULE clause
+   d'architecture (leurs clauses visibles sont vertes sur la base) : CHR-T04 (« un minuteur à 1 000 ms ») et CHR-T05a (« le
+   métronome est réinstallé » — la simulation retire l'intervalle, la base ne le repose pas). Les autres sont des
+   non-régressions (verts avant comme après).
    ═══════════════════════════════════════════════════════════════════════════════ */
 'use strict';
 
@@ -169,11 +173,18 @@ async function ecran(t, b, PORT) {
       else { o.boutonTerminer = await clic(X, '.tbs-fin'); await confirmer(X); }
       await X.pg.waitForTimeout(1300);
       const e = await etat(X);
-      o[nom] = { vivants: e.iv.length + e.cale, arme: e.arme, seance: await X.pg.evaluate(() => !!S.wkt), err: X.errs.length };
+      /* « plus de séance » ≠ `S.wkt` absent : `renderLog` recrée une séance VIDE (`if(!S.wkt) S.wkt={date,exs:[]}`), sur la base
+         comme avec ce lot (1ᵉʳ passage du 30/10 : rouge sur `!!S.wkt`, défaut du témoin). On regarde ce qui compte : plus aucun
+         exercice, plus de repos rangé, plus de séance en cours sur le téléphone. */
+      const sc = await X.pg.evaluate(() => { let d = null; try { d = JSON.parse(localStorage.getItem('ft4_wkt') || 'null'); } catch (e) { d = 'illisible'; }
+        return { exs: S.wkt ? (S.wkt.exs || []).length : 0, repos: !!(S.wkt && S.wkt.repos), disque: d === 'illisible' ? -1 : (d && d.exs ? d.exs.length : 0),
+          sessions: (S.sessions || []).length }; });
+      o[nom] = { vivants: e.iv.length + e.cale, arme: e.arme, seance: sc, err: X.errs.length };
       await X.cx.close();
     }
     t('CHR-T03b ⭐ fin DÉFINITIVE de la séance — « Annuler la séance » et « Terminer » (vrai bouton) → plus de séance, 0 minuteur du repos',
-      o.boutonTerminer === true && ['annuler', 'terminer'].every(k => o[k].vivants === 0 && !o[k].arme && !o[k].seance && o[k].err === 0), _det(o));
+      o.boutonTerminer === true && ['annuler', 'terminer'].every(k => o[k].vivants === 0 && !o[k].arme && o[k].seance.exs === 0 && !o[k].seance.repos
+        && o[k].seance.disque === 0 && o[k].err === 0) && o.annuler.seance.sessions === 0 && o.terminer.seance.sessions === 1, _det(o));
   }
 
   /* ── B. NAVIGATION : LE REPOS CONTINUE, L'AFFICHAGE EST EXACT TOUT DE SUITE ───────────────────────── */
@@ -229,7 +240,9 @@ async function ecran(t, b, PORT) {
       if (geste === 'regler') { openRestEdit(); document.getElementById('re-min').value = '4'; document.getElementById('re-sec').value = '0'; applyRestEdit(); }
       if (geste === 'reprise') _reposReprendre();
       const el = document.getElementById('rest-time'), retards = [];
-      const mo = new MutationObserver(() => { retards.push(((Date.now() - restStartTs) % 1000 + 1000) % 1000); });
+      let vu = el.textContent;     // seuls les CHANGEMENTS comptent : réécrire le même texte n'est pas un retard (T10b juge les écritures)
+      const mo = new MutationObserver(() => { const v = el.textContent; if (v === vu) return; vu = v;
+        retards.push(((Date.now() - restStartTs) % 1000 + 1000) % 1000); });
       mo.observe(el, { childList: true, characterData: true, subtree: true });
       await dors(4300); mo.disconnect();
       return retards; }, geste);
@@ -239,6 +252,8 @@ async function ecran(t, b, PORT) {
       cale(p15), _det(p15));
     t('CHR-T05c « Régler » (4:00) posé au milieu d\'une seconde : même garantie', cale(pReg), _det(pReg));
     t('CHR-T05d une reprise (`_reposReprendre`) au milieu d\'une seconde : même garantie', cale(pRep), _det(pRep));
+    console.log('   ℹ️ CHR-T05 (indicatif) — retard du chiffre après chaque changement de seconde, en ms : +15 s ' + _det(p15) + ' · Régler '
+      + _det(pReg) + ' · reprise ' + _det(pRep));
 
     const v = await X.pg.evaluate(() => {
       startRest(60); clearInterval(restIv);        // minuteurs gelés
@@ -302,6 +317,10 @@ async function ecran(t, b, PORT) {
     const X = await ouvrir({ wkt: WKT({ repos: { debut, total: 120 } }), ecran: 'home' });
     const d0 = await etat(X);
     await X.pg.waitForTimeout(1300);
+    /* lu au MILIEU d'une seconde : le chiffre change ~0,1 s APRÈS chaque changement de seconde (le calage, voulu ; CHR-T05 en
+       borne le retard) — lu au hasard, il retarde d'une seconde ~1 fois sur 10 (1ᵉʳ passage du 30/10 : « 1:18 » contre « 1:17 ») */
+    await X.pg.evaluate(() => new Promise(r => { const f = () => { const pos = ((Date.now() - restStartTs) % 1000 + 1000) % 1000;
+      if (pos >= 450 && pos <= 650) r(); else setTimeout(f, 10); }; f(); }));
     const d1 = await etat(X);
     t('CHR-T09a ⭐ réouverture avec un repos rangé (parti il y a ~40 s) : il reprend à l\'heure réelle — UN minuteur à 1 000 ms, même départ, la pilule EXACTE',
       d1.arme && _det(d1.iv) === _det(['_restTick@1000']) && d1.cale === 0 && d1.debut === debut && d1.total === 120 && d0.pilule && d1.pilule && d1.pTemps === d1.attendu,
@@ -350,6 +369,7 @@ async function ecran(t, b, PORT) {
     await X.pg.evaluate(() => stopRest());
     // ℹ️ indicatif, JAMAIS jugé : métriques du moteur de rendu sur les 10 s de repos ci-dessus
     console.log('   ℹ️ CHR-T10 (indicatif, PAS une mesure de batterie) — réveils/10 s : ' + _det(f) + ' · mutations/10 s : ' + _det(mu)
+      + ' · pilule (Accueil, 5 s) : ' + _det(mp) + ' · décompte (4 s) : ' + _det(mc) + ' · écran GO (3 s) : ' + _det(mg)
       + ' · métriques Chromium/10 s : ' + (k0 && k1 ? _det(Object.keys(k1).reduce((o, n) => { o[n] = +(k1[n] - k0[n]).toFixed(4); return o; }, {})) : 'session CDP indisponible'));
     t('CHR-T10z aucune erreur de page (bloc E)', X.errs.length === 0, X.errs.slice(0, 2).join(' | '));
     await X.cx.close();
