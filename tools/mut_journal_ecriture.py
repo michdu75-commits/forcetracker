@@ -26,7 +26,7 @@ MUT = [
     ('J03 le journal est ecrit EN TETE de persist (avant les cles des seances)',
      [(ST, "  _ecrireJournalLocal();\n  try{\n    localStorage.setItem('ft4_savedfoods'", "  try{\n    localStorage.setItem('ft4_savedfoods'"),
       (ST, "  const _rep={fait:false};   // le repli quota ne joue qu'UNE fois par appel, quelle que soit la phase qui échoue\n", "  const _rep={fait:false};   // le repli quota ne joue qu'UNE fois par appel, quelle que soit la phase qui échoue\n  _ecrireJournalLocal();\n")],
-     G('G2b', 'G6a'), 'GARDE'),
+     G('G2b'), 'GARDE'),
     ('J04 le journal est ecrit en direct, sans l ecrivain dedie (la ligne d origine, hors try)',
      [(ST, "  _ecrireJournalLocal();\n  try{\n    localStorage.setItem('ft4_savedfoods'", "  localStorage.setItem('ft4_foodlog',JSON.stringify(S.foodLog||[]));\n  try{\n    localStorage.setItem('ft4_savedfoods'")],
      G('G3A-après', 'G6a'), 'GARDE'),
@@ -38,7 +38,7 @@ MUT = [
      G('G3E', 'G6b'), 'GARDE'),
     ('J07 la phase B n a plus de repli (un quota sur une cle apres le journal passe en silence)',
      [(ST, "  }catch(e){ _persistRepli(e, _rep); }\n  // Mise à jour reportée (app.js)", "  }catch(e){}\n  // Mise à jour reportée (app.js)")],
-     G('G3C', 'G3E', 'G6b'), 'GARDE'),
+     G('G3C', 'G6b'), 'GARDE'),
     ('J08 l ecrivain du journal ecrit aussi une autre cle',
      [(ST, "  try{ localStorage.setItem('ft4_foodlog',JSON.stringify(S.foodLog||[])); _journalOk=true; return true; }", "  try{ localStorage.setItem('ft4_foodlog',JSON.stringify(S.foodLog||[])); localStorage.setItem('ft4_hist_tronque','1'); _journalOk=true; return true; }")],
      G('G1a', 'G6b', 'G3A-après'), 'GARDE'),
@@ -86,10 +86,10 @@ MUT = [
      G('G5a'), 'GARDE'),
     ('J23 le message d echec demande de re-saisir (ou de retoucher) le repas',
      [(A, "puis touche « Réessayer l\\'enregistrement » en haut du journal — ne le ressaisis pas.", "puis touche de nouveau le repas.")],
-     G('G4b'), 'GARDE'),
+     G('G4d'), 'GARDE'),
     ('J24 le message d echec ne dit plus que ce sera PERDU',
      [(A, "c\\'est à l\\'écran mais ce sera PERDU si tu fermes l\\'application. ", "c\\'est à l\\'écran. ")],
-     G('G4b'), 'GARDE'),
+     G('G4d'), 'GARDE'),
 ]
 
 def banc(arbre):

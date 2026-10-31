@@ -59,6 +59,7 @@ async function nouvellePage(b, PORT, maitre) {
   await pg.waitForTimeout(1300);
   await pg.evaluate((src) => { window.persistMaitre = (0, eval)('(' + src + ')'); }, maitre);
   await pg.evaluate(SEED);
+  await pg.evaluate(() => { window.__essaiPersist = function () { try { persist(); return null; } catch (e) { return String((e && e.message) || e); } }; });   // une exception de persist() doit faire ROUGIR un témoin, pas planter le banc
   await pg.evaluate(() => { window.__toasts = []; const v = window.toast; window.toast = function (m, t) { window.__toasts.push(String(m)); try { return v.apply(this, arguments); } catch (e) {} }; });
   return { cx, pg, erreurs };
 }
@@ -135,10 +136,10 @@ module.exports.ecran = async function ecran(t, b, PORT) {
       if (mut === 'securite') { window.__Q.refuse = ['ft4_exphotos']; window.__Q.erreur = 'securite'; S.foodLog.push({ id: 'new00000001', date: today(), meal: 'dejeuner', name: 'Nouveau repas', q: 100, u: 'g', kcal: 100, prot: 5, carbs: 10, fat: 2, ts: 9999 }); window.__Q.limit = Infinity; }
       if (mut === 'multiples') { window.__Q.refuse = ['ft4_exphotos', 'ft4_foodlog', 'ft4_bodyscans']; window.__Q.limit = Infinity; }   // une clé AVANT le journal, le journal, une clé APRÈS : trois échecs INDÉPENDANTS dans le même cycle (le repli, lui, libère de la place : il ne peut pas les produire tous par le seul budget)
       const n0 = _journalEtat().seq;
-      (ver === 'maitre' ? persistMaitre : persist)();
+      let leve = false; try { (ver === 'maitre' ? persistMaitre : persist)(); } catch (e) { leve = true; }
       const quota = window.__toasts.filter((m) => /Stockage du téléphone plein/.test(m)).length;
       window.__Q.limit = Infinity; window.__Q.refuse = []; window.__Q.erreur = 'quota';
-      return { refus: window.__Q.refus.slice(), toastsQuota: quota,
+      return { leve, refus: window.__Q.refus.slice(), toastsQuota: quota,
         disque: { sessions: (L('ft4_sessions') || []).length, journal: (L('ft4_foodlog') || []).length, favoris: (L('ft4_savedfoods') || []).length, bodyscans: (L('ft4_bodyscans') || []).length, drapeau: localStorage.getItem('ft4_hist_tronque') },
         memoire: { sessions: S.sessions.length, journal: S.foodLog.length }, journalEtat: ver === 'maitre' ? null : _journalEtat().ok, tentatives: ver === 'maitre' ? null : _journalEtat().seq - n0 };
     }, [mutation, version]);
@@ -150,24 +151,24 @@ module.exports.ecran = async function ecran(t, b, PORT) {
 
   const A0 = await scenarioBudget('A', 'journal', 'maitre'), A1 = await scenarioBudget('A', 'journal', 'neuf');
   t('B-JEC G3A-avant ⭐ [CONTRÔLE DU HARNAIS] le journal déborde — sur le code d\'AVANT, l\'historique des séances est tronqué sur le disque (120 → 50), le drapeau `ft4_hist_tronque` est posé, le toast ne parle que de séances, et au redémarrage il ne reste que 50 séances : c\'est le défaut que ce banc doit pouvoir voir', A0.refus.indexOf('ft4_foodlog') >= 0 && A0.disque.sessions === 50 && A0.disque.drapeau === '1' && A0.toastsQuota === 1 && A0.redemarrage.sessions === 50, J(A0));
-  t('B-JEC G3A-après ⭐⭐⭐ le journal déborde — avec le code neuf, l\'historique des séances reste ENTIER sur le disque (120), AUCUN drapeau de troncature, AUCUN toast de quota des séances, l\'écrivain dit « échec », la clé qui suit le journal est écrite (favoris), la mémoire garde le nouveau repas, et au redémarrage les 120 séances sont toujours là', A1.refus.indexOf('ft4_foodlog') >= 0 && A1.disque.sessions === 120 && A1.disque.drapeau === null && A1.toastsQuota === 0 && A1.journalEtat === false && A1.disque.favoris === 1 && A1.memoire.journal === A1.disque.journal + 1 && A1.redemarrage.sessions === 120 && A1.redemarrage.drapeau === false, J(A1));
+  t('B-JEC G3A-après ⭐⭐⭐ le journal déborde — avec le code neuf, l\'historique des séances reste ENTIER sur le disque (120), AUCUN drapeau de troncature, AUCUN toast de quota des séances, l\'écrivain dit « échec », la clé qui suit le journal est écrite (favoris), la mémoire garde le nouveau repas, et au redémarrage les 120 séances sont toujours là', A1.leve === false && A1.refus.indexOf('ft4_foodlog') >= 0 && A1.disque.sessions === 120 && A1.disque.drapeau === null && A1.toastsQuota === 0 && A1.journalEtat === false && A1.disque.favoris === 1 && A1.memoire.journal === A1.disque.journal + 1 && A1.redemarrage.sessions === 120 && A1.redemarrage.drapeau === false, J(A1));
 
   const B0 = await scenarioBudget('B', 'seance', 'maitre'), B1 = await scenarioBudget('B', 'seance', 'neuf');
-  t('B-JEC G3B ⭐⭐⭐ une SÉANCE déborde (la panne que le repli existe pour traiter) — le repli est IDENTIQUE à celui d\'avant : séances ramenées à 50, drapeau posé, un seul toast, même résultat au redémarrage (la protection des séances ne baisse pas)', B0.disque.sessions === 50 && B0.disque.drapeau === '1' && B0.toastsQuota === 1 && B1.disque.sessions === B0.disque.sessions && B1.disque.drapeau === B0.disque.drapeau && B1.toastsQuota === 1 && B1.redemarrage.sessions === B0.redemarrage.sessions && B1.redemarrage.drapeau === B0.redemarrage.drapeau, J({ avant: B0, apres: B1 }));
+  t('B-JEC G3B ⭐⭐⭐ une SÉANCE déborde (la panne que le repli existe pour traiter) — le repli est IDENTIQUE à celui d\'avant : séances ramenées à 50, drapeau posé, un seul toast, même résultat au redémarrage (la protection des séances ne baisse pas)', B1.leve === false && B0.disque.sessions === 50 && B0.disque.drapeau === '1' && B0.toastsQuota === 1 && B1.disque.sessions === B0.disque.sessions && B1.disque.drapeau === B0.disque.drapeau && B1.toastsQuota === 1 && B1.redemarrage.sessions === B0.redemarrage.sessions && B1.redemarrage.drapeau === B0.redemarrage.drapeau, J({ avant: B0, apres: B1 }));
   t('B-JEC G3B-bis le même scénario, le journal est maintenant essayé APRÈS le repli (avant, il ne l\'était jamais) : il est écrit en entier sur le disque', B1.disque.journal === B1.memoire.journal && B0.disque.journal < B0.memoire.journal, J({ avant: B0.disque, apres: B1.disque }));
 
   const C0 = await scenarioBudget('C', 'journal+tard', 'maitre'), C1 = await scenarioBudget('C', 'journal+tard', 'neuf');
-  t('B-JEC G3C ⭐⭐ le journal ET une clé tardive (bodyscans) débordent — le VRAI dépassement n\'est pas masqué : le repli des séances se déclenche, UNE seule fois (un seul toast), comme avant ; l\'écrivain dit « échec »', C1.refus.indexOf('ft4_foodlog') >= 0 && C1.refus.indexOf('ft4_bodyscans') >= 0 && C1.toastsQuota === 1 && C0.toastsQuota === 1 && C1.disque.sessions === 50 && C1.disque.drapeau === '1' && C1.journalEtat === false, J({ avant: C0, apres: C1 }));
+  t('B-JEC G3C ⭐⭐ le journal ET une clé tardive (bodyscans) débordent — le VRAI dépassement n\'est pas masqué : le repli des séances se déclenche, UNE seule fois (un seul toast), comme avant ; l\'écrivain dit « échec »', C1.leve === false && C1.refus.indexOf('ft4_foodlog') >= 0 && C1.refus.indexOf('ft4_bodyscans') >= 0 && C1.toastsQuota === 1 && C0.toastsQuota === 1 && C1.disque.sessions === 50 && C1.disque.drapeau === '1' && C1.journalEtat === false, J({ avant: C0, apres: C1 }));
 
   const D0 = await scenarioBudget('D', 'avant', 'maitre'), D1 = await scenarioBudget('D', 'avant', 'neuf');
-  t('B-JEC G3D ⭐⭐ une clé ANTÉRIEURE au journal échoue (les photos d\'exercices) — avant, le journal n\'était JAMAIS essayé (disque en retard sur la mémoire) ; maintenant il est essayé et écrit : le disque a le nouveau repas', D0.disque.journal === D0.memoire.journal - 1 && D1.disque.journal === D1.memoire.journal && D1.journalEtat === true && D1.tentatives === 1, J({ avant: D0.disque, apres: D1.disque, memoire: D1.memoire }));
+  t('B-JEC G3D ⭐⭐ une clé ANTÉRIEURE au journal échoue (les photos d\'exercices) — avant, le journal n\'était JAMAIS essayé (disque en retard sur la mémoire) ; maintenant il est essayé et écrit : le disque a le nouveau repas', D1.leve === false && D0.disque.journal === D0.memoire.journal - 1 && D1.disque.journal === D1.memoire.journal && D1.journalEtat === true && D1.tentatives === 1, J({ avant: D0.disque, apres: D1.disque, memoire: D1.memoire }));
   t('B-JEC G3D-bis ... et le repli des séances joue UNE fois comme avant (une clé antérieure a bien échoué par quota) : il n\'est ni supprimé ni dupliqué', D0.toastsQuota === 1 && D1.toastsQuota === 1 && D1.disque.sessions === D0.disque.sessions, J({ avant: D0.toastsQuota, apres: D1.toastsQuota }));
 
   const E1 = await scenarioBudget('E', 'multiples', 'neuf');
-  t('B-JEC G3E ⭐⭐⭐ TROIS échecs dans le même cycle (une clé avant le journal, le journal, une clé après) : UN SEUL repli destructif et UN SEUL toast (jamais deux troncatures), l\'écrivain dit « échec », la mémoire n\'est pas touchée', E1.refus.indexOf('ft4_exphotos') >= 0 && E1.refus.indexOf('ft4_foodlog') >= 0 && E1.refus.indexOf('ft4_bodyscans') >= 0 && E1.toastsQuota === 1 && E1.journalEtat === false && E1.memoire.sessions === 120, J(E1));
+  t('B-JEC G3E ⭐⭐⭐ TROIS échecs dans le même cycle (une clé avant le journal, le journal, une clé après) : UN SEUL repli destructif et UN SEUL toast (jamais deux troncatures), l\'écrivain dit « échec », la mémoire n\'est pas touchée', E1.leve === false && E1.refus.indexOf('ft4_exphotos') >= 0 && E1.refus.indexOf('ft4_foodlog') >= 0 && E1.refus.indexOf('ft4_bodyscans') >= 0 && E1.toastsQuota === 1 && E1.journalEtat === false && E1.memoire.sessions === 120, J(E1));
 
   const F1 = await scenarioBudget('F', 'securite', 'neuf');
-  t('B-JEC G3F ⭐ une erreur qui n\'est PAS un quota sur une clé antérieure : aucun repli (aucune troncature, aucun drapeau), et le journal est écrit quand même', F1.toastsQuota === 0 && F1.disque.sessions === 120 && F1.disque.drapeau === null && F1.disque.journal === F1.memoire.journal && F1.journalEtat === true, J(F1));
+  t('B-JEC G3F ⭐ une erreur qui n\'est PAS un quota sur une clé antérieure : aucun repli (aucune troncature, aucun drapeau), et le journal est écrit quand même', F1.leve === false && F1.toastsQuota === 0 && F1.disque.sessions === 120 && F1.disque.drapeau === null && F1.disque.journal === F1.memoire.journal && F1.journalEtat === true, J(F1));
 
   /* ═══ G4 — les cinq écrivains Nutrition : le succès n'est dit que si le journal a été écrit ═══ */
   const lignes = (pg) => pg.evaluate(() => S.foodLog.length);
@@ -219,13 +220,16 @@ module.exports.ecran = async function ecran(t, b, PORT) {
   const MSGJ = /Pas enregistré sur le téléphone/;
   t('B-JEC G4b ⭐⭐⭐ le journal ne peut PAS être écrit : les cinq écrivains gardent leur modification EN MÉMOIRE (rien n\'est défait, aucun doublon), aucun ne dit « ajouté ✅ » / « Modifié ✅ », chacun dit le message d\'échec exact',
     OFF.remove.delta === -1 && OFF.add.delta === 1 && OFF.quick.delta === 1 && OFF.rejeu.delta === 2 && [OFF.remove, OFF.edit, OFF.add, OFF.quick, OFF.rejeu].every((x) => MSGJ.test(x.toast)) && !/✅|🍽️/.test([OFF.edit, OFF.add, OFF.quick, OFF.rejeu].map((x) => x.toast).join('|')), J(OFF));
+  const MSG_OFF = OFF.remove.toast;
+  t('B-JEC G4d ⭐⭐ le message d\'échec dit un FAIT et la marche à suivre : c\'est à l\'écran mais sera PERDU à la fermeture ; la nouvelle tentative est « Réessayer l\'enregistrement » ; il ne demande JAMAIS de ressaisir, de retoucher ou de re-toucher le repas (ce serait un 2ᵉ ajout), et ne parle pas de synchronisation (le cloud n\'est pas une confirmation)',
+    /ce sera PERDU si tu fermes/.test(MSG_OFF) && /Réessayer l'enregistrement/.test(MSG_OFF) && /ne le ressaisis pas/.test(MSG_OFF) && !/touche de nouveau|ré-ajoute|retouche|re-touche/i.test(MSG_OFF) && !/synchronis|cloud|en ligne/i.test(MSG_OFF), MSG_OFF);
   t('B-JEC G4c ⭐ le bandeau « Réessayer l\'enregistrement » apparaît dans le journal tant que la dernière sauvegarde a échoué', OFF.bandeau.present === true && OFF.bandeau.bouton === true, J(OFF.bandeau));
 
   /* ═══ G5 — « Réessayer » : on réécrit, on ne recrée rien ; puis redémarrage ═══ */
   {
     const { cx, pg, erreurs } = await nouvellePage(b, PORT, maitre);
     await pg.evaluate(() => { goScreen('s-nutrition'); });
-    await pg.evaluate(() => { window.__Q.refuse = ['ft4_foodlog']; S.foodLog.push({ id: 'rt000000001', date: today(), meal: 'dejeuner', name: 'Repas à réessayer', q: 100, u: 'g', kcal: 90, prot: 4, carbs: 12, fat: 2, ts: 99999, n2: { s: 1, m: 'd', no: [], st: 'declaree' } }); persist(); });
+    await pg.evaluate(() => { window.__Q.refuse = ['ft4_foodlog']; S.foodLog.push({ id: 'rt000000001', date: today(), meal: 'dejeuner', name: 'Repas à réessayer', q: 100, u: 'g', kcal: 90, prot: 4, carbs: 12, fat: 2, ts: 99999, n2: { s: 1, m: 'd', no: [], st: 'declaree' } }); __essaiPersist(); });
     const idsAvant = await pg.evaluate(() => S.foodLog.map((x) => x.id));
     const avant = await bandeau(pg);
     await pg.evaluate(() => { window.__toasts = []; _journalReessayer(); }); await pg.waitForTimeout(200);
@@ -236,7 +240,7 @@ module.exports.ecran = async function ecran(t, b, PORT) {
     const fin = { toast: await dernier(pg), bandeau: await bandeau(pg) };
     t('B-JEC G5b ⭐⭐⭐ le stockage répond de nouveau : « Réessayer » écrit le journal tel qu\'il est en mémoire — le repas existe UNE fois (mémoire et disque), identique à l\'octet, message de succès, le bandeau disparaît', ap.disque === 1 && ap.memoire === 1 && ap.memeContenu === true && ap.etat === true && /Enregistré sur le téléphone/.test(fin.toast) && fin.bandeau.present === false, J({ ap, fin }));
     // redémarrage après une panne non réparée
-    await pg.evaluate(() => { window.__Q.refuse = ['ft4_foodlog']; S.foodLog.push({ id: 'perdu0000001', date: today(), meal: 'diner', name: 'Repas perdu', q: 100, u: 'g', kcal: 80, prot: 2, carbs: 10, fat: 1, ts: 100000, n2: { s: 1, m: 'd', no: [], st: 'declaree' } }); persist(); });
+    await pg.evaluate(() => { window.__Q.refuse = ['ft4_foodlog']; S.foodLog.push({ id: 'perdu0000001', date: today(), meal: 'diner', name: 'Repas perdu', q: 100, u: 'g', kcal: 80, prot: 2, carbs: 10, fat: 1, ts: 100000, n2: { s: 1, m: 'd', no: [], st: 'declaree' } }); __essaiPersist(); });
     const sessionsAvant = await pg.evaluate(() => JSON.parse(localStorage.getItem('ft4_sessions')).length);
     await pg.reload(); await pg.waitForTimeout(1500);
     const apRel = await pg.evaluate(() => ({ perdu: S.foodLog.filter((x) => x.name === 'Repas perdu').length, reessaye: S.foodLog.filter((x) => x.name === 'Repas à réessayer').length, sessions: S.sessions.length, drapeau: S.histTronque, etat: _journalEtat().ok }));
