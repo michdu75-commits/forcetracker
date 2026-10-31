@@ -90,7 +90,7 @@ async function ouvrirPage(b, PORT) {
 }
 
 module.exports.ecran = async function ecran(t, b, PORT) {
-  console.log('\n-- B-NRH2. Tes repas habituels : tout ou rien, un choix explicite, une écriture groupée sans retour arrière ; redémarrage et fidélité du stockage --');
+  console.log('\n-- B-NRH2. Tes repas habituels : tout ou rien, un choix explicite, une écriture groupée sans retour arrière --');
   const { cx, pg, erreurs } = await ouvrirPage(b, PORT);
   const E = (f, a) => pg.evaluate(f, a);
   const pause = (ms) => pg.waitForTimeout(ms);
@@ -104,7 +104,7 @@ module.exports.ecran = async function ecran(t, b, PORT) {
   const dernier = async () => ((await toasts()).slice(-1)[0] || '');
   const afficher = () => E(() => { goScreen('s-nutrition'); renderFoodJournal(); });
   /* un scénario = un jeu de repas (au plus 3), un état de module remis à zéro, les données persistées */
-  const charger = async (cles) => { await E((cl) => { S.foodLog = cl.reduce((a, k) => a.concat(JSON.parse(JSON.stringify(window.__JEUX[k]))), []); S.savedFoods = []; S.hiddenFoods = []; _habNonConfirme = {}; _habDernier = { cle: '', t: 0 }; _habEnCours = 0; window.__toasts = []; persist(); goScreen('s-nutrition'); renderFoodJournal(); }, cles); await pause(300); };
+  const charger = async (cles) => { await E((cl) => { S.foodLog = cl.reduce((a, k) => a.concat(JSON.parse(JSON.stringify(window.__JEUX[k]))), []); S.savedFoods = []; S.hiddenFoods = []; _habDernier = { cle: '', t: 0 }; _habEnCours = 0; window.__toasts = []; persist(); goScreen('s-nutrition'); renderFoodJournal(); }, cles); await pause(300); };
   const hab = (nom) => E((n) => { const h = _repasHabituels(); const i = h.findIndex((x) => x.items.some((it) => it.name === n)); return { i: i, sig: h[i] && h[i].sig, meal: h[i] && h[i].meal, nb: h.length, items: h[i] ? h[i].items.map((x) => x.name) : [] }; }, nom);
   const jouer = async (sig, mom, choix) => { await E((a) => { rejouerRepas(a[0], a[1], a[2]); }, [sig, mom, choix]); await pause(450); };
   const panneau = (i) => E((k) => { const c = document.getElementById('hab-m-' + k); const bx = c && c.querySelector('.hab-choix'); return bx ? { boutons: [...bx.querySelectorAll('button')].map((x) => x.textContent), attrsOnclick: [...bx.querySelectorAll('button')].some((x) => x.hasAttribute('onclick')), texte: bx.querySelector('div') ? bx.querySelector('div').textContent : '' } : null; }, i);
@@ -114,11 +114,6 @@ module.exports.ecran = async function ecran(t, b, PORT) {
   const enMemoire = (noms) => E((ns) => ns.map((n) => (S.foodLog || []).filter((x) => x && x.name === n && x.date === today()).length), noms);
   const stockees = (noms) => E((ns) => { const l = JSON.parse(localStorage.getItem('ft4_foodlog') || '[]'); return ns.map((n) => l.filter((x) => x && x.name === n && x.date === today()).length); }, noms);
   const stockage = () => E(() => { const o = {}; for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); o[k] = localStorage.getItem(k); } return o; });
-  const attente = () => E(() => Object.keys(_habNonConfirme).length);
-  const quotaOn = () => E(() => { if (window.__si) return; window.__si = Storage.prototype.setItem; Storage.prototype.setItem = function (k, v) { if (k === 'ft4_foodlog') { const e = new Error('quota'); e.name = 'QuotaExceededError'; throw e; } return window.__si.apply(this, arguments); }; });
-  const quotaOff = () => E(() => { if (window.__si) { Storage.prototype.setItem = window.__si; window.__si = null; } });
-  const MSG = await E(() => _HAB_MSG_NON_DURABLE);
-  const redemarrer = async () => { await pg.reload(); await pause(1800); await prete(); };
 
   /* ═══ F1 — repas valide · un bloqué · deux bloqués ═══ */
   await charger(['V', 'M', 'N']);
@@ -273,8 +268,8 @@ module.exports.ecran = async function ecran(t, b, PORT) {
   await jouer(hX.sig, 'collation');
   await E(() => { window._n2Reajouter = window.__rajOrig2; });
   const tousX = await toasts();
-  t('B-NRH2 A1-T01c ⭐⭐ une exception tombe APRÈS que l\'écriture a inséré : on REGARDE le journal (il a grandi) — les 2 lignes existent, aucun « Rien n\'a été ajouté », le post-traitement a lieu (lignes durables), rien n\'est en attente, aucune ré-insertion',
-    (await neuves(avantX)).length === 2 && J(await stockees(['Riz H02 faute', 'Mais H02 faute'])) === J([2, 2]) && !tousX.some((m) => /Rien n'a été ajouté/.test(m)) && (await attente()) === 0, J({ toasts: tousX.slice(-2), mem: await enMemoire(['Riz H02 faute']), sto: await stockees(['Riz H02 faute']) }));
+  t('B-NRH2 A1-T01c ⭐⭐ une exception tombe APRÈS que l\'écriture a inséré : on REGARDE le journal (il a grandi) — les 2 lignes existent, aucun « Rien n\'a été ajouté », le post-traitement a lieu (lignes écrites dans le stockage), aucune ré-insertion',
+    (await neuves(avantX)).length === 2 && J(await stockees(['Riz H02 faute', 'Mais H02 faute'])) === J([2, 2]) && !tousX.some((m) => /Rien n'a été ajouté/.test(m)) , J({ toasts: tousX.slice(-2), mem: await enMemoire(['Riz H02 faute']), sto: await stockees(['Riz H02 faute']) }));
 
   /* ═══ F6 — A1 : échec avant insertion · sauvegarde en panne · rendu en panne · nouvelle tentative ═══ */
   await charger(['T', 'P', 'R']);
@@ -284,38 +279,12 @@ module.exports.ecran = async function ecran(t, b, PORT) {
   await jouer(hT.sig, 'collation2');
   await E(() => { window._n2Reajouter = window.__rajOrig; });
   const cle01 = hT.sig + '|collation2|';
-  const etat01 = await E(() => ({ attente: Object.keys(_habNonConfirme).length, dernier: _habDernier.cle, enCours: _habEnCours }));
+  const etat01 = await E(() => ({ dernier: _habDernier.cle, enCours: _habEnCours }));
   t('B-NRH2 A1-T01 ⭐⭐ échec AVANT l\'insertion (l\'écriture lève une exception) : aucune ligne, journal et stockage identiques à l\'octet, « Rien n\'a été ajouté » (vrai ici), aucun verrou résiduel',
-    (await snap()) === avantT01 && J(await stockage()) === J(ls01) && /Rien n'a été ajouté/.test(await dernier()) && etat01.attente === 0 && etat01.dernier !== cle01 && etat01.enCours === 0, J({ etat01, toast: await dernier() }));
+    (await snap()) === avantT01 && J(await stockage()) === J(ls01) && /Rien n'a été ajouté/.test(await dernier()) && etat01.dernier !== cle01 && etat01.enCours === 0, J({ etat01, toast: await dernier() }));
   const avantT01b = await ids();
   await jouer(hT.sig, 'collation2');
   t('B-NRH2 A1-T01b la nouvelle tentative immédiate fonctionne (rien n\'avait été inséré, rien n\'est bloqué) : 2 lignes, une seule fois', (await neuves(avantT01b)).length === 2, '');
-
-  await afficher(); await pause(1000); await razToasts();
-  const avantP = await ids();
-  await E(() => { window.__enreg = 0; window.__eo2 = window._n2Enregistrer; window._n2Enregistrer = function () { window.__enreg++; return window.__eo2.apply(this, arguments); }; });
-  await quotaOn();
-  await jouer(hP.sig, 'collation2');
-  const tousP = await toasts(); const nP = await neuves(avantP);
-  const memP = await enMemoire(['Riz H02 persist', 'Mais H02 persist']), durP = await stockees(['Riz H02 persist', 'Mais H02 persist']);
-  const cleP = hP.sig + '|collation2|';
-  const pend = await E((k) => (_habNonConfirme[k] || []).length, cleP);
-  t('B-NRH2 A1-T02 ⭐⭐ la sauvegarde locale échoue APRÈS l\'insertion (stockage plein) : les 2 lignes EXISTENT en mémoire mais PAS dans le stockage, le message est EXACT (« l\'enregistrement local durable n\'est PAS confirmé »), jamais « Rien n\'a été ajouté », une seule insertion, aucune ligne supprimée',
-    nP.length === 2 && J(memP) === J([1, 1]) && J(durP) === J([0, 0]) && tousP.includes(MSG) && !tousP.some((m) => /Rien n'a été ajouté/.test(m)) && /enregistrement local durable n'est PAS confirmé/.test(MSG) && pend === 2 && (await E(() => window.__enreg)) === 1, J({ memP, durP, pend, toasts: tousP.slice(-3) }));
-  await pause(1000); await razToasts();
-  await jouer(hP.sig, 'collation2');
-  t('B-NRH2 A1-T04a ⭐⭐ nouvelle tentative PENDANT la panne de stockage : aucune ré-insertion (toujours 1 ligne de chaque), le même message exact', J(await enMemoire(['Riz H02 persist', 'Mais H02 persist'])) === J([1, 1]) && (await dernier()) === MSG && (await E(() => window.__enreg)) === 1, J({ toast: await dernier() }));
-  const avantAutre = await ids();
-  await jouer(hT.sig, 'diner');
-  t('B-NRH2 A1-T04b ⭐⭐ un AUTRE repas (autre clé) n\'est pas empêché par la sauvegarde en attente : il est inséré normalement, et les DEUX attentes coexistent (une table, pas une case : aucune n\'est écrasée)', (await neuves(avantAutre)).length === 2 && (await attente()) === 2, J({ attente: await attente() }));
-  await quotaOff(); await pause(1000); await razToasts();
-  await jouer(hP.sig, 'collation2');
-  t('B-NRH2 A1-T04c ⭐⭐ le stockage répond de nouveau : le geste RETENTE la sauvegarde sans rien ré-insérer (toujours 1 ligne de chaque en mémoire), les lignes sont maintenant DURABLES (le repas d\'à côté, en attente lui aussi, est confirmé du même coup), message « Enregistrement local confirmé », plus rien en attente',
-    J(await enMemoire(['Riz H02 persist', 'Mais H02 persist'])) === J([1, 1]) && J(await stockees(['Riz H02 persist', 'Mais H02 persist'])) === J([1, 1]) && /Enregistrement local confirmé/.test(await dernier()) && (await attente()) === 0 && (await E(() => window.__enreg)) === 2, J({ toast: await dernier(), attente: await E(() => Object.keys(_habNonConfirme)) }));
-  await pause(1000);
-  await jouer(hP.sig, 'collation2');
-  t('B-NRH2 A1-T04d ⭐ une fois la sauvegarde confirmée, un NOUVEAU geste sur le même repas est un vrai nouvel ajout (2 lignes de chaque) : les ajouts légitimes ultérieurs ne sont jamais bloqués', J(await enMemoire(['Riz H02 persist', 'Mais H02 persist'])) === J([2, 2]), '');
-  await E(() => { window._n2Enregistrer = window.__eo2; });
 
   await afficher(); await pause(1000); await razToasts();
   const avantR = await ids();
@@ -323,8 +292,8 @@ module.exports.ecran = async function ecran(t, b, PORT) {
   await jouer(hR.sig, 'collation2');
   await E(() => { window.renderFoodJournal = window.__rjOrig; });
   const tousR = await toasts();
-  t('B-NRH2 A1-T03 ⭐⭐ le rendu échoue APRÈS l\'insertion : les 2 lignes existent ET sont durables, le message parle d\'affichage (« rouvre l\'écran »), jamais « Rien n\'a été ajouté », rien en attente, aucune ré-insertion',
-    (await neuves(avantR)).length === 2 && J(await stockees(['Riz H02 rendu', 'Mais H02 rendu'])) === J([1, 1]) && tousR.some((m) => /l'affichage n'a pas pu se rafraîchir/.test(m)) && !tousR.some((m) => /Rien n'a été ajouté/.test(m)) && (await attente()) === 0, J({ toasts: tousR.slice(-2) }));
+  t('B-NRH2 A1-T03 ⭐⭐ le rendu échoue APRÈS l\'insertion : les 2 lignes existent ET sont écrites dans le stockage, le message parle d\'affichage (« rouvre l\'écran »), jamais « Rien n\'a été ajouté », aucune ré-insertion',
+    (await neuves(avantR)).length === 2 && J(await stockees(['Riz H02 rendu', 'Mais H02 rendu'])) === J([1, 1]) && tousR.some((m) => /l'affichage n'a pas pu se rafraîchir/.test(m)) && !tousR.some((m) => /Rien n'a été ajouté/.test(m)) , J({ toasts: tousR.slice(-2) }));
 
   /* ═══ F7 — A2 : panne DANS l'insertion groupée ═══ */
   await charger(['Q']);
@@ -334,8 +303,8 @@ module.exports.ecran = async function ecran(t, b, PORT) {
   await jouer(hQ.sig, 'collation2');
   const apresQ = await snap(); const lsQ2 = await stockage(); const carnetQ2 = await nCarnet();
   const nPush = await E(() => window.__pushPanne);
-  t('B-NRH2 A2-T01 ⭐⭐ panne dans l\'insertion groupée elle-même : le journal est INCHANGÉ à l\'octet, l\'insertion n\'est tentée qu\'UNE fois (aucune ré-insertion automatique), le message est « Rien n\'a été ajouté (erreur technique) » — vrai, rien n\'a été inséré — et rien n\'est en attente',
-    apresQ === avantQ && nPush === 1 && /Rien n'a été ajouté \(erreur technique\)/.test(await dernier()) && (await attente()) === 0, J({ nPush, toast: await dernier() }));
+  t('B-NRH2 A2-T01 ⭐⭐ panne dans l\'insertion groupée elle-même : le journal est INCHANGÉ à l\'octet, l\'insertion n\'est tentée qu\'UNE fois (aucune ré-insertion automatique), le message est « Rien n\'a été ajouté (erreur technique) » — vrai, rien n\'a été inséré — et rien d\'autre ne bouge',
+    apresQ === avantQ && nPush === 1 && /Rien n'a été ajouté \(erreur technique\)/.test(await dernier()) , J({ nPush, toast: await dernier() }));
   const autresCles = (o) => J(Object.keys(o).filter((k) => k !== 'ft4_douane_obs').sort().map((k) => [k, o[k]]));
   t('B-NRH2 A2-T02 ⭐⭐ LIMITE DÉCLARÉE, mesurée : la douane a DÉJÀ compté les 2 lignes (le carnet `ft4_douane_obs` avance de 2 alors que le journal n\'a rien reçu) ; tous les AUTRES effets de stockage sont nuls — le compteur est de l\'observation, il ne contient aucune donnée de repas. L\'opération n\'est PAS présentée comme totalement atomique.',
     carnetQ2 - carnetQ === 2 && autresCles(lsQ2) === autresCles(lsQ), J({ avant: carnetQ, apres: carnetQ2, memeStockage: autresCles(lsQ2) === autresCles(lsQ) }));
@@ -344,111 +313,10 @@ module.exports.ecran = async function ecran(t, b, PORT) {
   await jouer(hQ.sig, 'collation2');
   t('B-NRH2 A2-T02b après la panne, une nouvelle tentative (push rétabli) insère le repas UNE fois : 2 lignes, pas de doublon, rien n\'était verrouillé', (await neuves(avantQb)).length === 2, '');
 
-  /* ═══ F8 — A1-R : REDÉMARRAGE (rechargement réel de la page) APRÈS une panne de stockage ═══
-     La table `_habNonConfirme` est en MÉMOIRE : elle disparaît au rechargement. Ces témoins MESURENT ce que cela change, ils ne l'espèrent pas. */
-  await charger(['P', 'V']);
-  const hP8 = await hab('Riz H02 persist'), hV8 = await hab('Riz H02 valide');
-  const histP = await stockees(['Riz H02 persist']);  // l'historique des 2 jours précédents n'est pas daté d'aujourd'hui : 0
-  const brutAvant = await E(() => localStorage.getItem('ft4_foodlog'));
-  await quotaOn();
-  await jouer(hP8.sig, 'collation2');
-  const msgR1 = await toasts();
-  const memR1 = await enMemoire(['Riz H02 persist', 'Mais H02 persist']);
-  await quotaOff();   // (le rechargement remet de toute façon un stockage sain)
-  await redemarrer();
-  const apresR1 = await E(() => ({ aujourdhui: ['Riz H02 persist', 'Mais H02 persist'].map((n) => (S.foodLog || []).filter((x) => x.name === n && x.date === today()).length), total: (S.foodLog || []).length, attente: Object.keys(_habNonConfirme).length, brut: localStorage.getItem('ft4_foodlog') }));
-  t('B-NRH2 A1-R1 ⭐⭐ PANNE TOTALE puis REDÉMARRAGE : les 2 lignes (présentes à l\'écran) sont PERDUES au rechargement — perte ANNONCÉE (le message disait « PAS confirmé… si tu fermes l\'application maintenant, il sera perdu »), jamais silencieuse ; le stockage est resté EXACTEMENT celui d\'avant (aucune corruption, aucune demi-ligne) ; la table d\'attente n\'existe plus',
-    J(memR1) === J([1, 1]) && msgR1.includes(MSG) && /il sera perdu/.test(MSG) && J(apresR1.aujourdhui) === J([0, 0]) && apresR1.brut === brutAvant && apresR1.attente === 0, J({ memR1, apresR1: { a: apresR1.aujourdhui, att: apresR1.attente, memeBrut: apresR1.brut === brutAvant } }));
-  await afficher(); await pause(400);
-  const hP8b = await hab('Riz H02 persist');
-  const avantR1b = await ids();
-  await jouer(hP8b.sig, 'collation2');
-  t('B-NRH2 A1-R2 ⭐⭐ après le redémarrage, ré-ajouter le même repas ne crée AUCUN doublon (l\'original est perdu, donc il n\'y a rien à doubler) : exactement 1 ligne de chaque, et cette fois DURABLES',
-    J(await enMemoire(['Riz H02 persist', 'Mais H02 persist'])) === J([1, 1]) && J(await stockees(['Riz H02 persist', 'Mais H02 persist'])) === J([1, 1]) && (await neuves(avantR1b)).length === 2, '');
-
-  /* DEUX repas en attente, puis redémarrage */
-  await charger(['P', 'V']);
-  const hP9 = await hab('Riz H02 persist'), hV9 = await hab('Riz H02 valide');
-  await quotaOn();
-  await jouer(hP9.sig, 'collation2'); await pause(1000); await jouer(hV9.sig, 'collation2');
-  const att9 = await attente();
-  await quotaOff(); await redemarrer();
-  const ap9 = await E(() => ({ p: ['Riz H02 persist', 'Mais H02 persist'].map((n) => (S.foodLog || []).filter((x) => x.name === n && x.date === today()).length), v: ['Riz H02 valide', 'Lentilles H02 valide'].map((n) => (S.foodLog || []).filter((x) => x.name === n && x.date === today()).length) }));
-  t('B-NRH2 A1-R3 ⭐ DEUX repas en attente (les deux annoncés « PAS confirmé ») puis redémarrage : les deux sont perdus ensemble (pas l\'un sans l\'autre, pas de demi-repas), table vide, journal d\'avant intact', att9 === 2 && J(ap9.p) === J([0, 0]) && J(ap9.v) === J([0, 0]), J({ att9, ap9 }));
-  await afficher(); await pause(400);
-  const h9p = await hab('Riz H02 persist'), h9v = await hab('Riz H02 valide');
-  await jouer(h9p.sig, 'collation2'); await pause(1000); await jouer(h9v.sig, 'collation2');
-  t('B-NRH2 A1-R4 ⭐ ré-ajouter les deux après redémarrage : exactement un de chaque (aucun doublon), durables', J(await stockees(['Riz H02 persist', 'Mais H02 persist', 'Riz H02 valide', 'Lentilles H02 valide'])) === J([1, 1, 1, 1]), '');
-
-  /* panne PARTIELLE : un repas durable, puis un repas non durable, puis redémarrage */
-  await charger(['P', 'V']);
-  const hP10 = await hab('Riz H02 persist'), hV10 = await hab('Riz H02 valide');
-  await jouer(hV10.sig, 'collation2'); await pause(1000);
-  await quotaOn(); await jouer(hP10.sig, 'collation2');
-  const att10 = await attente();
-  await quotaOff(); await redemarrer();
-  const ap10 = await E(() => ({ p: ['Riz H02 persist', 'Mais H02 persist'].map((n) => (S.foodLog || []).filter((x) => x.name === n && x.date === today()).length), v: ['Riz H02 valide', 'Lentilles H02 valide'].map((n) => (S.foodLog || []).filter((x) => x.name === n && x.date === today()).length) }));
-  t('B-NRH2 A1-R5 ⭐⭐ panne PARTIELLE (un repas sauvegardé, le suivant non) puis redémarrage : le repas durable SURVIT en un exemplaire, celui qui n\'avait pas été confirmé est perdu — chacun conforme à ce que le message lui avait annoncé, aucun mélange',
-    att10 === 1 && J(ap10.v) === J([1, 1]) && J(ap10.p) === J([0, 0]), J({ att10, ap10 }));
-
-  /* récupération du stockage AVANT le redémarrage */
-  await charger(['P']);
-  const hP11 = await hab('Riz H02 persist');
-  await quotaOn(); await jouer(hP11.sig, 'collation2');
-  await quotaOff(); await pause(1000); await jouer(hP11.sig, 'collation2');
-  const conf11 = /Enregistrement local confirmé/.test(await dernier());
-  await redemarrer();
-  const ap11 = await E(() => ['Riz H02 persist', 'Mais H02 persist'].map((n) => (S.foodLog || []).filter((x) => x.name === n && x.date === today()).length));
-  t('B-NRH2 A1-R6 ⭐⭐ le stockage répond de nouveau AVANT le redémarrage et la personne retouche le repas : sauvegarde confirmée sans ré-insertion, et après redémarrage le repas existe EXACTEMENT une fois (ni perdu, ni doublé)', conf11 && J(ap11) === J([1, 1]), J({ conf11, ap11 }));
-
-  /* FAUX NÉGATIF : la sauvegarde a RÉUSSI mais la relecture échoue → message d'alerte à tort ; la personne obéit au message APRÈS un redémarrage */
-  await charger(['P']);
-  const hP12 = await hab('Riz H02 persist');
-  await E(() => { window.__gi = Storage.prototype.getItem; Storage.prototype.getItem = function (k) { if (k === 'ft4_foodlog' && window.__relecture) return '{illisible'; return window.__gi.apply(this, arguments); }; window.__relecture = true; });
-  await jouer(hP12.sig, 'collation2');
-  const alerte12 = (await toasts()).includes(MSG);
-  await E(() => { window.__relecture = false; Storage.prototype.getItem = window.__gi; });
-  await redemarrer();
-  const ap12 = await E(() => ['Riz H02 persist', 'Mais H02 persist'].map((n) => (S.foodLog || []).filter((x) => x.name === n && x.date === today()).length));
-  await afficher(); await pause(400);
-  const h12 = await hab('Riz H02 persist');
-  await jouer(h12.sig, 'collation2');
-  const ap12b = await E(() => ['Riz H02 persist', 'Mais H02 persist'].map((n) => (S.foodLog || []).filter((x) => x.name === n && x.date === today()).length));
-  t('B-NRH2 A1-R7 ⭐⭐ LIMITE DÉCLARÉE, mesurée : relecture impossible alors que l\'écriture a RÉUSSI (fausse alerte « PAS confirmé ») — après redémarrage le repas EST au journal (1 exemplaire, rien de perdu) ; si la personne suit alors le message et retouche le repas, la table d\'attente n\'existe plus : un DOUBLON est créé (2 exemplaires). L\'anti-doublon n\'est fiable que PENDANT la session ; après un redémarrage, c\'est le journal affiché qui fait foi.',
-    alerte12 && J(ap12) === J([1, 1]) && J(ap12b) === J([2, 2]), J({ alerte12, ap12, ap12b }));
-
-  /* ═══ F9 — A2-I : FIDÉLITÉ du stockage relu (`_habDurable` prouve-t-il un contenu, ou seulement une présence ?) ═══ */
-  await charger(['V']);
-  const base = [
-    { id: 'i-0000001', ts: 1, date: '2026-10-30', meal: 'diner', name: 'Riz test', q: 150, u: 'g', kcal: 195, prot: 5, carbs: 42, fat: 0, sourceId: null, per100: { kcal: 130, prot: 3, carbs: 28, fat: 0.3 }, n2: { s: 1 } },
-    { id: 'i-0000002', ts: 2, date: '2026-10-30', meal: 'diner', name: 'Pois test', q: 100, u: 'g', kcal: 80, prot: 5, carbs: 14, fat: 0.4, sourceId: null, per100: { kcal: 80, prot: 5, carbs: 14, fat: 0.4 }, n2: { s: 1 } },
-  ];
-  const verdict = (stocke, memoire) => E(([st, mem]) => { const o = localStorage.getItem('ft4_foodlog'); localStorage.setItem('ft4_foodlog', typeof st === 'string' ? st : JSON.stringify(st)); try { return _habDurable(mem); } finally { localStorage.setItem('ft4_foodlog', o); } }, [stocke, memoire]);
-  const clone = () => JSON.parse(J(base));
-  const modif = (i, k, v) => { const c = clone(); c[i][k] = v; return c; };
-  t('B-NRH2 A2-I1 ⭐⭐ référence : un stockage FIDÈLE est confirmé ; l\'ordre différent des lignes, un `ts` différent et des métadonnées du moteur différentes ne comptent pas (détails volatils)',
-    (await verdict(clone(), base)) === true && (await verdict(clone().reverse(), base)) === true && (await verdict(modif(0, 'ts', 999).map((x) => Object.assign(x, { n2: { s: 2, autre: true } })), base)) === true && (await verdict(clone().concat([{ id: 'autre-0000001', name: 'Autre', date: '2026-10-29', meal: 'diner', q: 1, u: 'g', kcal: 1 }]), base)) === true, '');
-  t('B-NRH2 A2-I2 ⭐⭐ identité PRÉSENTE mais calories modifiées : NON confirmé (présence ≠ fidélité)', (await verdict(modif(0, 'kcal', 196), base)) === false, '');
-  t('B-NRH2 A2-I3 ⭐⭐ identité présente mais protéines, glucides ou lipides modifiés : NON confirmé (les trois)', (await verdict(modif(0, 'prot', 6), base)) === false && (await verdict(modif(1, 'carbs', 15), base)) === false && (await verdict(modif(1, 'fat', 0.5), base)) === false, '');
-  t('B-NRH2 A2-I4 ⭐⭐ identité présente mais quantité ou unité différente : NON confirmé', (await verdict(modif(0, 'q', 100), base)) === false && (await verdict(modif(0, 'u', 'ml'), base)) === false, '');
-  t('B-NRH2 A2-I5 ⭐⭐ identité présente mais moment ou jour incorrects : NON confirmé', (await verdict(modif(0, 'meal', 'dejeuner'), base)) === false && (await verdict(modif(1, 'date', '2026-10-29'), base)) === false, '');
-  t('B-NRH2 A2-I6 ⭐⭐ identité présente EN DOUBLE dans le stockage : NON confirmé (deux lignes de la même identité = journal ambigu)', (await verdict(clone().concat([clone()[0]]), base)) === false, '');
-  t('B-NRH2 A2-I7 ⭐⭐ une seule ligne sauvegardée sur un repas de plusieurs aliments : NON confirmé (tout ou rien, jamais « à moitié durable »)', (await verdict(clone().slice(0, 1), base)) === false && (await verdict(clone().slice(1), base)) === false, '');
-  t('B-NRH2 A2-I8 ⭐⭐ le stockage contient une ANCIENNE version de la ligne (même identité, anciennes valeurs) : NON confirmé', (await verdict(modif(0, 'name', 'Riz test (ancien nom)'), base)) === false && (await verdict(Object.assign(clone(), { 0: Object.assign(clone()[0], { per100: { kcal: 120, prot: 3, carbs: 26, fat: 0.3 } }) }), base)) === false, '');
-  t('B-NRH2 A2-I9 ⭐⭐ stockage illisible : JSON invalide, valeur qui n\'est pas une liste, clé absente, liste vide → NON confirmé, sans lever d\'exception', (await verdict('{illisible', base)) === false && (await verdict('{"a":1}', base)) === false && (await verdict('[]', base)) === false && (await verdict('null', base)) === false, '');
-  t('B-NRH2 A2-I10 ⭐ aucune ligne à confirmer → NON confirmé (une liste vide ne prouve rien) ; la lecture du stockage qui LÈVE une exception → NON confirmé', (await verdict(clone(), [])) === false && (await E((m) => { const g = Storage.prototype.getItem; Storage.prototype.getItem = function () { throw new Error('stockage inaccessible'); }; try { return _habDurable(m); } finally { Storage.prototype.getItem = g; } }, base)) === false, '');
-  /* de bout en bout : une sauvegarde qui écrit une copie ALTÉRÉE n'est jamais annoncée « confirmée » */
-  await charger(['P']);
-  const hP13 = await hab('Riz H02 persist');
-  await E(() => { window.__si3 = Storage.prototype.setItem; Storage.prototype.setItem = function (k, v) { if (k === 'ft4_foodlog') { try { const l = JSON.parse(v); const x = l.find((y) => y && y.name === 'Riz H02 persist' && y.date === today()); if (x) x.kcal = (x.kcal || 0) + 1; v = JSON.stringify(l); } catch (e) {} } return window.__si3.call(this, k, v); }; });
-  await jouer(hP13.sig, 'collation2');
-  await E(() => { Storage.prototype.setItem = window.__si3; });
-  t('B-NRH2 A2-I11 ⭐⭐ de bout en bout : une sauvegarde qui écrit la ligne avec des calories ALTÉRÉES (+1 kcal) n\'est jamais annoncée « confirmée » — l\'alerte « PAS confirmé » est affichée, et le repas est mis en attente', (await toasts()).includes(MSG) && (await attente()) === 1, J({ toasts: (await toasts()).slice(-2) }));
-
   /* ═══ lecture de la source : l'écrivain unique, le post-traitement, la provenance ═══ */
   const src = fs.readFileSync(path.join(__dirname, '..', '..', 'app.js'), 'utf8');
   const corps = (nom) => { const i = src.indexOf('function ' + nom + '('); if (i < 0) return ''; let d = 0; for (let j = src.indexOf('{', i); j < src.length; j++) { if (src[j] === '{') d++; else if (src[j] === '}') { d--; if (d === 0) return src.slice(i, j + 1); } } return ''; };
-  const EN = corps('_n2Enregistrer'), RA = corps('_n2Reajouter'), RJ = corps('rejouerRepas'), AP = corps('_habApresInsertion'), RE = corps('_habReessayer'), PU = corps('_habPurger'), DU = corps('_habDurable');
+  const EN = corps('_n2Enregistrer'), RA = corps('_n2Reajouter'), RJ = corps('rejouerRepas'), AP = corps('_habApresInsertion');
   const QF = corps('quickFillFood'), QA = corps('quickAddFood');
   t('B-NRH2 S1 ⭐ `_n2Enregistrer` reste l\'écrivain UNIQUE : exactement un `foodLog.push(` dans app.js, et c\'est le sien ; le groupe est un tableau du même chemin',
     (src.match(/foodLog\.push\(/g) || []).length === 1 && /foodLog\.push\(/.test(EN) && /Array\.isArray\(entree\)/.test(EN), '');
@@ -467,11 +335,12 @@ module.exports.ecran = async function ecran(t, b, PORT) {
   t('B-NRH2 A2-T03 ⭐⭐ écrivain unique inchangé dans sa structure : un seul `foodLog.push(` dans app.js (le sien), validation → douane → insertion dans cet ordre, aucun retour arrière',
     (src.match(/foodLog\.push\(/g) || []).length === 1 && iV > 0 && iD > iV && iP > iD && !/splice\(|\.pop\(|\.filter\(|rollback/i.test(EN), J([iV, iD, iP]));
   const SUPPR = /foodLog\s*\.\s*(splice|pop|shift|unshift)\s*\(|foodLog\s*=[^=]/;
-  t('B-NRH2 A1-T05 ⭐⭐ aucune suppression ni remplacement du journal dans `rejouerRepas`, `_habApresInsertion`, `_habReessayer` ni `_habPurger` ; aucune ré-insertion (ni `_n2Reajouter(`, ni `_n2Enregistrer(`) dans le post-traitement ; `persist()` n\'est plus appelé avant le constat d\'insertion',
-    [RJ, AP, RE, PU, DU].every((c) => c !== '' && !SUPPR.test(c)) && ![AP, RE, PU].some((c) => /_n2Reajouter\(|_n2Enregistrer\(/.test(c)) && !/persist\(\)/.test(RJ), '');
-  const iPe = AP.indexOf('persist()'), iDu = AP.indexOf('_habDurable('), iRe = AP.indexOf('renderFoodJournal()');
-  t('B-NRH2 A1-T06 ⭐ le post-traitement : sauvegarde → RELECTURE du stockage (`persist()` avale ses erreurs, il ne lève rien) → rendu, chaque étape dans son `try` ; le message d\'échec de sauvegarde ne parle jamais de synchronisation',
-    iPe > 0 && iDu > iPe && iRe > iDu && (AP.match(/try\{/g) || []).length >= 4 && !/synchronis/i.test(MSG), J([iPe, iDu, iRe]));
+  t('B-NRH2 A1-T05 ⭐⭐ aucune suppression ni remplacement du journal dans `rejouerRepas` ni `_habApresInsertion` ; aucune ré-insertion (ni `_n2Reajouter(`, ni `_n2Enregistrer(`) dans le post-traitement ; `persist()` n\'est appelé NI par `rejouerRepas` NI directement par le post-traitement (il passe par `_journalPersister`, qui dit si le journal a été écrit)',
+    [RJ, AP].every((c) => c !== '' && !SUPPR.test(c)) && !/_n2Reajouter\(|_n2Enregistrer\(/.test(AP) && !/persist\(\)/.test(RJ) && !/[^_a-zA-Z]persist\(\)/.test(AP), '');
+  const MSG = await E(() => _N_MSG_JOURNAL);
+  const iPe = AP.indexOf('_journalPersister()'), iRe = AP.indexOf('renderFoodJournal()'), iMs = AP.indexOf('_N_MSG_JOURNAL');
+  t('B-NRH2 A1-T06 ⭐ le post-traitement : sauvegarde (statut de l\'écrivain du journal) → rendu, le message d\'échec n\'est dit QUE si la sauvegarde a échoué, chaque étape de rendu dans son `try` ; le message d\'échec ne parle jamais de synchronisation, dit que ce sera PERDU, renvoie à « Réessayer » et ne demande JAMAIS de ressaisir ni de retoucher le repas',
+    iPe > 0 && iRe > iPe && iMs > iRe && (AP.match(/try\{/g) || []).length >= 2 && !/synchronis/i.test(MSG) && /PERDU/.test(MSG) && /Réessayer/.test(MSG) && /ne le ressaisis pas/.test(MSG) && !/touche de nouveau|ré-ajoute|retouche/i.test(MSG), J([iPe, iRe, iMs, MSG]));
 
   /* ═══ F10 — deux témoins ajoutés après la 1ʳᵉ campagne de mutations (M03 et M09 survivaient : le garde existait, aucun témoin dynamique ne le touchait) ═══ */
   await charger(['Y']);

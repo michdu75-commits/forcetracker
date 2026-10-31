@@ -3792,6 +3792,7 @@ function renderFoodJournal(){
     +'<span style="font-weight:800;font-size:14px;color:var(--t1);text-transform:capitalize;">'+jourLabel+'</span>'
     +_navBtn(1,'›',!estAuj)
     +'</div>';
+  html+=(typeof _journalBandeau==='function')?_journalBandeau():'';   // NUT-REF-HIST-02 (3B) : tant que la dernière sauvegarde du journal a échoué, le dire et offrir « Réessayer » (aucune donnée de plus)
 
   /* 📅 LA SEMAINE EN UN COUP D'ŒIL (ft-v1004) — Michel, capture d'une autre app à l'appui :
      « j'aimerais les jours de la semaine en haut, qu'ils soient cliquables, et voir d'un seul

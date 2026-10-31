@@ -1619,6 +1619,38 @@ function _n2Message(r){
   return M[e] || ('Enregistrement refusé ('+(e||'?')+') — rien n\'a été ajouté.');
 }
 
+/* ⭐⭐ NUT-REF-HIST-02 (3B) — SAUVEGARDER LE JOURNAL, ET SAVOIR SI ÇA A ÉCRIT.
+   Les écrivains du journal (« + Ajouter », « + » d'« Mes aliments », « Modifier », la croix, « Tes repas habituels ») appelaient `persist()` puis annonçaient « ✅ » : `persist()`
+   ne rend rien (voir `state.js`), donc une panne du stockage passait pour un succès et le repas disparaissait au redémarrage. `_journalPersister` rend le STATUT de l'écrivain
+   dédié du journal (`_ecrireJournalLocal`) pour CETTE sauvegarde : `true` seulement si la clé a été écrite (ou en mode démo, qui n'écrit rien par conception) ; « non tentée »
+   (une exception avant le journal) vaut « non confirmée ». Le contrat de `persist()` n'a pas changé, Séance non plus.
+   ⛔ Trois choses qu'on ne confond pas : la modification EN MÉMOIRE (déjà faite quand on arrive ici et JAMAIS défaite), la sauvegarde LOCALE (ce que dit cette fonction) et la
+   synchro CLOUD (différée par `persist()`, sans accusé : elle n'est jamais annoncée comme faite). */
+function _journalPersister(){
+  const avant=_journalEtat().seq;
+  try{ persist(); }catch(e){ try{ console.warn('[FT journal] persist() a levé',e); }catch(_){} }
+  if(window._demoMode) return true;
+  const a=_journalEtat();
+  return a.seq>avant && a.ok===true;
+}
+/* Le seul message d'échec de sauvegarde du journal : un FAIT et la marche à suivre — jamais « touche de nouveau le repas » (ce serait un deuxième ajout). */
+const _N_MSG_JOURNAL='Pas enregistré sur le téléphone (stockage plein ?) : c\'est à l\'écran mais ce sera PERDU si tu fermes l\'application. Fais de la place, puis touche « Réessayer l\'enregistrement » en haut du journal — ne le ressaisis pas.';
+/* Le bandeau du journal tant que la dernière sauvegarde a échoué (`ok===false`) : il disparaît dès qu'une sauvegarde réussit (aucune donnée de plus, rien à nettoyer). */
+function _journalBandeau(){
+  if(_journalEtat().ok!==false) return '';
+  return '<div role="alert" style="margin-bottom:10px;padding:10px 12px;border-radius:10px;background:var(--bg3);border:1px solid var(--red);">'
+    +'<div style="font-size:12.5px;color:var(--t1);line-height:1.4;">⚠️ Ces ajouts ne sont <b>pas enregistrés sur le téléphone</b> (stockage plein ?). Ils seront perdus si tu fermes l\'application.</div>'
+    +'<button type="button" onclick="_journalReessayer()" style="display:block;width:100%;min-height:44px;margin-top:8px;padding:10px 12px;border-radius:9px;border:1px solid var(--red);background:var(--red);color:#fff;font-size:13px;font-weight:700;font-family:var(--font);cursor:pointer;touch-action:manipulation;">Réessayer l\'enregistrement</button>'
+    +'</div>';
+}
+/* « Réessayer l\'enregistrement » : on RÉÉCRIT ce qui est déjà en mémoire — aucune ligne créée, aucune ligne retirée, donc aucun doublon possible. */
+function _journalReessayer(){
+  const ok=_journalPersister();
+  try{ renderFoodJournal(); }catch(e){}
+  try{ if(typeof renderNutrition==='function')renderNutrition(); }catch(e){}
+  toast(ok ? 'Enregistré sur le téléphone ✅' : _N_MSG_JOURNAL, ok ? 'success' : 'error');
+}
+
 /* ── L'état V2 de l'écran d'ajout (et de la modification) ──
    `_afCalc` : les valeurs que le moteur vient de calculer (null s'il n'y a pas de calcul en cours) ;
    `_afCorr` : les valeurs retouchées À LA MAIN sur un calcul, {champ:{v, avant, le}} — gardées et tracées (CR-2) ;
@@ -4612,15 +4644,13 @@ function _douaneRemiseAZero(){
    `choix` : `'autres'` = la personne a choisi d'ajouter SEULEMENT les aliments admissibles (l'ajout partiel est devenu un geste, plus un effet de bord). */
 let _habEnCours=0;   // l'instant du dernier rejeu lancé : le chargement CIQUAL est asynchrone, un double appui ne doit pas lancer deux ajouts (périme au bout de 15 s)
 let _habDernier={cle:'', t:0};   // le dernier ajout RÉUSSI (repas · moment · choix) : le même geste répété dans la même seconde est un double appui, pas un deuxième repas
-let _habNonConfirme={};   // clé du geste (repas · moment · choix) → identités des lignes INSÉRÉES dont l'enregistrement local durable n'a pas pu être confirmé — un nouveau geste les RETENTE, il ne les ré-insère pas (une table, pas une case : deux repas peuvent attendre en même temps)
-const _HAB_MSG_NON_DURABLE='Repas ajouté à l\'écran, mais l\'enregistrement local durable n\'est PAS confirmé (stockage du téléphone) : si tu fermes l\'application maintenant, il sera perdu. Ne le ré-ajoute pas : touche-le de nouveau pour retenter l\'enregistrement.';
-/* ⭐ NUT-REF-HIST-02 · MICRO-CORRECTION A1 — TROIS ÉTATS QU'ON NE CONFOND PLUS, parce que le message n'est pas le même :
+/* ⭐ NUT-REF-HIST-02 (3B) — TROIS ÉTATS QU'ON NE CONFOND PLUS, parce que le message n'est pas le même :
      ① AVANT l'insertion (préparation, écriture refusée ou en panne) : aucune ligne n'existe → « Rien n'a été ajouté » est vrai ;
      ② l'insertion est CONSTATÉE (`_n2Reajouter` a rendu `ok` avec ses lignes — ou, si une exception est tombée, le journal a grandi) : les lignes EXISTENT ;
         plus jamais « Rien n'a été ajouté » à partir d'ici, quoi qu'il arrive ensuite, et jamais de nouvelle insertion automatique, jamais de suppression ;
-     ③ APRÈS l'insertion (`_habApresInsertion`) : la sauvegarde locale, la synchro et le rendu sont des étapes séparées, chacune dans son `try`.
-   ⚠️ `persist()` AVALE ses propres erreurs (quota, stockage refusé : un message console ou un toast de quota, mais aucune exception ni valeur rendue) : un `try/catch`
-   autour d'elle ne verrait jamais une panne. La seule preuve d'un enregistrement durable est de RELIRE le stockage (`_habDurable`). */
+     ③ APRÈS l'insertion (`_habApresInsertion`) : la sauvegarde locale, le rendu et la synchro sont des étapes séparées. Le STATUT de la sauvegarde locale est
+        celui de l'écrivain dédié du journal (`_journalPersister`, `state.js`) : plus de relecture du stockage ni de table d'attente — l'écrivain DIT s'il a écrit.
+   La synchro distante est différée (`persist()` la programme) et n'est jamais présentée comme faite. */
 function rejouerRepas(sig, meal, choix){
   const hab=_repasHabituels(), idx=hab.findIndex(x=>x.sig===sig), r=hab[idx];
   if(!r){toast('Repas introuvable','error');return;}
@@ -4629,8 +4659,6 @@ function rejouerRepas(sig, meal, choix){
   const ok=(typeof FOOD_MEALS!=='undefined') && FOOD_MEALS.some(m=>m.k===meal);
   const moment=ok?meal:r.meal;
   const cle=sig+'|'+moment+'|'+(choix||'');
-  /* Une insertion déjà faite dont la sauvegarde durable n'est pas confirmée : on RETENTE la sauvegarde, on n'insère pas une deuxième fois. */
-  if(_habNonConfirme[cle] && _habReessayer(cle)) return;
   if(_habDernier.cle===cle && Date.now()-_habDernier.t<900) return;   // double appui : déjà fait
   _habEnCours=Date.now();
   /* 🥗 V2 (jalon 4) — chaque aliment est RE-NOTÉ par le moteur, depuis SA ligne d'origine, jamais depuis l'écran d'ajout
@@ -4665,70 +4693,21 @@ function rejouerRepas(sig, meal, choix){
     if(inserees) _habApresInsertion(cle, inserees, moment, bloques);
   });
 }
-/* Les lignes sont-elles DANS le stockage local, FIDÈLES à ce qu'elles sont en mémoire ? On relit la clé du journal et, pour chaque ligne, on exige : UNE seule ligne de cette
-   identité, et les champs qui font la valeur du repas IDENTIQUES (jour, moment, nom, quantité, unité, calories, protéines, glucides, lipides, identité de produit, pour-100 g).
-   Une identité présente avec d'autres chiffres, deux lignes de la même identité, une ancienne version, un stockage illisible → PAS confirmé. L'ordre des lignes, `ts` et les
-   métadonnées du moteur (`n2`…) ne comptent pas : ce sont des détails volatils, pas la valeur nutritionnelle. `lignes` = les lignes EN MÉMOIRE (l'état courant, ce que `persist()` écrit).
-   Mode démo : rien n'est écrit PAR CONCEPTION, ce n'est pas une panne.
-   ⚠️ Ce que cela PROUVE : à l'instant de la relecture, le stockage contient ces lignes à l'identique pour ces champs. Ce que cela ne prouve PAS : que le stockage les gardera (le navigateur peut
-   purger), ni que les AUTRES clés écrites par la même sauvegarde (favoris, masquages…) ont été écrites — `persist()` les écrit une à une et s'arrête à la première panne. */
-const _HAB_CHAMPS=['date','meal','name','q','u','kcal','prot','carbs','fat','sourceId'];
-function _habDurable(lignes){
-  try{
-    if(window._demoMode) return true;
-    const lus=JSON.parse(localStorage.getItem('ft4_foodlog')||'[]');
-    if(!Array.isArray(lus)) return false;
-    const par={};
-    lus.forEach(l=>{ if(l && l.id!==undefined && l.id!==null) (par[l.id]=par[l.id]||[]).push(l); });
-    const nul=x=>(x===undefined||x===null) ? null : x;
-    return (lignes||[]).length>0 && lignes.every(m=>{
-      if(!m) return false;
-      const c=par[m.id];
-      if(!c || c.length!==1) return false;
-      return _HAB_CHAMPS.every(k=>nul(m[k])===nul(c[0][k])) && JSON.stringify(nul(m.per100))===JSON.stringify(nul(c[0].per100));
-    });
-  }catch(e){ return false; }
-}
-/* Les lignes d'un geste, telles qu'elles sont AUJOURD'HUI en mémoire (une ligne modifiée ou supprimée depuis l'insertion est lue dans son état courant). */
-function _habCourantes(ids){ return ids.map(i=>(S.foodLog||[]).find(l=>l&&l.id===i)).filter(Boolean); }
-/* Tout ce qui suit une insertion CONFIRMÉE : chaque étape dans son `try`, aucune ne peut défaire ni masquer l'ajout, aucune n'insère. La synchro distante
-   n'est ni attendue ni annoncée (elle part en différé, sans confirmation ici). */
+/* Tout ce qui suit une insertion CONFIRMÉE : la sauvegarde locale (son statut vient de l'écrivain dédié du journal), le rendu et la carte « Où tu en es » — chaque étape dans son
+   `try`, aucune ne peut défaire ni masquer l'ajout, aucune n'insère. La synchro distante part en différé (`persist()`), sans confirmation ici et sans être annoncée.
+   ⛔ Le message de réussite n'est dit QUE si la sauvegarde locale a réussi ; sinon c'est le message d'échec (`_N_MSG_JOURNAL`), qui renvoie au bouton « Réessayer » du journal. */
 function _habApresInsertion(cle, lignes, moment, bloques){
-  const ids=lignes.map(l=>l&&l.id), n=lignes.length, court=x=>String(x||'').slice(0,30);
+  const n=lignes.length, court=x=>String(x||'').slice(0,30);
   _habDernier={cle:cle, t:Date.now()};
-  try{ persist(); }catch(e){}
-  const durable=_habDurable(_habCourantes(ids));
-  try{ if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced(); }catch(e){}
+  const sauve=_journalPersister();
   let rendu=true;
   try{ renderFoodJournal(); }catch(e){ rendu=false; }
   try{ if(typeof renderNutrition==='function')renderNutrition(); }catch(e){}
-  if(!durable){ _habNonConfirme[cle]=ids; toast(_HAB_MSG_NON_DURABLE,'error'); return; }
-  _habPurger();   // le stockage répond : tout ce qui attendait (ce geste, ou un autre) est maintenant relu et confirmé
+  if(!sauve){ toast(_N_MSG_JOURNAL,'error'); return; }
   const mi=(typeof _foodMealInfo==='function')?_foodMealInfo(moment):null;
   const quoi=n+' aliment'+(n>1?'s':'')+' ajouté'+(n>1?'s':'')+(mi&&mi.lbl?' — '+mi.lbl:'');
   if(!rendu){ toast(quoi+' et enregistré'+(n>1?'s':'')+', mais l\'affichage n\'a pas pu se rafraîchir : rouvre l\'écran.','info'); return; }
   toast(quoi+' 🍽️'+(bloques.length?' · non ajouté (à vérifier) : '+bloques.map(b=>court(b.nom)).join(', '):''), bloques.length?'info':'success');
-}
-/* Les gestes dont la sauvegarde attendait et que le stockage relit maintenant : on les retire de la table (jamais on ne retire une ligne du journal). Un geste dont
-   les lignes ne sont plus là (supprimées par la personne) n'a plus rien à confirmer. */
-function _habPurger(){
-  Object.keys(_habNonConfirme).forEach(k=>{
-    const presentes=_habCourantes(_habNonConfirme[k]);
-    if(!presentes.length || _habDurable(presentes)) delete _habNonConfirme[k];
-  });
-}
-/* Nouvelle tentative après une sauvegarde non confirmée : on ne ré-insère RIEN, on retente de sauvegarder les lignes qui existent encore. Rend `true` si elle a traité le geste. */
-function _habReessayer(cle){
-  const ids=_habNonConfirme[cle]; if(!ids) return false;
-  const presentes=_habCourantes(ids);
-  if(!presentes.length){ delete _habNonConfirme[cle]; return false; }   // elles ne sont plus là (supprimées) : un nouveau geste est un vrai nouvel ajout
-  try{ persist(); }catch(e){}
-  if(_habDurable(presentes)){
-    _habPurger();
-    try{ renderFoodJournal(); }catch(e){}
-    toast('Enregistrement local confirmé — ce repas était déjà ajouté, rien n\'a été ajouté une deuxième fois.','success');
-  }else toast(_HAB_MSG_NON_DURABLE,'error');
-  return true;
 }
 /* Le conteneur de la carte du repas, retrouvé SANS lire un attribut `onclick` : `hab-m-<rang>` est l'identifiant que le rendu pose à chaque carte, le rang est celui du repas
    dans `_repasHabituels()` (le rendu et ce code lisent la MÊME fonction), et on VÉRIFIE avant de s'en servir — le conteneur existe, c'est bien un `.hab-moments`, et la
@@ -5598,10 +5577,10 @@ function quickAddFood(i){
       return;
     }
     if(!r.ok){ toast(_n2Message(r),'error'); return; }
-    persist(); if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
+    const _sauve=_journalPersister();   // NUT-REF-HIST-02 (3B) : le succès n'est dit que si le journal a été écrit sur le téléphone
     closeAddFood(); renderFoodJournal();
     try{ if(typeof renderNutrition==='function')renderNutrition(); }catch(e){}
-    toast(_afToastAjout(),'success');
+    toast(_sauve ? _afToastAjout() : _N_MSG_JOURNAL, _sauve ? 'success' : 'error');
   });
 }
 function toggleFavFood(i){
@@ -7298,12 +7277,11 @@ function addFoodEntry(){
      habituels » ne touchent pas le favori non plus). */
   if(!_en.pastillePortions) _majDefFavori(_e);
   _afSetSrc(null);   // la provenance ne survit pas à l'enregistrement (R15 : le marqueur se pose et se rend)
-  persist();
+  const _sauve=_journalPersister();   // NUT-REF-HIST-02 (3B) : le succès n'est dit que si le journal a été écrit sur le téléphone
   closeAddFood();
   renderFoodJournal();
   try{ if(typeof renderNutrition==='function')renderNutrition(); }catch(e){}   // la carte « Où tu en es » suit
-  if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
-  toast(_afToastAjout(),'success');
+  toast(_sauve ? _afToastAjout() : _N_MSG_JOURNAL, _sauve ? 'success' : 'error');
 }
 /* 🔑⛔⛔ LA SUPPRESSION RETIRE **UNE** LIGNE, ET C'EST STRUCTUREL (16/09/2026, bug T-01).
    Avant : `filter(e=>e.ts!==ts)` — avec un `ts` partagé par trois lignes rejouées, un clic sur
@@ -7318,9 +7296,9 @@ function removeFoodEntry(id){
   const i=S.foodLog.findIndex(e=>e&&e.id===id);
   if(i<0)return;
   S.foodLog.splice(i,1);
-  persist();
+  const _sauve=_journalPersister();   // NUT-REF-HIST-02 (3B) : si la suppression n'a pas pu être écrite, la ligne REVIENDRAIT au redémarrage — on le dit
   renderFoodJournal();
-  if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
+  if(!_sauve) toast(_N_MSG_JOURNAL,'error');
 }
 // Demande confirmation avant de retirer un aliment du journal
 /* 🔑⭐⭐ L'ANNONCE ET L'ACTION EMPLOIENT LA MÊME CLÉ — c'est le fait le plus grave de T-01.
@@ -8619,15 +8597,17 @@ function saveEditFood(){
   const nonVerifiee=_n2FicheNonVerifiee(R);                // ⚠️ NUT-REF-HIST-01 : la seule exception de la frontière (voir `_n2FicheNonVerifiee`)
   /* 🛡️ NUT-REF-HIST-01 — UNE LIGNE À FICHE SUSPECTE : ses valeurs enregistrées restent, rien n'en est recalculé ni retouché ; seul le repas se change. */
   if(R.ficheSuspecte){
+    let _sauveS=true;   // NUT-REF-HIST-02 (3B) : « Modifié ✅ » seulement si la sauvegarde locale a réussi
     if(!_editFoodMeal){ toast('Choisis le repas — la ligne n\'a pas été modifiée.','error'); return; }
     if(_editFoodMeal!==e.meal){
       const rm=_n2Enregistrer({repasSeul:true, remplace:e, repas:_editFoodMeal},'saveEditFood');
       if(!rm.ok){ toast(_n2Message(rm).replace('rien n\'a été ajouté','la ligne n\'a pas été modifiée'),'error'); return; }
-      persist(); if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
+      _sauveS=_journalPersister();
     }
     const ovs=document.getElementById('ov-edit-food'); if(ovs)ovs.classList.remove('open');
     renderFoodJournal();
-    toast(_editFoodMeal!==e.meal ? 'Modifié ✅' : _N2_REF_SUSPECTE,'info');
+    if(!_sauveS) toast(_N_MSG_JOURNAL,'error');
+    else toast(_editFoodMeal!==e.meal ? 'Modifié ✅' : _N2_REF_SUSPECTE,'info');
     return;
   }
   /* 🔒 FINALISATION — NE CHANGER QUE LE REPAS d'une fiche identifiée : la ligne reste telle quelle (valeurs enregistrées, ancienne correction
@@ -8635,15 +8615,17 @@ function saveEditFood(){
   if(verr){
     const q0=_efQteFiche(R, e);
     if(q0 && _efQteIdentique(R, q0)){
+      let _sauveM=true;   // NUT-REF-HIST-02 (3B) : « Modifié ✅ » seulement si la sauvegarde locale a réussi
       if(!_editFoodMeal){ toast('Choisis le repas — la ligne n\'a pas été modifiée.','error'); return; }
       if(_editFoodMeal!==e.meal){
         const rm=_n2Enregistrer({repasSeul:true, remplace:e, repas:_editFoodMeal},'saveEditFood');
         if(!rm.ok){ toast(_n2Message(rm).replace('rien n\'a été ajouté','la ligne n\'a pas été modifiée'),'error'); return; }
-        persist(); if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
+        _sauveM=_journalPersister();
       }
       const ovm=document.getElementById('ov-edit-food'); if(ovm)ovm.classList.remove('open');
       renderFoodJournal();
-      toast(_editFoodMeal!==e.meal ? 'Modifié ✅' : 'Rien n\'a changé','success');
+      if(!_sauveM) toast(_N_MSG_JOURNAL,'error');
+      else toast(_editFoodMeal!==e.meal ? 'Modifié ✅' : 'Rien n\'a changé','success');
       return;
     }
   }
@@ -8719,10 +8701,10 @@ function saveEditFood(){
   const r=_n2Enregistrer(entree,'saveEditFood');
   if(!r.ok){ toast(_n2Message(r).replace('rien n\'a été ajouté','la ligne n\'a pas été modifiée'),'error'); return; }
   if(!nonVerifiee) _majDefFavori(r.ligne);   // 🏷️ ft-v1186 — le favori ne garde pas une définition périmée ; ⚠️ jamais depuis une fiche non vérifiée
-  persist(); if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
+  const _sauve=_journalPersister();   // NUT-REF-HIST-02 (3B) : « Modifié ✅ » seulement si la sauvegarde locale a réussi
   const ov=document.getElementById('ov-edit-food'); if(ov)ov.classList.remove('open');
   renderFoodJournal();
-  toast('Modifié ✅','success');
+  toast(_sauve ? 'Modifié ✅' : _N_MSG_JOURNAL, _sauve ? 'success' : 'error');
 }
 
 function renderSupplements() {

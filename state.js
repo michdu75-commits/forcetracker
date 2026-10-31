@@ -834,6 +834,36 @@ function _ecrireSessionsLocal(){
     return false;
   }
 }
+/* ⛔⛔ NUT-REF-HIST-02 (3B) — LE JOURNAL ALIMENTAIRE A SON ÉCRIVAIN, ET IL DIT S'IL A ÉCRIT.
+   MESURÉ (sondes du 30-31/10/2026, quota simulé) : `persist()` écrit ~98 clés dans UN SEUL `try`, sans valeur de retour, et
+   `ft4_foodlog` y est la 77ᵉ. Trois conséquences, toutes silencieuses :
+     · le journal échoue → le repli quota réécrit `ft4_sessions` à 50 séances et pose `ft4_hist_tronque`, alors que les
+       séances avaient DÉJÀ été écrites en entier juste avant : une panne de la NUTRITION tronquait l'historique de SÉANCES
+       sur le téléphone (et coupait leur envoi au cloud jusqu'à une restauration) ;
+     · une clé antérieure échoue (photos d'exercices, par exemple) → le journal n'est JAMAIS essayé : la mémoire a le repas,
+       le disque non, et personne n'en sait rien ;
+     · tous les écrivains Nutrition annonçaient « ajouté ✅ » sans le savoir.
+   👉 UN SEUL propriétaire de la clé (R2), qui rend un résultat EXPLICITE — le même geste que `_ecrireSessionsLocal` (ft-v1092) :
+   `true` seulement si `setItem` a ABOUTI (une clé est atomique : elle porte l'ancienne valeur ou la nouvelle) ; `false` sinon,
+   et alors le disque n'a PAS bougé. Elle ne lève jamais, n'écrit aucune autre clé, n'annonce rien (l'appelant parle) — et surtout
+   elle NE DÉCLENCHE PAS le repli des séances : une panne du journal n'est pas une panne des séances.
+   ⛔ Mode démo : on n'écrit rien PAR CONCEPTION, ce n'est pas une panne → `true`.
+   `_journalSeq` compte les TENTATIVES et `_journalOk` garde la dernière issue : l'appelant compare avant/après, donc une issue
+   ancienne ne peut jamais passer pour celle de CETTE sauvegarde (« non tentée » = « non confirmée »). */
+let _journalSeq=0, _journalOk=null;
+function _ecrireJournalLocal(){
+  _journalSeq++;
+  if(window._demoMode){ _journalOk=true; return true; }
+  try{ localStorage.setItem('ft4_foodlog',JSON.stringify(S.foodLog||[])); _journalOk=true; return true; }
+  catch(e){
+    _journalOk=false;
+    console.warn('[FT journal] écriture locale refusée',e);
+    try{ if(typeof _logErr==='function')_logErr({m:'ft4_foodlog non écrit : '+String((e&&e.message)||e).slice(0,120)}); }catch(_){}
+    return false;
+  }
+}
+/* L'issue de la DERNIÈRE tentative d'écriture du journal : `{seq, ok}` (`ok` : true / false / null = jamais tenté). */
+function _journalEtat(){ return {seq:_journalSeq, ok:_journalOk}; }
 /* ⛔⛔ ft-v1094 — DEUX ONGLETS OUVERTS, ET LE DERNIER QUI ÉCRIT EFFACE L'AUTRE.
    `persist()` écrit **tout `S`** d'un coup, depuis la mémoire de l'onglet qui l'appelle. Or
    l'app est une PWA : elle est très souvent ouverte à DEUX endroits en même temps — l'icône
@@ -1210,6 +1240,7 @@ function persist(){
   // ⛔ un autre onglet a écrit depuis notre dernière sauvegarde → on ajoute, on n'écrase pas
   if(_ftAutreOnglet){ _ftAutreOnglet=false; _fusionnerAvecLeDisque(); }
   _assurerRunIdSeance();   // LOT 3C : AVANT toute écriture de `ft4_wkt` et du brouillon
+  const _rep={fait:false};   // le repli quota ne joue qu'UNE fois par appel, quelle que soit la phase qui échoue
   try{
     localStorage.setItem('ft4_bw',S.bw);localStorage.setItem('ft4_bar',S.barW);
     localStorage.setItem('ft4_rest',S.defRest);localStorage.setItem('ft4_expandall',S.expandAll?'1':'0');localStorage.setItem('ft4_keto',S.keto?'1':'0');localStorage.setItem('ft4_foodmode',S.foodMode||'');localStorage.setItem('ft4_fasting',S.fasting||'');localStorage.setItem('ft4_gender',S.gender);
@@ -1322,7 +1353,12 @@ function persist(){
     localStorage.setItem('ft4_lws',S.lastWeekSummary||'');
     localStorage.setItem('ft4_lms',S.lastMonthSummary||'');
     localStorage.setItem('ft4_mealplan',JSON.stringify(S.mealPlan||null));
-    localStorage.setItem('ft4_foodlog',JSON.stringify(S.foodLog||[]));
+  }catch(e){ _persistRepli(e, _rep); }
+  /* ⭐ NUT-REF-HIST-02 (3B) — LE JOURNAL ICI, À SA PLACE D'AVANT (l'ordre des clés ne bouge pas : les séances, les records et la séance en
+     cours passent toujours AVANT lui — la priorité d'écriture EST l'ordre), mais HORS du `try` commun : ni une clé qui a échoué plus tôt
+     ne l'empêche d'être essayé, ni son propre échec n'interrompt les clés suivantes ou ne déclenche le repli des séances. */
+  _ecrireJournalLocal();
+  try{
     localStorage.setItem('ft4_savedfoods',JSON.stringify(S.savedFoods||[]));
     localStorage.setItem('ft4_hiddenfoods',JSON.stringify(S.hiddenFoods||[]));
     /* ⛔ L'ANCIEN POT EST TOUJOURS ÉCRIT, ET IL NE BOUGE PLUS : plus personne ne
@@ -1347,29 +1383,40 @@ function persist(){
     localStorage.setItem('ft4_a11y',S.a11y?'1':'0');
     localStorage.setItem('ft4_cb',S.colorblind||'');
     localStorage.setItem('ft4_lh',S.leftHand?'1':'0');
-  }catch(e){
-    if(e&&(e.name==='QuotaExceededError'||e.name==='NS_ERROR_DOM_QUOTA_REACHED'||e.code===22)){
-      try{
-        // Fallback : allège les sessions à 50 et réessaie les clés critiques
-        // ⚠️ 02/08 : on POSE UN DRAPEAU. Sans lui, au redémarrage suivant l'app ne connaissait
-        // plus que 50 séances, les renvoyait au serveur, et le cloud était écrasé par la version
-        // tronquée — alors que le message ci-dessous promet l'inverse. Tant que ce drapeau est
-        // levé, `_cloudSync` n'envoie PLUS les séances (règle d'or n°1 : zéro perte).
-        localStorage.setItem('ft4_sessions',JSON.stringify((S.sessions||[]).slice(0,50)));
-        localStorage.setItem('ft4_hist_tronque','1'); S.histTronque=true;
-        localStorage.setItem('ft4_prs',JSON.stringify(S.prs));
-        localStorage.setItem('ft4_wkt',JSON.stringify(S.wkt));
-        if(typeof toast==='function')toast('⚠️ Stockage du téléphone plein — seules tes 50 dernières séances restent SUR LE TÉLÉPHONE. Ta sauvegarde en ligne est intacte et protégée : fais « Restaurer » dans Profil pour tout récupérer.','error');
-      }catch(e2){}
-    }else{
-      // 🛡️ Audit 27/07 : une erreur NON-quota était 100 % silencieuse → au moins une trace console
-      try{console.warn('[FT persist] échec de sauvegarde locale :',e);}catch(_){}
-    }
-  }
+  }catch(e){ _persistRepli(e, _rep); }
   // Mise à jour reportée (app.js) : elle ne s'applique QUE sur l'accueil, sans séance en cours ni
   // récapitulatif ouvert — voir `_majPeutSAppliquer`. Une seule décision, un seul endroit (R2).
   try{ if(typeof _appliquerMaj==='function')_appliquerMaj(); }catch(e){}
   _cloudSyncDebounced();
+}
+
+/* ⛔ LE REPLI QUOTA DES SÉANCES — DÉPLACÉ TEL QUEL hors de `persist()` (NUT-REF-HIST-02, 3B), pour que les DEUX phases de `persist()` l'appellent sans le recopier.
+   Sa logique n'a pas bougé d'une ligne : stockage plein → les séances locales ramenées à 50 + `ft4_hist_tronque` (voir `_cloudSync`) + prs + wkt + message.
+   Deux garanties de plus, et seulement elles :
+     · UNE seule fois par appel de `persist()` (`rep.fait`) : un repli destructeur n'a pas à se rejouer parce que la 2ᵉ phase échoue aussi ;
+     · il n'est JAMAIS appelé pour le journal alimentaire (`_ecrireJournalLocal` avale son propre échec) : une panne de la nutrition n'est pas une panne des séances.
+   ⚠️ LIMITE ÉCRITE : il est toujours déclenché par une erreur de quota sur N'IMPORTE QUELLE autre clé (le navigateur ne dit pas laquelle) — comportement d'avant, hors du
+   périmètre du journal. */
+function _persistRepli(e, rep){
+  if(e&&(e.name==='QuotaExceededError'||e.name==='NS_ERROR_DOM_QUOTA_REACHED'||e.code===22)){
+    if(rep && rep.fait) return;
+    if(rep) rep.fait=true;
+    try{
+      // Fallback : allège les sessions à 50 et réessaie les clés critiques
+      // ⚠️ 02/08 : on POSE UN DRAPEAU. Sans lui, au redémarrage suivant l'app ne connaissait
+      // plus que 50 séances, les renvoyait au serveur, et le cloud était écrasé par la version
+      // tronquée — alors que le message ci-dessous promet l'inverse. Tant que ce drapeau est
+      // levé, `_cloudSync` n'envoie PLUS les séances (règle d'or n°1 : zéro perte).
+      localStorage.setItem('ft4_sessions',JSON.stringify((S.sessions||[]).slice(0,50)));
+      localStorage.setItem('ft4_hist_tronque','1'); S.histTronque=true;
+      localStorage.setItem('ft4_prs',JSON.stringify(S.prs));
+      localStorage.setItem('ft4_wkt',JSON.stringify(S.wkt));
+      if(typeof toast==='function')toast('⚠️ Stockage du téléphone plein — seules tes 50 dernières séances restent SUR LE TÉLÉPHONE. Ta sauvegarde en ligne est intacte et protégée : fais « Restaurer » dans Profil pour tout récupérer.','error');
+    }catch(e2){}
+  }else{
+    // 🛡️ Audit 27/07 : une erreur NON-quota était 100 % silencieuse → au moins une trace console
+    try{console.warn('[FT persist] échec de sauvegarde locale :',e);}catch(_){}
+  }
 }
 
 // ─── UTILS ───────────────────────────────────────────────────

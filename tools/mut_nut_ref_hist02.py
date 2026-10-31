@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""CONTROLE NEGATIF — NUT-REF-HIST-02 (30/10/2026) : le banc `tools/banc_nut_ref_hist02.js` (GO TESTS accordé, 30/10/2026) sait-il ROUGIR, et au BON endroit ?
+"""[3B, 31/10/2026] M16-M18 et M21-M30 sont RETIREES : elles mutaient la relecture du stockage (`_habDurable`), la table d'attente (`_habNonConfirme`) et leur message — du code supprime par la solution 3B (il ne protegeait plus aucun cas : le statut vient de l'ecrivain dedie du journal). Leurs equivalents vivent dans `tools/mut_journal_ecriture.py` (J01-J24). Les 17 autres sont inchangees.
+CONTROLE NEGATIF — NUT-REF-HIST-02 (30/10/2026) : le banc `tools/banc_nut_ref_hist02.js` (GO TESTS accordé, 30/10/2026) sait-il ROUGIR, et au BON endroit ?
 
 [!!] SUR UNE COPIE JETABLE, JAMAIS SUR LE DEPOT (BUGS.md §60). Chaque mutation retire UN morceau du controle dans un clone ; le depot n'est
 jamais ecrit. Point de depart : 0 rouge sur l'arbre sain. Une mutation est TUEE si le banc rougit (code 1) ET si CHACUN des temoins attendus
@@ -45,37 +46,11 @@ MUT = [
      [(A, "    const r=e.repasSeul ? N.changerRepas(e.remplace, e.repas) : N.ligneNouvelle(e);\n    if(!r.ok) return groupe ? Object.assign({}, r, {rang:k}) : r;\n    rs.push(r);", "    const r=e.repasSeul ? N.changerRepas(e.remplace, e.repas) : N.ligneNouvelle(e);\n    if(!r.ok) return groupe ? Object.assign({}, r, {rang:k}) : r;\n    if(!e.repasSeul){ try{ _douaneLigne(r.ligne, porte); }catch(x){} }\n    rs.push(r);")], S('N10'), 'GARDE'),
     ('M15 une exception apres l insertion n est plus lue dans le journal (le faux « Rien n a ete ajoute » revient)',
      [(A, "      if(S.foodLog===journal0 && (S.foodLog||[]).length>n0) inserees=S.foodLog.slice(n0);", "      /* M15 */")], S('A1-T01c'), 'GARDE'),
-    ('M16 la sauvegarde durable n est plus relue (persist avale ses erreurs : la panne passe inapercue)',
-     [(A, "  const durable=_habDurable(_habCourantes(ids));\n  try{ if(typeof _cloudSyncDebounced", "  const durable=true;\n  try{ if(typeof _cloudSyncDebounced")], S('A1-T02'), 'GARDE'),
-    ('M17 une nouvelle tentative ne retente plus la sauvegarde : elle re-insere (doublon)',
-     [(A, "  if(_habNonConfirme[cle] && _habReessayer(cle)) return;", "  /* M17 */")], S('A1-T04a'), 'GARDE'),
-    ('M18 une sauvegarde confirmee reste « en attente » (la table n est pas purgee par la tentative)',
-     [(A, "    _habPurger();\n    try{ renderFoodJournal(); }catch(e){}\n    toast('Enregistrement local", "    try{ renderFoodJournal(); }catch(e){}\n    toast('Enregistrement local")], S('A1-T04c'), 'GARDE'),
     ('M19 apres un echec de rendu, le message dit a tort que rien n a ete ajoute',
      [(A, "  if(!rendu){ toast(quoi+", "  if(!rendu){ toast('Rien n\\'a été ajouté — '+")], S('A1-T03'), 'GARDE'),
     ('M20 la douane est deplacee APRES l insertion (correction A2 hors mandat : les temoins A2 doivent la voir)',
      [(A, "  rs.forEach((r,k)=>{ if(!entrees[k].repasSeul){ try{ _douaneLigne(r.ligne, porte); }catch(e){} } });\n", ""),
       (A, "  }else S.foodLog.push(...rs.map(r=>r.ligne));", "  }else S.foodLog.push(...rs.map(r=>r.ligne));\n  rs.forEach((r,k)=>{ if(!entrees[k].repasSeul){ try{ _douaneLigne(r.ligne, porte); }catch(e){} } });")], S('A2-T02', 'A2-T03'), 'GARDE'),
-    ('M21 un seul emplacement d attente : un 2e repas ecrase le 1er (ancienne conception)',
-     [(A, "  if(!durable){ _habNonConfirme[cle]=ids; toast(_HAB_MSG_NON_DURABLE,'error'); return; }", "  if(!durable){ _habNonConfirme={}; _habNonConfirme[cle]=ids; toast(_HAB_MSG_NON_DURABLE,'error'); return; }")], S('A1-T04b'), 'GARDE'),
-    ('M22 _habDurable ne compare plus les calories (presence d identite seulement pour ce champ)',
-     [(A, "const _HAB_CHAMPS=['date','meal','name','q','u','kcal','prot','carbs','fat','sourceId'];", "const _HAB_CHAMPS=['date','meal','name','q','u','prot','carbs','fat','sourceId'];")], S('A2-I2', 'A2-I11'), 'GARDE'),
-    ('M23 _habDurable ne compare plus ni la quantite ni l unite',
-     [(A, "const _HAB_CHAMPS=['date','meal','name','q','u','kcal','prot','carbs','fat','sourceId'];", "const _HAB_CHAMPS=['date','meal','name','kcal','prot','carbs','fat','sourceId'];")], S('A2-I4'), 'GARDE'),
-    ('M24 _habDurable ne compare plus ni le jour ni le moment',
-     [(A, "const _HAB_CHAMPS=['date','meal','name','q','u','kcal','prot','carbs','fat','sourceId'];", "const _HAB_CHAMPS=['name','q','u','kcal','prot','carbs','fat','sourceId'];")], S('A2-I5'), 'GARDE'),
-    ('M25 _habDurable accepte une identite presente en double dans le stockage',
-     [(A, "      if(!c || c.length!==1) return false;", "      if(!c || c.length<1) return false;")], S('A2-I6'), 'GARDE'),
-    ('M26 _habDurable accepte un repas dont une seule ligne est sauvegardee (some au lieu de every)',
-     [(A, "    return (lignes||[]).length>0 && lignes.every(m=>{", "    return (lignes||[]).length>0 && lignes.some(m=>{")], S('A2-I7'), 'GARDE'),
-    ('M27 _habDurable ne compare plus les valeurs pour 100 g (ancienne version de la ligne acceptee)',
-     [(A, " && JSON.stringify(nul(m.per100))===JSON.stringify(nul(c[0].per100));", ";")], S('A2-I8'), 'GARDE'),
-    ('M28 _habDurable ne compare plus rien que la presence (A2 d origine : id seul)',
-     [(A, "      return _HAB_CHAMPS.every(k=>nul(m[k])===nul(c[0][k])) && JSON.stringify(nul(m.per100))===JSON.stringify(nul(c[0].per100));", "      return true;")], S('A2-I2', 'A2-I3', 'A2-I4', 'A2-I5', 'A2-I8', 'A2-I11'), 'GARDE'),
-    ('M29 le message de panne ne dit plus que la fermeture de l application perd le repas',
-     [(A, "si tu fermes l\\'application maintenant, il sera perdu. Ne le", "Ne le")], S('A1-R1'), 'GARDE'),
-    ('M30 un stockage vide est considere comme confirme',
-     [(A, "    return (lignes||[]).length>0 && lignes.every(m=>{", "    return !(lignes||[]).length || lignes.every(m=>{")], S('A2-I10'), 'GARDE'),
 ]
 
 def banc(arbre):
