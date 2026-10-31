@@ -16,8 +16,9 @@ const J = (x) => JSON.stringify(x);
 
 const COMMIT_MAITRE = 'e2b942f3';
 
+/* `FT_DEPOT_GIT` : le dépôt qui porte l'historique git — les contrôles négatifs tournent sur des COPIES sans `.git` (BUGS.md §60) et le lui indiquent. */
 function persistMaitreSource() {
-  const src = execSync('git show ' + COMMIT_MAITRE + ':state.js', { cwd: path.join(__dirname, '..', '..'), maxBuffer: 64 * 1024 * 1024 }).toString('utf8');
+  const src = execSync('git show ' + COMMIT_MAITRE + ':state.js', { cwd: process.env.FT_DEPOT_GIT || path.join(__dirname, '..', '..'), maxBuffer: 64 * 1024 * 1024 }).toString('utf8');
   const i = src.indexOf('function persist(){');
   if (i < 0) throw new Error('persist() introuvable dans ' + COMMIT_MAITRE);
   let d = 0;

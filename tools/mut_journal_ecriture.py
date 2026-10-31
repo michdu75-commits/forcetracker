@@ -93,7 +93,8 @@ MUT = [
 ]
 
 def banc(arbre):
-    r = subprocess.run(['node', 'tools/banc_journal_ecriture.js'], cwd=arbre, capture_output=True, text=True, timeout=900)
+    env = dict(os.environ, FT_DEPOT_GIT=SRC)   # la copie n'a pas de .git : le témoin relit `persist()` de master dans le vrai dépôt
+    r = subprocess.run(['node', 'tools/banc_journal_ecriture.js'], cwd=arbre, capture_output=True, text=True, timeout=900, env=env)
     out = r.stdout or ''
     last = [l for l in out.split('\n') if ' OK / ' in l]
     rouges = [l.split('rouge : ', 1)[1] for l in out.split('\n') if l.startswith('  rouge : ')]
