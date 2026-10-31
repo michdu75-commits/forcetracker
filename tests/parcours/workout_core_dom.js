@@ -51,10 +51,10 @@ async function ecran(t, b, PORT) {
       const D=${JSON.stringify(init)}; Object.keys(D).forEach(k=>localStorage.setItem(k,D[k])); }catch(e){} })();`);
     /* espions, posés AVANT tout script de l'app : vibrations ; chaque sauvegarde de `ft4_wkt` (les séries telles qu'enregistrées) ;
        les remplacements des enfants de `#wkt-exs` (le rendu global) et le nombre de nœuds ajoutés dessous */
-    await cx.addInitScript(`(()=>{ window.__vib=[]; window.__snaps=[]; window.__rempl=0; window.__ajoutes=0;
+    await cx.addInitScript(`(()=>{ window.__vib=[]; window.__snaps=[]; window.__brut=[]; window.__rempl=0; window.__ajoutes=0;
       try{ navigator.vibrate=function(p){ window.__vib.push(p); return true; }; }catch(e){}
       const si=Storage.prototype.setItem;
-      Storage.prototype.setItem=function(k,v){ try{ if(this===window.localStorage&&k==='ft4_wkt'){ const w=JSON.parse(v);
+      Storage.prototype.setItem=function(k,v){ try{ if(this===window.localStorage&&k==='ft4_wkt'){ window.__brut.push(String(v)); const w=JSON.parse(v);
         window.__snaps.push((w&&w.exs||[]).map(e=>(e.sets||[]).map(s=>({kg:s.kg,reps:s.reps,done:!!s.done})))); } }catch(e){}
         return si.apply(this,arguments); };
       document.addEventListener('DOMContentLoaded',()=>{ const c=document.getElementById('wkt-exs'); if(!c) return;
@@ -62,8 +62,9 @@ async function ecran(t, b, PORT) {
           .observe(c,{childList:true,subtree:true}); });
     })();`);
     const pg = await cx.newPage(); const errs = []; pg.on('pageerror', x => errs.push(String(x.message).slice(0, 160)));
+    const warns = []; pg.on('console', m => { if (m.type() === 'warning') warns.push(m.text()); });   // les refus signalés du rendu ciblé (DOM-T17, T18)
     await pg.goto('http://localhost:' + PORT + '/index.html'); await pg.waitForTimeout(1500);
-    const X = { cx, pg, errs };
+    const X = { cx, pg, errs, warns };
     await X.pg.evaluate(() => { document.querySelectorAll('.overlay.open').forEach(o => o.classList.remove('open'));
       const ob = document.getElementById('onboarding'); if (ob) ob.style.display = 'none'; });
     await X.pg.evaluate((ei) => { goScreen('log', document.getElementById('nb-log')); renderLog(); _expandedEx = ei; renderExBlocks(); }, opts.ouvert || 0);
@@ -201,23 +202,32 @@ async function ecran(t, b, PORT) {
   }
 
   /* ── B bis. LA MATRICE DE LA SAISIE VALIDÉE (GO TESTS du 30/10, cas 1, 3, 5, 10 ; les cas 2, 4, 6, 8, 9 sont en B et en A) ──
-     Chaque cas suit AUSSI les appels à `upSet` (espion posé après le chargement) et chaque sauvegarde de `ft4_wkt` : aucune valeur
-     perdue, remplacée en silence ou rangée dans une autre série ; aucune sauvegarde « faite » avec l'ancienne valeur ; rien d'écrit
-     APRÈS le geste (ni 0, ni suggestion) ; pas un `upSet` de plus que les champs réellement changés. */
+     Ce que chaque cas OBSERVE : la série (modèle, écran, téléphone), les autres séries, et CHAQUE sauvegarde de `ft4_wkt` — aucune
+     valeur perdue, remplacée en silence ou rangée dans une autre série ; aucune sauvegarde « faite » avec l'ancienne valeur ; AUCUNE
+     SAUVEGARDE QUI NE CHANGE RIEN (`doublons` : une écriture identique à la précédente, l'état d'avant le geste compris) ; rien
+     d'écrit APRÈS le geste.
+     ↪️ ADAPTÉ LE 31/10 (simplification S2, autorisation conditionnelle du CTO) : ces témoins comptaient les APPELS de `upSet` — la
+     forme du code. Ils comptent désormais les SAUVEGARDES, ce que la personne paie (`persist()` réécrit toute la mémoire du
+     téléphone) : même exigence (une valeur tapée = une écriture), et plus large (une sauvegarde inutile est vue quelle que soit sa
+     source). ⛔ DOM-T13b est RETIRÉ : il simulait une frappe dans un champ NON actif sans `change` (valeur posée par script) — ce
+     qu'aucune vraie saisie ne produit dans Chromium (DOM-T15 : 13 sorties de champ mesurées, la valeur est enregistrée à chaque
+     fois). Le cas réel des deux champs tapés est DOM-T13c. Ajouté : DOM-T13i (champ quitté puis ✓ — rouge sur 227f090e). */
   {
     const X = await ouvrir();
-    await X.pg.evaluate(() => { window.__up = []; const u = window.upSet;
-      window.upSet = function (ei, si, f, v) { window.__up.push([ei, si, f, String(v)]); return u.apply(this, arguments); }; });
-    // l'état complet d'une série + ce qu'on a vu passer, sans rien changer
+    // l'état complet d'une série + les sauvegardes vues depuis la dernière remise, sans rien changer
     const lire = (ei, si) => X.pg.evaluate(([ei, si]) => { const s = S.wkt.exs[ei].sets[si], d = JSON.parse(localStorage.getItem('ft4_wkt') || 'null');
-      const lig = document.getElementById('sr-' + ei + '-' + si), inps = lig ? lig.querySelectorAll('.sinp') : [];
+      const lig = document.getElementById('sr-' + ei + '-' + si), inps = lig ? lig.querySelectorAll('.sinp') : [], b = window.__brut;
       return { kg: s.kg, reps: s.reps, done: !!s.done, rm1: s.rm1, disque: d && d.exs ? [d.exs[ei].sets[si].kg, d.exs[ei].sets[si].reps, !!d.exs[ei].sets[si].done] : null,
-        affiche: [inps[0] ? inps[0].value : null, inps[1] ? inps[1].value : null], up: window.__up.slice(),
+        affiche: [inps[0] ? inps[0].value : null, inps[1] ? inps[1].value : null], ecritures: b.length - 1, doublons: b.filter((x, i) => i > 0 && x === b[i - 1]).length,
         // toutes les sauvegardes où CETTE série est « faite » : ses valeurs
         faits: window.__snaps.filter(x => x[ei] && x[ei][si] && x[ei][si].done).map(x => [x[ei][si].kg, x[ei][si].reps]),
-        autres: S.wkt.exs.map((e, a) => e.sets.map((z, b) => (a === ei && b === si) ? null : [z.kg, z.reps, !!z.done])) }; }, [ei, si]);
+        autres: S.wkt.exs.map((e, a) => e.sets.map((z, c) => (a === ei && c === si) ? null : [z.kg, z.reps, !!z.done])) }; }, [ei, si]);
+    // la remise : repos arrêté, champ quitté, PUIS les compteurs repartent de l'état enregistré (1ᵉʳ élément de `__brut`)
     const remise = () => X.pg.evaluate(() => { stopRest(); if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
-      window.__up.length = 0; window.__snaps.length = 0; });
+      window.__snaps.length = 0; window.__brut = [localStorage.getItem('ft4_wkt')]; });
+    // le geste : ✓ de la série, par un clic PROGRAMMATIQUE (le focus reste où il est, comme un toucher sur iPhone) ; rend le nombre
+    // d'écritures 300 ms après — la lecture finale, 600 à 900 ms plus tard, doit en trouver autant (rien d'écrit après le geste)
+    const valider = (sel) => X.pg.evaluate(async (sel) => { document.querySelector(sel).click(); await new Promise(r => setTimeout(r, 300)); return window.__brut.length - 1; }, sel);
     // ce que la séance DOIT contenir, mis à jour après chaque cas : une autre série qui bouge = une valeur rangée au mauvais endroit
     const ATTENDU = [[[60, 8, false], [60, 8, false], [60, 8, false], [60, 8, false]], [[100, 5, false], [100, 5, false], [100, 5, false]]];
     const autresIntacts = (r, ei, si) => _det(r.autres) === _det(ATTENDU.map((e, a) => e.map((z, b) => (a === ei && b === si) ? null : z)));
@@ -225,58 +235,56 @@ async function ecran(t, b, PORT) {
     // cas 1 — la CHARGE modifiée juste avant ✓, champ encore actif (aucun `change`) : « 67,5 » sur 60 pré-rempli, série 1
     await remise();
     await X.pg.locator('#sr-0-0 .sinp').nth(1).click(); await X.pg.keyboard.type('67,5'); await X.pg.waitForTimeout(80);
-    const c1 = await X.pg.evaluate(async () => { const champ = document.querySelectorAll('#sr-0-0 .sinp')[1], up0 = window.__up.length;
+    const c1 = await X.pg.evaluate(async () => { const champ = document.querySelectorAll('#sr-0-0 .sinp')[1], kgAvant = S.wkt.exs[0].sets[0].kg, e0 = window.__brut.length - 1;
       document.querySelector('#sr-0-0 .chk').click(); await new Promise(r => setTimeout(r, 300));
-      return { avantGeste: up0, memeChamp: document.querySelectorAll('#sr-0-0 .sinp')[1] === champ, focusRendu: document.activeElement !== champ }; });
+      return { kgAvant, ecrituresAvant: e0, n: window.__brut.length - 1, memeChamp: document.querySelectorAll('#sr-0-0 .sinp')[1] === champ, focusRendu: document.activeElement !== champ }; });
     await X.pg.waitForTimeout(600);
     const r1 = await lire(0, 0);
-    t('DOM-T13a ⭐ cas 1 — charge « 67,5 » tapée sur 60 pré-rempli, ✓ touché champ ACTIF (aucun `change`) : 67,5 enregistré dès la 1ʳᵉ sauvegarde « faite », 1RM recalculé, un seul `upSet` (kg), affichage « 67.5 », rien d\'autre ne bouge',
-      c1.avantGeste === 0 && r1.kg === 67.5 && r1.reps === 8 && r1.done && r1.rm1 === await X.pg.evaluate(() => bz(67.5, 8)) && r1.faits.length >= 1
-      && r1.faits.every(f => f[0] === 67.5 && f[1] === 8) && _det(r1.up) === _det([[0, 0, 'kg', '67,5']]) && _det(r1.disque) === _det([67.5, 8, true])
-      && r1.affiche[1] === '67.5' && c1.memeChamp && c1.focusRendu && autresIntacts(r1, 0, 0), _det({ c1, r1 }));
+    t('DOM-T13a ⭐ cas 1 — charge « 67,5 » tapée sur 60 pré-rempli, ✓ touché champ ACTIF (rien d\'enregistré avant le geste) : 67,5 dès la 1ʳᵉ sauvegarde « faite », 1RM recalculé, affichage « 67.5 », AUCUNE sauvegarde qui ne change rien (le champ quitté ne réécrit pas sa valeur), rien après le geste, rien d\'autre ne bouge',
+      c1.kgAvant === 60 && c1.ecrituresAvant === 0 && r1.kg === 67.5 && r1.reps === 8 && r1.done && r1.rm1 === await X.pg.evaluate(() => bz(67.5, 8))
+      && r1.faits.length >= 1 && r1.faits.every(f => f[0] === 67.5 && f[1] === 8) && r1.doublons === 0 && r1.ecritures === c1.n
+      && _det(r1.disque) === _det([67.5, 8, true]) && r1.affiche[1] === '67.5' && c1.memeChamp && c1.focusRendu && autresIntacts(r1, 0, 0), _det({ c1, r1 }));
     ATTENDU[0][0] = [67.5, 8, true];
 
-    // cas 3 (strict) — les DEUX champs tapés SANS AUCUN `change` (ni « Entrée », ni sortie de champ), puis ✓ — série 2.
-    // Une frappe émet toujours `input` (clavier, dictée, correction) : on l'émet ; un `.value` posé par un script, sans `input`,
-    // n'est PAS une saisie (DOM-T13g) — c'était l'hypothèse de la 1ʳᵉ écriture de ce témoin, corrigée après session_integrity T1.
+    // cas 11 (31/10) — « 62,5 » tapé puis champ QUITTÉ (sa valeur est enregistrée à la sortie, comme avant), ✓ ensuite sans champ
+    // actif : la validation ne réécrit rien. Sur 227f090e : une 2ᵉ sauvegarde complète, identique (la marque de frappe relisait
+    // « 62,5 », différent du texte « 62.5 » du modèle) — mesuré le 31/10.
     await remise();
-    const c3 = await X.pg.evaluate(async () => { const [rp, kg] = document.querySelectorAll('#sr-0-1 .sinp');
-      const tape = (el, v) => { el.value = v; el.dispatchEvent(new Event('input', { bubbles: true })); };
-      tape(rp, '6'); kg.focus(); tape(kg, '70');
-      document.querySelector('#sr-0-1 .chk').click(); await new Promise(r => setTimeout(r, 300));
-      return { memes: document.querySelectorAll('#sr-0-1 .sinp')[0] === rp && document.querySelectorAll('#sr-0-1 .sinp')[1] === kg }; });
-    await X.pg.waitForTimeout(900);    // laisse passer un éventuel `change` tardif ou l'avance automatique (700 ms)
-    const r3 = await lire(0, 1);
-    t('DOM-T13b ⭐ cas 3 (strict) — répétitions ET charge tapées sans aucun `change`, puis ✓ : 6 × 70 enregistrés, 1RM recalculé, EXACTEMENT deux `upSet` (reps, kg), toute sauvegarde « faite » porte 6 × 70, rien n\'est écrit après le geste',
-      r3.kg === 70 && r3.reps === 6 && r3.done && r3.rm1 === await X.pg.evaluate(() => bz(70, 6)) && r3.faits.length >= 1 && r3.faits.every(f => f[0] === 70 && f[1] === 6)
-      && _det(r3.up.map(x => x.join('|')).sort()) === _det(['0|1|kg|70', '0|1|reps|6']) && _det(r3.disque) === _det([70, 6, true]) && _det(r3.affiche) === _det(['6', '70'])
-      && c3.memes && autresIntacts(r3, 0, 1), _det({ c3, r3 }));
-    ATTENDU[0][1] = [70, 6, true];
+    await X.pg.locator('#sr-0-1 .sinp').nth(1).click(); await X.pg.keyboard.type('62,5');
+    await X.pg.locator('#sr-0-1 .sinp').nth(0).click(); await X.pg.waitForTimeout(80);
+    const c11 = await X.pg.evaluate(() => { const kgQuitte = S.wkt.exs[0].sets[1].kg; document.activeElement.blur(); return { kgQuitte, e0: window.__brut.length - 1 }; });
+    c11.n = await valider('#sr-0-1 .chk');
+    await X.pg.waitForTimeout(600);
+    const r11 = await lire(0, 1);
+    t('DOM-T13i ⭐ « 62,5 » tapé puis champ QUITTÉ (UNE sauvegarde, à la sortie), ✓ ensuite : 62,5 dans toute sauvegarde « faite », AUCUNE sauvegarde qui ne change rien — la valeur déjà enregistrée n\'est pas réécrite à la validation',
+      c11.kgQuitte === 62.5 && c11.e0 === 1 && r11.kg === 62.5 && r11.reps === 8 && r11.done && r11.faits.length >= 1 && r11.faits.every(f => f[0] === 62.5 && f[1] === 8)
+      && r11.doublons === 0 && r11.ecritures === c11.n && _det(r11.disque) === _det([62.5, 8, true]) && autresIntacts(r11, 0, 1), _det({ c11, r11 }));
+    ATTENDU[0][1] = [62.5, 8, true];
 
-    // cas 3 (clavier réel) — répétitions tapées, puis on touche le champ KG (le `change` des répétitions part), « 72,5 », ✓ — série 3
+    // cas 3 — les DEUX champs tapés au clavier : les répétitions (on touche ensuite le champ KG, leur `change` part), « 72,5 », ✓ — série 3
     await remise();
     await X.pg.locator('#sr-0-2 .sinp').nth(0).click(); await X.pg.keyboard.type('9');
     await X.pg.locator('#sr-0-2 .sinp').nth(1).click(); await X.pg.keyboard.type('72,5'); await X.pg.waitForTimeout(80);
-    const upAvant = await X.pg.evaluate(() => window.__up.slice());
-    await X.pg.evaluate(async () => { document.querySelector('#sr-0-2 .chk').click(); await new Promise(r => setTimeout(r, 300)); });
-    await X.pg.waitForTimeout(900);
+    const avant3 = await X.pg.evaluate(() => { const s = S.wkt.exs[0].sets[2]; return { kg: s.kg, reps: s.reps, ecritures: window.__brut.length - 1 }; });
+    const n3 = await valider('#sr-0-2 .chk');
+    await X.pg.waitForTimeout(900);    // laisse passer un éventuel `change` tardif ou l'avance automatique (700 ms)
     const r3c = await lire(0, 2);
-    t('DOM-T13c ⭐ cas 3 (clavier réel) — « 9 » puis « 72,5 » : les répétitions partent par leur `change` (comme avant), la charge par la validation — deux `upSet` en tout, aucun doublon, 9 × 72,5 enregistrés et affichés',
-      _det(upAvant) === _det([[0, 2, 'reps', '9']]) && _det(r3c.up) === _det([[0, 2, 'reps', '9'], [0, 2, 'kg', '72,5']]) && r3c.kg === 72.5 && r3c.reps === 9 && r3c.done
-      && r3c.faits.length >= 1 && r3c.faits.every(f => f[0] === 72.5 && f[1] === 9) && _det(r3c.disque) === _det([72.5, 9, true]) && _det(r3c.affiche) === _det(['9', '72.5'])
-      && autresIntacts(r3c, 0, 2), _det({ upAvant, r3c }));
+    t('DOM-T13c ⭐ cas 3 — « 9 » puis « 72,5 » (les deux champs tapés) : les répétitions sont enregistrées en quittant leur champ (comme avant), la charge à la validation — 9 × 72,5 enregistrés et affichés, aucune sauvegarde qui ne change rien, rien après le geste',
+      avant3.reps === 9 && avant3.kg === 60 && avant3.ecritures === 1 && r3c.kg === 72.5 && r3c.reps === 9 && r3c.done
+      && r3c.faits.length >= 1 && r3c.faits.every(f => f[0] === 72.5 && f[1] === 9) && r3c.doublons === 0 && r3c.ecritures === n3
+      && _det(r3c.disque) === _det([72.5, 9, true]) && _det(r3c.affiche) === _det(['9', '72.5']) && autresIntacts(r3c, 0, 2), _det({ avant3, r3c }));
     ATTENDU[0][2] = [72.5, 9, true];
 
     // cas 5 — « 0 » tapé sur une charge pré-remplie (60), ✓ champ actif : 0 est une valeur, pas une case vide — série 4
     await remise();
     await X.pg.locator('#sr-0-3 .sinp').nth(1).click(); await X.pg.keyboard.type('0'); await X.pg.waitForTimeout(80);
-    await X.pg.evaluate(async () => { document.querySelector('#sr-0-3 .chk').click(); await new Promise(r => setTimeout(r, 300)); });
+    const n5 = await valider('#sr-0-3 .chk');
     await X.pg.waitForTimeout(900);
     const r5 = await lire(0, 3);
     const g5 = await X.pg.evaluate(() => { renderExBlocks(); const i = document.querySelectorAll('#sr-0-3 .sinp'); return [i[0] ? i[0].value : null, i[1] ? i[1].value : null]; });
-    t('DOM-T13d ⭐ cas 5 — « 0 » tapé sur 60 pré-rempli puis ✓ : la charge enregistrée est 0 (la valeur tapée), un seul `upSet`, aucun 1RM inventé, rien ne la remplace après (ni 60, ni suggestion) ; l\'affichage est celui du rendu global',
-      r5.kg === 0 && r5.reps === 8 && r5.done && r5.rm1 === undefined && _det(r5.up) === _det([[0, 3, 'kg', '0']]) && r5.faits.length >= 1 && r5.faits.every(f => f[0] === 0 && f[1] === 8)
-      && _det(r5.disque) === _det([0, 8, true]) && _det(r5.affiche) === _det(g5) && autresIntacts(r5, 0, 3), _det({ r5, global: g5 }));
+    t('DOM-T13d ⭐ cas 5 — « 0 » tapé sur 60 pré-rempli puis ✓ : la charge enregistrée est 0 (la valeur tapée), aucun 1RM inventé, rien ne la remplace après (ni 60, ni suggestion), aucune sauvegarde qui ne change rien ; l\'affichage est celui du rendu global',
+      r5.kg === 0 && r5.reps === 8 && r5.done && r5.rm1 === undefined && r5.faits.length >= 1 && r5.faits.every(f => f[0] === 0 && f[1] === 8)
+      && r5.doublons === 0 && r5.ecritures === n5 && _det(r5.disque) === _det([0, 8, true]) && _det(r5.affiche) === _det(g5) && autresIntacts(r5, 0, 3), _det({ r5, global: g5 }));
     ATTENDU[0][3] = [0, 8, true];
 
     // cas 10 — DÉ-validation pendant une saisie active : série 1 (faite à 67,5), « 75 » tapé dans sa charge, ✓ touché champ ACTIF
@@ -287,69 +295,86 @@ async function ecran(t, b, PORT) {
       document.querySelector('#sr-0-0 .chk').click(); await new Promise(r => setTimeout(r, 300));
       const s = S.wkt.exs[0].sets[0];
       return { done: !!s.done, kgModele: s.kg, memeChamp: document.querySelectorAll('#sr-0-0 .sinp')[1] === champ, focus: document.activeElement === champ,
-        valeur: champ.value, rempl: window.__rempl - r0, up: window.__up.slice() }; });
+        valeur: champ.value, rempl: window.__rempl - r0 }; });
     await X.pg.evaluate(() => { document.activeElement.blur(); });    // la personne quitte le champ : son `change` part, comme avant
     await X.pg.waitForTimeout(300);
     const r10 = await lire(0, 0);
-    t('DOM-T13f ⭐ cas 10 — dé-validation PENDANT la saisie (« 75 » tapé, champ actif) : la série repasse « à faire », le champ n\'est ni détruit ni réécrit (focus, « 75 »), puis en le quittant 75 entre dans CETTE série — aucune perte, aucune autre série touchée',
+    t('DOM-T13f ⭐ cas 10 — dé-validation PENDANT la saisie (« 75 » tapé, champ actif) : la série repasse « à faire », le champ n\'est ni détruit ni réécrit (focus, « 75 »), puis en le quittant 75 entre dans CETTE série — aucune perte, aucune sauvegarde qui ne change rien, aucune autre série touchée',
       !c10.done && c10.memeChamp && c10.focus && c10.valeur === '75' && c10.rempl === 0 && (c10.kgModele === 67.5 || c10.kgModele === 75)
-      && r10.kg === 75 && !r10.done && _det(r10.up) === _det([[0, 0, 'kg', '75']]) && _det(r10.disque) === _det([75, 8, false])
-      && autresIntacts(r10, 0, 0), _det({ c10, r10 }));
+      && r10.kg === 75 && !r10.done && r10.doublons === 0 && _det(r10.disque) === _det([75, 8, false]) && autresIntacts(r10, 0, 0), _det({ c10, r10 }));
     t('DOM-T13z aucune erreur de page (bloc B bis)', X.errs.length === 0, X.errs.slice(0, 2).join(' | '));
     await X.cx.close();
   }
 
-  /* ── B ter. LA SUGGESTION GRISE N'EST PAS UNE VALEUR TAPÉE (cas 7) — et un « 0 » tapé ne laisse pas la place à la suggestion ── */
+  /* ── B ter. LA SUGGESTION GRISE N'EST PAS UNE VALEUR TAPÉE (cas 7) — et un « 0 » tapé ne laisse pas la place à la suggestion ──
+     ↪️ ADAPTÉ LE 31/10 : les appels de `upSet` ne sont plus comptés (la forme), les SAUVEGARDES le sont (voir B bis). Ajouté :
+     DOM-T13e3 — un champ VIDÉ, suggestion grise affichée, sur une série dont le modèle a une valeur : vider n'est pas taper. */
   {
     const PREV = [{ date: '2026-10-27', startHour: 18, duration: 3600, vol: 1170,
       exs: [{ name: DC, sets: [{ kg: 65, reps: 6, type: 'N', done: true }, { kg: 65, reps: 6, type: 'N', done: true }, { kg: 65, reps: 6, type: 'N', done: true }] }] }];
     const vide = () => ({ kg: 0, reps: 0, type: 'N', done: false });
     const X = await ouvrir({ wkt: WKT({ exs: [{ name: DC, sets: [vide(), vide(), vide()] }] }), sessions: PREV });
     const r = await X.pg.evaluate(async () => {
-      window.__up = []; const u = window.upSet;
-      window.upSet = function (ei, si, f, v) { window.__up.push([ei, si, f, String(v)]); return u.apply(this, arguments); };
       const attendre = ms => new Promise(r => setTimeout(r, ms));
+      window.__snaps.length = 0; window.__brut = [localStorage.getItem('ft4_wkt')];
       const i0 = document.querySelectorAll('#sr-0-0 .sinp');
       const o = { ph: [i0[0].placeholder, i0[1].placeholder], val: [i0[0].value, i0[1].value] };
       document.querySelector('#sr-0-0 .chk').click(); await attendre(300);
-      const s0 = S.wkt.exs[0].sets[0];
-      o.c7 = { kg: s0.kg, reps: s0.reps, done: !!s0.done, rm1: s0.rm1, attenduRm: bz(65, 6), up: window.__up.slice(),
-        affiche: [...document.querySelectorAll('#sr-0-0 .sinp')].map(x => x.value) };
-      stopRest(); window.__up.length = 0;
+      const s0 = S.wkt.exs[0].sets[0], b = window.__brut;
+      o.c7 = { kg: s0.kg, reps: s0.reps, done: !!s0.done, rm1: s0.rm1, attenduRm: bz(65, 6),
+        // une sauvegarde où la série porterait une valeur SANS être faite = la suggestion enregistrée comme une saisie
+        commeSaisie: window.__snaps.filter(x => (x[0][0].kg || x[0][0].reps) && !x[0][0].done).length,
+        doublons: b.filter((x, i) => i > 0 && x === b[i - 1]).length, affiche: [...document.querySelectorAll('#sr-0-0 .sinp')].map(x => x.value) };
+      stopRest(); window.__snaps.length = 0; window.__brut = [localStorage.getItem('ft4_wkt')];
       return o; });
     // « 0 » tapé dans la charge VIDE de la série 2 (suggestion 65 en gris), ✓ champ actif
     await X.pg.locator('#sr-0-1 .sinp').nth(1).click(); await X.pg.keyboard.type('0'); await X.pg.waitForTimeout(80);
     const z = await X.pg.evaluate(async () => { document.querySelector('#sr-0-1 .chk').click(); await new Promise(r => setTimeout(r, 300));
-      const s = S.wkt.exs[0].sets[1]; return { kg: s.kg, reps: s.reps, done: !!s.done, rm1: s.rm1, up: window.__up.slice(), autre: S.wkt.exs[0].sets[2] }; });
-    t('DOM-T13e ⭐ cas 7 — série au modèle VIDE, suggestion grise 6 × 65 (la dernière fois), ✓ sans rien taper : la règle d\'avant s\'applique telle quelle (6 × 65, 1RM) et la saisie validée n\'a appelé AUCUN `upSet` — une suggestion n\'est pas une valeur tapée',
+      const s = S.wkt.exs[0].sets[1], b = window.__brut;
+      return { kg: s.kg, reps: s.reps, done: !!s.done, rm1: s.rm1, autre: S.wkt.exs[0].sets[2], doublons: b.filter((x, i) => i > 0 && x === b[i - 1]).length,
+        faits: window.__snaps.filter(x => x[0][1].done).map(x => [x[0][1].kg, x[0][1].reps]) }; });
+    t('DOM-T13e ⭐ cas 7 — série au modèle VIDE, suggestion grise 6 × 65 (la dernière fois), ✓ sans rien taper : la règle d\'avant s\'applique telle quelle (6 × 65, 1RM) — la suggestion n\'est jamais enregistrée comme une saisie (aucune sauvegarde où la série la porterait sans être faite), aucune sauvegarde qui ne change rien',
       _det(r.ph) === _det(['6', '65']) && _det(r.val) === _det(['', '']) && r.c7.kg === 65 && r.c7.reps === 6 && r.c7.done && r.c7.rm1 === r.c7.attenduRm
-      && r.c7.up.length === 0 && _det(r.c7.affiche) === _det(['6', '65']), _det(r));
-    t('DOM-T13e2 cas 5 + 7 — « 0 » tapé dans une charge VIDE suggérée à 65 : 0 est gardé (pas la suggestion) ; les répétitions non tapées prennent la suggestion (6), comme avant ; la série 3 n\'est pas touchée',
-      z.kg === 0 && z.reps === 6 && z.done && z.rm1 === undefined && _det(z.up) === _det([[0, 1, 'kg', '0']]) && z.autre.kg === 0 && z.autre.reps === 0 && !z.autre.done, _det(z));
+      && r.c7.commeSaisie === 0 && r.c7.doublons === 0 && _det(r.c7.affiche) === _det(['6', '65']), _det(r));
+    t('DOM-T13e2 cas 5 + 7 — « 0 » tapé dans une charge VIDE suggérée à 65 : 0 est gardé (pas la suggestion) ; les répétitions non tapées prennent la suggestion (6), comme avant ; aucune sauvegarde qui ne change rien ; la série 3 n\'est pas touchée',
+      z.kg === 0 && z.reps === 6 && z.done && z.rm1 === undefined && z.faits.length >= 1 && z.faits.every(f => f[0] === 0 && f[1] === 6) && z.doublons === 0
+      && z.autre.kg === 0 && z.autre.reps === 0 && !z.autre.done, _det(z));
+    // cas 7 bis (31/10) — la série 3 reçoit 9 répétitions (tapées, enregistrées en quittant le champ) ; on revient dans le champ, on le
+    // VIDE (la suggestion grise « 6 » réapparaît), ✓ champ actif : vider n'est pas taper, la suggestion n'est pas une saisie → 9 reste
+    await X.pg.evaluate(() => { stopRest(); });
+    await X.pg.locator('#sr-0-2 .sinp').nth(0).click(); await X.pg.keyboard.type('9');
+    await X.pg.locator('#sr-0-2 .sinp').nth(1).click(); await X.pg.waitForTimeout(80);
+    await X.pg.locator('#sr-0-2 .sinp').nth(0).click(); await X.pg.keyboard.press('Backspace'); await X.pg.waitForTimeout(80);
+    const e3 = await X.pg.evaluate(async () => { const champ = document.querySelectorAll('#sr-0-2 .sinp')[0];
+      const o = { vide: champ.value, ph: champ.placeholder, repsAvant: S.wkt.exs[0].sets[2].reps, actif: document.activeElement === champ };
+      document.querySelector('#sr-0-2 .chk').click(); await new Promise(r => setTimeout(r, 300));
+      const s = S.wkt.exs[0].sets[2]; return Object.assign(o, { reps: s.reps, kg: s.kg, done: !!s.done, affiche: champ.value }); });
+    t('DOM-T13e3 ⭐ cas 7 bis — champ des répétitions VIDÉ (suggestion grise « 6 » affichée) sur une série qui en a 9, ✓ champ actif : la série garde 9 — un champ vidé n\'est pas une saisie et la suggestion n\'est pas une valeur tapée ; la charge vide prend la suggestion (65), comme avant',
+      e3.vide === '' && e3.ph === '6' && e3.repsAvant === 9 && e3.actif && e3.reps === 9 && e3.kg === 65 && e3.done && e3.affiche === '9', _det(e3));
     t('DOM-T13y aucune erreur de page (bloc B ter)', X.errs.length === 0, X.errs.slice(0, 2).join(' | '));
     await X.cx.close();
   }
 
   /* ── B quater. UN MODÈLE CHANGÉ PAR LE CODE (sans redessin) N'EST PAS ÉCRASÉ PAR L'ANCIEN TEXTE AFFICHÉ ──────────────────────
      Trouvé au GO TESTS par `session_integrity` T1 (témoin historique, inchangé) : son harnais écrit les séries dans le modèle sans
-     redessiner, puis valide. « Tapée » veut dire : le champ a reçu une FRAPPE (événement `input`), pas « son texte diffère du
-     modèle ». Vert sur la base aussi (elle ne relisait pas l'écran quand le modèle était rempli) : c'est une non-régression. */
+     redessiner, puis valide. Vert sur la base aussi (elle ne relisait pas l'écran quand le modèle était rempli) : non-régression.
+     ↪️ ADAPTÉ LE 31/10 : il n'y a plus de « marque de frappe » — la validation ne relit que le champ ACTIF. Les témoins vérifient
+     le comportement (aucune sauvegarde ne ramène l'ancien texte), plus le nombre d'appels de `upSet`. */
   {
     const X = await ouvrir();
     const r = await X.pg.evaluate(async () => {
-      window.__up = []; const u = window.upSet;
-      window.upSet = function (ei, si, f, v) { window.__up.push([ei, si, f, String(v)]); return u.apply(this, arguments); };
       const s = S.wkt.exs[0].sets[0]; s.kg = 77; s.reps = 9; persist();      // le code change le modèle ; l'écran affiche encore 8 × 60
+      window.__snaps.length = 0;
       const avant = [...document.querySelectorAll('#sr-0-0 .sinp')].map(x => x.value);
       document.querySelector('#sr-0-0 .chk').click(); await new Promise(r => setTimeout(r, 300));
       const d = JSON.parse(localStorage.getItem('ft4_wkt') || 'null');
-      return { avant, kg: s.kg, reps: s.reps, done: !!s.done, rm1: s.rm1, attenduRm: bz(77, 9), up: window.__up.slice(),
+      return { avant, kg: s.kg, reps: s.reps, done: !!s.done, rm1: s.rm1, attenduRm: bz(77, 9), sauvegardes: window.__snaps.map(x => [x[0][0].kg, x[0][0].reps]),
         disque: d && d.exs ? [d.exs[0].sets[0].kg, d.exs[0].sets[0].reps, !!d.exs[0].sets[0].done] : null,
         affiche: [...document.querySelectorAll('#sr-0-0 .sinp')].map(x => x.value) }; });
-    t('DOM-T13g ⭐ le modèle changé par le CODE sans redessiner (l\'écran affiche encore 8 × 60) puis ✓ sans rien taper : 9 × 77 gardés, aucun `upSet`, et l\'écran rattrape le modèle — l\'ancien texte affiché ne remplace rien en silence',
-      _det(r.avant) === _det(['8', '60']) && r.kg === 77 && r.reps === 9 && r.done && r.rm1 === r.attenduRm && r.up.length === 0
+    t('DOM-T13g ⭐ le modèle changé par le CODE sans redessiner (l\'écran affiche encore 8 × 60) puis ✓ sans rien taper : 9 × 77 gardés — aucune sauvegarde ne porte 8 × 60 —, et l\'écran rattrape le modèle : l\'ancien texte affiché ne remplace rien en silence',
+      _det(r.avant) === _det(['8', '60']) && r.kg === 77 && r.reps === 9 && r.done && r.rm1 === r.attenduRm && r.sauvegardes.length >= 1 && r.sauvegardes.every(x => x[0] === 77 && x[1] === 9)
       && _det(r.disque) === _det([77, 9, true]) && _det(r.affiche) === _det(['9', '77']), _det(r));
-    // une frappe se consomme UNE fois : « 61 » tapé et validé, dé-validé, puis le code change la charge (77) sans redessiner,
+    // une frappe ne sert qu'UNE fois : « 61 » tapé et validé, dé-validé, puis le code change la charge (77) sans redessiner,
     // puis ✓ sans rien taper → 77 reste (le « 61 » déjà enregistré ne revient pas l'écraser)
     await X.pg.evaluate(() => { stopRest(); });
     await X.pg.locator('#sr-0-1 .sinp').nth(1).click(); await X.pg.keyboard.type('61'); await X.pg.waitForTimeout(80);
@@ -357,12 +382,61 @@ async function ecran(t, b, PORT) {
       const attendre = ms => new Promise(r => setTimeout(r, ms)), s = S.wkt.exs[0].sets[1], chk = () => document.querySelector('#sr-0-1 .chk');
       chk().click(); await attendre(200); const apres1 = s.kg; stopRest();
       chk().click(); await attendre(120); const defaite = !s.done;
-      s.kg = 77; persist(); window.__up.length = 0;
+      s.kg = 77; persist(); window.__snaps.length = 0;
       chk().click(); await attendre(200); stopRest();
-      return { apres1, defaite, kg: s.kg, done: !!s.done, up: window.__up.slice() }; });
-    t('DOM-T13h une frappe se consomme UNE fois : « 61 » enregistré à sa validation ; dé-validée, la série reçoit 77 du code (sans redessin) ; re-validée sans frappe → 77 reste, aucun `upSet`',
-      h.apres1 === 61 && h.defaite && h.kg === 77 && h.done && h.up.length === 0, _det(h));
+      return { apres1, defaite, kg: s.kg, done: !!s.done, sauvegardes: window.__snaps.map(x => x[0][1].kg) }; });
+    t('DOM-T13h une frappe ne sert qu\'UNE fois : « 61 » enregistré à sa validation ; dé-validée, la série reçoit 77 du code (sans redessin) ; re-validée sans frappe → 77 reste, et aucune sauvegarde ne ramène 61',
+      h.apres1 === 61 && h.defaite && h.kg === 77 && h.done && h.sauvegardes.length >= 1 && h.sauvegardes.every(k => k === 77), _det(h));
     t('DOM-T13x aucune erreur de page (bloc B quater)', X.errs.length === 0, X.errs.slice(0, 2).join(' | '));
+    await X.cx.close();
+  }
+
+  /* ── B quinquies. QUITTER UN CHAMP ENREGISTRE CE QUI EST TAPÉ (31/10/2026 — le PRÉALABLE de la simplification S2) ────────────
+     La validation ne relit plus que le champ ACTIF de la série validée. C'est juste si, et seulement si, toute autre frappe est déjà
+     dans le modèle. Ce témoin le MESURE pour 13 façons réelles de quitter un champ (clavier et souris de Playwright, toucher simulé) :
+     pour chacune, soit le champ tapé est encore le champ actif (la validation le lira), soit sa valeur est dans le modèle ET sur le
+     téléphone. Les trois sorties par ✓ vérifient aussi la série validée.
+     Ce qu'il NE COUVRE PAS : le clavier de l'iPhone (« OK », flèches ⌃ ⌄, dictée, toucher ✓ clavier ouvert) ni l'app mise en
+     arrière-plan — le navigateur de test garde la page visible et focalisée (mesuré le 31/10, même dans une vraie fenêtre sous
+     Xvfb). La recette iPhone reste obligatoire. */
+  {
+    const huit = () => [0, 1, 2, 3, 4, 5, 6, 7].map(() => S8(60, 8)), six = () => [0, 1, 2, 3, 4, 5].map(() => S8(100, 5));
+    const X = await ouvrir({ wkt: WKT({ exs: [{ name: DC, sets: huit() }, { name: SQ, sets: six() }] }) });
+    const champ = (ei, si, j) => X.pg.locator('#sr-' + ei + '-' + si + ' .sinp').nth(j);
+    const tape = async (ei, si, j, txt) => { await champ(ei, si, j).click({ timeout: 4000 }); await X.pg.keyboard.type(txt); await X.pg.waitForTimeout(60); };
+    const carte = ei => X.pg.evaluate(ei => { stopRest(); if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); _expandedEx = ei; renderExBlocks(); }, ei);
+    // le constat : le champ tapé est-il encore ACTIF ? sinon, sa valeur est-elle dans le modèle ET sur le téléphone ?
+    const constat = (ei, si, f, v) => X.pg.evaluate(([ei, si, f, v]) => { const a = document.activeElement, lig = document.getElementById('sr-' + ei + '-' + si);
+      const actif = !!(lig && a && lig.contains(a) && [].indexOf.call(lig.querySelectorAll('.sinp'), a) === (f === 'kg' ? 1 : 0));
+      const d = JSON.parse(localStorage.getItem('ft4_wkt') || 'null'), s = S.wkt.exs[ei].sets[si], disque = d && d.exs ? d.exs[ei].sets[si][f] : null;
+      return { actif, modele: s[f], disque, done: !!s.done, ok: actif || (s[f] === v && disque === v) }; }, [ei, si, f, v]);
+    const res = {};
+    await carte(0);
+    await tape(0, 0, 1, '62,5'); await champ(0, 0, 0).click(); await X.pg.waitForTimeout(80); res.memeLigne = await constat(0, 0, 'kg', 62.5);
+    await tape(0, 1, 1, '62,5'); await champ(0, 6, 1).click(); await X.pg.waitForTimeout(80); res.autreLigne = await constat(0, 1, 'kg', 62.5);
+    await tape(0, 2, 1, '62,5'); await X.pg.keyboard.press('Tab'); await X.pg.waitForTimeout(80); res.tab = await constat(0, 2, 'kg', 62.5);
+    await tape(0, 3, 1, '62,5'); await X.pg.keyboard.press('Shift+Tab'); await X.pg.waitForTimeout(80); res.majTab = await constat(0, 3, 'kg', 62.5);
+    await tape(0, 4, 0, '7'); await X.pg.keyboard.press('Enter'); await X.pg.waitForTimeout(80); res.entreeReps = await constat(0, 4, 'reps', 7);
+    await tape(0, 5, 0, '7'); await X.pg.waitForTimeout(950); res.avanceAuto = await constat(0, 5, 'reps', 7);
+    const coin = await X.pg.locator('#ex-block-0').boundingBox();
+    await tape(0, 6, 1, '62,5'); await X.pg.mouse.click(coin.x + 6, coin.y + 6); await X.pg.waitForTimeout(80); res.clicVide = await constat(0, 6, 'kg', 62.5);
+    await tape(0, 7, 1, '62,5'); await X.pg.touchscreen.tap(coin.x + 6, coin.y + 6); await X.pg.waitForTimeout(80); res.toucherVide = await constat(0, 7, 'kg', 62.5);
+    await carte(1);
+    await tape(1, 0, 1, '102,5'); await X.pg.locator('#sr-1-0 .chk').click({ timeout: 4000 }); await X.pg.waitForTimeout(250); res.clicCoche = await constat(1, 0, 'kg', 102.5);
+    await X.pg.evaluate(() => stopRest());
+    await tape(1, 1, 1, '102,5'); await X.pg.locator('#sr-1-1 .chk').tap({ timeout: 4000 }); await X.pg.waitForTimeout(250); res.toucherCoche = await constat(1, 1, 'kg', 102.5);
+    await X.pg.evaluate(() => stopRest());
+    await tape(1, 2, 1, '102,5'); await X.pg.locator('#sr-1-3 .chk').click({ timeout: 4000 }); await X.pg.waitForTimeout(250); res.cocheAutreLigne = await constat(1, 2, 'kg', 102.5);
+    const autreValidee = await X.pg.evaluate(() => { const s = S.wkt.exs[1].sets[3]; stopRest(); return [s.kg, s.reps, !!s.done]; });
+    await tape(1, 4, 1, '102,5'); await X.pg.evaluate(() => goScreen('home', document.getElementById('nb-home'))); await X.pg.waitForTimeout(250);
+    await X.pg.evaluate(() => goScreen('log', document.getElementById('nb-log'))); await X.pg.waitForTimeout(250); res.ecranQuitte = await constat(1, 4, 'kg', 102.5);
+    await X.pg.evaluate(() => { _expandedEx = 1; renderExBlocks(); });
+    await tape(1, 5, 1, '102,5'); await X.pg.evaluate(() => document.activeElement.blur()); await X.pg.waitForTimeout(80); res.blur = await constat(1, 5, 'kg', 102.5);
+    const ko = Object.keys(res).filter(k => !res[k].ok);
+    t('DOM-T15 ⭐ préalable S2 — 13 façons réelles de quitter un champ après une frappe (autre champ de la ligne, d\'une autre ligne, Tab, Maj+Tab, Entrée sur les répétitions, avance automatique, clic et toucher dans le vide, ✓ cliqué, ✓ touché, ✓ d\'une autre ligne, changement d\'écran, `blur()`) : la valeur tapée est TOUJOURS dans le modèle et sur le téléphone — une frappe pas encore enregistrée ne reste que dans le champ actif (Chromium, pas l\'iPhone)',
+      Object.keys(res).length === 13 && ko.length === 0 && res.clicCoche.done && res.toucherCoche.done && !res.cocheAutreLigne.done && _det(autreValidee) === _det([100, 5, true]),
+      _det({ ko, res, autreValidee }));
+    t('DOM-T15z aucune erreur de page (bloc B quinquies)', X.errs.length === 0, X.errs.slice(0, 2).join(' | '));
     await X.cx.close();
   }
 
@@ -513,6 +587,113 @@ async function ecran(t, b, PORT) {
     console.log('   ℹ️ DOM-T12 (indicatif) — nœuds ajoutés sous #wkt-exs pendant ces gestes : ' + r14.noeuds + ' (avant ce lot : chaque geste recréait toutes les cartes)');
     await X.cx.close();
   }
+
+  /* ── G. LE RENDU CIBLÉ = LE RENDU GLOBAL, DANS PLUSIEURS ÉTATS (31/10/2026) ────────────────────────────────────────────────
+     DOM-T01b ne comparait que la PREMIÈRE validation. Ici chaque geste ordinaire est suivi de la comparaison, au caractère près,
+     entre la carte mise à jour sur place et celle que le rendu global produit juste après — série d'échauffement (É), série du
+     milieu (la précédente pas faite), réserve RIR, « Échec » (pastille X), dé-validation, série suivante, dernière série, réserve
+     effacée — avec une colonne « Précédent » qui montre la série EXACTE de la dernière fois. Chaque geste doit aussi être passé SUR
+     PLACE (`#wkt-exs` jamais remplacé) : sinon la comparaison ne jugerait rien. */
+  {
+    const PREV = [{ date: '2026-10-27', startHour: 18, duration: 3600, vol: 2000, exs: [{ name: DC, sets: [{ kg: 40, reps: 10, type: 'É', done: true },
+      { kg: 60, reps: 8, type: 'N', done: true }, { kg: 60, reps: 8, type: 'N', done: true }, { kg: 62.5, reps: 6, type: 'N', done: true }, { kg: 62.5, reps: 6, type: 'N', done: true }] }] }];
+    const X = await ouvrir({ sessions: PREV, wkt: WKT({ exs: [{ name: DC, sets: [{ kg: 40, reps: 10, type: 'É', done: false }, S8(60, 8), S8(60, 8), S8(62.5, 6), S8(62.5, 6)] },
+      { name: SQ, sets: [S8(100, 5), S8(100, 5)] }] }) });
+    const photo = () => X.pg.evaluate(() => { const live = document.getElementById('ex-block-0'), c = live.cloneNode(true);
+      const li = live.querySelectorAll('input'); c.querySelectorAll('input').forEach((i, k) => i.setAttribute('value', li[k].value));
+      c.querySelectorAll('textarea').forEach(ta => ta.removeAttribute('style'));   // la hauteur des notes est posée par le rendu global seul
+      return c.outerHTML; });
+    const prec = await X.pg.evaluate(() => [...document.querySelectorAll('#ex-block-0 .sprev-v')].length);
+    const etapes = [];
+    for (const [nom, src] of [['É validée (1ʳᵉ)', "document.querySelector('#sr-0-0 .chk').click()"], ['3ᵉ validée, la 2ᵉ pas faite', "document.querySelector('#sr-0-2 .chk').click()"],
+      ['réserve 2 sur la 3ᵉ', 'setRir(0,2,2)'], ['« Échec » sur la 3ᵉ (X)', "setRir(0,2,'X')"], ['3ᵉ dé-validée', "document.querySelector('#sr-0-2 .chk').click()"],
+      ['2ᵉ validée', "document.querySelector('#sr-0-1 .chk').click()"], ['dernière (5ᵉ) validée', "document.querySelector('#sr-0-4 .chk').click()"], ['réserve effacée (✕) sur la 5ᵉ', 'setRir(0,4,null)']]) {
+      const rempl = await X.pg.evaluate(async (src) => { const r0 = window.__rempl; (new Function(src))(); await new Promise(r => setTimeout(r, 120)); return window.__rempl - r0; }, src);
+      const local = await photo();
+      await X.pg.evaluate(() => renderExBlocks());
+      const glob = await photo();
+      await X.pg.evaluate(() => stopRest());
+      let i = 0; while (i < local.length && local[i] === glob[i]) i++;
+      etapes.push({ nom, surPlace: rempl === 0, egal: local === glob, ecart: local === glob ? '' : local.slice(Math.max(0, i - 50), i + 70) + ' ≠ ' + glob.slice(Math.max(0, i - 50), i + 70) });
+    }
+    const etat = await X.pg.evaluate(() => S.wkt.exs[0].sets.map(s => [s.kg, s.reps, s.type, !!s.done, s.rir === undefined ? null : s.rir]));
+    t('DOM-T16 ⭐ HUIT états, pas seulement la 1ʳᵉ validation (É, milieu, réserve, Échec X, dé-validation, suivante, dernière, réserve effacée ; « Précédent » affiché) : chaque fois la carte est mise à jour SUR PLACE et elle est IDENTIQUE, au caractère près, à celle du rendu global juste après',
+      prec >= 3 && etapes.length === 8 && etapes.every(e => e.surPlace && e.egal)
+      && _det(etat) === _det([[40, 10, 'É', true, null], [60, 8, 'N', true, null], [60, 8, 'X', false, null], [62.5, 6, 'N', false, null], [62.5, 6, 'N', true, null]]),
+      _det({ prec, ko: etapes.filter(e => !e.surPlace || !e.egal), etat }));
+    t('DOM-T16z aucune erreur de page (bloc G)', X.errs.length === 0, X.errs.slice(0, 2).join(' | '));
+    await X.cx.close();
+  }
+
+  /* ── G bis. LE CHAMP VOISIN EN SAISIE TRAVERSE PLUSIEURS GESTES (31/10/2026) — DOM-T02/T03 n'en jugeaient qu'UN ─────────── */
+  {
+    const X = await ouvrir();
+    await X.pg.locator('#sr-0-3 .sinp').nth(1).click(); await X.pg.keyboard.type('65'); await X.pg.waitForTimeout(80);
+    const r = await X.pg.evaluate(async () => {
+      const champ = document.querySelectorAll('#sr-0-3 .sinp')[1]; champ.setSelectionRange(1, 2);
+      const att = ms => new Promise(r => setTimeout(r, ms)), r0 = window.__rempl, etapes = [];
+      const note = nom => etapes.push({ nom, meme: document.activeElement === champ && champ.isConnected, val: champ.value, sel: [champ.selectionStart, champ.selectionEnd],
+        modele: S.wkt.exs[0].sets[3].kg, kbd: document.getElementById('root').classList.contains('kbd-serie') });
+      document.querySelector('#sr-0-0 .chk').click(); await att(80); note('1ʳᵉ validée');
+      setRir(0, 0, 2); await att(50); note('réserve 2');
+      document.querySelector('#sr-0-1 .chk').click(); await att(80); note('2ᵉ validée');
+      setRir(0, 1, 'X'); await att(50); note('« Échec »');
+      document.querySelector('#sr-0-1 .chk').click(); await att(80); note('2ᵉ dé-validée');
+      document.querySelector('#sr-0-2 .chk').click(); await att(80); note('3ᵉ validée');
+      stopRest(); await att(50); note('repos arrêté');
+      return { etapes, rempl: window.__rempl - r0 }; });
+    t('DOM-T16b ⭐ champ VOISIN en saisie (série 4, « 65 », sélection 1 → 2) pendant SEPT gestes (validations, réserve, « Échec », dé-validation, arrêt du repos) : à chaque étape le même champ, actif, même texte, même sélection, barre du clavier toujours posée — le modèle ne l\'a pas lu, rien n\'est reconstruit (simulation Chromium)',
+      r.rempl === 0 && r.etapes.length === 7 && r.etapes.every(e => e.meme && e.val === '65' && e.sel[0] === 1 && e.sel[1] === 2 && e.modele === 60 && e.kbd), _det(r));
+    t('DOM-T16y aucune erreur de page (bloc G bis)', X.errs.length === 0, X.errs.slice(0, 2).join(' | '));
+    await X.cx.close();
+  }
+
+  /* ── H. UN ÉCRAN QUI NE RESSEMBLE PLUS AU GABARIT, OU UNE ERREUR : RECONSTRUCTION COMPLÈTE, ET C'EST ÉCRIT (31/10/2026) ──────
+     Avant, le rendu ciblé sautait en silence un élément absent (la ligne restait fausse) et avalait ses erreurs (`return false`
+     muet). Il refuse maintenant — l'appelant reconstruit la carte — et l'écrit : console à chaque fois, journal d'erreurs de
+     Profil → Admin (clé existante `ft4_errlog`) une seule fois par chargement. Rien n'est montré à la personne. */
+  {
+    const X = await ouvrir({ wkt: WKT({ exs: [{ name: DC, sets: [0, 1, 2, 3, 4, 5, 6].map(() => S8(60, 8)) }, { name: SQ, sets: [S8(100, 5)] }] }) });
+    const r = await X.pg.evaluate(async () => {
+      const att = ms => new Promise(r => setTimeout(r, ms)), journal = () => JSON.parse(localStorage.getItem('ft4_errlog') || '[]').filter(x => /rendu ciblé/.test(x.m)).length;
+      localStorage.removeItem('ft4_errlog');
+      // chaque cas : un élément que le rendu ciblé vérifie disparaît de l'écran (désynchronisé), puis une série est validée par son ✓
+      const cas = [['1RM de la série 2', '#sr-0-1 .srm', 1, '#sr-0-1 .srm'], ['pastille de la série 3', '#sr-0-2 .stype', 2, '#sr-0-2 .stype'],
+        ['✓ d\'une AUTRE série (la 7ᵉ)', '#sr-0-6 .chk', 3, '#sr-0-6 .chk'], ['méta de la carte', '#ex-block-0 .ex-meta', 4, '#ex-block-0 .ex-meta'],
+        ['une ligne entière (la 7ᵉ)', '#sr-0-6', 5, '#sr-0-6'], ['champ de charge de la série validée', '#sr-0-0 .sinp:nth-of-type(2)', 0, '#sr-0-0 input.sinp + input.sinp']];
+      const o = [];
+      for (const [nom, sel, si, revient] of cas) {
+        const el = document.querySelector(sel); const present = !!el; if (el) el.remove();
+        const r0 = window.__rempl;
+        document.querySelector('#sr-0-' + si + ' .chk').click(); await att(120);
+        o.push({ nom, present, rempl: window.__rempl - r0, revenu: !!document.querySelector(revient), done: !!S.wkt.exs[0].sets[si].done, journal: journal() });
+        stopRest();
+      }
+      return o; });
+    const avert = X.warns.filter(w => /rendu ciblé refusé/.test(w));
+    t('DOM-T17 ⭐ SIX éléments que le rendu ciblé vérifie, retirés de l\'écran un à un (1RM, pastille, ✓ d\'une autre série, méta de la carte, ligne entière, champ de la série validée) : chaque validation reconstruit la carte (l\'élément revient) et la série est faite ; chaque refus est écrit dans la console, UNE seule fois dans le journal d\'erreurs (Profil → Admin) ; rien pour la personne (aucune erreur de page)',
+      r.length === 6 && r.every(c => c.present && c.rempl > 0 && c.revenu && c.done && c.journal === 1) && avert.length === 6 && X.errs.length === 0,
+      _det({ ko: r.filter(c => !(c.present && c.rempl > 0 && c.revenu && c.done && c.journal === 1)), avert: avert.length }));
+    await X.cx.close();
+  }
+  {
+    const X = await ouvrir();
+    const r = await X.pg.evaluate(async () => {
+      localStorage.removeItem('ft4_errlog');
+      const orig = window._renderExHtml; let appels = 0;
+      window._renderExHtml = function () { if (!appels++) throw new Error('panne simulée du gabarit'); return orig.apply(this, arguments); };
+      const r0 = window.__rempl;
+      document.querySelector('#sr-0-0 .chk').click(); await new Promise(r => setTimeout(r, 120));
+      window._renderExHtml = orig;
+      const lig = document.getElementById('sr-0-0');
+      const o = { appels, rempl: window.__rempl - r0, done: !!S.wkt.exs[0].sets[0].done, doneRow: lig.classList.contains('done-row'), chk: lig.querySelector('.chk').textContent,
+        journal: JSON.parse(localStorage.getItem('ft4_errlog') || '[]').filter(x => /rendu ciblé/.test(x.m) && /panne simulée/.test(x.m)).length };
+      stopRest(); return o; });
+    const avert = X.warns.filter(w => /rendu ciblé refusé/.test(w) && /panne simulée/.test(w));
+    t('DOM-T18 ⭐ une ERREUR pendant le rendu ciblé (gabarit en panne, une fois) : la carte est reconstruite, la série validée s\'affiche faite — et l\'erreur est écrite (console, journal d\'erreurs), sans rien montrer à la personne (aucune erreur de page)',
+      r.appels >= 2 && r.rempl > 0 && r.done && r.doneRow && r.chk === '✓' && avert.length === 1 && r.journal === 1 && X.errs.length === 0, _det({ r, avert }));
+    await X.cx.close();
+  }
 }
 
 /* ── TÉMOINS DE SOURCE (le code SEUL : commentaires retirés) ─────────────────────────────────────────────── */
@@ -528,8 +709,10 @@ function source(t, ROOT, fs, path) {
   t('DOM-S2 le rendu ciblé n\'invente aucune règle : il refuse les groupes, les dropsets et le mode « Grouper », et prend la carte du MÊME gabarit que le rendu global (`_renderExHtml`)',
     /_groupMode\|\|ex\.group\|\|ex\.dropset/.test(up) && /_renderExHtml\(ei,false\)/.test(up) && !/innerHTML\s*=\s*[^;]*#wkt-exs/.test(up)
     && !/document\.getElementById\('wkt-exs'\)/.test(up), '');
-  t('DOM-S3 la valeur tapée de la série validée passe par `upSet` (mêmes conversions `numFR`, même 1RM) — aucune conversion recopiée',
-    /upSet\(ei,si,f,inp\.value\)/.test(corps(code, '_saisieVersModele')) && /if\(row&&!set\.done\)_saisieVersModele\(ei,si,row\);/.test(ts), '');
+  /* DOM-S3 RETIRÉ le 31/10/2026 (simplification S2) : il exigeait une FORME (`upSet(ei,si,f,inp.value)` dans `_saisieVersModele`).
+     Ce qu'il protégeait — la valeur tapée passe par les mêmes conversions que `change` (`numFR` : « 67,5 » → 67,5 ; même 1RM) — est
+     un COMPORTEMENT, jugé par DOM-T13a (« 67,5 » enregistré 67,5, 1RM de 67,5 × 8), T13c et T13d. Les mutations qui le visaient
+     (D07, D11) sont attrapées par les témoins d'écran (DOM-T09b, DOM-T02). */
 }
 
 module.exports = { ecran, source };

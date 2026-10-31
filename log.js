@@ -1694,7 +1694,18 @@ function renderExBlocks(){
    valeur du modèle (celle que le rendu global aurait affichée) que s'ils n'ont PAS le focus.
    Rend `false` — l'appelant reconstruit alors tout, comme avant — dès que le cas n'est pas ordinaire : exercice dans un groupe
    (superset, drop, pyramide), dropset, mode « Grouper », carte repliée ou absente, nombre de séries changé depuis le geste
-   (`avant.n`), ligne manquante, ou colonne « Précédent » qui se réalignerait. */
+   (`avant.n`), ou colonne « Précédent » qui se réalignerait.
+   🛡️ Simplification du 31/10/2026 : il refuse AUSSI dès qu'un élément qu'il doit recopier (ligne, ✓, 1RM, pastille, champs de la
+   série, méta de la carte) est présent d'un côté et pas de l'autre — l'écran ne ressemble plus au gabarit, la reconstruction
+   le remet d'aplomb. Avant, il sautait l'élément en silence et la ligne restait fausse. Ce refus-là, comme une erreur, n'est
+   PAS attendu : il est écrit dans la console et une fois par chargement dans le journal d'erreurs (Profil → Admin, `_logErr`,
+   clé existante) — rien n'est montré à la personne, qui voit seulement l'écran reconstruit. */
+let _rcAlerte=false;      // une seule trace par chargement : une alerte répétée à chaque série noierait les autres erreurs du journal
+function _rcRefus(raison){
+  try{ console.warn('[WORKOUT-CORE-01] rendu ciblé refusé ('+raison+') : reconstruction complète'); }catch(e){}
+  if(!_rcAlerte&&typeof _logErr==='function'){ _rcAlerte=true; _logErr({m:'[rendu ciblé] '+String(raison).slice(0,160),f:'log.js',l:0}); }
+  return false;
+}
 function updateWorkoutSetDOM(ei,si,avant){
   try{
     const ex=S.wkt&&S.wkt.exs&&S.wkt.exs[ei];
@@ -1708,11 +1719,15 @@ function updateWorkoutSetDOM(ei,si,avant){
     const neuf=t.content, lignes=[];
     for(let k=0;k<n;k++){                                       // 1) tout vérifier avant de toucher à quoi que ce soit
       const a=document.getElementById('sr-'+ei+'-'+k), b=neuf.getElementById('sr-'+ei+'-'+k);
-      if(!a||!b||!carte.contains(a)) return false;
+      if(!a||!b||!carte.contains(a)) return _rcRefus('ligne '+(k+1)+' absente');
       const ap=a.querySelector('.sprev'), bp=b.querySelector('.sprev');
       if((ap?ap.innerHTML:'')!==(bp?bp.innerHTML:'')) return false;
+      const q=['.chk','.srm','.stype','.stype > *'].find(x=>!a.querySelector(x)!==!b.querySelector(x))
+        ||(k===si&&a.querySelectorAll('.sinp').length!==b.querySelectorAll('.sinp').length&&'.sinp');
+      if(q) return _rcRefus('ligne '+(k+1)+' : '+q);
       lignes.push([k,a,b]);
     }
+    if(!carte.querySelector('.ex-meta')!==!neuf.querySelector('.ex-meta')) return _rcRefus('.ex-meta');
     const actif=document.activeElement;
     for(const [k,a,b] of lignes){                               // 2) recopier ce qui a changé, et rien d'autre
       if(a.className!==b.className) a.className=b.className;
@@ -1737,7 +1752,7 @@ function updateWorkoutSetDOM(ei,si,avant){
     if(typeof renderLogFinish==='function') renderLogFinish();
     _renderEnteteSeance();
     return true;
-  }catch(e){ return false; }                                    // au moindre doute : la reconstruction d'avant
+  }catch(e){ return _rcRefus('erreur : '+(e&&e.message||e)); }   // au moindre doute : la reconstruction d'avant
 }
 // ⚠️ LA COLONNE « PRÉCÉDENT » DISAIT « 5×70 » SANS DIRE QUE C'ÉTAIT UN ÉCHAUFFEMENT (ft-v827).
 // Retour de Michel, capture à l'appui : « là il n'y a rien de marqué, on ne sait pas si c'est de
@@ -2023,28 +2038,31 @@ const _REPOS_PRESETS=[30,45,60,90,120];
 /* 🔢 ft-v1057 : `numFR` et pas `parseFloat` — la valeur arrive du HTML en ARGUMENT
    (`this.value`), donc elle echappait a la recherche sur `.value`. C'est le champ le
    PLUS utilise de l'app : `parseFloat('62,5')` y rendait 62, la moitie du poids. */
-function upSet(ei,si,f,v){const s=S.wkt.exs[ei].sets[si];s[f]=numFR(v)||0;if(s.kg&&s.reps)s.rm1=bz(s.kg,s.reps);persist();}
-/* ⌨️ WORKOUT-CORE-01 (arbitrage du 30/10/2026) — CE QUI EST TAPÉ DANS LA SÉRIE QU'ON VALIDE EST CE QUI EST ENREGISTRÉ.
-   Les champs n'écrivent dans le modèle qu'à l'événement `change` (`upSet`, ci-dessus). Or il peut ne pas avoir eu lieu au moment du
-   geste : « Entrée » sur KG l'empêche (`preventDefault`), et sur iPhone toucher ✓ ne retire pas forcément le focus au champ.
-   `toggleSet` ne relit l'écran que si le modèle est VIDE : une valeur pré-remplie (programme, dernière fois) modifiée puis validée
-   aussitôt gardait l'ANCIENNE valeur — et la reconstruction de l'écran effaçait ensuite le champ tapé.
-   Au geste de VALIDATION, chaque champ de CETTE série dont le texte diffère de ce que le modèle affiche passe par `upSet`, exactement
-   comme l'aurait fait `change` : mêmes conversions (`numFR`), même 1RM, même sauvegarde — aucune règle nouvelle (R2).
-   ⛔ Un champ VIDE n'est pas une valeur tapée : il garde la règle existante de `toggleSet` (modèle vide → la suggestion grise ;
-   modèle rempli → le modèle). Vide, zéro (« 0 » est une valeur) et suggestion restent trois choses distinctes.
-   ⛔ Les champs des AUTRES séries ne sont jamais lus ici : on n'enregistre que ce que la personne valide.
-   ⛔ TAPÉE = le champ a reçu une FRAPPE (`_ftTape`, posé par l'événement `input`, que tout geste de saisie émet — clavier, dictée,
-   correction — et qu'un script qui change `.value` n'émet pas). Un modèle changé par le CODE sans redessiner l'écran garde donc sa
-   valeur : l'ancien texte affiché ne la remplace pas en silence (GO TESTS du 30/10, `session_integrity` T1). ⚠️ Pas `defaultValue` :
-   app.js le recopie à chaque frappe (astuce iOS « Voulez-vous annuler la saisie ? »), mesuré. Consommée ici, la marque retombe. */
-document.addEventListener('input',e=>{ if(_estChampSerie(e.target)) e.target._ftTape=true; },true);
+/* 💾 WORKOUT-CORE-01 (31/10/2026, simplification autorisée) : une valeur numérique INCHANGÉE n'écrit rien et ne sauvegarde rien.
+   C'était le seul effet d'un tel appel : `persist()` réécrit toute la mémoire du téléphone (dont l'historique des séances) pour un
+   état identique. Or un champ quitté émet `change` même quand il dit la même chose que le modèle (« 62,5 » relu « 62.5 », ou
+   l'affichage remis au modèle à la validation, plus bas) : ces appels-là ne coûtent plus rien. Le 1RM se recalcule à chaque
+   changement réel, et à la validation (`toggleSet`). */
+function upSet(ei,si,f,v){
+  const s=S.wkt.exs[ei].sets[si], n=numFR(v)||0;
+  if(s[f]===n)return;
+  s[f]=n;if(s.kg&&s.reps)s.rm1=bz(s.kg,s.reps);persist();
+}
+/* ⌨️ WORKOUT-CORE-01 — CE QUI EST TAPÉ DANS LA SÉRIE QU'ON VALIDE EST CE QUI EST ENREGISTRÉ (S2, simplification du 31/10/2026).
+   Un champ n'écrit dans le modèle qu'à son `change` (`upSet`, ci-dessus), et le navigateur l'émet dès qu'on QUITTE un champ modifié.
+   MESURÉ le 31/10 (Chromium, 13 façons de sortir : autre champ de la ligne ou d'une autre ligne, Tab, Maj+Tab, Entrée, avance
+   automatique, clic ou toucher dans le vide, bouton, ✓ cliqué ou touché, changement d'écran, `blur()`) : la valeur est enregistrée
+   à la sortie. Une frappe pas encore enregistrée ne peut donc se trouver que dans le champ ACTIF — celui que laissent « Entrée »
+   sur KG (`preventDefault`) et ✓ touché sur iPhone (le bouton ne prend pas le focus). C'est le seul champ relu ici, et seulement
+   s'il appartient à la série validée ; il passe par `upSet` comme l'aurait fait `change` (mêmes conversions `numFR`, même 1RM).
+   ⛔ Un champ VIDE n'est pas une valeur tapée : la règle de `toggleSet` s'applique (modèle vide → la suggestion grise).
+   ⛔ Les champs NON actifs ne sont jamais relus : leur valeur est déjà dans le modèle, ou c'est le modèle que le code a changé
+   sans redessiner — un texte resté à l'écran ne le remplace pas en silence (`session_integrity` T1).
+   ⚠️ NON VÉRIFIÉ SUR IPHONE : que toute sortie de champ y émette `change` (recette). Une app mise en arrière-plan n'a pas pu être
+   reproduite ici (le navigateur de test garde la page visible) ; le champ y reste de toute façon le champ actif. */
 function _saisieVersModele(ei,si,row){
-  const set=S.wkt.exs[ei].sets[si], inps=row.querySelectorAll('.sinp');
-  [['reps',inps[0]],['kg',inps[1]]].forEach(([f,inp])=>{
-    if(inp&&inp._ftTape&&inp.value!==''&&inp.value!==String(set[f]||'')) upSet(ei,si,f,inp.value);
-    if(inp) inp._ftTape=false;
-  });
+  const a=document.activeElement, j=row.contains(a)?[].indexOf.call(row.querySelectorAll('.sinp'),a):-1;
+  if((j===0||j===1)&&a.value!=='')upSet(ei,si,j?'kg':'reps',a.value);
 }
 function toggleSet(ei,si){
   const set=S.wkt.exs[ei].sets[si];
@@ -2290,18 +2308,15 @@ function toggleSet(ei,si){
      ⌨️ VALIDER une série dont un champ a le focus : la reconstruction détruisait ce champ, ce qui fermait le clavier — le geste
      « j'ai fini cette série » garde ce comportement. La valeur tapée est déjà dans le modèle (`_saisieVersModele`) : le champ
      affiche d'abord ce que le modèle retient (ce qu'aurait affiché la reconstruction), PUIS rend le focus — un champ vidé ne peut
-     donc pas écrire 0 dans une série déjà validée. ⚠️ MESURÉ au GO TESTS (DOM-T13a/c/d, Chromium) : après une FRAPPE, quitter le
-     champ émet quand même un `change` — avec la valeur affichée, donc la même, mais c'est un 2ᵉ `upSet`, donc une sauvegarde
-     complète de plus (`persist` réécrit tout l'historique). Le gestionnaire `onchange` est retiré le temps de `blur()` (le `change`
-     y part de façon synchrone), puis remis. « Entrée » sur KG pose ensuite le focus sur la série suivante (`confirmSetAndNext`,
-     inchangé). DÉ-valider ne touche pas au champ actif : la saisie continue, son `change` partira quand on le quittera. */
+     donc pas écrire 0 dans une série déjà validée. En partant, il émet son `change` avec la valeur du modèle : `upSet` n'écrit
+     rien (valeur inchangée) — plus besoin de retirer le gestionnaire `onchange` le temps de `blur()` (simplification du 31/10).
+     « Entrée » sur KG pose ensuite le focus sur la série suivante (`confirmSetAndNext`, inchangé). DÉ-valider ne touche pas au
+     champ actif : la saisie continue, son `change` partira quand on le quittera. */
   const _actif=document.activeElement;
   if(!_avant.done&&row&&_actif&&row.contains(_actif)&&_estChampSerie(_actif)){
     const _j=[].indexOf.call(row.querySelectorAll('.sinp'),_actif);
     if(_j===0||_j===1)_actif.value=String(set[_j?'kg':'reps']||'');
-    const _oc=_actif.onchange; _actif.onchange=null;   // le modèle a déjà cette valeur : le `change` émis en partant ne la réécrit pas
     _actif.blur();
-    _actif.onchange=_oc;
   }
   if(!updateWorkoutSetDOM(ei,si,_avant))renderExBlocks();
 }
@@ -5700,10 +5715,11 @@ let restIv=null,restTot=120,restStartTs=0;
    « changement de seconde + 100 ms » : un armement PONCTUEL attend ce moment, puis installe l'intervalle (99 ms d'avance et
    899 ms de retard tolérés). ⛔ Ce n'est PAS une garantie contre iOS, qui gèle les minuteurs d'une app en arrière-plan : au
    retour, `visibilitychange` relit l'horloge et recale (voir l'écouteur, plus haut).
-   ⭐ Pendant le calage (moins d'une seconde), `restIv` porte l'armement ponctuel (`_restIvCale` le dit, pour le nettoyer avec
-   `clearTimeout`) : « `restIv` non nul ⇔ un repos est armé » reste vrai — la pastille, `renderLog`, le retour au premier plan
-   et les bancs le lisent ainsi depuis toujours. Le jeton `_restGen` rend périmé tout armement remplacé ou arrêté entre-temps. */
-let _restIvCale=false;   // true tant que `restIv` porte l'armement ponctuel du calage ; false quand c'est l'intervalle de 1 s
+   ⭐ Pendant le calage (moins d'une seconde), `restIv` porte l'armement ponctuel : « `restIv` non nul ⇔ un repos est armé » reste
+   vrai — la pastille, `renderLog`, le retour au premier plan et les bancs le lisent ainsi depuis toujours. `clearInterval` le
+   retire aussi bien que l'intervalle : armements ponctuels et intervalles sont une seule liste de minuteurs (norme HTML ; mesuré
+   dans Chromium) — l'indicateur `_restIvCale`, qui choisissait entre `clearTimeout` et `clearInterval`, est retiré (31/10/2026).
+   Le jeton `_restGen` rend périmé tout armement remplacé ou arrêté entre-temps. */
 let _restGen=0;          // jeton : change à chaque armement et à chaque arrêt — un rappel d'une autre génération ne fait rien
 let _restBeeped=false;
 let _restDoneCb=null;
@@ -5719,8 +5735,8 @@ function _restLeft(){
 // ⏱️ WORKOUT-CORE-01 — retire le métronome, qu'il soit encore en calage (armement ponctuel) ou installé (intervalle).
 function _restDesarmer(){
   _restGen++;                                                // tout rappel déjà programmé devient périmé
-  if(restIv){ if(_restIvCale) clearTimeout(restIv); else clearInterval(restIv); }
-  restIv=null; _restIvCale=false;
+  if(restIv) clearInterval(restIv);                          // l'un ou l'autre : une seule liste de minuteurs
+  restIv=null;
 }
 // ⏱️ WORKOUT-CORE-01 — (re)pose le métronome du repos en cours : d'abord un armement ponctuel jusqu'au prochain
 // « changement de seconde + 100 ms », puis l'intervalle de 1 s. Appelé là où le repos commence (`startRest`), reprend
@@ -5730,10 +5746,9 @@ function _restArmer(){
   if(!restStartTs) return;                                   // pas de repos (ou arrêté) : rien à armer
   const gen=_restGen;
   const pos=((Date.now()-restStartTs)%1000+1000)%1000;       // ms écoulées dans la seconde en cours (≥ 0 même quand « +15 s » a mis le départ dans le futur)
-  _restIvCale=true;
   restIv=setTimeout(function _restCaler(){
     if(gen!==_restGen) return;                               // périmé : un arrêt ou un autre armement est passé entre-temps
-    restIv=null; _restIvCale=false;                          // l'armement ponctuel est consommé
+    restIv=null;                                             // l'armement ponctuel est consommé
     if(!restStartTs) return;
     restIv=setInterval(_restTick,1000);
     _restTick();

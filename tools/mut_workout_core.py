@@ -6,6 +6,18 @@
      gardent les deux corrections nees d'un rouge reproduit (DOM-T13a/c/d : un `change` emis en quittant le champ refaisait un
      `upSet` ; session_integrity T1 : l'ancien texte affiche ecrasait un modele change par le code) et le cas 7 de la matrice de
      saisie (une suggestion grise n'est pas une valeur tapee).
+[!!] SIMPLIFICATION DU 31/10/2026 (autorisation conditionnelle du CTO, S2) : la saisie validee ne relit plus que le champ ACTIF,
+     `upSet` ne sauvegarde plus une valeur inchangee, la suspension de `onchange`, la marque de frappe `_ftTape` et l'indicateur
+     `_restIvCale` sont RETIRES du code. Tracabilite (rien n'est efface sans le dire) :
+       - RETIREES, leur mecanisme n'existe plus : D17 (suspension de onchange retiree), D18 (gestionnaire remis avant blur),
+         D20 (preuve de frappe ignoree), D21 (marque de frappe non retombee) — voir MUT_RETIREES, en bas de liste.
+         Ce qu'elles protegeaient reste garde : « pas de 2e sauvegarde en quittant le champ » par D22 (DOM-T13a, T13e2) ;
+         « l'ancien texte n'ecrase pas un modele change par le code » par D23 (DOM-T13g).
+       - REANCREES sur le nouveau code, meme intention : D08, D19 (sur la lecture du champ actif), W04, W05 (le calage n'est plus
+         tenu par `restIv`, donc jamais annule).
+       - AJOUTEES : W22 [equivalente] (clearTimeout au lieu de clearInterval : la preuve que `_restIvCale` etait inutile),
+         D22 a D31 (upSet non idempotent, lecture de tous les champs, refus du rendu cible muets ou absents, onchange des
+         repetitions retire).
 [!!] DANS LA COPIE MUTEE : chaque mutation est appliquee a un ARBRE COPIE, jamais au depot (BUGS.md §60).
 Point de depart : 0 rouge sur l'arbre sain, mesure d'abord ; l'arbre sain est REJOUE a la fin (banc instable = campagne refusee).
 Les mutations [deguisee] cassent l'invariant sans toucher a la ligne evidente ; [negatif] et [equivalente] ne doivent PAS
@@ -29,9 +41,10 @@ ARM_ADDRT = "  _restArmer();                  // WORKOUT-CORE-01 : le départ a 
 ARM_REGLER = "    _restArmer();                // WORKOUT-CORE-01 : nouveau départ, nouveaux changements de seconde — on recale le tic\n"
 DESARME_ARM = "  _restDesarmer();                                           // aucun doublon : l'ancien minuteur part toujours d'abord\n"
 JETON = "    if(gen!==_restGen) return;                               // périmé : un arrêt ou un autre armement est passé entre-temps\n"
-ANNULE = "  if(restIv){ if(_restIvCale) clearTimeout(restIv); else clearInterval(restIv); }"
+ANNULE = "  if(restIv) clearInterval(restIv);                          // l'un ou l'autre : une seule liste de minuteurs"
+CALAGE = "  restIv=setTimeout(function _restCaler(){\n"
 VISIBLE = "  if(restIv){ _restTick(); _restArmer(); }"
-NEUTRE = "    const _oc=_actif.onchange; _actif.onchange=null;   // le modèle a déjà cette valeur : le `change` émis en partant ne la réécrit pas\n"
+LECTURE = "  if((j===0||j===1)&&a.value!=='')upSet(ei,si,j?'kg':'reps',a.value);"
 
 MUT = [
     # ── CHR-03 : un seul metronome, 1 s, cale ──────────────────────────────────────────────────────────────────────────
@@ -41,12 +54,18 @@ MUT = [
      [(LO, "    restIv=setInterval(_restTick,1000);", "    restIv=setInterval(_restTick,250);")], 'GARDE', 'CHR-T10a', 'chr'),
     ('W03 [deguisee] le (re)armement n\'enleve plus l\'ancien minuteur (startRest s\'en sort par stopRest ; pas les autres)',
      [(LO, DESARME_ARM, "")], 'GARDE', 'CHR-T02b', 'chr'),
+    # W04 / W05 REANCREES le 31/10 (`_restIvCale` retire) : « l'armement ponctuel n'est plus annule » s'ecrit desormais en ne le
+    # tenant plus dans `restIv` (rien ne peut l'annuler) — meme intention qu'avant (l'ancienne ecriture testait le drapeau)
     ('W04 ni annulation ni jeton : un calage perime installe son intervalle apres stopRest',
-     [(LO, ANNULE, "  if(restIv&&!_restIvCale) clearInterval(restIv);"), (LO, JETON, "")], 'GARDE', 'CHR-T02c', 'chr'),
+     [(LO, CALAGE, "  restIv=-1; setTimeout(function _restCaler(){\n"), (LO, JETON, "")], 'GARDE', 'CHR-T02c', 'chr'),
     # W05 etait classee [equivalente] (attendu OK) : FAUX, mesure au GO TESTS — l'ordre exige l'annulation ET le jeton ; sans
     # annulation, 5 armements perimes restent en attente apres 5 startRest (sans effet grace au jeton), CHR-T02a les compte
     ('W05 l\'armement ponctuel n\'est plus annule (le jeton seul empeche son effet) : les armements perimes restent en attente',
-     [(LO, ANNULE, "  if(restIv&&!_restIvCale) clearInterval(restIv);")], 'GARDE', 'CHR-T02a', 'chr'),
+     [(LO, CALAGE, "  restIv=-1; setTimeout(function _restCaler(){\n")], 'GARDE', 'CHR-T02a', 'chr'),
+    ('W23 [deguisee] l\'armement ponctuel n\'est plus annule — vu par les VRAIS reveils, pas par le registre de l\'espion',
+     [(LO, CALAGE, "  restIv=-1; setTimeout(function _restCaler(){\n")], 'GARDE', 'CHR-T02d', 'chr'),
+    ('W22 [equivalente] clearTimeout au lieu de clearInterval pour retirer le metronome (une seule liste de minuteurs : `_restIvCale` etait inutile)',
+     [(LO, ANNULE, "  if(restIv) clearTimeout(restIv);")], 'OK', None, 'chr'),
     ('W06 rattrapage au retour : les vibrations des secondes sautees sont rejouees',
      [(LO, VISIBLE, "  if(restIv){ for(let k=5;k>=1;k--){ if(_restLeft()<k&&_restLeft()>0&&!_countdownSecs.has(k)){ _countdownSecs.add(k); if(navigator.vibrate)navigator.vibrate(60); } } _restTick(); _restArmer(); }")],
      'GARDE', 'CHR-T06a', 'chr'),
@@ -118,8 +137,7 @@ MUT = [
      [(LO, "  if(row&&!set.done)_saisieVersModele(ei,si,row);                // WORKOUT-CORE-01 : ce qui est TAPÉ dans la série validée l'emporte\n", "")],
      'GARDE', 'DOM-T09b', 'dom'),
     ('D08 [deguisee] un champ VIDE est pris pour une valeur (il ecrit 0)',
-     [(LO, "    if(inp&&inp._ftTape&&inp.value!==''&&inp.value!==String(set[f]||'')) upSet(ei,si,f,inp.value);",
-       "    if(inp&&inp._ftTape&&inp.value!==String(set[f]||'')) upSet(ei,si,f,inp.value);")], 'GARDE', 'DOM-T09c', 'dom'),
+     [(LO, LECTURE, "  if(j===0||j===1)upSet(ei,si,j?'kg':'reps',a.value);")], 'GARDE', 'DOM-T09c', 'dom'),
     # D09 SURVIVAIT avec DOM-T09c (chemin ordinaire : le rendu cible reecrit le champ juste apres) : la ligne protege le chemin de
     # RECONSTRUCTION contre un `change` emis apres le depart du champ — DOM-T09e le simule (dropset vers le haut)
     ('D09 [deguisee] le champ quitte ne porte pas la valeur retenue : un change differe ecrit 0 (chemin de reconstruction)',
@@ -136,20 +154,43 @@ MUT = [
     ('D13 l\'en-tete (N / M series) ne suit plus la validation',
      [(LO, "    if(typeof renderLogFinish==='function') renderLogFinish();\n    _renderEnteteSeance();\n    return true;",
        "    if(typeof renderLogFinish==='function') renderLogFinish();\n    return true;")], 'GARDE', 'DOM-T01', 'dom'),
-    ('D17 le `change` emis en quittant le champ n\'est plus neutralise (un 2e upSet, une sauvegarde complete de plus)',
-     [(LO, NEUTRE, ""), (LO, "    _actif.onchange=_oc;\n", "")], 'GARDE', 'DOM-T13a', 'dom'),
-    ('D18 [deguisee] le gestionnaire est remis AVANT de quitter le champ (meme lignes, mauvais ordre)',
-     [(LO, "    _actif.blur();\n    _actif.onchange=_oc;\n", "    _actif.onchange=_oc;\n    _actif.blur();\n")], 'GARDE', 'DOM-T13a', 'dom'),
-    ('D19 [deguisee] la suggestion grise d\'un champ vide est prise pour une valeur tapee (deux upSet de plus)',
-     [(LO, "    if(inp&&inp._ftTape&&inp.value!==''&&inp.value!==String(set[f]||'')) upSet(ei,si,f,inp.value);",
-       "    const v=inp?(inp.value||inp.placeholder):''; if(inp&&(inp._ftTape||!inp.value)&&v!==''&&v!==String(set[f]||'')) upSet(ei,si,f,v);")],
-     'GARDE', 'DOM-T13e', 'dom'),
-    ('D20 [deguisee] la preuve de frappe est ignoree : l\'ancien texte affiche ecrase un modele change par le code (session_integrity T1)',
-     [(LO, "if(inp&&inp._ftTape&&inp.value!==''", "if(inp&&inp.value!==''")], 'GARDE', 'DOM-T13g', 'dom'),
-    ('D21 la marque de frappe ne retombe pas apres usage (un texte deja enregistre ecrase un modele change ensuite par le code)',
-     [(LO, "    if(inp) inp._ftTape=false;\n", "")], 'GARDE', 'DOM-T13h', 'dom'),
+    # D19 REANCREE le 31/10 : temoin exige DOM-T13e3 (un champ vide AVEC suggestion sur une serie au modele rempli) — DOM-T13e
+    # (rien de focalise) ne peut plus la voir : la validation ne relit que le champ actif
+    ('D19 [deguisee] la suggestion grise d\'un champ vide est prise pour une valeur tapee',
+     [(LO, LECTURE, "  if(j===0||j===1){ const v=a.value||a.placeholder; if(v!=='')upSet(ei,si,j?'kg':'reps',v); }")], 'GARDE', 'DOM-T13e3', 'dom'),
+    # ── SIMPLIFICATION DU 31/10/2026 ───────────────────────────────────────────────────────────────────────────────────────
+    ('D22 `upSet` sauvegarde de nouveau une valeur INCHANGEE (le champ quitte apres validation reecrit toute la memoire)',
+     [(LO, "  if(s[f]===n)return;\n", "")], 'GARDE', 'DOM-T13a', 'dom'),
+    ('D23 la validation relit TOUS les champs de la serie, actifs ou non (l\'ancien texte ecrase un modele change par le code)',
+     [(LO, "  const a=document.activeElement, j=row.contains(a)?[].indexOf.call(row.querySelectorAll('.sinp'),a):-1;\n" + LECTURE,
+       "  row.querySelectorAll('.sinp').forEach((x,k)=>{ if(k<2&&x.value!=='')upSet(ei,si,k?'kg':'reps',x.value); });")], 'GARDE', 'DOM-T13g', 'dom'),
+    ('D24 un element a recopier qui manque a l\'ecran est saute en silence (la ligne reste fausse)',
+     [(LO, "      if(q) return _rcRefus('ligne '+(k+1)+' : '+q);\n", "")], 'GARDE', 'DOM-T17', 'dom'),
+    ('D25 [deguisee] une erreur du rendu cible est avalee sans trace (la reconstruction a lieu, personne ne le sait)',
+     [(LO, "  }catch(e){ return _rcRefus('erreur : '+(e&&e.message||e)); }", "  }catch(e){ return false; }")], 'GARDE', 'DOM-T18', 'dom'),
+    ('D26 les repetitions n\'ont plus de `change` : une frappe quittee n\'est jamais enregistree (le prealable de S2 tombe)',
+     [(LO, "enterkeyhint=\"next\" onchange=\"upSet(${ei},${si},'reps',this.value)\" ", "enterkeyhint=\"next\" ")], 'GARDE', 'DOM-T15', 'dom'),
+    ('D27 [deguisee] le refus n\'est plus ecrit dans le journal d\'erreurs (console seule : invisible sur l\'iPhone)',
+     [(LO, "  if(!_rcAlerte&&typeof _logErr==='function'){ _rcAlerte=true; _logErr({m:'[rendu ciblé] '+String(raison).slice(0,160),f:'log.js',l:0}); }\n", "")],
+     'GARDE', 'DOM-T17', 'dom'),
+    ('D28 le journal d\'erreurs recoit une ligne a CHAQUE refus (il en garde 8 : il noierait les autres erreurs)',
+     [(LO, "if(!_rcAlerte&&typeof _logErr==='function'){ _rcAlerte=true;", "if(typeof _logErr==='function'){")], 'GARDE', 'DOM-T17', 'dom'),
+    ('D29 la meta de la carte absente n\'est plus verifiee',
+     [(LO, "    if(!carte.querySelector('.ex-meta')!==!neuf.querySelector('.ex-meta')) return _rcRefus('.ex-meta');\n", "")], 'GARDE', 'DOM-T17', 'dom'),
+    ('D30 [deguisee] une ligne absente est refusee EN SILENCE (comme avant : la reconstruction a lieu, sans trace)',
+     [(LO, "      if(!a||!b||!carte.contains(a)) return _rcRefus('ligne '+(k+1)+' absente');", "      if(!a||!b||!carte.contains(a)) return false;")], 'GARDE', 'DOM-T17', 'dom'),
+    ('D31 un champ manquant dans la serie validee n\'est plus verifie',
+     [(LO, "\n        ||(k===si&&a.querySelectorAll('.sinp').length!==b.querySelectorAll('.sinp').length&&'.sinp');", ";")], 'GARDE', 'DOM-T17', 'dom'),
     ('D14 [negatif] un commentaire du rendu cible est reformule',
      [(LO, "// au moindre doute : la reconstruction d'avant", "// en cas de doute : reconstruction")], 'OK', None, 'dom'),
+]
+
+# Mutations RETIREES le 31/10/2026 (leur mecanisme a quitte le code) — gardees ici pour la tracabilite, jamais executees :
+MUT_RETIREES = [
+    ('D17', 'le `change` emis en quittant le champ n\'est plus neutralise', 'suspension de onchange retiree du code ; garde par D22 (DOM-T13a)'),
+    ('D18', 'le gestionnaire est remis AVANT de quitter le champ', 'meme mecanisme retire ; garde par D22 (DOM-T13a)'),
+    ('D20', 'la preuve de frappe est ignoree (session_integrity T1)', '`_ftTape` retire ; garde par D23 (DOM-T13g)'),
+    ('D21', 'la marque de frappe ne retombe pas apres usage', '`_ftTape` retire ; DOM-T13h garde le comportement (une frappe ne sert qu\'une fois)'),
 ]
 
 

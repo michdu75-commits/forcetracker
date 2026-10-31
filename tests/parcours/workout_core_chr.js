@@ -137,6 +137,23 @@ async function ecran(t, b, PORT) {
     t('CHR-T02c ⛔ `stopRest()` pendant le calage : l\'armement ponctuel est annulé, RIEN ne se réarme ensuite (0 minuteur, `restIv` nul)',
       !c0.arme && !c1.arme && c1.iv.length === 0 && c1.cale === 0, _det({ c0: [c0.arme, c0.iv, c0.cale], c1: [c1.arme, c1.iv, c1.cale] }));
 
+    /* CHR-T02d (31/10/2026, simplification : `_restIvCale` retiré) — les témoins ci-dessus lisent le REGISTRE de l'espion, qui
+       oublie un minuteur dès qu'on l'annule, quelle que soit la fonction appelée. Celui-ci compte les VRAIS réveils de `_restCaler` :
+       un armement remplacé ou arrêté pendant son calage doit ne jamais partir. `_restDesarmer` l'annule par `clearInterval`, qu'il
+       s'agisse de l'armement ponctuel ou de l'intervalle (une seule liste de minuteurs, norme HTML) — vérifié ici sur la plateforme. */
+    const f0 = await compteurs(X);
+    await X.pg.evaluate(() => { for (let i = 0; i < 5; i++) startRest(45 + i); });          // 4 armements remplacés pendant leur calage
+    await X.pg.waitForTimeout(1300);
+    const f1 = await compteurs(X);
+    await X.pg.evaluate(() => { startRest(60); stopRest(); });                             // 1 armement arrêté pendant son calage
+    await X.pg.waitForTimeout(1300);
+    const f2 = await compteurs(X);
+    const plateforme = await X.pg.evaluate(() => new Promise(res => { let parti = false; const id = setTimeout(() => { parti = true; }, 30); clearInterval(id);
+      setTimeout(() => res(!parti), 150); }));
+    const reveils = [(f1.fires._restCaler || 0) - (f0.fires._restCaler || 0), (f2.fires._restCaler || 0) - (f1.fires._restCaler || 0)];
+    t('CHR-T02d ⭐ un armement de calage remplacé ou arrêté ne part JAMAIS : 5 `startRest` d\'affilée → `_restCaler` réveillé UNE fois (le dernier) ; `startRest` puis `stopRest` dans la seconde → 0 réveil — et `clearInterval` annule bien un armement ponctuel (même liste de minuteurs : `_restIvCale` n\'était pas nécessaire)',
+      reveils[0] === 1 && reveils[1] === 0 && plateforme, _det({ reveils, plateforme }));
+
     // « n'écrire que ce qui change » ne doit jamais laisser un écran FAUX : « Passer » remet la bordure du dock à zéro à la main ;
     // le repos suivant, dans le même état d'affichage, doit la réécrire (la mémoire des valeurs écrites est vidée à l'arrêt)
     const nv = await X.pg.evaluate(() => {
@@ -416,14 +433,14 @@ function source(t, ROOT, fs, path) {
     const bornes = [];
     for (const decal of [0, 1, 99, 100, 101, 550, 899, 900, 999, 1000, -1234, -100, 899100]) {
       const T0 = 1800000000000; let ici = T0 + decal; const prog = [];
-      const ctx = { restIv: null, _restIvCale: false, _restGen: 0, restStartTs: T0, ticks: 0, iv: 0, Date: { now: () => ici },
+      const ctx = { restIv: null, _restGen: 0, restStartTs: T0, ticks: 0, iv: 0, Date: { now: () => ici },
         _restTick() { ctx.ticks++; }, setTimeout(f, ms) { prog.push({ f, ms }); return 'to' + prog.length; },
         clearTimeout() {}, clearInterval() {}, setInterval(f, ms) { ctx.iv = ms; return 'iv'; } };
       let ok = false, d = null;
       try {
         vm.createContext(ctx); vm.runInContext(code + '\n_restArmer();', ctx);
         d = prog[0].ms; ici += d; prog[0].f();
-        const pose = ctx.iv === 1000 && ctx.restIv === 'iv' && !ctx._restIvCale && ctx.ticks === 1;
+        const pose = ctx.iv === 1000 && ctx.restIv === 'iv' && ctx.ticks === 1;   // (31/10 : plus de drapeau `_restIvCale` à vérifier — retiré du code)
         vm.runInContext('_restArmer();', ctx); const n0 = ctx.ticks; prog[0].f();
         const perime = ctx.ticks === n0 && ctx.restIv === 'to2';
         prog[1].f();
