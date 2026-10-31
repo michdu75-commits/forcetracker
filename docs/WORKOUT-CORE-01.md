@@ -1,5 +1,9 @@
 # WORKOUT-CORE-01 — Séance : un seul métronome de repos, rendu ciblé des séries
 
+> **Statut (31/10/2026, simplification S2 autorisée par le CTO, clôture sur GO de Michel)** : **CORRIGÉ SUR BRANCHE — commits LOCAUX,
+> NON POUSSÉS · NON INTÉGRÉ · NON PUBLIÉ · NON VÉRIFIÉ SUR IPHONE · ORANGE jusqu'à audit indépendant.** Détail au **§0** ; le statut du
+> 30/10 ci-dessous est conservé tel quel (historique).
+>
 > **Statut (30/10/2026, fin du GO TESTS)** : **CODÉ ET TESTÉ SUR BRANCHE ISOLÉE (tests ciblés, Chromium Linux) · NON INTÉGRÉ ·
 > NON PUBLIÉ · NON VÉRIFIÉ SUR IPHONE.**
 > Agent : Claude N°2 (Séance, session-C) · ordres « GO DÉVELOPPEMENT sous conditions » puis « GO TESTS CIBLÉS — AUCUNE INTÉGRATION
@@ -22,6 +26,152 @@
 | Anomalies de mutations | `f374662c` | W05 reclassée, CHR-T10f (W18 survivait), DOM-T09e (D09 survivait) — témoins seulement |
 | Bornes du calage | `ead0aef1` | CHR-S5 — exigé par l'ordre (« (1100 − pos) % 1000, en particulier pos = 100 ») |
 | Rapport GO TESTS | (commit de ce document) | résultats, recette iPhone, journal |
+| **Simplification S2** | `a9a0fb85` | saisie : seul le champ ACTIF de la série validée est relu ; `upSet` ne sauvegarde plus une valeur inchangée ; `_ftTape`, la suspension de `onchange` et `_restIvCale` retirés ; le rendu ciblé refuse et signale un écran qui ne ressemble plus au gabarit — témoins et mutations adaptés (§0) |
+| Témoin D06 | `daf0f3f4` | DOM-T19 / T19b : aucun refus signalé dans les parcours normaux (supersérie, dropset, pyramide) — tests seulement |
+| Dossier de simplification | (commit de ce §0) | ce document, §0 ; NON poussé |
+
+---
+
+## 0. Simplification du 31/10/2026 — autorisation conditionnelle du CTO (S2)
+
+> **Statut de cette étape** : **CORRIGÉ SUR BRANCHE (commits locaux, NON POUSSÉS) · NON INTÉGRÉ · NON PUBLIÉ · NON VÉRIFIÉ SUR IPHONE.**
+> Ordre : « AUTORISATION CONDITIONNELLE — SIMPLIFICATION WORKOUT-CORE-01 » (31/10), après la revue critique et l'audit
+> architectural. Statut du lot : **ORANGE jusqu'à audit indépendant du résultat.** Seul fichier applicatif : `log.js`.
+> Aucun changement de `state.js` / `persist()`, de la Nutrition, d'un fichier partagé ; aucun merge, push, déploiement ni numéro de version.
+
+### 0.1 Le préalable, mesuré AVANT de retenir S2
+
+L'ordre : « ne suppose pas qu'un champ non focalisé ne contient jamais de saisie pertinente. Vérifie ce point avant de retenir S2. »
+Mesuré dans Chromium (clavier et souris réels de Playwright, toucher simulé) : **13 façons de quitter un champ après une frappe** —
+autre champ de la même ligne, d'une autre ligne, Tab, Maj+Tab, Entrée sur les répétitions, avance automatique (700 ms), clic et
+toucher dans le vide, ✓ cliqué, ✓ touché, ✓ d'une autre ligne, changement d'écran (Accueil puis retour), `blur()` — : **la valeur
+tapée est enregistrée à chaque fois, à la sortie** (`change`). Une frappe pas encore enregistrée ne peut donc se trouver que dans le
+**champ actif**. Le changement d'écran : le champ caché reste actif un instant, puis Chromium le quitte et émet `change` (mesuré :
+enregistré en moins de 150 ms) ; au retour l'écran est reconstruit avec la valeur.
+**Pas reproduit ici** : l'app mise en arrière-plan (le navigateur de test garde la page visible et focalisée, même dans une vraie
+fenêtre sous Xvfb — essayé). Le champ y reste de toute façon le champ actif. **iPhone : non vérifié** → recette R18 à R21.
+Cette matrice est devenue un témoin permanent : **DOM-T15**.
+
+### 0.2 Ce qui a changé dans `log.js`
+
+| Mécanisme | Avant (`227f090e`) | Après | Pourquoi |
+|---|---|---|---|
+| `upSet` | réécrivait et **sauvegardait** même une valeur identique | une valeur numérique **inchangée** n'écrit rien, ne sauvegarde rien | `persist()` réécrit toute la mémoire du téléphone (dont l'historique) ; un champ quitté émet `change` même s'il dit la même chose (« 62,5 » relu « 62.5 ») |
+| `_saisieVersModele` (S2) | relisait chaque champ de la série marqué `_ftTape` | ne relit que le **champ actif** de la série validée | seul endroit où une frappe peut ne pas être enregistrée (0.1) |
+| `_ftTape` + écouteur global `input` | posait une marque à chaque frappe, consommée à la validation | **RETIRÉS** | devenus inutiles (S2) — et nuisibles : mesuré, une 2ᵉ sauvegarde complète identique quand on quittait le champ avant ✓ (DOM-T13i, T13e2 rouges sur `227f090e`) |
+| Suspension de `onchange` autour de `blur()` | retirait puis remettait le gestionnaire | **RETIRÉE** | le `change` émis en partant porte la valeur du modèle : `upSet` n'écrit plus rien |
+| `_restIvCale` | choisissait `clearTimeout` ou `clearInterval` | **RETIRÉ** : `clearInterval` pour les deux | armements ponctuels et intervalles sont une seule liste de minuteurs (norme HTML) — mesuré (CHR-T02d, mutation équivalente W22) |
+| `updateWorkoutSetDOM` | sautait en silence un élément absent, avalait ses erreurs | **refuse** (reconstruction complète) dès qu'un élément à recopier manque d'un côté ; refus et erreurs écrits (console, et une fois par chargement dans le journal d'erreurs existant, `_logErr` / `ft4_errlog`) | une ligne restait fausse sans que personne le sache (DOM-T17, T18 rouges sur `227f090e`) |
+| Conservés | — | `updateWorkoutSetDOM`, le métronome à 1 Hz, `_restGen`, `_cdownLit`, `_restVu` | ordre ; `_cdownLit` / `_restVu` : aucune comparaison mesurée faite → pas de retrait |
+
+Aucune règle métier du repos ni de la saisie n'a changé : vide ≠ 0 ≠ suggestion, autres séries jamais lues, « Entrée » inchangé,
+dé-validation inchangée.
+
+### 0.3 Témoins — adaptés, retirés, ajoutés (chaque adaptation justifiée par un comportement)
+
+- **DOM-T13a, c, d, e, e2, f, g, h — ADAPTÉS** : ils comptaient les **appels** de `upSet` (une forme du code) ; ils comptent désormais
+  les **sauvegardes** (`ft4_wkt`) : aucune sauvegarde identique à la précédente, la valeur tapée dans toute sauvegarde « faite »,
+  rien d'écrit après le geste, aucune autre série touchée. Même exigence (une valeur tapée = une écriture), et plus large (une
+  sauvegarde inutile est vue quelle que soit sa source). Aucune valeur attendue n'a changé.
+- **DOM-T13b — RETIRÉ** : il simulait une frappe dans un champ **non actif** sans `change` (valeur posée par script) ; aucune vraie
+  saisie ne produit cet état dans Chromium (DOM-T15). Le cas réel des deux champs tapés est DOM-T13c.
+- **DOM-S3 — RETIRÉ** : il exigeait une forme (`upSet(ei,si,f,inp.value)`) ; le comportement (mêmes conversions, même 1RM) est jugé
+  par DOM-T13a, c, d.
+- **CHR-S5 — ADAPTÉ** : le drapeau `_restIvCale` n'existe plus ; le comportement vérifié (tic à +100 ms, intervalle de 1 s, rappel
+  périmé sans effet) est inchangé.
+- **AJOUTÉS** : DOM-T13i (champ quitté puis ✓ : aucune sauvegarde inutile), DOM-T13e3 (champ vidé, suggestion affichée, modèle
+  rempli : la valeur reste), DOM-T15 (les 13 sorties de champ), DOM-T16 (le rendu ciblé égal au rendu global dans **8 états** :
+  échauffement, milieu, réserve, Échec X, dé-validation, suivante, dernière, réserve effacée — colonne « Précédent » affichée),
+  DOM-T16b (un champ voisin garde focus, texte et sélection pendant **7 gestes**), DOM-T17 (**6 éléments** retirés un à un :
+  reconstruction + trace), DOM-T18 (erreur simulée : reconstruction + trace), CHR-T02d (un armement remplacé ou arrêté ne part
+  **jamais** : vrais réveils, pas le registre de l'espion), et — au GO de clôture de Michel — **DOM-T19** (supersérie, dropset ↓,
+  dropset ↑, pyramide : 18 gestes, **aucun refus signalé**, cartes de dropset identiques au rendu global) et **DOM-T19b** (aucun
+  refus signalé dans les **18** contextes normaux du banc ; le bloc H, qui casse l'écran exprès, est exclu).
+
+**Sur l'ancien code de la branche (`227f090e`) avec ces témoins : 78 verts / 4 rouges** — DOM-T13i et T13e2 (une sauvegarde
+identique de trop), DOM-T17 (la ligne reste sans son 1RM, aucune trace), DOM-T18 (aucune trace de l'erreur). Sur la base `e2b942f3` (sans le lot), avec les témoins finaux : **43 verts / 41 rouges** (16 CHR, 25 DOM) — les comportements
+que le lot apporte. DOM-T15 y est vert : « quitter un champ enregistre la frappe » est une propriété du navigateur et des gestionnaires
+existants, que S2 utilise sans la changer ; DOM-T19 / T19b y sont verts sans objet (la base n'a pas de filet).
+
+### 0.4 Mutations — `tools/mut_workout_core.py` (traçabilité)
+
+- **Retirées** (leur mécanisme a quitté le code, gardées dans `MUT_RETIREES`) : D17, D18 (suspension), D20, D21 (`_ftTape`). Ce
+  qu'elles protégeaient reste gardé : D22 (`upSet` non idempotent → DOM-T13a), D23 (lecture de tous les champs → DOM-T13g).
+- **Réancrées, même intention** : D08 et D19 (sur la lecture du champ actif ; D19 exige désormais DOM-T13e3), W04 et W05
+  (l'armement de calage n'est plus tenu par `restIv`, donc jamais annulé).
+- **Ajoutées** : W22 [équivalente : `clearTimeout` au lieu de `clearInterval` doit survivre — la preuve que `_restIvCale` était
+  inutile], W23 (calage non annulé vu par CHR-T02d), D22 à D31 (sauvegarde d'une valeur inchangée, lecture de tous les champs,
+  élément manquant sauté, erreur avalée, `change` des répétitions retiré, refus non écrit au journal, journal inondé, méta non
+  vérifiée, ligne absente refusée en silence, champ manquant non vérifié).
+
+**Campagne complète, jouée SEULE** (`MUT_J=1`, 50 mutations, ≈ 1 h 25) : **49 / 50 conformes**, arbre sain 0 rouge au départ ET au
+rejeu final (banc stable). W22 [équivalente] a bien **survécu** (la preuve que `_restIvCale` était inutile) ; W23 et W05 (calage
+jamais annulé) rougissent sur CHR-T02d et CHR-T02a.
+**La non-conformité : D06** (« le rendu ciblé accepte les dropsets ») — `GARDE sans DOM-T07b` : rouge sur le seul témoin de FORME
+DOM-S2. Cause, reproduite dans une copie : un dropset non exclu passe désormais par le filet du rendu ciblé, qui repère que ses
+lignes n'ont pas les mêmes éléments que le gabarit (« ligne 1 : .chk ») et **reconstruit** la carte — l'écran reste juste, donc
+DOM-T07b reste vert — mais le refus est **signalé** (console, journal d'erreurs) **dans un usage normal**. Défaut **du témoin**, pas du
+code : l'exclusion explicite des dropsets est toujours là.
+**Traité au GO de clôture** : DOM-T19 / T19b ajoutés, vérifiés sur le code sain (0 faux signalement), puis exigés pour D06 :
+**D06 conforme** (rouge sur DOM-T19, T19b et DOM-S2) ; D14 [négatif] reste vert ; arbre sain stable. Les 48 autres résultats
+restent valables tels quels : les témoins ajoutés sont purement additifs (aucune assertion existante modifiée).
+**Aucun défaut D06 démontré dans l'application → aucune correction de code.**
+
+### 0.5 Bancs voisins et contrôles
+
+Jouée SEULE, sous garde réseau, sur une copie du commit `daf0f3f4` (l'arbre n'a pas changé pendant la suite : 0 fichier modifié
+au début et à la fin) :
+
+| Contrôle | Résultat | Durée |
+|---|---|---|
+| Banc du lot `chr,dom` (arbre final) | **84 OK / 0 rouge** | 168 s |
+| Base `e2b942f3`, témoins finaux | 43 OK / 41 rouges (attendus, voir §0.3) | 168 s |
+| 16 bancs voisins : `seance_repos` 61 · `rir_superset` 52 · `seance_ux` 69 · `ux_d086` 122 · `ux_integration` 69 · `cc01_dropset` 31 · `seance_recette` 93 · `seance_chiffres` 102 · `seance_date` 25 · `session_integrity` 93 · `debrief_provenance` 24 · `nut_punch01` 36 · `aides_audit` 18 · `ml_a` 34 · `ml_b` 60 · `lot3` 87 | **976 OK / 0 rouge** | ≈ 24 min |
+| Passe réduite du runner (14 blocs) | **632 ✅ / 0 ❌** | 193 s |
+| `tools/mut_rir_superset.py` M2, M3, M5, M11, M8 (les seules ancrées dans une fonction touchée : M2, M11 dans `toggleSet`) | **5 / 5 conformes**, arbre sain stable | 472 s |
+| `tools/mut_seance_repos.py` | non rejouée : aucune de ses 52 ancres n'est dans une fonction touchée par S2 (vérifié statiquement) | — |
+
+`session_integrity` T1 — le témoin historique qui avait fait naître la marque `_ftTape` — reste vert sans elle : S2 couvre son cas
+(aucun champ actif → le modèle changé par le code est gardé). Pas de passe D-031 complète (non autorisée) ; Chromium seulement.
+
+### 0.6 Risques restants
+
+- **iPhone non vérifié.** S2 repose sur « quitter un champ émet `change` » : vrai dans Chromium sur 13 sorties ; sur iPhone, rien
+  n'est mesuré (clavier « OK », flèches ⌃ ⌄, dictée, app mise en arrière-plan, verrouillage). Si iOS quittait un champ **sans**
+  émettre `change`, la frappe serait perdue à la validation **comme sur `e2b942f3`** (l'ancienne marque `_ftTape` l'aurait
+  rattrapée). Recette R18 à R21.
+- `_restIvCale` : retiré sur la foi de la norme HTML et d'une mesure Chromium ; WebKit l'implémente de la même façon (non mesuré sur
+  iPhone). Même si iOS n'annulait pas l'armement ponctuel, le jeton `_restGen` le rend sans effet (CHR-S5).
+- Le journal d'erreurs (`ft4_errlog`, 8 lignes) reçoit au plus **une** ligne par chargement si le rendu ciblé refuse (désynchronisation
+  ou erreur) : signal attendu = jamais ; s'il apparaît, c'est un défaut à analyser, pas un incident pour la personne.
+- `upSet` ne recalcule plus le 1RM sur un appel qui ne change pas la valeur : sans effet observable (le 1RM est recalculé à chaque
+  changement réel et à la validation) ; seule une série DÉJÀ faite dont le 1RM serait faux à l'ouverture (aucun cas connu) ne serait
+  plus « réparée » par un `change` identique.
+- DOM-S1 / DOM-S2 restent des témoins **de forme** (comptage de `renderExBlocks()`, motifs) : non obsolètes, donc non touchés ;
+  DOM-T16 juge désormais l'identité sur place / global dans 8 états. À remplacer par des comportements lors d'une prochaine passe.
+- **R8 de la recette** (vibrations) : `navigator.vibrate` n'existe probablement pas dans Safari iOS (non vérifié ici) — si aucune
+  vibration n'est ressentie, ce n'est pas une régression du lot ; à confirmer sur l'iPhone (`'vibrate' in navigator`).
+- Les témoins de temps (CHR-T05, T09a, T10) exigent une machine non saturée : toutes les campagnes ont été jouées seules.
+
+### 0.7 Recette iPhone — ajouts (préparés, NON exécutés)
+
+| # | Geste | Attendu | Résultat |
+|---|---|---|---|
+| R18 | Taper « 62,5 » dans une charge pré-remplie (60), fermer le clavier par « OK », puis toucher ✓ | la série est validée à **62,5** | ☐ |
+| R19 | Taper les répétitions, passer à la charge par la flèche ⌄ du clavier, taper « 62,5 », toucher ✓ **clavier ouvert** | les deux valeurs tapées sont enregistrées | ☐ |
+| R20 | Taper une charge, passer sur une autre app **sans fermer le clavier**, revenir, toucher ✓ | la valeur tapée est enregistrée | ☐ |
+| R21 | Taper une charge, **verrouiller** l'iPhone, déverrouiller, toucher ✓ | la valeur tapée est enregistrée | ☐ |
+| R22 | Lancer un repos et toucher « Passer » **dans la première seconde** | rien ne repart : ni chiffre, ni vibration, ni décompte | ☐ |
+
+### 0.8 Règle #17 — cette étape seule (code applicatif : `log.js`, `227f090e` → `a9a0fb85` ; `daf0f3f4` = tests seulement)
+
+Données persistées ajoutées **0** (le journal d'erreurs `ft4_errlog` existait) · fichiers applicatifs touchés **1** · **+54 / −39**
+lignes (code seul, commentaires retirés : **+22 / −16**, net **+6** : les retraits — S2 sans `_ftTape`, la suspension,
+`_restIvCale` — font **−8** ; `upSet` sur plusieurs lignes avec son test d'idempotence **+4** ; le repli signalé du rendu ciblé
+(`_rcRefus`, vérifications de présence, erreur tracée) **+10**) ·
+anciens chemins supprimés **3** (la marque `_ftTape` et son écouteur global, la suspension de `onchange`, l'indicateur
+`_restIvCale`) · nouveau chemin **1** (`_rcRefus` : console + journal d'erreurs, une fois par chargement).
+**Cumul du lot** (`e2b942f3` → `a9a0fb85`) : **+219 / −31** (code seul **+126 / −30**).
 
 ---
 
@@ -51,6 +201,9 @@ repos est armé » (la pastille, `renderLog`, le retour au premier plan, 13 lect
 confusion possible entre les deux : `_restDesarmer` choisit `clearTimeout` ou `clearInterval` d'après `_restIvCale` (CHR-T02c, mutations
 W03 à W05).
 
+> ↪️ **31/10 (simplification S2)** : `_restIvCale` est **retiré** — `clearInterval` annule aussi l'armement ponctuel (une seule liste de
+> minuteurs, norme HTML ; CHR-T02d, mutation équivalente W22). La ligne `_restDesarmer()` du tableau ci-dessus décrit l'état du 30/10.
+
 **Inchangés** : 900 s de dépassement, ±15 s, « Régler », « Passer », tap sur GO, RIR, callbacks de fin, persistance du repos, avance
 automatique, aucun son. `_wktChronoIv` (chrono de séance) : hors périmètre, non touché.
 
@@ -75,6 +228,10 @@ comme avant — dès que le cas n'est pas ordinaire (groupe, dropset, mode « Gr
   gestionnaire `onchange` est retiré le temps du `blur()` (correctif 1 : le `change` émis en partant refaisait un `upSet`, donc une
   sauvegarde complète de plus — `persist` réécrit tout l'historique) ;
 - « Entrée » sur KG : inchangé ; **dé-valider** ne touche pas au champ actif : la saisie continue, son `change` partira en le quittant.
+
+> ↪️ **31/10 (simplification S2)** : la marque `_ftTape`, son écouteur global et la suspension de `onchange` sont **retirés** ; seul le
+> champ ACTIF de la série validée est relu (préalable mesuré : DOM-T15), et `upSet` ne sauvegarde plus une valeur inchangée. Le texte
+> ci-dessus décrit l'état du 30/10 — voir §0.2.
 
 ## 3. Tests exécutés (GO TESTS du 30/10) — témoins du lot
 
@@ -245,6 +402,8 @@ M2 GARDE (B-RSS-①b) · M3 GARDE (B-RSS-①b) · M5 GARDE (B-RSS-②a) · M11 G
 
 ## 6. Risques, limites, anomalies
 
+> ↪️ **31/10** : risques mis à jour au **§0.6** (iPhone, `_restIvCale`, journal d'erreurs, témoins de forme, R8).
+
 **Résiduels** :
 - **iPhone non vérifié** : clavier réel, vibrations, gel des minuteurs en arrière-plan, batterie — recette ci-dessous obligatoire.
 - Si un navigateur émettait le `change` de sortie de champ **après** `blur()` (et non pendant), le correctif 1 ne jouerait pas : la
@@ -265,6 +424,9 @@ kg × reps à la fin — piste, non reproduite sur le lot) ; dropset ↓ : l'ét
 **Régressions du lot** : deux, trouvées par les tests, **corrigées** (correctifs 1 et 2) ; aucune connue à ce jour.
 
 ## 7. Recette iPhone — PRÉPARÉE, NON EXÉCUTÉE
+
+> ↪️ **31/10** : ajouts **R18 à R22** au **§0.7** (sorties de champ par le clavier de l'iPhone, arrière-plan, verrouillage, arrêt du
+> repos dans la 1ʳᵉ seconde) ; R8 (vibrations) — voir §0.6.
 
 > ⛔ Rien ici n'a été vu sur un iPhone. Les témoins Chromium **simulent** le clavier (le champ garde le focus, `kbd-serie` reste posée) et
 > le gel des minuteurs (intervalle retiré + départ reculé) : ils ne prouvent ni le clavier réel, ni les vibrations ressenties, ni la
@@ -304,8 +466,12 @@ Chromium, jamais une mesure de batterie.
 - `master` non touché ; aucun push hors de la branche ; aucune opération sur la branche de Claude N°1.
 - **Retour arrière** : ne pas fusionner, ou `git revert 8d605500 18769fd2 bf077948 6523d74d` (du plus récent au plus ancien ; les
   commits de tests et de documentation n'ont aucun effet applicatif).
+  ↪️ **31/10** : avec la simplification, `git revert a9a0fb85 8d605500 18769fd2 bf077948 6523d74d` (`daf0f3f4` et ce dossier :
+  tests et documentation, sans effet applicatif). Revenir à l'état du GO TESTS seul : `git revert a9a0fb85`.
 - Décisions à consigner à l'intégration (`docs/DECISIONS.md`, hors périmètre de cet ordre) : calage « seconde + 100 ms » (D-127
   proposé) et saisie validée prioritaire — seule une frappe est une saisie (D-128 proposé).
+  ↪️ **31/10** : D-128 proposé devient « ce qui est tapé dans la série validée l'emporte : seul le champ ACTIF est relu, et une
+  valeur inchangée n'est jamais sauvegardée » (S2).
 - Règle d'or #11 : aucun geste nouveau, aucun repère déplacé → pas de pop-up proposée.
 
 **Règle #17 (code applicatif seul)** : données persistées ajoutées **0** · fichiers applicatifs touchés **1** (`log.js`) · **+203 / −30**
@@ -313,6 +479,8 @@ lignes (code seul, commentaires retirés : **+119 / −29** ; les deux correctif
 fusionnés **4** : le second intervalle (`_pillIv`) fusionné dans le métronome unique, le tic à 250 ms, les écritures inconditionnelles
 du dock / de la pastille / du cadran, la reconstruction globale pour une validation ordinaire et une réponse de réserve (repli
 conservé).
+↪️ **31/10** : compteurs de la simplification et cumul du lot au **§0.8** (cumul `e2b942f3` → `a9a0fb85` : **+219 / −31**, code seul
+**+126 / −30**).
 
 ---
 
