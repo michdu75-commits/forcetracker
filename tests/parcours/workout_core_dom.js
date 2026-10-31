@@ -41,6 +41,7 @@ const WKT = (extra) => Object.assign({ date: new Date().toISOString().slice(0, 1
 const _det = o => JSON.stringify(o);
 
 async function ecran(t, b, PORT) {
+  const normaux = [];   // les avertissements de chaque parcours NORMAL (tout sauf le bloc H, qui casse l'écran exprès) — DOM-T19b
   const ouvrir = async (opts) => {
     opts = opts || {};
     const cx = await b.newContext({ serviceWorkers: 'block', viewport: { width: 390, height: opts.h || 844 }, timezoneId: 'Europe/Paris',
@@ -62,7 +63,8 @@ async function ecran(t, b, PORT) {
           .observe(c,{childList:true,subtree:true}); });
     })();`);
     const pg = await cx.newPage(); const errs = []; pg.on('pageerror', x => errs.push(String(x.message).slice(0, 160)));
-    const warns = []; pg.on('console', m => { if (m.type() === 'warning') warns.push(m.text()); });   // les refus signalés du rendu ciblé (DOM-T17, T18)
+    const warns = []; pg.on('console', m => { if (m.type() === 'warning') warns.push(m.text()); });   // les refus signalés du rendu ciblé (DOM-T17, T18, T19)
+    if (!opts.refusAttendus) normaux.push(warns);
     await pg.goto('http://localhost:' + PORT + '/index.html'); await pg.waitForTimeout(1500);
     const X = { cx, pg, errs, warns };
     await X.pg.evaluate(() => { document.querySelectorAll('.overlay.open').forEach(o => o.classList.remove('open'));
@@ -536,6 +538,61 @@ async function ecran(t, b, PORT) {
     await X.cx.close();
   }
 
+  /* ── D bis. AUCUN REFUS SIGNALÉ DANS LES PARCOURS NORMAUX : supersérie, dropset ↓ et ↑, pyramide (31/10/2026, mutation D06) ──────
+     Les groupes et les dropsets ne passent PAS par le rendu ciblé : ils en sont exclus d'emblée, en silence, et reconstruits comme
+     avant. Le refus SIGNALÉ (console, journal d'erreurs) est fait pour l'imprévu : dans un parcours normal il ne doit JAMAIS se
+     déclencher — sinon le journal se remplit de faux signalements et le rendu ciblé se dégrade sans le dire. Ici, sur chaque
+     structure : valider, répondre à la réserve (2, « Échec », effacer), dé-valider ; et chaque carte de dropset est comparée, au
+     caractère près, au rendu global juste après. Mutation D06 (les dropsets ne sont plus exclus d'emblée) : la campagne du 31/10 l'a
+     vue survivre au témoin d'écran DOM-T07b — le filet reconstruisait la carte (écran juste), mais en signalant un refus. */
+  {
+    const supA = Object.assign({ name: DC, sets: [S8(60, 8), S8(60, 8)] }, { group: 'g1', groupType: 'super' });
+    const supB = Object.assign({ name: SQ, sets: [S8(100, 5), S8(100, 5)] }, { group: 'g1', groupType: 'super' });
+    const dBas = { name: 'Rowing Barre (Tirage Horizontal)', sets: [S8(60, 8), S8(55, 8), S8(50, 8)], dropset: { paliers: 3, pct: 10, direction: 'down' } };
+    const dHaut = { name: 'Curl Barre', sets: [S8(30, 8), S8(33, 8), S8(36, 8)], dropset: { paliers: 3, pct: 10, direction: 'up' } };
+    const pyrA = Object.assign({ name: 'Curl Haltères', sets: [S8(12, 10), S8(12, 10)] }, { group: 'g2', groupType: 'pyramid-up' });
+    const pyrB = Object.assign({ name: 'Extension Triceps', sets: [S8(20, 12), S8(20, 12)] }, { group: 'g2', groupType: 'pyramid-up' });
+    const X = await ouvrir({ wkt: WKT({ exs: [supA, supB, dBas, dHaut, pyrA, pyrB] }) });
+    const r = await X.pg.evaluate(async () => {
+      const att = ms => new Promise(r => setTimeout(r, ms));
+      const photo = ei => { const live = document.getElementById('ex-block-' + ei); if (!live || live.classList.contains('ex-mini')) return null;
+        const c = live.cloneNode(true), li = live.querySelectorAll('input');
+        c.querySelectorAll('input').forEach((i, k) => i.setAttribute('value', li[k].value));
+        c.querySelectorAll('textarea').forEach(ta => ta.removeAttribute('style')); return c.outerHTML; };
+      const ecarts = [], gestes = [];
+      // un geste : la carte de l'exercice ouverte, le geste, puis (dropsets) la carte comparée au rendu global ; repos arrêté
+      const geste = async (nom, ei, f) => { _expandedEx = ei; renderExBlocks(); await att(30);
+        f(); await att(160);
+        if (ei === 2 || ei === 3) { const loc = photo(ei); renderExBlocks(); const glob = photo(ei);
+          if (loc !== null && loc !== glob) ecarts.push(nom); }
+        stopRest(); gestes.push(nom); };
+      await geste('supersérie : A validée', 0, () => toggleSet(0, 0));
+      await geste('supersérie : B validée', 1, () => toggleSet(1, 0));
+      await geste('supersérie : réserve 2 sur A', 0, () => setRir(0, 0, 2));
+      await geste('supersérie : « Échec » sur B', 1, () => setRir(1, 0, 'X'));
+      await geste('supersérie : réserve effacée sur B', 1, () => setRir(1, 0, null));
+      await geste('supersérie : A dé-validée', 0, () => toggleSet(0, 0));
+      await geste('dropset ↓ : palier 1', 2, () => toggleSet(2, 0));
+      await geste('dropset ↓ : palier 2', 2, () => toggleSet(2, 1));
+      await geste('dropset ↓ : réserve 1 sur le palier 2', 2, () => setRir(2, 1, 1));
+      await geste('dropset ↓ : palier 2 dé-validé', 2, () => toggleSet(2, 1));
+      await geste('dropset ↑ : palier 1', 3, () => toggleSet(3, 0));
+      await geste('dropset ↑ : réserve 2', 3, () => setRir(3, 0, 2));
+      await geste('dropset ↑ : « Échec »', 3, () => setRir(3, 0, 'X'));
+      await geste('dropset ↑ : palier 1 dé-validé', 3, () => toggleSet(3, 0));
+      await geste('pyramide : A validée', 4, () => toggleSet(4, 0));
+      await geste('pyramide : B validée', 5, () => toggleSet(5, 0));
+      await geste('pyramide : réserve 3 sur A', 4, () => setRir(4, 0, 3));
+      await geste('pyramide : A dé-validée', 4, () => toggleSet(4, 0));
+      return { gestes: gestes.length, ecarts, faits: S.wkt.exs.map(e => e.sets.map(s => !!s.done)) }; });
+    const refus = X.warns.filter(w => /rendu ciblé refusé/.test(w));
+    t('DOM-T19 ⭐ D06 — supersérie, dropset ↓, dropset ↑ et pyramide : 18 gestes (validations, réserves 2 / « Échec » / effacée, dé-validations) — AUCUN refus signalé (le filet ne sert qu\'à l\'imprévu), chaque carte de dropset identique au rendu global, aucune erreur de page',
+      r.gestes === 18 && refus.length === 0 && r.ecarts.length === 0 && X.errs.length === 0
+      && _det(r.faits) === _det([[false, false], [true, false], [true, false, false], [false, false, false], [false, false], [true, false]]),
+      _det({ refus: refus.slice(0, 3), ecarts: r.ecarts, faits: r.faits, errs: X.errs.slice(0, 2) }));
+    await X.cx.close();
+  }
+
   /* ── E. RECONSTRUCTIONS STRUCTURELLES ET REPRISE ──────────────────────────────────────────────────── */
   {
     const X = await ouvrir();
@@ -653,7 +710,7 @@ async function ecran(t, b, PORT) {
      muet). Il refuse maintenant — l'appelant reconstruit la carte — et l'écrit : console à chaque fois, journal d'erreurs de
      Profil → Admin (clé existante `ft4_errlog`) une seule fois par chargement. Rien n'est montré à la personne. */
   {
-    const X = await ouvrir({ wkt: WKT({ exs: [{ name: DC, sets: [0, 1, 2, 3, 4, 5, 6].map(() => S8(60, 8)) }, { name: SQ, sets: [S8(100, 5)] }] }) });
+    const X = await ouvrir({ refusAttendus: true, wkt: WKT({ exs: [{ name: DC, sets: [0, 1, 2, 3, 4, 5, 6].map(() => S8(60, 8)) }, { name: SQ, sets: [S8(100, 5)] }] }) });
     const r = await X.pg.evaluate(async () => {
       const att = ms => new Promise(r => setTimeout(r, ms)), journal = () => JSON.parse(localStorage.getItem('ft4_errlog') || '[]').filter(x => /rendu ciblé/.test(x.m)).length;
       localStorage.removeItem('ft4_errlog');
@@ -677,7 +734,7 @@ async function ecran(t, b, PORT) {
     await X.cx.close();
   }
   {
-    const X = await ouvrir();
+    const X = await ouvrir({ refusAttendus: true });
     const r = await X.pg.evaluate(async () => {
       localStorage.removeItem('ft4_errlog');
       const orig = window._renderExHtml; let appels = 0;
@@ -694,6 +751,11 @@ async function ecran(t, b, PORT) {
       r.appels >= 2 && r.rempl > 0 && r.done && r.doneRow && r.chk === '✓' && avert.length === 1 && r.journal === 1 && X.errs.length === 0, _det({ r, avert }));
     await X.cx.close();
   }
+  /* DOM-T19b — le même invariant sur TOUS les parcours normaux de ce banc (blocs A à G bis, D bis compris) : validations, saisies,
+     sorties de champ, défilement, enchaînements, reconstructions, reprise. Seul le bloc H, qui casse l'écran exprès, en est exclu. */
+  { const tous = normaux.reduce((a, w) => a.concat(w), []).filter(w => /rendu ciblé refusé/.test(w));
+    t('DOM-T19b ⭐ aucun refus signalé dans AUCUN parcours normal du banc (' + normaux.length + ' contextes ; le bloc H, qui casse l\'écran exprès, est exclu)',
+      normaux.length >= 12 && tous.length === 0, _det(tous.slice(0, 3))); }
 }
 
 /* ── TÉMOINS DE SOURCE (le code SEUL : commentaires retirés) ─────────────────────────────────────────────── */

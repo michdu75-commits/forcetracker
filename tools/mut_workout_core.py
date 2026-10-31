@@ -130,9 +130,13 @@ MUT = [
     ('D16 [deguisee] le 1RM de TOUTES les lignes revient au modele (l\'apercu d\'une serie en saisie est ecrase)',
      [(LO, "      if(k===si&&ar&&br&&ar.textContent!==br.textContent) ar.textContent=br.textContent;",
        "      if(ar&&br&&ar.textContent!==br.textContent) ar.textContent=br.textContent;")], 'GARDE', 'DOM-T02', 'dom'),
-    ('D06 le rendu cible accepte les dropsets (la ligne du palier en cours ne change pas de place)',
+    # D06 — TEMOIN EXIGE CHANGE LE 31/10 (campagne S2 : 49/50, D06 « GARDE sans DOM-T07b ») : depuis que le rendu cible REFUSE un
+    # ecran qui ne ressemble plus au gabarit, un dropset non exclu est rattrape par ce filet — l'ecran reste juste (DOM-T07b vert),
+    # mais le refus est SIGNALE dans un parcours normal (faux signalement). DOM-T19 exige zero refus sur supersérie / dropset /
+    # pyramide ; verifie sur le code sain avant d'etre exige ici (0 refus, 18 gestes, 18 contextes normaux).
+    ('D06 le rendu cible accepte les dropsets (exclusion explicite retiree : le filet signale un refus en usage normal)',
      [(LO, "    if(!ex||!ex.sets||_groupMode||ex.group||ex.dropset) return false;", "    if(!ex||!ex.sets||_groupMode||ex.group) return false;")],
-     'GARDE', 'DOM-T07b', 'dom'),
+     'GARDE', 'DOM-T19', 'dom'),
     ('D07 la valeur tapee n\'est plus lue a la validation (l\'ancien defaut)',
      [(LO, "  if(row&&!set.done)_saisieVersModele(ei,si,row);                // WORKOUT-CORE-01 : ce qui est TAPÉ dans la série validée l'emporte\n", "")],
      'GARDE', 'DOM-T09b', 'dom'),
