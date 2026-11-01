@@ -58,7 +58,7 @@ MUT = [
      [(A, "    toast(_sauve ? _afToastAjout() : _N_MSG_JOURNAL, _sauve ? 'success' : 'error');\n  });", "    toast(_afToastAjout(), 'success');\n  });")],
      G('G4b'), 'GARDE'),
     ('J14 removeFoodEntry se tait quand la suppression n est pas ecrite',
-     [(A, "  if(!_sauve) toast(_N_MSG_JOURNAL,'error');\n}\n// Demande confirmation", "}\n// Demande confirmation")],
+     [(A, "  if(!_sauve) toast(_N_MSG_SUPPR_JOURNAL,'error');\n}\n// Demande confirmation", "}\n// Demande confirmation")],
      G('G4b'), 'GARDE'),
     ('J15 saveEditFood annonce toujours « Modifie »',
      [(A, "  toast(_sauve ? 'Modifié ✅' : _N_MSG_JOURNAL, _sauve ? 'success' : 'error');", "  toast('Modifié ✅','success');")],

@@ -1155,6 +1155,10 @@ function _cloudSync(){
       dietRestrictions:S.dietRestrictions||[],
       dietNotes:S.dietNotes||'',
       foodLog:(S.foodLog||[]).slice(-8000), // ~journal nutrition sur plusieurs annees (entrees minuscules)
+      /* 🗑️ NUT-SYNC-01 — LES SUPPRESSIONS VOLONTAIRES VOYAGENT EN CLAIR, avec le drapeau « je sais les déclarer » (`foodLogV:2`). Sans lui le serveur garde l'ancien comportement (une absence
+         dans l'envoi = un retrait, avec copie de sécurité) ; avec lui, une ABSENCE n'est plus jamais une suppression : seule une suppression DÉCLARÉE retire une ligne du journal du compte. */
+      foodSupprimes:_foodSupprimesNormaliser(S.foodSupprimes),
+      foodLogV:2,
       savedFoods:(S.savedFoods||[]).slice(0,200), // aliments favoris (re-ajout rapide)
       /* NV2-FIAB (24/10) — les masquages (« ✕ ») et la remise à zéro voyagent : des dates de départ, fusionnées par le max
          (`_nutMasquesNormaliser`). Sans eux, un aliment retiré revenait sur un autre appareil ou après « Restaurer » (N2). */
@@ -3839,6 +3843,9 @@ function _applyRestoreData(raw){
      gagne » : celle-ci effaçait une ligne locale jamais synchronisée dès que le cloud avait autant de
      lignes (`_fusionnerFoodLogRestauration`, state.js). Puis l'identité canonique (`_foodLogIdentifier`). */
   try{if(Array.isArray(d.foodLog)){S.foodLog=_fusionnerFoodLogRestauration(S.foodLog,d.foodLog).liste;_foodLogIdentifier(S.foodLog);}}catch(e){console.warn('[FT restore] foodLog',e);}
+  /* 🗑️ NUT-SYNC-01 — UNE RESTAURATION NE RAMÈNE PAS CE QUI A ÉTÉ SUPPRIMÉ À DESSEIN : les suppressions du compte s'ajoutent à celles du téléphone (union), puis le registre fait foi sur le journal
+     fusionné — les lignes du cloud comme celles du téléphone. */
+  try{ if(Array.isArray(d.foodSupprimes)) S.foodSupprimes=_foodSupprimesFusion(S.foodSupprimes,d.foodSupprimes); _foodAppliquerSuppressions(); }catch(e){console.warn('[FT restore] suppressions',e);}
   try{if(Array.isArray(d.savedFoods)&&d.savedFoods.length)S.savedFoods=d.savedFoods;}catch(e){console.warn('[FT restore] savedFoods',e);}
   /* 🙈 NV2-FIAB (24/10, décision de Michel) — CE QUI A ÉTÉ MASQUÉ OU REMIS À ZÉRO NE REVIENT PAS PAR LA RESTAURATION. Les dates
      de départ du cloud s'AJOUTENT à celles du téléphone (le plus tard gagne : rien n'est démasqué), puis les favoris qui en

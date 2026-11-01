@@ -89,6 +89,7 @@
     "exPhotos": "photos d'exercices, volumineux",
     "expandAll": "préférence d'affichage",
     "foodAiUses": "compteur d'usage, technique",
+    "foodSupprimes": "registre TECHNIQUE de synchronisation (NUT-SYNC-01) : les identités des repas supprimés à dessein, pour que la suppression se propage entre appareils. Aucune connaissance sur la personne — Milo n'en a rien à faire (le journal, lui, ne contient déjà plus ces repas).",
     "gardienStats": "Compteur de dérives du Gardien (des NOMBRES : {depuis, dernier, total, codes}). Milo n'a rien à en faire — c'est un instrument de MESURE sur lui, pas une information sur la personne : le lui donner l'inviterait à commenter son propre score, ce qui est exactement la sortie de rôle qu'on traque. Il part en revanche dans la sauvegarde cloud (ft-v945), pour mesurer les dérives chez de VRAIS utilisateurs et pas seulement chez le fondateur, dont le Milo est débridé — cousin de R9.",
     "halo": "réglage d'apparence",
     "haloColor": "réglage d'apparence",

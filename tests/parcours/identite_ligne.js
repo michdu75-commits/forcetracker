@@ -95,8 +95,22 @@ module.exports = function(t, ROOT, fs, path){
       ecrit.length===1 && ecrit[0]==='l.id', 'écrit : '+(ecrit.join(', ')||'rien'));
     /* ⛔ ELLE EXIGE L'UNICITÉ, PAS LA PRÉSENCE : un `id` en double est RÉATTRIBUÉ. Sans ça on
        rejouerait le bug exact qu'on corrige, avec une autre clé. (Trouvé par mutation.) */
-    t('B-CCCXVI ⑤bis ⭐ un identifiant en DOUBLE est réattribué (unicité, pas présence)',
-      /!vus\[cle\]/.test(b), '');
+    /* ↪️ RÉÉCRIT LE 01/11/2026 (NUT-SYNC-01) : l'ancien témoin lisait le NOM d'une variable de l'implémentation (`!vus[cle]`) — il protégeait un texte, pas l'invariant, et aurait rougi à tout
+       renommage. L'invariant (« l'unicité, pas la présence ») est maintenant MESURÉ en exécutant la vraie fonction extraite de state.js : un `id` porté par deux lignes n'est gardé que par UNE
+       — la même quel que soit l'ordre de la liste —, l'autre reçoit une identité distincte, et un `id` unique n'est jamais touché. Texte d'avant : `git show 22ccce77:tests/parcours/identite_ligne.js`. */
+    const fnTxt=(n)=>{ const m=srcS.match(new RegExp('function '+n+'\\s*\\(')); if(!m) return ''; let i=srcS.indexOf('{',m.index+m[0].length-1),p=0,j=i;
+      while(j<srcS.length){ if(srcS[j]==='{')p++; else if(srcS[j]==='}'){p--; if(!p) return srcS.slice(m.index,j+1);} j++; } return ''; };
+    let unicite=false, detail='';
+    try{
+      const F=new Function('TextEncoder', fnTxt('_empreinteFood')+fnTxt('_sha256hex')+fnTxt('_foodLogIdentifier')+'; return _foodLogIdentifier;')(TextEncoder);
+      const mk=()=>[{id:'dup-aaaaaaaa',date:'2026-10-30',name:'A',kcal:1,ts:1},{id:'dup-aaaaaaaa',date:'2026-10-30',name:'B',kcal:2,ts:2},{id:'solo-bbbbbbbb',date:'2026-10-30',name:'C',kcal:3,ts:3}];
+      const L=mk(), R=mk().reverse(); const n1=F(L), n2=F(R);
+      const gagnant=(liste)=>liste.filter(x=>x.id==='dup-aaaaaaaa').map(x=>x.name).join();
+      unicite=n1===1 && n2===1 && new Set(L.map(x=>x.id)).size===3 && L.some(x=>x.id==='solo-bbbbbbbb' && x.name==='C') && gagnant(L)===gagnant(R) && gagnant(L)!=='';
+      detail=JSON.stringify({n1,n2,L:L.map(x=>x.id),R:R.map(x=>x.id)});
+    }catch(e){ detail='plantage : '+e.message; }
+    t('B-CCCXVI ⑤bis ⭐ un identifiant en DOUBLE est réattribué (unicité, pas présence) — mesuré en exécutant la fonction, indépendant de l\'ordre de la liste',
+      unicite, detail);
   }
 
   /* ⑥ CE N'EST PAS UN DRAPEAU « MIGRATION FAITE » : une restauration peut réinjecter de

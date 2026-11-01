@@ -105,7 +105,7 @@ function serveur(o) {
     LockService: { getScriptLock: () => ({ tryLock: () => true, waitLock() {}, releaseLock() {} }) },
   };
   vm.createContext(ctx);
-  vm.runInContext(CODE_SRC, ctx, { filename: 'Code.js' });
+  vm.runInContext(o.code || CODE_SRC, ctx, { filename: 'Code.js' });   // `o.code` : une AUTRE version de Code.js (NUT-SYNC-01 : le serveur d'AVANT, pour la compatibilité) — par défaut, le vrai Code.js du dépôt
   const textes = [];
   const lire = r => {
     const t = (r && r.t != null) ? String(r.t) : String(r);
@@ -860,5 +860,9 @@ function serveurTests(t0) {
 }
 
 module.exports.serveurTests = serveurTests;
+/* NUT-SYNC-01 : le serveur en mémoire est réutilisé par le banc multi-appareils (nut_sync01.js) — mêmes services Google simulés, même compression RÉELLE. */
+module.exports.serveur = serveur;
+module.exports.preparerCode = brut => brut.replace(RE_HARD, "const PREMIUM_HARDCODED_ = ['" + FONDATEUR + "'];");
+module.exports.FONDATEUR = FONDATEUR;
 /** Point d'entrée de la passe (tests/parcours/runner.js, bloc des sources) : synchrone, aucun navigateur — 100 % serveur. */
 module.exports.source = function (t0) { serveurTests(t0); };

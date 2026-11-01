@@ -1634,16 +1634,54 @@ function _nutDeplacerVersDrive_(email, nom, sortantes) {
   if (relu !== contenu) throw new Error('relecture différente de l\'écrit');
   return nomFichier;
 }
-function _nutProtegerListe_(existing, profile, nom, recu, email) {
+/* ⭐⭐ NUT-SYNC-01 — LE REGISTRE DES SUPPRESSIONS VOLONTAIRES DU JOURNAL ([{i: identité de la ligne, t: instant}], `profile.foodSupprimes`).
+   Union, JAMAIS un retrait : une entrée reçue s'ajoute, une entrée connue ne disparaît jamais (aucune expiration — une purge ferait revenir la ligne depuis un appareil resté absent).
+   Une identité invalide (ni chaîne de 8 à 64 caractères [0-9A-Za-z-]) est ignorée. Le PLAFOND protège le stockage partagé de 512 000 octets : au-delà, les entrées DÉJÀ connues sont
+   toutes gardées, seules les NOUVELLES sont refusées — et le refus est journalisé, pas silencieux (effet : ces lignes-là pourraient revenir, jamais une perte). */
+var NUT_SUPPR_MAX_ = 3000;
+function _nutSupprimesFusion_(actuel, recu, email) {
+  var out = [], idx = Object.create(null), refusees = 0;
+  function ajouter(e, nouvelle) {
+    var i = (e && typeof e === 'object') ? e.i : e;
+    if (typeof i !== 'string' || i.length < 8 || i.length > 64 || !/^[0-9A-Za-z-]+$/.test(i)) return;
+    var t = (e && typeof e === 'object' && isFinite(+e.t) && +e.t > 0) ? Math.floor(+e.t) : 0;
+    if (idx[i] !== undefined) { var o = out[idx[i]]; if (t && (!o.t || t < o.t)) o.t = t; return; }
+    if (nouvelle && out.length >= NUT_SUPPR_MAX_) { refusees++; return; }
+    idx[i] = out.length; out.push({ i: i, t: t });
+  }
+  (Array.isArray(actuel) ? actuel : []).forEach(function(e) { ajouter(e, false); });
+  (Array.isArray(recu) ? recu : []).forEach(function(e) { ajouter(e, true); });
+  if (refusees) Logger.log('[FT GARDE-FOU foodSupprimes] ' + refusees + ' suppression(s) NOUVELLE(S) refusée(s) : plafond de ' + NUT_SUPPR_MAX_ + ' atteint');
+  return out;
+}
+function _nutProtegerListe_(existing, profile, nom, recu, email, v2) {
   var actuel = Array.isArray(profile[nom]) ? profile[nom] : [];
   if (!Array.isArray(recu)) {                              // un envoi illisible ne remplace rien (avant : stocké tel quel)
     Logger.log('[FT GARDE-FOU ' + nom + '] envoi non lisible : ignoré, liste conservée');
     return profile[nom];
   }
-  if (recu.length === 0 && actuel.length > 0) return profile[nom];   // règle existante de _pa_ : le vide ne gagne jamais
+  /* ⭐⭐ NUT-SYNC-01 — UNE SUPPRESSION DÉCLARÉE L'EMPORTE, PARTOUT ET TOUJOURS ; UNE ABSENCE N'EST PLUS UNE SUPPRESSION (clients `foodLogV:2`).
+     · pour TOUS les clients : une ligne dont l'identité est au registre n'est plus acceptée dans l'envoi (un appareil resté hors ligne, avec l'ancienne copie, ne la fait pas revenir)
+       et quitte le journal du compte (copiée en zone de récupération, motif « supprimee ») ;
+     · pour les clients V2 SEULEMENT : toute ligne du compte ABSENTE de l'envoi RESTE dans le journal actif (union) — un historique local raccourci par une panne, un appareil neuf
+       ou en retard ne retire plus rien. Les anciens clients gardent le comportement d'avant (remplacement, avec copie de sécurité) : ils ne savent pas déclarer une suppression.
+     · en cas de modification et de suppression concurrentes de la même ligne, LA SUPPRESSION GAGNE (déterministe, quel que soit l'ordre d'arrivée). */
+  var supprimees = [];
+  if (nom === 'foodLog') {
+    var tomb = Object.create(null);
+    (Array.isArray(profile.foodSupprimes) ? profile.foodSupprimes : []).forEach(function(e) { if (e && e.i) tomb[e.i] = true; });
+    var estSupp = function(l) { var id = _nutIdLigne_(l); return !!(id && tomb[id]); };
+    recu = recu.filter(function(l) { return !estSupp(l); });
+    supprimees = actuel.filter(estSupp);
+    actuel = actuel.filter(function(l) { return !estSupp(l); });
+  }
+  if (recu.length === 0 && actuel.length > 0) return nom === 'foodLog' ? actuel : profile[nom];   // règle existante de _pa_ : le vide ne gagne jamais (le journal sans ses lignes supprimées)
   var ec = _nutEcartees_(actuel, recu);
-  if (!ec.retirees.length && !ec.modifiees.length) return recu;
-  var brutal = actuel.length >= 30 && (actuel.length - ec.retirees.length) < actuel.length * 0.6;   // le seuil des séances
+  var gardees = (v2 && nom === 'foodLog') ? ec.retirees : [];          // V2 : une absence n'est pas une suppression → ces lignes RESTENT
+  var aCopier = (v2 && nom === 'foodLog') ? [] : ec.retirees;           // anciens clients : retirées, donc copiées en zone de récupération
+  var resultat = gardees.length ? recu.concat(gardees) : recu;
+  if (!aCopier.length && !ec.modifiees.length && !supprimees.length) return resultat;
+  var brutal = !(v2 && nom === 'foodLog') && actuel.length >= 30 && (actuel.length - ec.retirees.length) < actuel.length * 0.6;   // le seuil des séances
   var z = existing.recupNut || (existing.recupNut = { v: 1 });
   // On travaille sur une COPIE de la zone : si le débordement ne peut pas être mis à l'abri, rien de ce calcul n'est gardé.
   var liste = (z[nom] || []).slice();
@@ -1656,8 +1694,9 @@ function _nutProtegerListe_(existing, profile, nom, recu, email) {
     var k = cle(l); if (deja[k] > 0) { deja[k]--; return; }
     copiees++; liste.push({ t: quand, m: motif, l: JSON.parse(JSON.stringify(l)) });
   }
-  ec.retirees.forEach(function(l) { garder(l, brutal ? 'brutal' : 'retiree'); });
+  aCopier.forEach(function(l) { garder(l, brutal ? 'brutal' : 'retiree'); });
   ec.modifiees.forEach(function(l) { garder(l, 'modifiee'); });
+  supprimees.forEach(function(l) { garder(l, 'supprimee'); });
   /* ⛔ BORNÉE, ET RIEN N'EST JAMAIS JETÉ (condition 3 de Michel, 23/10) : une copie peut n'être dans AUCUNE sauvegarde
      (un repas saisi le jour même, retiré avant la nuit). Au-delà de la borne, les copies les plus ANCIENNES DÉMÉNAGENT
      dans Drive jusqu'à la moitié de la borne (un fichier par débordement, pas un par synchronisation) — RELUES d'abord,
@@ -1687,15 +1726,17 @@ function _nutProtegerListe_(existing, profile, nom, recu, email) {
     z.deplacees = (z.deplacees || 0) + n;
   }
   z[nom] = liste;
-  var e = { t: quand, liste: nom, avant: actuel.length, recu: recu.length, retirees: ec.retirees.length,
+  var e = { t: quand, liste: nom, avant: actuel.length, recu: recu.length, retirees: aCopier.length,
             modifiees: ec.modifiees.length, copiees: copiees, deplacees: n, brutal: brutal };
+  if (supprimees.length) e.supprimees = supprimees.length;   // NUT-SYNC-01 : suppressions DÉCLARÉES appliquées (copiées en zone, motif « supprimee »)
+  if (gardees.length) e.gardees = gardees.length;             // NUT-SYNC-01 : lignes absentes de l'envoi, GARDÉES dans le journal actif (clients V2)
   if (fichier) e.fichier = fichier;
   if (differe) e.differe = 'drive';                      // D-110 : accepté malgré Drive, la zone attend au-delà de sa borne
   _nutEvenement_(z, e);                                    // des NOMBRES (et un nom de fichier) : ni adresse, ni aliment
   Logger.log('[FT GARDE-FOU ' + nom + '] ' + ec.retirees.length + ' retirée(s), ' + ec.modifiees.length + ' modifiée(s) sur '
              + actuel.length + (brutal ? ' — RÉTRÉCISSEMENT BRUTAL' : '') + ' : ' + copiees + ' copie(s) en zone de récupération'
              + (n ? ', ' + n + ' copie(s) ancienne(s) déménagée(s) dans ' + fichier + ' (relu)' : ''));
-  return recu;
+  return resultat;
 }
 function _nutEvenement_(z, e) {
   var evts = z.evts || (z.evts = []);
@@ -1869,7 +1910,9 @@ function handleSaveProfile_(body) {
     if (body.dietRestrictions!== undefined) profile.dietRestrictions = _pa_(body.dietRestrictions, profile.dietRestrictions);
     if (body.dietNotes     !== undefined) profile.dietNotes     = _ps_(body.dietNotes,     profile.dietNotes);
     // 🛡️ NUT-SECURISATION-P1 : plus de `_pa_` ici — rien de ce que le serveur avait ne part sans copie (voir _nutProtegerListe_).
-    if (body.foodLog       !== undefined) profile.foodLog       = _nutProtegerListe_(existing, profile, 'foodLog',    body.foodLog,    email);
+    /* 🗑️ NUT-SYNC-01 — LES SUPPRESSIONS VOLONTAIRES D'ABORD (union, jamais un retrait), PUIS le journal : le registre doit être à jour quand la liste reçue est jugée. */
+    if (body.foodSupprimes !== undefined) profile.foodSupprimes = _nutSupprimesFusion_(profile.foodSupprimes, body.foodSupprimes, email);
+    if (body.foodLog       !== undefined) profile.foodLog       = _nutProtegerListe_(existing, profile, 'foodLog',    body.foodLog,    email, Number(body.foodLogV) >= 2);
     if (body.savedFoods    !== undefined) profile.savedFoods    = _nutProtegerListe_(existing, profile, 'savedFoods', body.savedFoods, email);
     if (body.foodAiUses    !== undefined) profile.foodAiUses    = Math.max(parseInt(body.foodAiUses)||0, parseInt(profile.foodAiUses)||0);
     /* 🫙 LES TROIS POTS IA SÉPARÉS DE LA NUTRITION (19/09/2026, phase 3.1).

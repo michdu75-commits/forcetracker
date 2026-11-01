@@ -75,6 +75,7 @@ let S={
   exSwaps:{},
   mealPlan:null,
   foodLog:[],
+  foodSupprimes:[],   // NUT-SYNC-01 : registre DURABLE des suppressions volontaires du journal [{i:id, t:instant}] — jamais purgé (voir _foodSupprimer)
   /* 🫙 L'ANCIEN POT COMMUN — GELÉ DEPUIS LE 19/09/2026 (phase 3.1).
      ⛔ Plus AUCUN code ne l'incrémente : les trois capacités IA de la Nutrition ont chacune
      le sien (ci-dessous). Il est GARDÉ, pas supprimé, pour trois raisons écrites :
@@ -163,22 +164,128 @@ function _foodIdAttr(id){ return String(id==null?'':id).replace(/[^0-9a-zA-Z-]/g
    ⛔⛔ IL NE TOUCHE QU'À L'IDENTITÉ MANQUANTE. Aucune macro, aucune date, aucun repas, aucune
    quantité, aucune portion, aucun `per100`, aucune provenance ne bouge — une ancienne ligne
    gagne uniquement ce qui lui manquait. Rend le nombre de lignes enrichies (0 = rien à faire). */
+/* 🔑⭐⭐ NUT-SYNC-01 — L'IDENTITÉ D'UNE ANCIENNE LIGNE EST DÉTERMINISTE, DONC STABLE.
+   Avant : une ligne sans `id` recevait un identifiant ALÉATOIRE à chaque chargement, et rien ne l'enregistrait si la personne ne touchait à rien — « le prochain chargement en
+   repose d'autres ». Conséquence : deux appareils (ou deux ouvertures) donnaient à la MÊME ancienne ligne deux identités différentes, donc aucune suppression ne pouvait la
+   désigner de façon sûre.
+   Maintenant : l'identité d'une ligne sans `id` est calculée À PARTIR DE TOUT SON CONTENU (`_empreinteFood` : tous les champs sauf `id`, `ts` compris) —
+   `m1-` + 32 premiers caractères hexadécimaux du SHA-256 de cette empreinte. ⛔ Jamais le nom, les calories ou la date SEULS : deux repas voulus identiques ont des `ts` différents
+   donc des empreintes différentes ; si deux lignes sont réellement indiscernables (même empreinte), elles reçoivent `…`, `…-2`, `…-3` selon leur rang — deux entrées DISTINCTES,
+   jamais fusionnées — et deux appareils qui portent le même multi-ensemble leur donnent les mêmes identités.
+   ⛔ Un `id` déjà présent n'est JAMAIS régénéré. Seule exception, indispensable à l'unicité : un `id` PORTÉ PAR PLUSIEURS lignes (donnée corrompue) n'est gardé que par UNE — celle dont
+   l'empreinte est la plus petite (indépendant de l'ordre de la liste, donc identique sur tous les appareils) ; les autres reçoivent une identité déterministe.
+   Idempotent et reprenable : rien n'est écrit ici (la sauvegarde suit au premier `persist()` naturel) ; si le chargement est interrompu, le suivant recalcule les MÊMES identités.
+   ⛔⛔ IL NE TOUCHE QU'À L'IDENTITÉ MANQUANTE OU EN DOUBLE. Aucune macro, aucune date, aucun repas, aucune quantité, aucune portion, aucun `per100`, aucune provenance ne bouge.
+   Rend le nombre de lignes dont l'identité a été posée (0 = rien à faire). */
+function _sha256hex(msg){
+  if(!_sha256hex.K){
+    const K=[], H=[]; let n=2;
+    const frac=x=>x-Math.floor(x);
+    for(let c=0;c<64;n++){
+      let premier=true; for(let d=2;d*d<=n;d++){ if(n%d===0){ premier=false; break; } }
+      if(!premier) continue;
+      if(c<8) H[c]=(frac(Math.sqrt(n))*4294967296)>>>0;
+      K[c]=(frac(Math.cbrt(n))*4294967296)>>>0; c++;
+    }
+    _sha256hex.K=K; _sha256hex.H=H;
+  }
+  const K=_sha256hex.K, octets=new TextEncoder().encode(String(msg)), l=octets.length;
+  const n=((l+9+63)>>6)<<6, m=new Uint8Array(n); m.set(octets); m[l]=0x80;
+  const dv=new DataView(m.buffer); dv.setUint32(n-8, Math.floor(l/0x20000000)); dv.setUint32(n-4, (l<<3)>>>0);
+  let h=_sha256hex.H.slice(); const w=new Uint32Array(64);
+  for(let o=0;o<n;o+=64){
+    for(let i=0;i<16;i++) w[i]=dv.getUint32(o+i*4);
+    for(let i=16;i<64;i++){
+      const x=w[i-15], y=w[i-2];
+      const s0=((x>>>7)|(x<<25))^((x>>>18)|(x<<14))^(x>>>3), s1=((y>>>17)|(y<<15))^((y>>>19)|(y<<13))^(y>>>10);
+      w[i]=(w[i-16]+s0+w[i-7]+s1)>>>0;
+    }
+    let [a,b,c,d,e,f,g,hh]=h;
+    for(let i=0;i<64;i++){
+      const S1=((e>>>6)|(e<<26))^((e>>>11)|(e<<21))^((e>>>25)|(e<<7)), ch=(e&f)^(~e&g);
+      const t1=(hh+S1+ch+K[i]+w[i])>>>0;
+      const S0=((a>>>2)|(a<<30))^((a>>>13)|(a<<19))^((a>>>22)|(a<<10)), maj=(a&b)^(a&c)^(b&c);
+      const t2=(S0+maj)>>>0;
+      hh=g; g=f; f=e; e=(d+t1)>>>0; d=c; c=b; b=a; a=(t1+t2)>>>0;
+    }
+    h=[(h[0]+a)>>>0,(h[1]+b)>>>0,(h[2]+c)>>>0,(h[3]+d)>>>0,(h[4]+e)>>>0,(h[5]+f)>>>0,(h[6]+g)>>>0,(h[7]+hh)>>>0];
+  }
+  return h.map(x=>x.toString(16).padStart(8,'0')).join('');
+}
 function _foodLogIdentifier(liste){
   if(!Array.isArray(liste)) return 0;
-  let n=0;
-  /* ⛔ ON NE FAIT PAS CONFIANCE À `id` PARCE QU'IL EST « PRÉSENT » : un `id` recopié sur deux
-     lignes (une fusion malheureuse, un futur écrivain distrait) rejouerait le bug exact qu'on
-     corrige. On exige l'UNICITÉ, et on réattribue le doublon plutôt que de le laisser passer. */
-  const vus=Object.create(null);
-  for(let i=0;i<liste.length;i++){
-    const l=liste[i]; if(!l||typeof l!=='object') continue;
-    const cle=(typeof l.id==='string' && l.id.length>=8) ? l.id : null;
-    if(cle && !vus[cle]){ vus[cle]=1; continue; }
-    const neuf=_foodLineId();
-    if(!neuf) continue;              // aucune source aléatoire : on laisse la ligne telle quelle
-    l.id=neuf; vus[neuf]=1; n++;
-  }
+  const objet=l=>!!l && typeof l==='object';
+  const valide=l=>typeof l.id==='string' && l.id.length>=8;
+  const emp=l=>_empreinteFood(l);
+  // ① un `id` porté par plusieurs lignes : une seule le garde (la plus petite empreinte), les autres sont à refaire
+  const parId=Object.create(null), aRefaire=[];
+  liste.forEach((l,i)=>{ if(objet(l) && valide(l)) (parId[l.id]=parId[l.id]||[]).push(i); });
+  Object.keys(parId).forEach(id=>{
+    const idx=parId[id]; if(idx.length<2) return;
+    const e=idx.map(i=>[emp(liste[i]),i]).sort((x,y)=> x[0]<y[0]?-1 : x[0]>y[0]?1 : x[1]-y[1]);
+    e.slice(1).forEach(x=>aRefaire.push(x[1]));
+  });
+  liste.forEach((l,i)=>{ if(objet(l) && !valide(l)) aRefaire.push(i); });
+  if(!aRefaire.length) return 0;
+  // ② les identités déjà prises (toutes les lignes qui gardent la leur)
+  const redo=new Set(aRefaire), pris=new Set();
+  liste.forEach((l,i)=>{ if(objet(l) && valide(l) && !redo.has(i)) pris.add(l.id); });
+  // ③ identité = empreinte du contenu + rang parmi les lignes de MÊME empreinte (dans l'ordre de la liste)
+  const rang=Object.create(null); let n=0;
+  aRefaire.sort((x,y)=>x-y).forEach(i=>{
+    const l=liste[i], h=_sha256hex(emp(l)).slice(0,32);
+    let r=(rang[h]||0)+1, id;
+    do{ id='m1-'+h+(r>1?'-'+r:''); r++; }while(pris.has(id));
+    rang[h]=r-1; pris.add(id); l.id=id; n++;
+  });
   return n;
+}
+
+/* 🗑️⭐⭐ NUT-SYNC-01 — UNE SUPPRESSION VOLONTAIRE EST UN FAIT ENREGISTRÉ, PAS UNE ABSENCE.
+   Avant : retirer un repas, c'était l'ABSENCE d'une ligne dans le journal envoyé. Le serveur ne pouvait pas distinguer « la personne l'a supprimé » de « cet appareil n'a pas (ou
+   plus) la ligne » — après une panne d'écriture, un historique local raccourci ou un appareil resté hors ligne, l'absence était lue comme une suppression, ou à l'inverse la
+   ligne supprimée revenait avec l'ancienne copie d'un autre appareil.
+   Maintenant : `S.foodSupprimes` = [{i:identité de la ligne, t:instant}], clé `ft4_food_supprimes`, écrite par SON écrivain (`_ecrireSuppressionsLocal`, qui dit s'il a écrit).
+     · ⛔ ELLE S'ÉCRIT AVANT LA LIGNE : `_foodSupprimer(id)` ne rend `true` que si le registre est sur le téléphone. Sinon la ligne n'est PAS retirée et l'appelant le dit — jamais une
+       réussite trompeuse, jamais une suppression « à moitié ».
+     · Le registre fait foi sur la ligne : au chargement, à chaque fusion et à chaque restauration, une ligne dont l'identité y figure est retirée (`_foodAppliquerSuppressions`). Une
+       panne qui empêche de réécrire le journal ne peut donc plus faire revenir une ligne supprimée.
+     · Il ne s'efface JAMAIS (aucune expiration : une purge ferait revenir la ligne depuis un appareil resté absent) ; une entrée coûte une soixantaine d'octets.
+     · Il VOYAGE avec la synchro (`setup.js`) et s'additionne partout (union) : la suppression gagne sur toute version de la ligne, modification comprise. */
+function _foodSupprimesNormaliser(x){
+  const out=[], idx=Object.create(null);
+  (Array.isArray(x)?x:[]).forEach(e=>{
+    const i=(e && typeof e==='object') ? e.i : e;
+    if(typeof i!=='string' || i.length<8 || i.length>64 || !/^[0-9A-Za-z-]+$/.test(i)) return;
+    const t=(e && typeof e==='object' && isFinite(+e.t) && +e.t>0) ? Math.floor(+e.t) : 0;
+    if(idx[i]!==undefined){ const o=out[idx[i]]; if(t && (!o.t || t<o.t)) o.t=t; return; }
+    idx[i]=out.length; out.push({i:i, t:t});
+  });
+  return out;
+}
+function _foodSupprimesFusion(a,b){ return _foodSupprimesNormaliser((Array.isArray(a)?a:[]).concat(Array.isArray(b)?b:[])); }
+/* Retire du journal (sur place) les lignes dont l'identité figure au registre. Rend le nombre de lignes retirées. */
+function _foodAppliquerSuppressions(){
+  const reg=S.foodSupprimes||[]; if(!reg.length || !Array.isArray(S.foodLog)) return 0;
+  const m=Object.create(null); reg.forEach(e=>{ m[e.i]=1; });
+  let n=0;
+  for(let k=S.foodLog.length-1;k>=0;k--){ const l=S.foodLog[k]; if(l && typeof l.id==='string' && m[l.id]){ S.foodLog.splice(k,1); n++; } }
+  return n;
+}
+/* L'écrivain du registre — le même geste que `_ecrireJournalLocal` : `true` seulement si la clé a été écrite (mode démo : rien n'est écrit par conception → `true`), jamais d'exception. */
+function _ecrireSuppressionsLocal(){
+  if(window._demoMode) return true;
+  try{ localStorage.setItem('ft4_food_supprimes',JSON.stringify(S.foodSupprimes||[])); return true; }
+  catch(e){ try{ console.warn('[FT suppressions] écriture locale refusée',e); }catch(_){} return false; }
+}
+/* Enregistre la suppression d'UNE ligne, DURABLEMENT. `true` = le registre est écrit (la ligne peut alors être retirée) ; `false` = rien n'a changé. Ne touche pas au journal. */
+function _foodSupprimer(id){
+  if(typeof id!=='string' || !id) return false;
+  const avant=S.foodSupprimes||[];
+  S.foodSupprimes=_foodSupprimesFusion(avant,[{i:id,t:Date.now()}]);
+  if(!S.foodSupprimes.some(e=>e.i===id)){ S.foodSupprimes=avant; return false; }   // identité refusée par la normalisation
+  if(!_ecrireSuppressionsLocal()){ S.foodSupprimes=avant; return false; }
+  return true;
 }
 
 /* ☁️🍽️ NUT-FOODLOG-RESTORE-01 (01/10/2026, lot Nutrition 3) — LA RESTAURATION FAIT UNE UNION DU
@@ -670,6 +777,9 @@ function load(){
        personne ne touche à rien, le prochain chargement en repose d'autres : c'est sans
        conséquence, rien ne dépend d'un `id` stable d'une session à l'autre. */
     _foodLogIdentifier(S.foodLog);
+    /* 🗑️ NUT-SYNC-01 — le registre des suppressions volontaires fait foi sur le journal : une ligne supprimée ne revient pas, même si le journal n'a pas pu être réécrit après. */
+    try{ S.foodSupprimes=_foodSupprimesNormaliser(JSON.parse(localStorage.getItem('ft4_food_supprimes')||'[]')); }catch(e){ S.foodSupprimes=[]; }
+    _foodAppliquerSuppressions();
     S.savedFoods=JSON.parse(localStorage.getItem('ft4_savedfoods')||'[]');
     S.hiddenFoods=_nutMasquesNormaliser(JSON.parse(localStorage.getItem('ft4_hiddenfoods')||'[]'));   // NV2-FIAB : des dates de départ
     S.foodAiUses=parseInt(localStorage.getItem('ft4_foodai')||'0')||0;
@@ -1040,6 +1150,12 @@ function _fusionnerAvecLeDisque(){
     /* 🔑 La fusion peut ramener des lignes de l'AUTRE onglet écrites avant cette version : elles
        repassent donc par le même propriétaire, qui réattribue aussi un `id` en double. */
     _foodLogIdentifier(S.foodLog);
+    /* 🗑️ NUT-SYNC-01 — le registre des suppressions de l'AUTRE onglet s'ajoute au nôtre, puis fait foi : une ligne supprimée dans un onglet ne revient pas par l'autre (la fusion
+       ci-dessus, par ressemblance, peut la ramener depuis le disque ; son identité — désormais déterministe — permet de la retirer).
+       ⛔ La clé de fusion du journal reste la SIGNATURE (décision figée, témoin B-CCCXVI ⑪) : deux repas voulus identiques peuvent encore se confondre ENTRE DEUX ONGLETS — limite
+       connue, hors de cette brique (voir le rapport NUT-SYNC-01). */
+    S.foodSupprimes = _foodSupprimesFusion(S.foodSupprimes, lire('ft4_food_supprimes',[]));
+    _foodAppliquerSuppressions();
     /* Les records sont un OBJET : pour un exercice connu des deux côtés, on garde le plus
        RÉCENT — sinon un onglet resté ouvert écraserait un record battu ailleurs par son
        ancienne valeur, ce qui est précisément la perte qu'on répare. */
@@ -1357,6 +1473,7 @@ function persist(){
   /* ⭐ NUT-REF-HIST-02 (3B) — LE JOURNAL ICI, À SA PLACE D'AVANT (l'ordre des clés ne bouge pas : les séances, les records et la séance en
      cours passent toujours AVANT lui — la priorité d'écriture EST l'ordre), mais HORS du `try` commun : ni une clé qui a échoué plus tôt
      ne l'empêche d'être essayé, ni son propre échec n'interrompt les clés suivantes ou ne déclenche le repli des séances. */
+  _ecrireSuppressionsLocal();   // NUT-SYNC-01 : le registre des suppressions AVANT le journal — si le journal est écrit, les suppressions qu'il suppose le sont aussi
   _ecrireJournalLocal();
   try{
     localStorage.setItem('ft4_savedfoods',JSON.stringify(S.savedFoods||[]));

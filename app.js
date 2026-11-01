@@ -1635,6 +1635,10 @@ function _journalPersister(){
 }
 /* Le seul message d'échec de sauvegarde du journal : un FAIT et la marche à suivre — jamais « touche de nouveau le repas » (ce serait un deuxième ajout). */
 const _N_MSG_JOURNAL='Pas enregistré sur le téléphone (stockage plein ?) : c\'est à l\'écran mais ce sera PERDU si tu fermes l\'application. Fais de la place, puis touche « Réessayer l\'enregistrement » en haut du journal — ne le ressaisis pas.';
+/* NUT-SYNC-01 — les deux messages de la suppression. 1) le registre n'a pas pu être écrit : RIEN n'a changé, la ligne est conservée. 2) le registre est écrit (la suppression est
+   DÉFINITIVE, elle ne reviendra pas) mais le journal n'a pas pu être réécrit : on le dit, sans parler de perte pour la ligne supprimée. */
+const _N_MSG_SUPPRESSION='Suppression NON enregistrée (stockage plein ?) : le repas est conservé. Fais de la place, puis réessaie.';
+const _N_MSG_SUPPR_JOURNAL='Suppression bien enregistrée, mais le journal n\'a pas pu être réécrit sur le téléphone (stockage plein ?). Fais de la place, puis touche « Réessayer l\'enregistrement » en haut du journal.';
 /* Le bandeau du journal tant que la dernière sauvegarde a échoué (`ok===false`) : il disparaît dès qu'une sauvegarde réussit (aucune donnée de plus, rien à nettoyer). */
 function _journalBandeau(){
   if(_journalEtat().ok!==false) return '';
@@ -7295,10 +7299,14 @@ function removeFoodEntry(id){
   if(!S.foodLog)return;
   const i=S.foodLog.findIndex(e=>e&&e.id===id);
   if(i<0)return;
-  S.foodLog.splice(i,1);
-  const _sauve=_journalPersister();   // NUT-REF-HIST-02 (3B) : si la suppression n'a pas pu être écrite, la ligne REVIENDRAIT au redémarrage — on le dit
+  /* ⭐ NUT-SYNC-01 — EN DEUX TEMPS, DANS CET ORDRE. ① La suppression est ENREGISTRÉE (le registre `ft4_food_supprimes`, son propre écrivain) : si elle ne l'est pas, la ligne reste, intacte, et
+     la personne le sait — jamais « supprimé » à l'écran pour une ligne qui reviendra. ② Seulement alors la ligne quitte le journal. Si le journal ne peut pas être réécrit juste après, la
+     suppression reste DÉFINITIVE (le registre fait foi au chargement) : le message le dit, sans parler de perte. La synchro envoie la suppression EXPLICITE — plus une simple absence. */
+  if(!_foodSupprimer(id)){ renderFoodJournal(); toast(_N_MSG_SUPPRESSION,'error'); return; }
+  S.foodLog.splice(i,1);   // `i` : l'index trouvé plus haut — le registre n'a pas touché au journal
+  const _sauve=_journalPersister();   // NUT-REF-HIST-02 (3B) : le journal est réécrit ; son statut vient de l'écrivain dédié
   renderFoodJournal();
-  if(!_sauve) toast(_N_MSG_JOURNAL,'error');
+  if(!_sauve) toast(_N_MSG_SUPPR_JOURNAL,'error');
 }
 // Demande confirmation avant de retirer un aliment du journal
 /* 🔑⭐⭐ L'ANNONCE ET L'ACTION EMPLOIENT LA MÊME CLÉ — c'est le fait le plus grave de T-01.
@@ -12628,6 +12636,10 @@ async function _ftBootstrapJeton(){
            les favoris qui en datent d'avant sortent — rien n'est jamais ajouté ni démasqué par ce chemin. */
         try{ const _m=d2.profile&&d2.profile.hiddenFoods;
           if(Array.isArray(_m)&&_m.length){ S.hiddenFoods=_nutMasquesFusion(S.hiddenFoods,_m); S.savedFoods=_nutFavorisVivants(S.savedFoods,S.hiddenFoods,_n2Cle); } }catch(e){}
+        /* 🗑️ NUT-SYNC-01 — UNE SUPPRESSION FAITE SUR UN AUTRE APPAREIL ARRIVE ICI, avec le profil déjà chargé (aucun appel en plus, règle d'or #4) : le registre s'ADDITIONNE au nôtre
+           (union, jamais un retrait), puis les lignes concernées quittent le journal local. La suppression gagne sur toute version de la ligne. */
+        try{ const _s=d2.profile&&d2.profile.foodSupprimes;
+          if(Array.isArray(_s)&&_s.length){ S.foodSupprimes=_foodSupprimesFusion(S.foodSupprimes,_s); _foodAppliquerSuppressions(); } }catch(e){}
         persist();
         try{if(typeof _renderEmailVerifyCard==='function')_renderEmailVerifyCard();}catch(e){}
         window._premiumPending=false;

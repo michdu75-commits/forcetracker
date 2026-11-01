@@ -112,12 +112,18 @@ module.exports.ecran = async function ecran(t, b, PORT) {
       S.savedFoods = [{ name: 'Favori', kcal: 1, t: 1 }]; S.hiddenFoods = [{ k: 'nom:x', t: 1 }]; S.bodyScans = [{ d: '2026-10-30' }];
       const run = (f) => { localStorage.clear(); window.__Q.ordre = []; f(); const ordre = window.__Q.ordre.slice(); window.__Q.ordre = null; return { ordre, dump: dump() }; };
       const a = run(() => persistMaitre()), b2 = run(() => persist());
+      /* ↪️ ADAPTÉ LE 01/11/2026 (NUT-SYNC-01, contrat voulu) : `persist()` écrit désormais UNE clé de plus que celui de master — `ft4_food_supprimes`, le registre des suppressions volontaires, juste
+         AVANT le journal. La comparaison reste aussi stricte pour TOUT le reste : mêmes clés, mêmes octets, même ordre une fois cette clé écartée ; et on exige que ce soit la seule clé en plus, à cette place. */
+      const SUPP = 'ft4_food_supprimes';
+      const extra = Object.keys(b2.dump).filter((k) => !(k in a.dump));
+      const posSupp = b2.ordre.indexOf(SUPP), posJournal = b2.ordre.indexOf('ft4_foodlog');
+      delete b2.dump[SUPP]; b2.ordre = b2.ordre.filter((k) => k !== SUPP);
       const cles = Object.keys(a.dump).sort(), clesB = Object.keys(b2.dump).sort();
       const diff = cles.filter((k) => a.dump[k] !== b2.dump[k]);
-      return { ordreIdentique: JSON.stringify(a.ordre) === JSON.stringify(b2.ordre), nbEcritures: a.ordre.length, memesCles: JSON.stringify(cles) === JSON.stringify(clesB), nbCles: cles.length, diff, rangJournal: a.ordre.indexOf('ft4_foodlog') + 1, apres: a.ordre[a.ordre.indexOf('ft4_foodlog') + 1], avant: a.ordre[a.ordre.indexOf('ft4_foodlog') - 1] };
+      return { extra, suppAvantJournal: posSupp >= 0 && posJournal === posSupp + 1, ordreIdentique: JSON.stringify(a.ordre) === JSON.stringify(b2.ordre), nbEcritures: a.ordre.length, memesCles: JSON.stringify(cles) === JSON.stringify(clesB), nbCles: cles.length, diff, rangJournal: a.ordre.indexOf('ft4_foodlog') + 1, apres: a.ordre[a.ordre.indexOf('ft4_foodlog') + 1], avant: a.ordre[a.ordre.indexOf('ft4_foodlog') - 1] };
     });
-    t('B-JEC G2a ⭐⭐ sans panne, `persist()` écrit les MÊMES clés avec les MÊMES octets que celui de master (' + COMMIT_MAITRE + ') : la scission du bloc ne change rien au stockage', r.memesCles && r.diff.length === 0 && r.nbCles > 80, J({ nbCles: r.nbCles, diff: r.diff }));
-    t('B-JEC G2b ⭐⭐ l\'ORDRE des écritures est identique à celui de master (le journal reste à son rang : après `ft4_mealplan`, avant `ft4_savedfoods`) — la priorité d\'écriture, c\'est l\'ordre : les séances, les records et la séance en cours passent TOUJOURS avant lui', r.ordreIdentique && r.rangJournal > 70 && r.avant === 'ft4_mealplan' && r.apres === 'ft4_savedfoods', J(r));
+    t('B-JEC G2a ⭐⭐ sans panne, `persist()` écrit les MÊMES clés avec les MÊMES octets que celui de master (' + COMMIT_MAITRE + ') : la scission du bloc ne change rien au stockage', r.memesCles && r.diff.length === 0 && r.nbCles > 80 && J(r.extra) === J(['ft4_food_supprimes']), J({ nbCles: r.nbCles, diff: r.diff }));
+    t('B-JEC G2b ⭐⭐ l\'ORDRE des écritures est identique à celui de master (le journal reste à son rang : après `ft4_mealplan`, avant `ft4_savedfoods`) — la priorité d\'écriture, c\'est l\'ordre : les séances, les records et la séance en cours passent TOUJOURS avant lui', r.ordreIdentique && r.suppAvantJournal && r.rangJournal > 70 && r.avant === 'ft4_mealplan' && r.apres === 'ft4_savedfoods', J(r));
     await cx.close();
   }
 
@@ -218,9 +224,11 @@ module.exports.ecran = async function ecran(t, b, PORT) {
   t('B-JEC G4a ⭐⭐ sans panne, les cinq écrivains font ce qu\'ils faisaient (suppression d\'une ligne, modification, ajout par le formulaire, « + » d\'« Mes aliments », repas habituel) et AUCUN ne dit « pas enregistré » ; pas de bandeau',
     ON.remove.delta === -1 && /Modifié/.test(ON.edit.toast) && ON.add.delta === 1 && ON.quick.delta === 1 && ON.rejeu.delta === 2 && [ON.edit, ON.add, ON.quick, ON.rejeu].every((x) => ok(x)) && ON.bandeau.present === false && ON.erreurs.length === 0, J(ON));
   const MSGJ = /Pas enregistré sur le téléphone/;
-  t('B-JEC G4b ⭐⭐⭐ le journal ne peut PAS être écrit : les cinq écrivains gardent leur modification EN MÉMOIRE (rien n\'est défait, aucun doublon), aucun ne dit « ajouté ✅ » / « Modifié ✅ », chacun dit le message d\'échec exact',
-    OFF.remove.delta === -1 && OFF.add.delta === 1 && OFF.quick.delta === 1 && OFF.rejeu.delta === 2 && [OFF.remove, OFF.edit, OFF.add, OFF.quick, OFF.rejeu].every((x) => MSGJ.test(x.toast)) && !/✅|🍽️/.test([OFF.edit, OFF.add, OFF.quick, OFF.rejeu].map((x) => x.toast).join('|')), J(OFF));
-  const MSG_OFF = OFF.remove.toast;
+  /* ↪️ ADAPTÉ LE 01/11/2026 (NUT-SYNC-01, contrat voulu) : la SUPPRESSION a son propre message — le registre des suppressions est écrit avant le journal, donc quand le journal ne peut pas l'être, la suppression est DÉFINITIVE
+     (elle ne reviendra pas) et dire « ce sera PERDU » serait faux. Les quatre autres écrivains gardent le message d'échec d'avant, mot pour mot. Le texte de la suppression est exigé par sa propre expression. */
+  t('B-JEC G4b ⭐⭐⭐ le journal ne peut PAS être écrit : les cinq écrivains gardent leur modification EN MÉMOIRE (rien n\'est défait, aucun doublon), aucun ne dit « ajouté ✅ » / « Modifié ✅ », chacun dit le message d\'échec exact (la suppression : « bien enregistrée, mais le journal n\'a pas pu être réécrit »)',
+    OFF.remove.delta === -1 && OFF.add.delta === 1 && OFF.quick.delta === 1 && OFF.rejeu.delta === 2 && [OFF.edit, OFF.add, OFF.quick, OFF.rejeu].every((x) => MSGJ.test(x.toast)) && /Suppression bien enregistrée, mais le journal n'a pas pu être réécrit/.test(OFF.remove.toast) && !/✅|🍽️/.test([OFF.edit, OFF.add, OFF.quick, OFF.rejeu].map((x) => x.toast).join('|')), J(OFF));
+  const MSG_OFF = OFF.add.toast;
   t('B-JEC G4d ⭐⭐ le message d\'échec dit un FAIT et la marche à suivre : c\'est à l\'écran mais sera PERDU à la fermeture ; la nouvelle tentative est « Réessayer l\'enregistrement » ; il ne demande JAMAIS de ressaisir, de retoucher ou de re-toucher le repas (ce serait un 2ᵉ ajout), et ne parle pas de synchronisation (le cloud n\'est pas une confirmation)',
     /ce sera PERDU si tu fermes/.test(MSG_OFF) && /Réessayer l'enregistrement/.test(MSG_OFF) && /ne le ressaisis pas/.test(MSG_OFF) && !/touche de nouveau|ré-ajoute|retouche|re-touche/i.test(MSG_OFF) && !/synchronis|cloud|en ligne/i.test(MSG_OFF), MSG_OFF);
   t('B-JEC G4c ⭐ le bandeau « Réessayer l\'enregistrement » apparaît dans le journal tant que la dernière sauvegarde a échoué', OFF.bandeau.present === true && OFF.bandeau.bouton === true, J(OFF.bandeau));
@@ -258,10 +266,10 @@ module.exports.ecran = async function ecran(t, b, PORT) {
   const ecrivains2 = toutes.filter(([f, s]) => /setItem\(\s*'ft4_foodlog'/.test(s)).map(([f]) => f);
   const iAppel = PER.indexOf('_ecrireJournalLocal()'), avantAppel = PER.slice(0, iAppel), apresAppel = PER.slice(iAppel);
   const finA = PER.indexOf('_persistRepli(e, _rep); }') + '_persistRepli(e, _rep); }'.length;
-  const entre = PER.slice(finA, iAppel).replace(/\/\*[\s\S]*?\*\//g, '').trim();
+  const entre = PER.slice(finA, iAppel).replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '').trim();
   const profondeur = (txt) => { let d = 0; for (const c of txt) { if (c === '{') d++; else if (c === '}') d--; } return d; };
-  t('B-JEC G6a ⭐⭐ `ft4_foodlog` n\'est écrit que par `_ecrireJournalLocal` (un seul propriétaire dans tout le dépôt) ; `persist()` l\'appelle UNE fois, HORS de tout `try` (profondeur d\'accolades de `persist()` + 0 à cet endroit), entre le `catch` de la phase A et le `try` de la phase B',
-    J(ecrivains2) === J(['state.js']) && /setItem\('ft4_foodlog'/.test(ECR) && !/setItem\('ft4_foodlog'/.test(PER) && (PER.match(/_ecrireJournalLocal\(\)/g) || []).length === 1 && profondeur(avantAppel) === 1 && entre === '' && /^_ecrireJournalLocal\(\);\s*try\{/.test(apresAppel), J({ ecrivains2, profondeur: profondeur(avantAppel), entre: entre.slice(0, 80) }));
+  t('B-JEC G6a ⭐⭐ `ft4_foodlog` n\'est écrit que par `_ecrireJournalLocal` (un seul propriétaire dans tout le dépôt) ; `persist()` l\'appelle UNE fois, HORS de tout `try` (profondeur d\'accolades de `persist()` + 0 à cet endroit), entre le `catch` de la phase A et le `try` de la phase B — et la SEULE instruction qui la précède est l\'écrivain du registre des suppressions (NUT-SYNC-01 : le registre est écrit juste AVANT le journal)',
+    J(ecrivains2) === J(['state.js']) && /setItem\('ft4_foodlog'/.test(ECR) && !/setItem\('ft4_foodlog'/.test(PER) && (PER.match(/_ecrireJournalLocal\(\)/g) || []).length === 1 && profondeur(avantAppel) === 1 && entre === '_ecrireSuppressionsLocal();' && /^_ecrireJournalLocal\(\);\s*try\{/.test(apresAppel), J({ ecrivains2, profondeur: profondeur(avantAppel), entre: entre.slice(0, 80) }));
   t('B-JEC G6b ⭐ le repli est appelé par les DEUX phases, une seule fois chacune au plus (garde `rep.fait` posée AVANT les écritures destructives) ; l\'écrivain du journal ne l\'appelle jamais ; l\'écrivain du journal n\'écrit aucune autre clé et ne touche ni `ft4_sessions` ni `ft4_hist_tronque`',
     (PER.match(/_persistRepli\(e, _rep\)/g) || []).length === 2 && /rep\.fait/.test(REP) && REP.indexOf('rep.fait=true') < REP.indexOf("setItem('ft4_sessions'") && !/_persistRepli|ft4_sessions|ft4_hist_tronque/.test(ECR) && (ECR.match(/setItem\(/g) || []).length === 1, '');
   t('B-JEC G6c ⭐ aucune écriture du journal ne passe par `persist()` SEUL dans les cinq écrivains Nutrition : `addFoodEntry`, `quickAddFood`, `saveEditFood`, `removeFoodEntry` et `_habApresInsertion` appellent `_journalPersister()` et n\'annoncent leur réussite qu\'avec son statut',
