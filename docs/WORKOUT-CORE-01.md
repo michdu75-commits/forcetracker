@@ -149,8 +149,10 @@ au début et à la fin) :
   plus « réparée » par un `change` identique.
 - DOM-S1 / DOM-S2 restent des témoins **de forme** (comptage de `renderExBlocks()`, motifs) : non obsolètes, donc non touchés ;
   DOM-T16 juge désormais l'identité sur place / global dans 8 états. À remplacer par des comportements lors d'une prochaine passe.
-- **R8 de la recette** (vibrations) : `navigator.vibrate` n'existe probablement pas dans Safari iOS (non vérifié ici) — si aucune
-  vibration n'est ressentie, ce n'est pas une régression du lot ; à confirmer sur l'iPhone (`'vibrate' in navigator`).
+- **R8 de la recette** (vibrations) — ↪️ **01/11, SEANCE-HL-04** : `navigator.vibrate` n'est pas pris en charge par Safari ni par iOS
+  (MDN, données de compatibilité lues le 01/11/2026 : Safari « non supporté », iOS identique ; **non mesuré sur l'appareil**). Sur
+  iPhone, une absence de vibration n'est donc ni une régression du lot ni un échec de recette : R8, R9, R10 et R22 sont reformulés
+  (§0.7 et §7) et jugent le retour visuel et le minuteur. Le code ne change pas (chaque appel reste gardé par `if(navigator.vibrate)`).
 - Les témoins de temps (CHR-T05, T09a, T10) exigent une machine non saturée : toutes les campagnes ont été jouées seules.
 
 ### 0.7 Recette iPhone — ajouts (préparés, NON exécutés)
@@ -161,7 +163,7 @@ au début et à la fin) :
 | R19 | Taper les répétitions, passer à la charge par la flèche ⌄ du clavier, taper « 62,5 », toucher ✓ **clavier ouvert** | les deux valeurs tapées sont enregistrées | ☐ |
 | R20 | Taper une charge, passer sur une autre app **sans fermer le clavier**, revenir, toucher ✓ | la valeur tapée est enregistrée | ☐ |
 | R21 | Taper une charge, **verrouiller** l'iPhone, déverrouiller, toucher ✓ | la valeur tapée est enregistrée | ☐ |
-| R22 | Lancer un repos et toucher « Passer » **dans la première seconde** | rien ne repart : ni chiffre, ni vibration, ni décompte | ☐ |
+| R22 | Lancer un repos et toucher « Passer » **dans la première seconde** | rien ne repart : ni chiffre, ni décompte (et, sur un appareil qui vibre, aucune vibration — rien à constater sur iPhone) | ☐ |
 
 ### 0.8 Règle #17 — cette étape seule (code applicatif : `log.js`, `227f090e` → `a9a0fb85` ; `daf0f3f4` = tests seulement)
 
@@ -400,6 +402,9 @@ M2 GARDE (B-RSS-①b) · M3 GARDE (B-RSS-①b) · M5 GARDE (B-RSS-②a) · M11 G
 
 **M9 — classée à part (ordre GO TESTS)** : son ancre `rir:(r===null?'':r), volume:Math.round(kg*reps)});` n'existe plus dans `setup.js` depuis `cff47f0d` (Mission Séance lot 2 : facteur unilatéral ajouté au volume de l'export) — déjà invalide sur `e2b942f3`, **pas un effet de ce lot**, NON corrigée (fichier hors périmètre). Vérification sur une COPIE hors dépôt, ancre réancrée sur `volume:Math.round(kg*reps*_facteurUni(s, ex.name))` : **1/1 conformes** (M9 GARDE (B-RSS-③d)) — le témoin B-RSS-③d garde toujours l'export. Proposition (autorisation requise) : réancrer M9 dans `tools/mut_rir_superset.py`.
 
+> ↪️ **01/11, SEANCE-HL-02** : l'ancre est corrigée dans l'outil (réduite à la seule colonne RIR ; `setup.js` n'est pas modifié) sur la
+> branche `claude/seance-hl-04-02`. M9 y est rejouée seule : le résultat est dans le message du commit.
+
 ## 6. Risques, limites, anomalies
 
 > ↪️ **31/10** : risques mis à jour au **§0.6** (iPhone, `_restIvCale`, journal d'erreurs, témoins de forme, R8).
@@ -427,6 +432,12 @@ kg × reps à la fin — piste, non reproduite sur le lot) ; dropset ↓ : l'ét
 
 > ↪️ **31/10** : ajouts **R18 à R22** au **§0.7** (sorties de champ par le clavier de l'iPhone, arrière-plan, verrouillage, arrêt du
 > repos dans la 1ʳᵉ seconde) ; R8 (vibrations) — voir §0.6.
+>
+> ↪️ **01/11, SEANCE-HL-04** — 📳 **vibrations** : Safari et iOS ne prennent pas en charge `navigator.vibrate` (MDN, lu le 01/11/2026 ;
+> non mesuré sur l'appareil). **Sur iPhone**, R8, R9, R10 et R22 se jugent sur le **retour visuel** (chiffres du décompte, écran « GO »,
+> dock ou pilule, dépassement « +… ») et sur le **fonctionnement du minuteur** — **jamais sur une vibration**. Sur un appareil qui
+> vibre (par exemple Chrome sur Android), les clauses « appareil qui vibre » s'appliquent en plus. Si un iPhone vibrait malgré tout :
+> le noter comme observation, ce n'est ni un critère ni un échec.
 
 > ⛔ Rien ici n'a été vu sur un iPhone. Les témoins Chromium **simulent** le clavier (le champ garde le focus, `kbd-serie` reste posée) et
 > le gel des minuteurs (intervalle retiré + départ reculé) : ils ne prouvent ni le clavier réel, ni les vibrations ressenties, ni la
@@ -445,9 +456,9 @@ exercices, un exercice en dropset ↓. Repos réglé à 1:00 pour aller vite.
 | R5 | Faire défiler pour que la séance soit au milieu de l'écran, valider puis dé-valider une série | la page ne saute pas | la position de la liste | ☐ |
 | R6 | Dé-valider une série faite PENDANT qu'on tape une nouvelle charge dedans (clavier ouvert) | la série repasse « à faire », le clavier reste, le texte tapé reste ; en quittant le champ, la nouvelle charge est dans **cette** série | aucune autre série ne change | ☐ |
 | R7 | Taper « 0 » dans la charge d'une série pré-remplie et valider | la série est enregistrée à 0 kg (le champ s'affiche vide, comme toute charge à 0) | pas de retour à 60 | ☐ |
-| R8 | Laisser un repos de 1:00 aller au bout, app ouverte, téléphone en main | vibrations courtes à 5, 4, 3, 2, 1 ; écran du décompte puis « GO » ; une vibration de fin et une pour GO, **une fois chacune** | aucune vibration en double ou en rafale | ☐ |
-| R9 | Repos lancé, **verrouiller** l'iPhone ~30 s, déverrouiller | le temps affiché est juste tout de suite (≈ 30 s de moins), sans rafale de vibrations ni chiffre qui « rattrape » | le dock ou la pilule | ☐ |
-| R10 | Repos de 1:00 lancé, passer sur une autre app **3-4 minutes**, revenir | repos fini : une vibration de fin, l'écran GO, une seule fois ; le dépassement s'affiche (« +2:… ») | pas de double vibration au 2ᵉ retour | ☐ |
+| R8 | Laisser un repos de 1:00 aller au bout, app ouverte, téléphone en main | **iPhone** : écran du décompte (5, 4, 3, 2, 1), puis « GO », **une seule fois** · **appareil qui vibre** (en plus) : vibrations courtes à 5, 4, 3, 2, 1, une de fin et une pour GO, **une fois chacune** | iPhone : aucun chiffre sauté ni doublé · appareil qui vibre : aucune vibration en double ou en rafale | ☐ |
+| R9 | Repos lancé, **verrouiller** l'iPhone ~30 s, déverrouiller | le temps affiché est juste tout de suite (≈ 30 s de moins), sans chiffre qui « rattrape » (ni rafale de vibrations, sur un appareil qui vibre) | le dock ou la pilule | ☐ |
+| R10 | Repos de 1:00 lancé, passer sur une autre app **3-4 minutes**, revenir | repos fini : l'écran GO, **une seule fois** ; le dépassement s'affiche (« +2:… ») · appareil qui vibre (en plus) : une vibration de fin | pas de second écran GO au 2ᵉ retour (ni de double vibration, sur un appareil qui vibre) | ☐ |
 | R11 | Même chose mais revenir après **plus de 15 min** | le repos est abandonné, rien ne se relance | — | ☐ |
 | R12 | Superset : valider A | on passe à B tout de suite, sans repos | — | ☐ |
 | R13 | Superset : valider B | repos « ⚡ Tour suivant » ; la question de réserve (RIR) porte sur A **et** B | — | ☐ |

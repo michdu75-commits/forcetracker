@@ -62,8 +62,10 @@ MUT = [
     # ── la chaine des donnees
     ('M8 la reponse n\'est plus enregistree sur le telephone (setRir sans persist)',
      [(LG, "persist(); _renderRirRow(); renderExBlocks();", "_renderRirRow(); renderExBlocks();")], 'GARDE', ('B-RSS-③a',)),
+    # SEANCE-HL-02 (01/11) : ancre réduite à la seule colonne RIR. La fin de la ligne (`volume:…`) a déjà bougé une fois (cff47f0d,
+    # facteur unilatéral) et rendait cette mutation INVALIDE (ancre absente) ; ce que M9 casse, c'est le RIR, pas le volume.
     ('M9 l\'export de l\'historique perd la colonne RIR',
-     [(SE, "rir:(r===null?'':r), volume:Math.round(kg*reps)});", "rir:'', volume:Math.round(kg*reps)});")], 'GARDE', ('B-RSS-③d',)),
+     [(SE, "rir:(r===null?'':r),", "rir:'',")], 'GARDE', ('B-RSS-③d',)),
     ('M10 le contexte de Milo ne porte plus le RIR des series',
      [(CO, "const rir = (_r===null) ? '' : (' RIR'+_r);", "const rir = '';")], 'GARDE', ('B-RSS-③e',)),
     ('M12 « Precedent » ne relit plus la reponse de la seance d\'avant',

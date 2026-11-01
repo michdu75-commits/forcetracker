@@ -49,7 +49,7 @@
 | R19 | répétitions, flèche ⌄ vers la charge, « 62,5 », ✓ clavier ouvert | les deux valeurs tapées enregistrées |
 | R20 | taper une charge, passer sur une autre app sans fermer le clavier, revenir, ✓ | valeur tapée enregistrée |
 | R21 | taper une charge, verrouiller, déverrouiller, ✓ | valeur tapée enregistrée |
-| R22 | lancer un repos, « Passer » dans la première seconde | rien ne repart (ni chiffre, ni vibration, ni décompte) |
+| R22 | lancer un repos, « Passer » dans la première seconde | rien ne repart (ni chiffre, ni décompte ; sur un appareil qui vibre, aucune vibration — rien à constater sur iPhone) |
 (R1 à R17 : voir `docs/WORKOUT-CORE-01.md` §7 — aussi NON exécutées.)
 
 ## 5. Bugs identifiés — causes — solutions retenues
