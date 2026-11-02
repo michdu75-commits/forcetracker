@@ -46,7 +46,7 @@ MUT = [
     ('K12 le demarrage n applique plus les suppressions venues d un autre appareil',
      [(A, "if(Array.isArray(_s)&&_s.length){ S.foodSupprimes=_foodSupprimesFusion(S.foodSupprimes,_s,true); _foodAppliquerSuppressions(); }", "")], G('T14'), 'GARDE'),   # ancre rafraichie le 01/11/2026 (NUT-SYNC-01 FINAL), meme intention. ATTENDU AJUSTE (T10c retire, T14 seul rougit) : la voie « rejets » de la reponse de synchronisation compense dans T10/T10c ; le DEMARRAGE seul est isole par E03d (nut_sync02, mutation K53).
     ('K13 la synchro n envoie plus le registre',
-     [(SU, "      foodSupprimes:_foodSupprimesPourEnvoi(),\n", "")], G('T10', 'T10b'), 'GARDE'),   # ancre rafraichie le 01/11/2026 (NUT-SYNC-01 FINAL : le registre voyage dans `_corpsSync`, le constructeur UNIQUE du corps d'envoi — R2), meme intention : la synchro n'envoie plus le registre
+     [(SU, "      foodSupprimes:_supEnvoi,\n", "")], G('T10', 'T10b'), 'GARDE'),   # ancre rafraichie le 02/11/2026 (NUT-SYNC-02 phase A : la liste des suppressions non confirmees est calculee UNE fois, `_supEnvoi`), meme intention   # ancre rafraichie le 01/11/2026 (NUT-SYNC-01 FINAL : le registre voyage dans `_corpsSync`, le constructeur UNIQUE du corps d'envoi — R2), meme intention : la synchro n'envoie plus le registre
     ('K14 la synchro ne declare plus le drapeau V2',
      [(SU, "foodLogV:3, requestId:_requestId,", "foodLogV:1, requestId:_requestId,")], G('T12'), 'GARDE'),   # ancre rafraichie le 01/11/2026 (NUT-SYNC-01 FINAL : transport lisible, registre dans le corps d'envoi, volet Nutrition dans `_nutSynchroniser_`), meme intention
     ('K15 le registre expire (suppressions de plus de 90 jours oubliees) cote telephone',
@@ -61,20 +61,20 @@ MUT = [
     ('K19 le serveur laisse dans son journal une ligne dont la suppression est declaree',
      [(CO, "    actuel = actuel.filter(function(l) { return !estSupp(l); });\n", "")], G('S02'), 'GARDE'),
     ('K20 le serveur lit le journal AVANT le registre de la meme requete',
-     [(CO, "  if (body.foodSupprimes !== undefined) profile.foodSupprimes = _nutSupprimesFusion_(profile.foodSupprimes, body.foodSupprimes, email);\n", ""),
-      (CO, "  if (body.savedFoods !== undefined) profile.savedFoods = _nutProtegerListe_(existing, profile, 'savedFoods', body.savedFoods, email, false, ctx);", "  if (body.savedFoods !== undefined) profile.savedFoods = _nutProtegerListe_(existing, profile, 'savedFoods', body.savedFoods, email, false, ctx);\n  if (body.foodSupprimes !== undefined) profile.foodSupprimes = _nutSupprimesFusion_(profile.foodSupprimes, body.foodSupprimes, email);")], G('G03', 'S02'), 'GARDE'),   # ancre rafraichie le 01/11/2026 (NUT-SYNC-01 FINAL : transport lisible, registre dans le corps d'envoi, volet Nutrition dans `_nutSynchroniser_`), meme intention
+     [(CO, '  if (body.foodSupprimes !== undefined) {\n    var F = _nutSupprimesFusion_(profile.foodSupprimes, body.foodSupprimes, email);   // NUT-SYNC-02 phase A : ne lève plus — une suppression sans place est DIFFÉRÉE, le reste passe\n    profile.foodSupprimes = F.liste; tomb.ok = F.ok; tomb.diff = F.diff;\n  }\n', ""),
+      (CO, "  if (body.savedFoods !== undefined) profile.savedFoods = _nutProtegerListe_(existing, profile, 'savedFoods', body.savedFoods, email, false, ctx);", "  if (body.savedFoods !== undefined) profile.savedFoods = _nutProtegerListe_(existing, profile, 'savedFoods', body.savedFoods, email, false, ctx);\n  if (body.foodSupprimes !== undefined) { var F = _nutSupprimesFusion_(profile.foodSupprimes, body.foodSupprimes, email); profile.foodSupprimes = F.liste; tomb.ok = F.ok; tomb.diff = F.diff; }")], G('G03', 'S02'), 'GARDE'),   # ancre rafraichie le 02/11/2026 (NUT-SYNC-02 phase A : la fusion du registre rend `{liste, ok, diff}` et alimente l'accuse `tomb`), meme intention
     ('K21 le serveur n a plus de plafond de registre',
-     [(CO, "    if (nouvelle && out.length >= NUT_SUPPR_MAX_) { refusees++; return; }\n", "")], G('S06'), 'GARDE'),
+     [(CO, "    if (nouvelle && out.length >= NUT_SUPPR_MAX_) return 'refusee';\n", "")], G('S06'), 'GARDE'),   # ancre rafraichie le 02/11/2026 (NUT-SYNC-02 phase A), meme intention
     ('K22 le serveur accepte n importe quelle identite',
-     [(CO, "    if (typeof i !== 'string' || i.length < 8 || i.length > 64 || !/^[0-9A-Za-z-]+$/.test(i)) return;", "    if (typeof i !== 'string' || !i) return;")], G('S03'), 'GARDE'),
+     [(CO, "    return (typeof i === 'string' && i.length >= 8 && i.length <= 64 && /^[0-9A-Za-z-]+$/.test(i)) ? i : '';", "    return (typeof i === 'string' && i) ? i : '';")], G('S03'), 'GARDE'),   # ancre rafraichie le 02/11/2026 (NUT-SYNC-02 phase A : la validation vit dans `identite()`), meme intention
     ('K23 un envoi vide renvoie le journal ANCIEN (avec ses lignes supprimees)',
      [(CO, "    recu = actuel.slice();", "    recu = (profile[nom] || []).slice();")], G('S04'), 'GARDE'),   # ancre rafraichie le 01/11/2026 (NUT-SYNC-01 FINAL : transport lisible, registre dans le corps d'envoi, volet Nutrition dans `_nutSynchroniser_`), meme intention
     ('K24 les lignes supprimees ne sont plus copiees en zone de recuperation',
      [(CO, "  supprimees.forEach(function(l) { garder(l, 'supprimee'); });\n", "")], G('S02'), 'GARDE'),
     ('K25 le serveur garde l instant de suppression le plus RECENT (au lieu du plus ancien)',
-     [(CO, "    if (idx[i] !== undefined) { var o = out[idx[i]]; if (t && (!o.t || t < o.t)) o.t = t; return; }\n    if (nouvelle", "    if (idx[i] !== undefined) { var o = out[idx[i]]; if (t && (!o.t || t > o.t)) o.t = t; return; }\n    if (nouvelle")], G('S03'), 'GARDE'),
+     [(CO, "    if (idx[i] !== undefined) { var o = out[idx[i]]; if (t && (!o.t || t < o.t)) o.t = t; return 'deja'; }\n    if (nouvelle", "    if (idx[i] !== undefined) { var o = out[idx[i]]; if (t && (!o.t || t > o.t)) o.t = t; return 'deja'; }\n    if (nouvelle")], G('S03'), 'GARDE'),   # ancre rafraichie le 02/11/2026 (NUT-SYNC-02 phase A), meme intention
     ('K26 le registre expire cote serveur (suppressions de plus de 90 jours oubliees)',
-     [(CO, "    if (idx[i] !== undefined) { var o = out[idx[i]]; if (t && (!o.t || t < o.t)) o.t = t; return; }\n    if (nouvelle", "    if (t && t < Date.now() - 90 * 86400000) return;\n    if (idx[i] !== undefined) { var o = out[idx[i]]; if (t && (!o.t || t < o.t)) o.t = t; return; }\n    if (nouvelle")], G('T11'), 'GARDE'),
+     [(CO, "    if (idx[i] !== undefined) { var o = out[idx[i]]; if (t && (!o.t || t < o.t)) o.t = t; return 'deja'; }\n    if (nouvelle", "    if (t && t < Date.now() - 90 * 86400000) return 'invalide';\n    if (idx[i] !== undefined) { var o = out[idx[i]]; if (t && (!o.t || t < o.t)) o.t = t; return 'deja'; }\n    if (nouvelle")], G('T11'), 'GARDE'),   # ancre rafraichie le 02/11/2026 (NUT-SYNC-02 phase A), meme intention
 ]
 
 def banc(arbre):

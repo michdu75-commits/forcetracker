@@ -1069,7 +1069,10 @@ function serveurQ15(t, tD) {
   X.props.ADMIN_TOKEN = ADMIN;
   const bobAvant = J(X.compte(BOB)), avant = JSON.parse(J(X.compte(C)));   // `avant` : la « sauvegarde de la nuit » d'avant la remise à zéro
   const toks = { [C]: X.ctx._jetonPoser_(C, 'tel'), [D]: X.ctx._jetonPoser_(D, 'tel'), [E]: X.ctx._jetonPoser_(E, 'tel') };
-  const post = (b, qui) => { const q = qui || C; try { return JSON.parse(X.post(Object.assign({ action: 'saveProfile', email: q, token: toks[q] }, b))); } catch (e) { return { status: 'ERREUR ' + e.message }; } };
+  /* ↪️ ADAPTÉ LE 02/11/2026 (NUT-SYNC-02 phase A, R30) : « des envois tels que l'app les fait » — l'app envoie, avec CHAQUE synchronisation, `foodLogV:3` et un `requestId` (c'est ce qui lui permet de lire l'accusé). Sans eux, la PORTE DE VERSION du serveur
+     refuse l'envoi Nutrition en entier (`NUT_CLIENT_INCOMPATIBLE`) : le témoin ② « la remise à zéro ne touche ni le journal… » aurait alors échoué pour une raison étrangère à la remise à zéro. Un identifiant NEUF par envoi (aucun rejeu). */
+  let seqQ15 = 0;
+  const post = (b, qui) => { const q = qui || C; try { return JSON.parse(X.post(Object.assign({ action: 'saveProfile', email: q, token: toks[q], foodLogV: 3, requestId: 'q15-' + (++seqQ15) + '-' + now }, b))); } catch (e) { return { status: 'ERREUR ' + e.message }; } };
   const prof = (qui) => ((X.compte(qui || C) || {}).profile || {});
   const noms = (l) => J((l || []).map((f) => f && f.name));
   const zone = (qui) => (((X.compte(qui || C) || {}).recupNut) || {});

@@ -18,12 +18,12 @@ G = lambda *c: ['B-NS02 ' + x + ' ' for x in c]
 
 MUT = [
     # ── serveur : le registre saturé ──
-    ('K01 le depassement du registre ne leve plus d erreur (les suppressions en trop sont de nouveau jetees en silence)',
-     [(CO, "    throw new NutSyncError('NUT_TOMBSTONE_LIMIT', 'Registre des suppressions saturé.', { limite: NUT_SUPPR_MAX_, refusees: refusees, conservees: out.length });\n", "")], G('B02', 'B04', 'D08'), 'B,D', 'GARDE'),
+    ('K01 le depassement du registre n est plus annonce (differe) : les suppressions en trop sont de nouveau jetees en silence',
+     [(CO, "    else if (r === 'refusee') { if (!diffVu[i]) { diffVu[i] = 1; diff.push({ i: i, code: 'NUT_TOMBSTONE_LIMIT' }); } }", "    else if (r === 'refusee') { }")], G('B02', 'B04', 'D08'), 'B,D', 'GARDE'),   # ancre rafraichie le 02/11/2026 (NUT-SYNC-02 phase A : plus de refus en bloc, une suppression sans place est DIFFEREE entree par entree) — meme intention : jamais jetee en silence
     ('K02 le plafond laisse passer une suppression de trop (3001)',
-     [(CO, "    if (nouvelle && out.length >= NUT_SUPPR_MAX_) { refusees++; return; }", "    if (nouvelle && out.length > NUT_SUPPR_MAX_) { refusees++; return; }")], G('B02', 'B03', 'D08'), 'B,D', 'GARDE'),
-    ('K46 le refus du registre sature est annonce « reessayable »',
-     [(CO, "retryable:(nutEchec.code !== 'NUT_TOMBSTONE_LIMIT')", "retryable:true")], G('B02'), 'B', 'GARDE'),
+     [(CO, "    if (nouvelle && out.length >= NUT_SUPPR_MAX_) return 'refusee';", "    if (nouvelle && out.length > NUT_SUPPR_MAX_) return 'refusee';")], G('B02', 'B03', 'D08'), 'B,D', 'GARDE'),   # ancre rafraichie le 02/11/2026 (NUT-SYNC-02 phase A), meme intention
+    # K46 (« le refus du registre sature est annonce reessayable ») est RETIREE le 02/11/2026, AVEC SA RAISON (R30) : depuis NUT-SYNC-02 phase A le registre plein n'est plus un REFUS — la suppression est DIFFEREE entree par entree, la
+    # reponse reste `ok:true`. Le seul refus non reessayable qui reste est la PORTE DE VERSION (`NUT_CLIENT_INCOMPATIBLE`) ; son jumeau est P05 de tools/mut_nut_phasea01.py (temoin PA01).
     # ── serveur : la decision de revision ──
     ('K03 un repas supprime n est plus reconnu comme tel par la decision',
      [(CO, "  if (server.deleted === true) {\n    return { action: 'reject', code: 'NUT_ENTRY_DELETED' };\n  }\n", "")], G('A01', 'C05'), 'A,C', 'GARDE'),
@@ -45,11 +45,11 @@ MUT = [
      [(CO, "      if (stockeesSupp[id] === undefined || stockeesSupp[id] !== _nutEmpreinte_(l)) extras.push([l, 'modif_supprimee']);\n", "")], G('C05', 'D03'), 'C,D', 'GARDE'),
     # ── serveur : le verrou et l idempotence ──
     ('K10 saveProfile ne prend plus le verrou (plus rien n est serialise)',
-     [(CO, "    verrou = _nutPrendreVerrou_();\n", "    verrou = { releaseLock: function() {} };\n")], G('C14', 'D01', 'D02', 'D03', 'D08'), 'C,D', 'GARDE'),
+     [(CO, "    verrou = _nutVerrouPrendre_();\n", "    verrou = { v: { releaseLock: function() {} }, t0: 0, rendu: false, ms: 0 };\n")], G('C14', 'D01', 'D02', 'D03', 'D08'), 'C,D', 'GARDE'),   # ancre rafraichie le 02/11/2026 (NUT-SYNC-02 phase A : `_nutVerrouPrendre_` rend un POIGNEE qui mesure la duree), meme intention
     ('K11 le verrou n est jamais rendu par `finally` (une erreur d ecriture le laisse tenu)',
-     [(CO, "    if (verrou) { try { verrou.releaseLock(); } catch (relErr) {} }\n", "")], G('C14'), 'C', 'GARDE'),
+     [(CO, "    if (verrou) _nutVerrouRendre_(verrou, 'saveProfile');\n", "")], G('C14'), 'C', 'GARDE'),   # ancre rafraichie le 02/11/2026 (NUT-SYNC-02 phase A), meme intention
     ('K50 le verrou reste tenu pendant le miroir Sheets et l e-mail de bienvenue (liberation anticipee retiree)',
-     [(CO, "    if (verrou) { try { verrou.releaseLock(); } catch (relErr) {} verrou = null; }\n", "")], G('C15'), 'C', 'GARDE'),
+     [(CO, "    lockMs = _nutVerrouRendre_(verrou, 'saveProfile'); verrou = null;   // libération anticipée ET durée mesurée (NUT-SYNC-02 phase A)\n", "")], G('C15'), 'C', 'GARDE'),   # ancre rafraichie le 02/11/2026 (NUT-SYNC-02 phase A), meme intention
     ('K12 un verrou indisponible est annonce non reessayable',
      [(CO, "code:'NUT_LOCK_BUSY', message:'Serveur occupé, réessaie dans un instant.', retryable:true", "code:'NUT_LOCK_BUSY', message:'Serveur occupé, réessaie dans un instant.', retryable:false")], G('D05'), 'D', 'GARDE'),
     ('K13 un verrou indisponible est ignore (on ecrit quand meme)',
@@ -67,11 +67,10 @@ MUT = [
      [(CO, "  var protegees = (!v2j && nom === 'foodLog') ? ec.retirees.filter(function(l) { return _nutRevisionDe_(l) > 0; }) : [];", "  var protegees = [];")], G('C12'), 'C', 'GARDE'),
     ('K20 le serveur declare toujours l instantane « complet » (le miroir recevrait un journal partiel)',
      [(CO, "  if (ctx && nom === 'foodLog') ctx.out.complet = !vide && v2j && gardees.length === 0;", "  if (ctx && nom === 'foodLog') ctx.out.complet = true;")], G('E05b'), 'E', 'GARDE'),
-    ('K47 un refus tardif laisserait un profil Nutrition a moitie ecrit (le registre est fusionne APRES le journal ET la restitution defensive est retiree) — c est ce que B03 garde',
-     [(CO, "  if (body.foodSupprimes !== undefined) profile.foodSupprimes = _nutSupprimesFusion_(profile.foodSupprimes, body.foodSupprimes, email);\n", ""),
-      (CO, "  if (out.refus) { out.acks = []; out.conflits = []; out.rejets = []; }", "  if (body.foodSupprimes !== undefined) profile.foodSupprimes = _nutSupprimesFusion_(profile.foodSupprimes, body.foodSupprimes, email);\n  if (out.refus) { out.acks = []; out.conflits = []; out.rejets = []; }"),
-      (CO, "      Object.keys(nutAvant).forEach(function(k) { if (nutAvant[k] === undefined) delete profile[k]; else profile[k] = nutAvant[k]; });\n", "")], G('B03', 'B04'), 'B', 'GARDE'),
-    ('K27 [equivalente] la restitution defensive de l etat Nutrition est retiree (la fusion du registre est la premiere instruction, rien n est encore ecrit)',
+    # K47 (« un refus tardif laisserait un profil Nutrition a moitie ecrit : le registre fusionne APRES le journal ») est RETIREE le 02/11/2026, AVEC SA RAISON (R30) : son declencheur — le refus du registre sature, leve APRES l'ecriture du
+    # journal — n'existe plus (la fusion du registre ne leve plus). La protection qu'elle gardait (restituer l'etat d'AVANT en cas d'erreur du bloc) est desormais celle du CONFINEMENT, eprouvee par P14 et P15 de tools/mut_nut_phasea01.py
+    # (temoins PA08a/b, avec une erreur injectee APRES la fusion du registre ET l'ecriture de la zone).
+    ('K27 [equivalente POUR CE BANC] la restitution defensive de l etat Nutrition est retiree (ce banc n injecte aucune erreur imprevue ; depuis NUT-SYNC-02 phase A elle sert le CONFINEMENT et P15 de mut_nut_phasea01.py la tue)',
      [(CO, "      Object.keys(nutAvant).forEach(function(k) { if (nutAvant[k] === undefined) delete profile[k]; else profile[k] = nutAvant[k]; });\n", "")], [], 'B', 'EQ'),
     # ── client : l accuse ──
     ('K30 la synchronisation redevient opaque (no-cors) : aucune reponse lisible',
@@ -83,8 +82,8 @@ MUT = [
     ('K51 la reponse d un ANCIEN serveur (« status:ok », sans ok ni requestId) est prise pour un accuse',
      [(SU, "if(!d || typeof d!=='object' || d.requestId!==envoi.requestId) return _nutNonConfirme(envoi,'ACCUSE_ABSENT');", "if(!d || typeof d!=='object' || (d.requestId!==envoi.requestId && d.status!=='ok')) return _nutNonConfirme(envoi,'ACCUSE_ABSENT');"),
       (SU, "  if(d.ok!==true){\n    const code=String(d.code", "  if(d.ok===false){\n    const code=String(d.code")], G('E10'), 'E', 'GARDE'),
-    ('K33 une suppression rejetee est EFFACEE du registre local',
-     [(SU, "S.foodSupprimes=_foodSupprimesNormaliser(S.foodSupprimes).map(e=>{ if(sup.has(e.i) && !e.c && e.x!==code){ marque=true; return Object.assign({},e,{x:code}); } return e; });", "S.foodSupprimes=_foodSupprimesNormaliser(S.foodSupprimes).filter(e=>!(sup.has(e.i) && !e.c)); marque=true;")], G('E01', 'E01c'), 'E', 'GARDE'),
+    ('K33 une suppression differee est EFFACEE du registre local',
+     [(SU, "    const nConf=S.foodSupprimes.filter(e=>e.c).length;", "    S.foodSupprimes=S.foodSupprimes.filter(e=>!(difMap.has(e.i)&&!e.c));\n    const nConf=S.foodSupprimes.filter(e=>e.c).length;")], G('E01', 'E01c'), 'E', 'GARDE'),
     ('K41 l etat « rejetee » ne survit pas a la normalisation du registre',
      [(ST, "    const n={i:i, t:t}; if(c) n.c=c; else if(xx) n.x=xx;", "    const n={i:i, t:t}; if(c) n.c=c;")], G('E01c'), 'E', 'GARDE'),
     ('K42 une suppression rejetee n est plus comptee parmi celles a renvoyer',

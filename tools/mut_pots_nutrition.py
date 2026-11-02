@@ -134,14 +134,15 @@ MUT = [
   [('state.js', r"  const anc=Math\.max\(0,parseInt\(S\.foodAiUses,10\)\|\|0\);",
     "  const anc=parseInt(S.foodAiUses,10);")], 'ROUGE'),
 
+ # ancres M26/M27 rafraichies le 02/11/2026 (NUT-SYNC-02 phase A : ces quatre cles s'ecrivent par `_ecrireCleNutrition`, au meme rang) — meme intention
  ('M26  `persist` n ecrit plus les trois pots (perdus au rechargement)',
-  [('state.js', r"    localStorage\.setItem\('ft4_foodai_label',String\(S\.foodLabelAiUses\|\|0\)\);\n"
-                 r"    localStorage\.setItem\('ft4_foodai_meal', String\(S\.foodMealEstimateAiUses\|\|0\)\);\n"
-                 r"    localStorage\.setItem\('ft4_foodai_bc',   String\(S\.foodBarcodeAiUses\|\|0\)\);\n",
+  [('state.js', r"    _ecrireCleNutrition\('ft4_foodai_label',String\(S\.foodLabelAiUses\|\|0\)\);\n"
+                 r"    _ecrireCleNutrition\('ft4_foodai_meal', String\(S\.foodMealEstimateAiUses\|\|0\)\);\n"
+                 r"    _ecrireCleNutrition\('ft4_foodai_bc',   String\(S\.foodBarcodeAiUses\|\|0\)\);\n",
     '')], 'ROUGE'),
 
  ('M27  l ancien pot commun est EFFACE au lieu d etre gele',
-  [('state.js', r"    localStorage\.setItem\('ft4_foodai',String\(S\.foodAiUses\|\|0\)\);",
+  [('state.js', r"    _ecrireCleNutrition\('ft4_foodai',String\(S\.foodAiUses\|\|0\)\);",
     "    localStorage.removeItem('ft4_foodai');S.foodAiUses=0;")], 'ROUGE'),
 
  # ══ LA PERSISTANCE CLOUD ══════════════════════════════════════════════════════

@@ -288,8 +288,12 @@ function _foodSupprimesFusion(a,b,deServeur){
   });
   return _foodSupprimesNormaliser((Array.isArray(a)?a:[]).concat(dessus));
 }
-/* Ce qui part au serveur : l'identité et l'instant, jamais l'état local. */
-function _foodSupprimesPourEnvoi(){ return _foodSupprimesNormaliser(S.foodSupprimes).map(e=>({i:e.i, t:e.t})); }
+/* Ce qui part au serveur : l'identité et l'instant des suppressions NON CONFIRMÉES (en attente ou différées), jamais l'état local.
+   ⚙️ NUT-SYNC-02 phase A : avant, le registre ENTIER partait à chaque synchro, confirmé ou non — 59 Ko à 1 000 entrées, 176 Ko à 3 000 (calculé), à chaque envoi. Une suppression CONFIRMÉE est chez le serveur : la renvoyer ne sert à rien tant
+   que le serveur ne l'a pas perdue — ce que la guérison (`_nutTraiterReponse`) détecte (le serveur annonce MOINS d'entrées que l'appareil n'en a confirmé) et corrige en les remettant « en attente ». */
+function _foodSupprimesPourEnvoi(){ return _foodSupprimesNormaliser(S.foodSupprimes).filter(e=>!e.c).map(e=>({i:e.i, t:e.t})); }
+/* Le registre COMPLET, confirmé ou non — pour le miroir seulement (il REMPLACE son champ : jamais un sous-ensemble). */
+function _foodSupprimesTous(){ return _foodSupprimesNormaliser(S.foodSupprimes).map(e=>({i:e.i, t:e.t})); }
 /* Les suppressions que le serveur n'a PAS encore confirmées (en attente OU rejetées) : à renvoyer, à ne jamais perdre. */
 function _foodSupprimesEnAttente(){ return _foodSupprimesNormaliser(S.foodSupprimes).filter(e=>!e.c); }
 /* Un identifiant d'opération par envoi : le serveur l'écho, l'appareil ne croit un accusé que s'il porte le SIEN. */
@@ -1022,6 +1026,23 @@ function _ecrireJournalLocal(){
 }
 /* L'issue de la DERNIÈRE tentative d'écriture du journal : `{seq, ok}` (`ok` : true / false / null = jamais tenté). */
 function _journalEtat(){ return {seq:_journalSeq, ok:_journalOk}; }
+/* ⚙️⚙️ NUT-SYNC-02 phase A (02/11/2026) — LES CLÉS NUTRITION ANNEXES NE FONT PLUS JAMAIS RÉDUIRE LES SÉANCES.
+   Le lot 3B a isolé le journal (`ft4_foodlog`) et le registre (`ft4_food_supprimes`). Il restait, DANS les deux `try` communs de `persist()`, les favoris (`ft4_savedfoods`), les masquages (`ft4_hiddenfoods`), le plan de repas (`ft4_mealplan`) et les
+   quatre compteurs de l'IA nutritionnelle (`ft4_foodai*`) : le navigateur ne dit pas QUELLE clé a dépassé le quota, donc un échec de l'une d'elles déclenchait le repli (`_persistRepli`) — séances ramenées à 50. Même geste que le journal : chacune est
+   écrite par CE helper, à sa place EXACTE (l'ordre des écritures est la priorité d'écriture — G2b l'épingle, octet pour octet), et son échec est avalé ici : il ne lève pas, n'atteint pas le `catch` commun, ne déclenche PAS le repli. `true` seulement si
+   `setItem` a abouti. Les clés refusées sont gardées (`_nutClesRefusees`) : l'appelant et les bancs peuvent les lire.
+   ⚠️ LIMITE ÉCRITE : les petites clés de réglage Nutrition (`ft4_diet*`, `ft4_foodmode`, `ft4_fasting`, `ft4_keto`, `ft4_nphase`) restent dans les blocs communs — quelques octets chacune, elles ne sont jamais la clé qui fait dépasser un quota. */
+let _nutRefusees=[];
+function _ecrireCleNutrition(cle,valeur){
+  try{ localStorage.setItem(cle,valeur); return true; }
+  catch(e){
+    _nutRefusees.push(cle); if(_nutRefusees.length>40) _nutRefusees.shift();
+    try{ console.warn('[FT nutrition] écriture locale refusée : '+cle,e); }catch(_){}
+    try{ if(typeof _logErr==='function')_logErr({m:cle+' non écrit : '+String((e&&e.message)||e).slice(0,120)}); }catch(_){}
+    return false;
+  }
+}
+function _nutClesRefusees(){ return _nutRefusees.slice(); }
 /* ⛔⛔ ft-v1094 — DEUX ONGLETS OUVERTS, ET LE DERNIER QUI ÉCRIT EFFACE L'AUTRE.
    `persist()` écrit **tout `S`** d'un coup, depuis la mémoire de l'onglet qui l'appelle. Or
    l'app est une PWA : elle est très souvent ouverte à DEUX endroits en même temps — l'icône
@@ -1516,7 +1537,7 @@ function persist(){
     localStorage.setItem('ft4_bday',S.bday||'');
     localStorage.setItem('ft4_lws',S.lastWeekSummary||'');
     localStorage.setItem('ft4_lms',S.lastMonthSummary||'');
-    localStorage.setItem('ft4_mealplan',JSON.stringify(S.mealPlan||null));
+    _ecrireCleNutrition('ft4_mealplan',JSON.stringify(S.mealPlan||null));   // NUT-SYNC-02 phase A : même rang, échec isolé (voir `_ecrireCleNutrition`)
   }catch(e){ _persistRepli(e, _rep); }
   /* ⭐ NUT-REF-HIST-02 (3B) — LE JOURNAL ICI, À SA PLACE D'AVANT (l'ordre des clés ne bouge pas : les séances, les records et la séance en
      cours passent toujours AVANT lui — la priorité d'écriture EST l'ordre), mais HORS du `try` commun : ni une clé qui a échoué plus tôt
@@ -1524,15 +1545,15 @@ function persist(){
   _ecrireSuppressionsLocal();   // NUT-SYNC-01 : le registre des suppressions AVANT le journal — si le journal est écrit, les suppressions qu'il suppose le sont aussi
   _ecrireJournalLocal();
   try{
-    localStorage.setItem('ft4_savedfoods',JSON.stringify(S.savedFoods||[]));
-    localStorage.setItem('ft4_hiddenfoods',JSON.stringify(S.hiddenFoods||[]));
+    _ecrireCleNutrition('ft4_savedfoods',JSON.stringify(S.savedFoods||[]));      // NUT-SYNC-02 phase A : ces sept clés Nutrition gardent leur rang, leur échec est isolé
+    _ecrireCleNutrition('ft4_hiddenfoods',JSON.stringify(S.hiddenFoods||[]));
     /* ⛔ L'ANCIEN POT EST TOUJOURS ÉCRIT, ET IL NE BOUGE PLUS : plus personne ne
        l'incrémente, mais le réécrire garde la valeur intacte pour un appareil resté sur
        l'ancienne version et pour la restauration. *On gèle une donnée, on ne l'efface pas.* */
-    localStorage.setItem('ft4_foodai',String(S.foodAiUses||0));
-    localStorage.setItem('ft4_foodai_label',String(S.foodLabelAiUses||0));
-    localStorage.setItem('ft4_foodai_meal', String(S.foodMealEstimateAiUses||0));
-    localStorage.setItem('ft4_foodai_bc',   String(S.foodBarcodeAiUses||0));
+    _ecrireCleNutrition('ft4_foodai',String(S.foodAiUses||0));
+    _ecrireCleNutrition('ft4_foodai_label',String(S.foodLabelAiUses||0));
+    _ecrireCleNutrition('ft4_foodai_meal', String(S.foodMealEstimateAiUses||0));
+    _ecrireCleNutrition('ft4_foodai_bc',   String(S.foodBarcodeAiUses||0));
     localStorage.setItem('ft4_health',JSON.stringify(S.healthProfile||null));
     localStorage.setItem('ft4_bodystudy',JSON.stringify(S.bodyStudy||null));
     localStorage.setItem('ft4_bodystudies',JSON.stringify(S.bodyStudies||[]));

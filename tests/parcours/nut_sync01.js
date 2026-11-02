@@ -113,7 +113,7 @@ module.exports.ecran = async function ecran(t, b, PORT) {
 
   /* ═══ A — IDENTITÉS ═══════════════════════════════════════════════════════════════════════════════════════ */
   {
-    const srv = P1.serveur({ code: CODE_NEUF });
+    const srv = P1.serveur({ code: CODE_NEUF, compatStrict: false });
     const A = await appareil('A', srv);
     await A.graine([ligne('Riz source', { id: 'src-00000001' })]);
     // 1) deux repas VOULUS identiques par le vrai chemin d'ajout rapide : deux identités distinctes
@@ -158,7 +158,7 @@ module.exports.ecran = async function ecran(t, b, PORT) {
      à la mise au point des mutations). Ce ne sont pas des données métier : l'invariant (calories, macros, quantité, date, repas, nom, ts identiques à l'octet) reste exigé sur TOUT le reste. */
   const champsMetier = (l) => sans(l, 'id', 'rev', 'modifiedAt').map((x) => J(x)).sort();
   {
-    const srv = P1.serveur({ code: CODE_NEUF });
+    const srv = P1.serveur({ code: CODE_NEUF, compatStrict: false });
     const A = await appareil('A', srv, { stockage: stockageAncien(ANCIENNES) });
     const B = await appareil('B', srv, { stockage: stockageAncien(ANCIENNES) });
     const jA = await A.journal(), jB = await B.journal();
@@ -216,7 +216,7 @@ module.exports.ecran = async function ecran(t, b, PORT) {
   const X2 = ligne('Repas X2', { id: 'idx2-00000002', ts: 1760000000012 });
   const X3 = ligne('Repas X3', { id: 'idx3-00000003', ts: 1760000000013 });
   {
-    const srv = P1.serveur({ code: CODE_NEUF });
+    const srv = P1.serveur({ code: CODE_NEUF, compatStrict: false });
     const A = await appareil('A', srv);
     await A.graine([X1, X2, X3]);
     await A.ev(() => { removeFoodEntry('idx2-00000002'); }); await pause(250);
@@ -229,7 +229,7 @@ module.exports.ecran = async function ecran(t, b, PORT) {
   }
   {
     // 9) échec du REGISTRE : rien n'est supprimé, et on le dit
-    const srv = P1.serveur({ code: CODE_NEUF });
+    const srv = P1.serveur({ code: CODE_NEUF, compatStrict: false });
     const A = await appareil('A', srv);
     await A.graine([X1, X2, X3]);
     await A.espionner();
@@ -243,7 +243,7 @@ module.exports.ecran = async function ecran(t, b, PORT) {
   }
   {
     // 9c) échec du JOURNAL seul : la suppression est définitive (le registre fait foi)
-    const srv = P1.serveur({ code: CODE_NEUF });
+    const srv = P1.serveur({ code: CODE_NEUF, compatStrict: false });
     const A = await appareil('A', srv);
     await A.graine([X1, X2, X3]);
     await A.espionner();
@@ -260,7 +260,7 @@ module.exports.ecran = async function ecran(t, b, PORT) {
   /* ═══ D — PLUSIEURS APPAREILS ═════════════════════════════════════════════════════════════════════════════════ */
   {
     // 10) A supprime, B revient avec l'ancienne copie
-    const srv = P1.serveur({ code: CODE_NEUF });
+    const srv = P1.serveur({ code: CODE_NEUF, compatStrict: false });
     const A = await appareil('A', srv), B = await appareil('B', srv), B2 = await appareil('B2', srv);
     await A.graine([X1, X2, X3]); await A.sync();
     await B.restaurer(); await B2.restaurer();
@@ -282,7 +282,7 @@ module.exports.ecran = async function ecran(t, b, PORT) {
   }
   {
     // 11) appareil resté hors ligne très longtemps
-    const srv = P1.serveur({ code: CODE_NEUF });
+    const srv = P1.serveur({ code: CODE_NEUF, compatStrict: false });
     const A = await appareil('A', srv), B = await appareil('B', srv);
     await A.graine([X1, X2, X3]); await A.sync(); await B.restaurer();
     B.horsLigne = true;                                           // B quitte le réseau
@@ -302,7 +302,7 @@ module.exports.ecran = async function ecran(t, b, PORT) {
   }
   {
     // 12) historique local incomplet après panne : aucune suppression cloud déduite
-    const srv = P1.serveur({ code: CODE_NEUF });
+    const srv = P1.serveur({ code: CODE_NEUF, compatStrict: false });
     const A = await appareil('A', srv);
     await A.graine([X1, X2, X3]); await A.sync();
     await A.ev(() => { window.__Q.refuse = ['ft4_foodlog']; for (let i = 0; i < 3; i++) S.foodLog.push({ id: 'nouv' + i + '-0000000', date: today(), meal: 'diner', name: 'Nouveau ' + i, kcal: 5, prot: 0, carbs: 0, fat: 0, ts: 1760000200000 + i, v: 1, saisie: 'liste', origine: 'reprise', n2: { s: 1, m: 'd', no: [], st: 'declaree' } }); persist(); });
@@ -321,7 +321,7 @@ module.exports.ecran = async function ecran(t, b, PORT) {
     const apres12 = await A.journal();
     t('B-NS01 T12c … la restauration RAMÈNE ensuite les repas que la panne avait empêché de garder (le compte les avait) : 6 lignes sur l\'appareil, aucun doublon', (await A.journal()).length === 6 && ['Nouveau 0', 'Nouveau 1', 'Nouveau 2', 'Repas X3'].every((n) => noms(apres12).includes(n)), J(noms(apres12)));
     // contrôle : un ANCIEN client (sans drapeau V2) qui envoie la même liste raccourcie retire bien les lignes (comportement d'avant, copié en zone de récupération)
-    const srv2 = P1.serveur({ code: CODE_NEUF });
+    const srv2 = P1.serveur({ code: CODE_NEUF, compatStrict: false });
     srv2.compte(EMAIL, { foodLog: [X1, X2, X3].map((x) => Object.assign({}, x)) });
     srv2.envoi(EMAIL, { foodLog: [X1] });
     t('B-NS01 T12d (contrôle) un ANCIEN client (sans `foodLogV`) envoyant une liste plus courte garde le comportement d\'avant : les lignes absentes sont retirées du journal actif et COPIÉES en zone de récupération', serveurJournal(srv2).length === 1 && ((compteServeur(srv2).recupNut || {}).foodLog || []).length === 2, J({ j: serveurJournal(srv2).length, recup: ((compteServeur(srv2).recupNut || {}).foodLog || []).length }));
@@ -329,7 +329,7 @@ module.exports.ecran = async function ecran(t, b, PORT) {
   }
   {
     // 13) deux repas identiques, un seul supprimé
-    const srv = P1.serveur({ code: CODE_NEUF });
+    const srv = P1.serveur({ code: CODE_NEUF, compatStrict: false });
     const A = await appareil('A', srv), B = await appareil('B', srv);
     const J1 = ligne('Jumeau', { id: 'jum1-00000001', ts: 1760000300001 }), J2 = ligne('Jumeau', { id: 'jum2-00000002', ts: 1760000300002 });
     await A.graine([J1, J2, X1]); await A.sync(); await B.restaurer();
@@ -342,7 +342,7 @@ module.exports.ecran = async function ecran(t, b, PORT) {
   {
     // 14) modification et suppression concurrentes : la suppression gagne, dans les DEUX ordres
     for (const ordre of ['edition-puis-suppression', 'suppression-puis-edition']) {
-      const srv = P1.serveur({ code: CODE_NEUF });
+      const srv = P1.serveur({ code: CODE_NEUF, compatStrict: false });
       const A = await appareil('A', srv), B = await appareil('B', srv);
       await A.graine([X1, X2, X3]); await A.sync(); await B.restaurer();
       const editerA = async () => { await A.ev((id) => { openEditFood(id); }, 'idx2-00000002'); await pause(250); await A.ev(() => { _editFoodMeal = 'diner'; saveEditFood(); }); await pause(300); await A.sync(); };
@@ -372,7 +372,7 @@ module.exports.ecran = async function ecran(t, b, PORT) {
   }
   {
     // 16) ANCIEN client ↔ nouveau serveur : une liste sans drapeau, sans registre ; il ne peut pas faire revenir une ligne supprimée
-    const srv = P1.serveur({ code: CODE_NEUF });
+    const srv = P1.serveur({ code: CODE_NEUF, compatStrict: false });
     const A = await appareil('A', srv);
     await A.graine([X1, X2, X3]); await A.sync();
     await A.ev(() => { removeFoodEntry('idx2-00000002'); }); await pause(250); await A.sync();
@@ -383,7 +383,7 @@ module.exports.ecran = async function ecran(t, b, PORT) {
   {
     // 17) journal MIXTE ancien (UUID + lignes sans identité) : tout reste accessible, rien ne change
     const mixte = [ligne('Avec UUID', { id: 'ab12cd34-ef56-4a78-9b01-23456789abcd', ts: 1750000001001 }), ligne('Sans identité', { ts: 1750000001002 }), ligne('Id trop court', { id: 'abc', ts: 1750000001003 })];
-    const srv = P1.serveur({ code: CODE_NEUF });
+    const srv = P1.serveur({ code: CODE_NEUF, compatStrict: false });
     const A = await appareil('A', srv, { stockage: { ft4_foodlog: J(mixte) } });
     const j = await A.journal();
     t('B-NS01 T17 ⭐ ANCIEN journal mixte (UUID valide / sans identité / identité invalide de 3 caractères) : l\'UUID est conservé tel quel, les deux autres reçoivent une identité déterministe, aucune ligne perdue, aucune donnée métier modifiée',
@@ -392,7 +392,7 @@ module.exports.ecran = async function ecran(t, b, PORT) {
   }
   {
     // 18) les macros des lignes conservées ne changent jamais : aller-retour complet (migration → synchro → restauration sur un autre appareil)
-    const srv = P1.serveur({ code: CODE_NEUF });
+    const srv = P1.serveur({ code: CODE_NEUF, compatStrict: false });
     const A = await appareil('A', srv, { stockage: stockageAncien(ANCIENNES) });
     await A.sync();
     const B = await appareil('B', srv);
@@ -406,7 +406,7 @@ module.exports.ecran = async function ecran(t, b, PORT) {
 
   /* ═══ F — SERVEUR SEUL (Code.js réel) ═════════════════════════════════════════════════════════════════════════════ */
   {
-    const srv = P1.serveur({ code: CODE_NEUF });
+    const srv = P1.serveur({ code: CODE_NEUF, compatStrict: false });
     const L = (i) => ligne('Serveur ' + i, { id: 'srv' + String(1000 + i) + '-aaaa', ts: 1760001000000 + i });
     srv.compte(EMAIL, { foodLog: [0, 1, 2, 3, 4].map(L) });
     // union V2 : une liste plus courte ne retire rien, ne copie rien en zone de récupération
@@ -431,23 +431,26 @@ module.exports.ecran = async function ecran(t, b, PORT) {
     r = srv.envoi(EMAIL, { foodLog: [], foodLogV: 2 });
     t('B-NS01 S04 ⭐ un envoi VIDE ne vide pas le compte (règle existante : il reste L0, L1, L4) et ne ramène pas les lignes supprimées (L2 et L3 sont au registre)', serveurJournal(srv).length === 3 && !serveurJournal(srv).some((x) => x.id === L(2).id || x.id === L(3).id), J(noms(serveurJournal(srv))));
     // tout supprimer à dessein : le journal peut devenir vide
-    const srv3 = P1.serveur({ code: CODE_NEUF });
+    const srv3 = P1.serveur({ code: CODE_NEUF, compatStrict: false });
     srv3.compte(EMAIL, { foodLog: [L(0), L(1)] });
     srv3.envoi(EMAIL, { foodLog: [], foodLogV: 2, foodSupprimes: [{ i: L(0).id, t: 1 }, { i: L(1).id, t: 2 }] });
     t('B-NS01 S05 ⭐ tout supprimer À DESSEIN (deux suppressions déclarées pour deux lignes) vide bien le journal du compte', serveurJournal(srv3).length === 0 && serveurReg(srv3).length === 2, J(serveurJournal(srv3).length));
     // plafond du registre : les entrées connues sont toutes gardées, les nouvelles refusées au-delà, et c'est journalisé
-    const srv4 = P1.serveur({ code: CODE_NEUF });
+    const srv4 = P1.serveur({ code: CODE_NEUF, compatStrict: false });
     srv4.compte(EMAIL, {});
     const mille = (a, b2) => Array.from({ length: b2 - a }, (_, k) => ({ i: 'tmb' + String(100000 + a + k) + '-aaaa', t: 1 + k }));
     srv4.envoi(EMAIL, { foodSupprimes: mille(0, 3000) });
     const rSat = srv4.envoi(EMAIL, { foodSupprimes: mille(0, 3000).concat(mille(3000, 3010)) });
-    /* ↪️ ADAPTÉ LE 01/11/2026 (NUT-SYNC-01 FINAL, ordre de Michel). Avant : les 10 suppressions en trop étaient jetées et la réponse restait « ok » (refus SILENCIEUX côté appareil). Désormais :
-       l'envoi Nutrition est refusé EN ENTIER, par une réponse explicite (`ok:false`, `NUT_TOMBSTONE_LIMIT`, non réessayable), et le registre reste exactement ce qu'il était (3000). L'exigence « conservé
-       + journalisé » est gardée telle quelle. */
-    t('B-NS01 S06 ⭐ plafond du registre (3000, protège le stockage partagé) : les 3000 entrées connues sont conservées, les 10 NOUVELLES sont refusées EXPLICITEMENT (ok:false, NUT_TOMBSTONE_LIMIT) ET journalisées',
-      serveurReg(srv4).length === 3000 && rSat.j.ok === false && rSat.j.code === 'NUT_TOMBSTONE_LIMIT' && rSat.j.retryable === false && srv4.journal.some((m) => /foodSupprimes\] REFUSÉ : 10 suppression/.test(m)), J({ n: serveurReg(srv4).length, r: rSat.j.code }));
+    /* ↪️ ADAPTÉ LE 01/11/2026 (NUT-SYNC-01 FINAL, ordre de Michel) puis LE 02/11/2026 (NUT-SYNC-02 phase A, GO du Principal — R30). Avant FINAL : les 10 suppressions en trop étaient jetées et la réponse restait « ok » (refus SILENCIEUX côté
+       appareil). En FINAL : l'envoi Nutrition entier était refusé (`ok:false`, `NUT_TOMBSTONE_LIMIT`, non réessayable) — un blocage durable de TOUT le volet, repas compris. Phase A : le PLAFOND de 3000 reste (il protège le stockage partagé),
+       mais le dépassement est DIFFÉRÉ entrée par entrée — réponse `ok:true`, les 10 NOUVELLES dans `nut.tomb.diff` avec leur code (jamais dans `tomb.ok`), le registre reste exactement ce qu'il était (3000), journalisé. L'exigence
+       « les 3000 connues conservées, les 10 nouvelles non inscrites, dites explicitement, journalisées » est gardée telle quelle ; seule la FORME de l'annonce change. */
+    const tSat = (rSat.j.nut && rSat.j.nut.tomb) || {};
+    t('B-NS01 S06 ⭐ plafond du registre (3000, protège le stockage partagé) : les 3000 entrées connues sont conservées, les 10 NOUVELLES sont DIFFÉRÉES EXPLICITEMENT (entrée par entrée, NUT_TOMBSTONE_LIMIT, jamais « acceptées ») ET journalisées',
+      serveurReg(srv4).length === 3000 && rSat.j.ok === true && (tSat.diff || []).length === 10 && tSat.diff.every((d) => d.code === 'NUT_TOMBSTONE_LIMIT') && (tSat.ok || []).length === 3000 && !(tSat.ok || []).some((i) => Number(i.slice(3, 9)) >= 103000)
+      && srv4.journal.some((m) => /foodSupprimes\] DIFFÉRÉ : 10 suppression/.test(m)), J({ n: serveurReg(srv4).length, ok: rSat.j.ok, diff: (tSat.diff || []).length, acc: (tSat.ok || []).length }));
     // coût : octets stockés par suppression (mesure, pas une promesse)
-    const srv5 = P1.serveur({ code: CODE_NEUF }); srv5.compte(EMAIL, {});
+    const srv5 = P1.serveur({ code: CODE_NEUF, compatStrict: false }); srv5.compte(EMAIL, {});
     const avant5 = (srv5.brut(EMAIL) || '').length;
     srv5.envoi(EMAIL, { foodSupprimes: Array.from({ length: 100 }, (_, k) => ({ i: crypto4(k), t: 1760000000000 + k })) });
     const parSupp = Math.round(((srv5.brut(EMAIL) || '').length - avant5) / 100);
@@ -467,7 +470,7 @@ module.exports.ecran = async function ecran(t, b, PORT) {
   /* ↪️ ADAPTÉ LE 01/11/2026 (NUT-SYNC-01 FINAL) : le corps envoyé au compte porte désormais `foodLogV:3` et un `requestId` (et le registre voyage sous `_foodSupprimesPourEnvoi()`, qui n'envoie que l'identité
      et l'instant) ; le serveur applique `body.foodSupprimes` AVANT `body.foodLog` dans `_nutSynchroniser_`. Même exigence : le registre est à jour quand la liste reçue est jugée. */
   t('B-NS01 G03 le corps envoyé au compte porte `foodSupprimes`, le drapeau `foodLogV:3` et un `requestId` ; le serveur lit `body.foodSupprimes` AVANT `body.foodLog`',
-    /foodSupprimes:_foodSupprimesPourEnvoi\(\)/.test(setup) && /foodLogV:3/.test(setup) && /requestId:_requestId/.test(setup) && code.indexOf('body.foodSupprimes !== undefined') > 0 && code.indexOf('body.foodSupprimes !== undefined') < code.indexOf("body.foodLog    !== undefined"), '');
+    /foodSupprimes:_supEnvoi,/.test(setup) && /const _supEnvoi=_foodSupprimesPourEnvoi\(\)/.test(setup) && /foodLogV:3/.test(setup) && /requestId:_requestId/.test(setup) && code.indexOf('body.foodSupprimes !== undefined') > 0 && code.indexOf('body.foodSupprimes !== undefined') < code.indexOf("body.foodLog    !== undefined"), '');
   t('B-NS01 G04 aucune erreur JavaScript inattendue pendant tout le banc', erreursGlobales.filter((e) => !/quota|refus|faute|écriture/i.test(e)).length === 0, J(erreursGlobales.slice(0, 3)));
 
   function crypto4(k) { return require('crypto').randomUUID(); }

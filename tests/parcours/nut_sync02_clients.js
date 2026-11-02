@@ -21,16 +21,16 @@ const ESPION_RESEAU = `(() => { if (window.__net) return; const f = window.fetch
   }; })();`;
 const CORS = { 'access-control-allow-origin': '*' };
 
-module.exports = async function sectionE(t, b, PORT, pool, O, erreursGlobales) {
-  const { canon, metier, ligne, email, rid, mille, CODE_PERSO, pause, J } = O;
-  console.log('\n-- B-NS02 (E). Le vrai client · des contextes indépendants · de vrais processus serveur --');
-
+/* ⚙️ NUT-SYNC-02 phase A : la FABRIQUE d'appareils, sortie de la section E pour que `nut_phasea01.js` la réutilise telle quelle (R2) — le code du bloc est inchangé, sauf trois leviers de panne ajoutés (`corps` : les corps envoyés ;
+   `sansTomb` : un accusé valide SANS `nut.tomb`, comme un serveur plus ancien ; `reponseFabriquee` : une réponse écrite par le test). */
+function fabriquerAppareils(b, PORT, pool, O, erreursGlobales) {
+  const { pause, J, CODE_PERSO } = O;
   /* ─── un APPAREIL : un contexte navigateur à lui ; `k` = le processus serveur qui répond à ses requêtes ─── */
   async function appareil(nom, k, mail, opt) {
     opt = opt || {};
     const cx = await b.newContext({ serviceWorkers: 'block', viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
     const pg = await cx.newPage();
-    const D = { nom, k, cx, pg, mail, horsLigne: false, perdreReponse: false, reponseIllisible: false, autreOperation: false, ancienServeur: false, retenir: null, recus: 0, miroir: opt.miroir || null, miroirRecus: [], erreurs: [] };
+    const D = { nom, k, cx, pg, mail, horsLigne: false, perdreReponse: false, reponseIllisible: false, autreOperation: false, ancienServeur: false, sansTomb: false, reponseFabriquee: null, fabriqueSeul: false, corps: [], retenir: null, recus: 0, miroir: opt.miroir || null, miroirRecus: [], erreurs: [] };
     pg.on('pageerror', (e) => { const m = nom + ' : ' + String(e && e.message || e).slice(0, 160); D.erreurs.push(m); erreursGlobales.push(m); });
     pg.on('dialog', (d) => d.accept());
     const init = "localStorage.setItem('ft4_email','" + mail + "');localStorage.setItem('ft4_ok','1');localStorage.setItem('ft4_authcode','" + CODE_PERSO + "');";
@@ -41,14 +41,23 @@ module.exports = async function sectionE(t, b, PORT, pool, O, erreursGlobales) {
       if (D.horsLigne) return route.abort('internetdisconnected');
       const req = route.request();
       if (D.retenir) await D.retenir;                                    // l'ordre d'arrivée des requêtes est PILOTÉ par le test
+      if (D.fabriqueSeul && D.reponseFabriquee && req.method() === 'POST') {          // NUT-SYNC-02 phase A : la réponse est ÉCRITE par le test et la requête n'atteint JAMAIS le serveur (un refus que le serveur n'a pas appliqué)
+        let c = {}; try { c = JSON.parse(req.postData() || '{}'); } catch (e) { /* tant pis */ }
+        D.recus++; D.corps.push(req.postData() || ''); if (D.corps.length > 40) D.corps.shift();
+        const j = D.reponseFabriquee(c);
+        if (j) return route.fulfill({ status: 200, contentType: 'application/json', headers: CORS, body: J(j) });
+      }
       let rep;
       try { rep = req.method() === 'POST' ? await pool.post(D.k, req.postData() || '') : await pool.get(D.k, Object.fromEntries(new URL(req.url()).searchParams)); }
       catch (e) { rep = { t: J({ status: 'error', error: 'harnais : ' + e.message }) }; }
       D.recus++;
+      if (req.method() === 'POST') { D.corps.push(req.postData() || ''); if (D.corps.length > 40) D.corps.shift(); }          // les corps ENVOYÉS (phase A : on mesure ce qui part, octet pour octet)
       if (D.perdreReponse) { D.perdreReponse = false; return route.abort('connectionreset'); }          // APPLIQUÉ côté serveur, mais la réponse n'arrive jamais
       if (D.reponseIllisible) return route.fulfill({ status: 200, contentType: 'text/html', headers: CORS, body: '<html><body>Erreur temporaire</body></html>' });
       if (D.ancienServeur) return route.fulfill({ status: 200, contentType: 'application/json', headers: CORS, body: '{"status":"ok"}' });   // la réponse d'un serveur d'AVANT ce lot : ni `ok`, ni `requestId`
       if (D.autreOperation) { let j = {}; try { j = JSON.parse(rep.t); } catch (e) { /* tant pis */ } j.requestId = 'une-autre-operation-00000000'; return route.fulfill({ status: 200, contentType: 'application/json', headers: CORS, body: J(j) }); }
+      if (D.sansTomb) { let j = {}; try { j = JSON.parse(rep.t); } catch (e) { /* tant pis */ } if (j.nut) delete j.nut.tomb; return route.fulfill({ status: 200, contentType: 'application/json', headers: CORS, body: J(j) }); }   // un accusé VALIDE mais d'un serveur qui ne sait pas annoncer ses suppressions
+      if (D.reponseFabriquee) { let c = {}; try { c = JSON.parse(req.postData() || '{}'); } catch (e) { /* tant pis */ } const j = D.reponseFabriquee(c); if (j) return route.fulfill({ status: 200, contentType: 'application/json', headers: CORS, body: J(j) }); }   // une réponse écrite par le test
       await route.fulfill({ status: 200, contentType: 'application/json', headers: CORS, body: rep.t });
     });
     /* le MIROIR : un modèle du contrat d'écriture (migration 0003). Tout ce que le client lui envoie est consigné. */
@@ -86,6 +95,14 @@ module.exports = async function sectionE(t, b, PORT, pool, O, erreursGlobales) {
     await D.espionner();
     return D;
   }
+  return appareil;
+}
+
+module.exports = async function sectionE(t, b, PORT, pool, O, erreursGlobales) {
+  const { canon, metier, ligne, email, rid, mille, CODE_PERSO, pause, J } = O;
+  console.log('\n-- B-NS02 (E). Le vrai client · des contextes indépendants · de vrais processus serveur --');
+  const appareil = fabriquerAppareils(b, PORT, pool, O, erreursGlobales);
+
   const compte = (mail) => pool.lire(0, mail);
   const jr = async (mail) => ((await compte(mail)).profile.foodLog || []);
   const zone = async (mail) => (((await compte(mail)).recupNut || {}).foodLog || []);
@@ -101,6 +118,9 @@ module.exports = async function sectionE(t, b, PORT, pool, O, erreursGlobales) {
     ligne('Huile test', 'sem6-00000006', { kcal: 884.0, prot: 0, carbs: 0, fat: 100, q: 10 }),
   ];
   const copie = (x) => JSON.parse(JSON.stringify(x));
+  /* ↪️ ADAPTÉ le 02/11/2026 (NUT-SYNC-02 phase A, R30) : avant la phase A, un envoi qui portait une suppression sans place était REFUSÉ EN ENTIER — le journal du compte restait donc dans le MÊME ordre. Désormais le reste du volet est APPLIQUÉ,
+     et le serveur reconstruit la liste (lignes reçues, puis lignes protégées) : mêmes lignes, mêmes révisions, mêmes valeurs, ORDRE différent — mesuré (`sem2` passe en dernier). L'ordre n'est pas un invariant (les écrans trient) ; ce qui l'est : aucune ligne ni valeur ni révision modifiée. */
+  const parId = (j) => (j || []).slice().sort((a, b) => (a.id < b.id ? -1 : 1));
 
   /* ═══ E01 — REGISTRE PLEIN, côté client (tests 4 et 2) ═══ */
   {
@@ -113,21 +133,22 @@ module.exports = async function sectionE(t, b, PORT, pool, O, erreursGlobales) {
     const reg = await A.registre();
     const entree = reg.find((e) => e.i === 'sem2-00000002') || {};
     const toasts = await A.toasts();
-    t('B-NS02 E01 ⭐⭐ (tests 2, 4 — vrai client) le registre du COMPTE est plein : la suppression locale est REJETÉE explicitement — l\'entrée reste sur le téléphone avec son état « rejetée » (code NUT_TOMBSTONE_LIMIT), pas confirmée, jamais effacée ; la ligne reste masquée du journal ; le message est clair',
-      !!entree.i && entree.x === 'NUT_TOMBSTONE_LIMIT' && !entree.c && !(await A.journal()).some((l) => l.id === 'sem2-00000002') && toasts.some((x) => /Synchronisation Nutrition impossible/.test(x) && /registre des suppressions/.test(x) && /Rien n'est perdu/.test(x)), J({ entree, toasts }));
-    t('B-NS02 E01b ⭐ … et le serveur n\'a RIEN retenu de ce volet (registre à 3 000 exactement, repas toujours vivant au compte, révisions inchangées) — pas de succès affiché',
-      (c.profile.foodSupprimes || []).length === 3000 && (await jr(m)).some((l) => l.id === 'sem2-00000002') && canon(await jr(m)) === canon(avantSuppr) && !toasts.some((x) => SUCCES.test(x)), '');
+    t('B-NS02 E01 ⭐⭐ (tests 2, 4 — vrai client, ADAPTÉ phase A) le registre du COMPTE est plein : la suppression locale est DIFFÉRÉE explicitement — l\'entrée reste sur le téléphone avec son état « différée » (code NUT_TOMBSTONE_LIMIT), pas confirmée, jamais effacée ; la ligne reste masquée du journal ; le message est clair et dit que les autres repas se synchronisent',
+      !!entree.i && entree.x === 'NUT_TOMBSTONE_LIMIT' && !entree.c && !(await A.journal()).some((l) => l.id === 'sem2-00000002') && toasts.some((x) => /registre des suppressions/.test(x) && /Rien n'est perdu/.test(x) && /autres repas se synchronisent/.test(x)), J({ entree, toasts }));
+    t('B-NS02 E01b ⭐ … et le serveur n\'a RIEN retenu DE CETTE SUPPRESSION (registre à 3 000 exactement, repas toujours vivant au compte, révisions inchangées) — pas de succès affiché',
+      (c.profile.foodSupprimes || []).length === 3000 && (await jr(m)).some((l) => l.id === 'sem2-00000002') && canon(parId(await jr(m))) === canon(parId(avantSuppr)) && !toasts.some((x) => SUCCES.test(x)), J({ n: (c.profile.foodSupprimes || []).length, vivant: (await jr(m)).some((l) => l.id === 'sem2-00000002'), identique: canon(parId(await jr(m))) === canon(parId(avantSuppr)), succes: toasts.filter((x) => SUCCES.test(x)) }));
     await A.sync(); await A.sync();
     const reg2 = await A.registre(); const dsk = await A.registreDisque();
     await A.redemarrer();
     const reg3 = await A.registre();
     t('B-NS02 E01c ⭐⭐ (test 4) la suppression rejetée SURVIT à plusieurs nouvelles tentatives et au REDÉMARRAGE (stockage compris) : toujours là, toujours rejetée, toujours masquée du journal, jamais confondue avec une suppression confirmée',
       [reg2, dsk, reg3].every((r) => r.some((e) => e.i === 'sem2-00000002' && e.x === 'NUT_TOMBSTONE_LIMIT' && !e.c)) && !(await A.journal()).some((l) => l.id === 'sem2-00000002') && (await A.ev(() => _foodSupprimesEnAttente().length)) === 1, J({ reg3 }));
-    /* E01e — la conséquence sur le RESTE de Nutrition, MESURÉE (elle n'était que déduite du refus tout-ou-rien + de l'envoi de tout le registre à chaque synchronisation) */
+    /* E01e — ↪️ ADAPTÉ le 02/11/2026 (NUT-SYNC-02 phase A). Le lot FINAL MESURAIT ici une limite assumée : tant que l'appareil portait une suppression que le compte ne connaissait pas, TOUT son volet Nutrition était refusé à chaque synchronisation (un repas saisi après
+       restait sur le téléphone sans rejoindre le compte). Cette limite est LEVÉE : la suppression est différée entrée par entrée, le reste du volet passe. Le témoin garde le même scénario et prouve l'inverse. */
     await A.ev((l) => { S.foodLog.push(l); persist(); }, ligne('Repas saisi après le rejet', 'apres-00000099'));
     await A.sync();
-    t('B-NS02 E01e (conséquence MESURÉE de la saturation — limite assumée, documentée) tant que cet appareil porte une suppression que le compte ne connaît pas, TOUT son volet Nutrition est refusé à chaque synchronisation : un repas saisi APRÈS le rejet reste sur le téléphone (mémoire ET disque) mais ne rejoint pas le compte — rien n\'est perdu, rien n\'est annoncé comme réussi',
-      (await A.journal()).some((l) => l.id === 'apres-00000099') && ((await A.disque()) || []).some((l) => l.id === 'apres-00000099') && !(await jr(m)).some((l) => l.id === 'apres-00000099') && !(await A.toasts()).some((x) => SUCCES.test(x)), J({ repasAuCompte: (await jr(m)).length }));
+    t('B-NS02 E01e ⭐⭐ (ADAPTÉ phase A — la limite MESURÉE du lot FINAL est LEVÉE) tant que cet appareil porte une suppression DIFFÉRÉE, son volet Nutrition n\'est PLUS bloqué : un repas saisi APRÈS rejoint le compte (mémoire, disque ET compte), la suppression reste en attente (jamais effacée, jamais confirmée), aucun succès trompeur',
+      (await A.journal()).some((l) => l.id === 'apres-00000099') && ((await A.disque()) || []).some((l) => l.id === 'apres-00000099') && (await jr(m)).some((l) => l.id === 'apres-00000099') && (await A.ev(() => _foodSupprimesEnAttente().length)) === 1 && !(await A.toasts()).some((x) => SUCCES.test(x)), J({ repasAuCompte: (await jr(m)).length }));
     /* la conséquence honnête, dite et figée : tant que le registre du compte est plein, un AUTRE appareil retrouve le repas au compte */
     const B = await appareil('B', 2, m); await B.restaurer();
     t('B-NS02 E01d (limite assumée, documentée) tant que le registre du compte est plein, la suppression ne se propage PAS : un autre appareil qui restaure retrouve le repas — c\'est le prix du refus explicite, et la personne en a été avertie (E01) ; les 3 000 suppressions DU COMPTE, elles, arrivent sur cet appareil déjà « confirmées »', (await B.journal()).some((l) => l.id === 'sem2-00000002') && (await B.registre()).length === 3000 && (await B.registre()).every((e) => !!e.c), '');
@@ -390,3 +411,4 @@ module.exports = async function sectionE(t, b, PORT, pool, O, erreursGlobales) {
     await A.fermer();
   }
 };
+module.exports.fabriquerAppareils = fabriquerAppareils;

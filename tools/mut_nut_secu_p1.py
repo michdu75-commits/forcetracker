@@ -103,7 +103,7 @@ MUT = [
     ("M30 le refus n'est plus trace dans le journal du serveur",
      "        Logger.log('[FT GARDE-FOU ' + nom + '] REFUSÉ :", "        if (false) Logger.log('[FT GARDE-FOU ' + nom + '] REFUSÉ :", 'GARDE'),
     ("M31 le message d'erreur de Drive est recopie sans masquer une adresse",
-     ".replace(/[^\\s@]+@[^\\s@]+/g, '[adresse]')", "", 'GARDE'),
+     "var cause = String(err && err.message || err).replace(/[^\\s@]+@[^\\s@]+/g, '[adresse]')", "var cause = String(err && err.message || err)", 'GARDE'),   # ancre precisee le 02/11/2026 (NUT-SYNC-02 phase A ajoute deux autres journalisations masquees avec le meme motif : l'ancienne ancre courte n'etait plus unique)
     ("M32 une copie de moins ecrite dans Drive que retiree de la zone (decalage d'une ligne)",
      "    try { fichier = _nutDeplacerVersDrive_(email, nom, liste.slice(0, n)); }\n",
      "    try { fichier = _nutDeplacerVersDrive_(email, nom, liste.slice(0, n - 1)); }\n", 'GARDE'),

@@ -114,25 +114,29 @@ module.exports.ecran = async function ecran(t, b, PORT) {
     const r1 = X.envoi(m, { foodSupprimes: mille(2999, 3000), foodLogV: 3, requestId: rid() });
     t('B-NS02 B01 ⭐ (test 1) registre à 2 999 suppressions : une nouvelle est ACCEPTÉE (ok:true, accusé avec requestId et serverRevision), le registre en compte 3 000',
       r1.j.ok === true && typeof r1.j.requestId === 'string' && Number.isSafeInteger(r1.j.serverRevision) && r1.j.serverRevision >= 1 && (X.lireCompte(m).profile.foodSupprimes || []).length === 3000, J({ ok: r1.j.ok, n: (X.lireCompte(m).profile.foodSupprimes || []).length }));
+    const avantReg = canon(X.lireCompte(m).profile.foodSupprimes);
     const avant = etat();
-    /* l'envoi refusé contient AUSSI du journal et des favoris : B03 ne vaut que si un refus tardif pouvait laisser ces deux listes à moitié écrites */
+    /* l'envoi DIFFÉRÉ contient AUSSI du journal et des favoris : ils doivent PASSER (↪️ ADAPTÉ le 02/11/2026, NUT-SYNC-02 phase A — avant, ce même envoi refusait TOUT le volet ; le plafond, lui, est CONSERVÉ) */
     const r2 = X.envoi(m, { foodSupprimes: mille(3000, 3001), foodLog: [ligne('Repas déjà là', 'deja-00000001'), ligne('Repas du refus', 'refus-00000001')], savedFoods: [{ name: 'Favori du refus', kcal: 2, prot: 1, carbs: 1, fat: 1 }], foodLogV: 3, requestId: rid() });
-    t('B-NS02 B02 ⭐⭐ (test 2) registre à 3 000 : une nouvelle suppression est REFUSÉE EXPLICITEMENT — { ok:false, code:\'NUT_TOMBSTONE_LIMIT\', message:\'Synchronisation Nutrition impossible.\', retryable:false } — avec les détails (limite, refusées, conservées), journalisée',
-      r2.j.ok === false && r2.j.code === 'NUT_TOMBSTONE_LIMIT' && r2.j.message === 'Synchronisation Nutrition impossible.' && r2.j.retryable === false && r2.j.status === 'nut_refuse'
-      && J(r2.j.details) === J({ limite: 3000, refusees: 1, conservees: 3000 }) && X.journal.some((l) => /foodSupprimes\] REFUSÉ : 1 suppression/.test(l)) && !('nut' in r2.j && r2.j.ok === true), r2.t.slice(0, 300));
-    t('B-NS02 B03 ⭐⭐ (test 3) AUCUN profil Nutrition à moitié écrit après le rejet : registre, journal, favoris, révision du compte, mémoire des opérations ET zone de récupération sont IDENTIQUES octet pour octet à ceux d\'avant',
-      etat() === avant, '');
-    /* un envoi plus riche : plusieurs nouvelles suppressions + du journal + des favoris + une pesée */
+    t('B-NS02 B02 ⭐⭐ (test 2, ADAPTÉ phase A) registre à 3 000 : une nouvelle suppression est DIFFÉRÉE EXPLICITEMENT, ENTRÉE PAR ENTRÉE — réponse ok:true, `nut.tomb.diff` = [{i, code:\'NUT_TOMBSTONE_LIMIT\'}], absente de `nut.tomb.ok`, jamais inscrite (le plafond de 3 000 protège toujours le stockage), journalisée',
+      r2.j.ok === true && r2.j.status === 'ok' && J(r2.j.nut.tomb.diff) === J([{ i: 'tmb103000-aaaa', code: 'NUT_TOMBSTONE_LIMIT' }]) && r2.j.nut.tomb.ok.length === 0 && r2.j.nut.tomb.n === 3000 && r2.j.nut.tomb.v === 1
+      && !(X.lireCompte(m).profile.foodSupprimes || []).some((e) => e.i === 'tmb103000-aaaa') && (X.lireCompte(m).profile.foodSupprimes || []).length === 3000 && X.journal.some((l) => /foodSupprimes\] DIFFÉRÉ : 1 suppression/.test(l)), r2.t.slice(0, 300));
+    t('B-NS02 B03 ⭐⭐ (test 3, ADAPTÉ phase A) le PLAFOND TIENT : le registre est IDENTIQUE octet pour octet à celui d\'avant l\'envoi différé — rien d\'ajouté au-delà de 3 000, rien de purgé (le plafond reste protecteur jusqu\'à la phase B)',
+      canon(X.lireCompte(m).profile.foodSupprimes) === avantReg, '');
+    /* un envoi plus riche : plusieurs suppressions en trop + du journal + des favoris + une pesée — RIEN ne doit être bloqué */
     const r3 = X.envoi(m, { foodSupprimes: mille(3001, 3004), foodLog: [ligne('Repas déjà là', 'deja-00000001'), ligne('Nouveau', 'neuf-00000001')], savedFoods: [{ name: 'Fav', kcal: 1, prot: 1, carbs: 1, fat: 1 }], weightLog: [{ date: '2026-11-01', kg: 80 }], foodLogV: 3, requestId: rid() });
-    t('B-NS02 B04 ⭐ le rejet porte sur TOUT le volet Nutrition de l\'envoi (3 suppressions en trop, un repas neuf, un favori : RIEN n\'est retenu) — mais le reste du profil est ENREGISTRÉ (règle d\'or n°3 : une séance ne se perd jamais à cause du registre) et la réponse le dit (`profilEnregistre:true`)',
-      r3.j.ok === false && r3.j.code === 'NUT_TOMBSTONE_LIMIT' && J(r3.j.details) === J({ limite: 3000, refusees: 3, conservees: 3000 }) && etat() === avant && r3.j.profilEnregistre === true
-      && J(X.lireCompte(m).weightLog) === J([{ date: '2026-11-01', kg: 80 }]), r3.t.slice(0, 200));
+    const c3 = X.lireCompte(m);
+    t('B-NS02 B04 ⭐ (ADAPTÉ phase A) une suppression différée NE BLOQUE RIEN : dans le même envoi (3 suppressions en trop, un repas neuf, un favori, une pesée) le repas neuf est écrit avec sa révision, le favori est enregistré, la pesée aussi, l\'accusé annonce les révisions — et les 3 suppressions sont dans `diff`, jamais dans `ok`',
+      r3.j.ok === true && r3.j.nut.tomb.diff.length === 3 && r3.j.nut.tomb.ok.length === 0 && (c3.profile.foodLog || []).some((x) => x.id === 'neuf-00000001' && x.rev === 1) && r3.j.nut.acks.some((a) => a.i === 'neuf-00000001' && a.r === 1)
+      && (c3.profile.savedFoods || []).some((f) => f.name === 'Fav') && J(c3.weightLog) === J([{ date: '2026-11-01', kg: 80 }]) && (c3.profile.foodSupprimes || []).length === 3000 && canon(c3.profile.foodSupprimes) === avantReg, r3.t.slice(0, 220));
     const r4 = X.envoi(m, { foodSupprimes: mille(0, 3000), foodLogV: 3, requestId: rid() });
     const r4b = X.envoi(m, { foodSupprimes: mille(0, 3000), foodLogV: 3, requestId: rid() });
-    t('B-NS02 B05 ⭐ (test 5) RÉÉMISSION d\'une suppression déjà connue, même registre plein : ACCEPTÉE (ok:true), idempotente — le registre reste exactement ce qu\'il était, deux fois de suite',
-      r4.j.ok === true && r4b.j.ok === true && (X.lireCompte(m).profile.foodSupprimes || []).length === 3000 && canon(X.lireCompte(m).profile.foodSupprimes) === canon(mille(0, 2999).concat(mille(2999, 3000))), '');
+    t('B-NS02 B05 ⭐ (test 5) RÉÉMISSION d\'une suppression déjà connue, même registre plein : ACCEPTÉE (ok:true, nommée dans `nut.tomb.ok`, aucune différée), idempotente — le registre reste exactement ce qu\'il était, deux fois de suite',
+      r4.j.ok === true && r4b.j.ok === true && r4.j.nut.tomb.ok.length === 3000 && r4.j.nut.tomb.diff.length === 0 && (X.lireCompte(m).profile.foodSupprimes || []).length === 3000 && canon(X.lireCompte(m).profile.foodSupprimes) === canon(mille(0, 2999).concat(mille(2999, 3000))), '');
+    const avant6 = etat();
     const rV = X.envoi(m, { foodSupprimes: mille(3000, 3001), foodLogV: 3 });
-    t('B-NS02 B06 sans `requestId` (ancien appareil) le refus est tout aussi explicite et l\'état tout aussi intact', rV.j.ok === false && rV.j.code === 'NUT_TOMBSTONE_LIMIT' && rV.j.requestId === '' && etat() === avant, rV.t.slice(0, 160));
+    t('B-NS02 B06 (ADAPTÉ phase A) sans `requestId` (appareil qui ne sait pas lire un accusé) la porte de version REFUSE explicitement et en entier (NUT_CLIENT_INCOMPATIBLE, non réessayable) et l\'état Nutrition est intact — le détail des cas est dans `nut_phasea01`',
+      rV.j.ok === false && rV.j.code === 'NUT_CLIENT_INCOMPATIBLE' && rV.j.retryable === false && rV.j.requestId === '' && etat() === avant6, rV.t.slice(0, 160));
   }
 
   /* ═══ C — les révisions par repas, en séquence ═══════════════════════════════════════════════════════════════════════════════ */
@@ -234,7 +238,9 @@ module.exports.ecran = async function ecran(t, b, PORT) {
 
     /* ancien client (test 13) */
     {
-      const Z = P1.serveur(); const mm = email('old'); Z.compte(mm, {});
+      /* ↪️ ADAPTÉ le 02/11/2026 (NUT-SYNC-02 phase A) : ces trois témoins éprouvent le chemin « ancien client » — il n'est plus atteignable en production (la porte de version le refuse en entier) mais RESTE le comportement du levier de retour arrière
+         `NUT_COMPAT_STRICT_ = false` : ils tournent donc sur un serveur legacy, explicitement. */
+      const Z = P1.serveur({ compatStrict: false }); const mm = email('old'); Z.compte(mm, {});
       Z.envoi(mm, { foodLog: [ligne('Révisé', 'revis-00000001'), ligne('Frère', 'frere-00000001')], foodLogV: 3, requestId: rid() });
       Z.envoi(mm, { foodLog: [ligne('Révisé', 'revis-00000001', { rev: 1, kcal: 140 }), ligne('Frère', 'frere-00000001', { rev: 1 })], foodLogV: 3, requestId: rid() });   // révisé : rev 2
       const base = Z.lireCompte(mm).profile.foodLog;
@@ -249,7 +255,7 @@ module.exports.ecran = async function ecran(t, b, PORT) {
       t('B-NS02 C12 ⭐⭐ (test 13b) ANCIEN client qui envoie une liste plus courte : les repas RÉVISÉS par un appareil à jour ne sont pas retirés (il ne sait ni les révisions ni les suppressions), son repas neuf est ajouté',
         apres2.some((x) => x.id === 'revis-00000001') && apres2.some((x) => x.id === 'frere-00000001') && apres2.some((x) => x.id === 'vieux-00000001') && o2.j.ok === true, J(apres2.map((x) => x.name)));
       /* (c) un ancien client reste utile sur ce que personne n'a révisé */
-      const Q = P1.serveur(); const mq = email('old2'); Q.compte(mq, { foodLog: [ligne('Jamais révisé', 'jamais-0000001')] });
+      const Q = P1.serveur({ compatStrict: false }); const mq = email('old2'); Q.compte(mq, { foodLog: [ligne('Jamais révisé', 'jamais-0000001')] });
       Q.envoi(mq, { foodLog: [ligne('Jamais révisé', 'jamais-0000001', { kcal: 77 })] });
       t('B-NS02 C13 ⭐ (test 13c) un ancien client peut toujours corriger ce que personne n\'a jamais révisé (comportement d\'avant conservé), sans que la révision monte', (() => { const l = Q.lireCompte(mq).profile.foodLog[0]; return l.kcal === 77 && !('rev' in l); })(), '');
     }
@@ -388,8 +394,12 @@ module.exports.ecran = async function ecran(t, b, PORT) {
       const m = email('plein'); await pool.init(0, m, { code: CODE_PERSO, profile: { foodSupprimes: mille(0, 2999) } });
       const [ra, rb] = await pool.simultane([{ k: 1, corps: corps(m, { foodSupprimes: mille(5000, 5001), requestId: rid() }) }, { k: 2, corps: corps(m, { foodSupprimes: mille(6000, 6001), requestId: rid() }) }], true);
       const ja = lj(ra), jb = lj(rb); const reg = ((await pool.lire(0, m)).profile.foodSupprimes || []);
-      t('B-NS02 D08 ⭐ (VRAIE CONCURRENCE) deux appareils demandent en même temps la DERNIÈRE place du registre : l\'un l\'obtient (3 000), l\'autre est REFUSÉ explicitement — jamais deux acceptés (3 001), jamais un refus silencieux',
-        reg.length === 3000 && [ja.ok, jb.ok].filter((x) => x === true).length === 1 && [ja, jb].filter((x) => x.ok === false && x.code === 'NUT_TOMBSTONE_LIMIT').length === 1, J({ n: reg.length, a: ja.code || ja.ok, b: jb.code || jb.ok }));
+      /* ↪️ ADAPTÉ le 02/11/2026 (NUT-SYNC-02 phase A) : le perdant n'est plus REFUSÉ en bloc (ok:false) mais DIFFÉRÉ entrée par entrée (ok:true, la suppression dans `nut.tomb.diff`) ; l'exigence reste la même et se lit mieux :
+         JAMAIS deux acceptées (3 001), jamais une différée silencieuse (annoncée dans `diff`, absente de `ok`), et une seule des deux identités au registre. */
+      const dA = ja.nut && ja.nut.tomb ? ja.nut.tomb : { ok: [], diff: [] }, dB = jb.nut && jb.nut.tomb ? jb.nut.tomb : { ok: [], diff: [] };
+      const idsReg = reg.map((e) => e.i).filter((i) => i === 'tmb105000-aaaa' || i === 'tmb106000-aaaa');
+      t('B-NS02 D08 ⭐ (VRAIE CONCURRENCE, ADAPTÉ phase A) deux appareils demandent en même temps la DERNIÈRE place du registre : l\'un l\'obtient (3 000, nommée dans `tomb.ok`), l\'autre est DIFFÉRÉ explicitement (dans `tomb.diff`, code NUT_TOMBSTONE_LIMIT, absent de `tomb.ok`) — jamais deux acceptés (3 001), jamais une différée silencieuse',
+        reg.length === 3000 && ja.ok === true && jb.ok === true && idsReg.length === 1 && [dA, dB].filter((d) => d.ok.length === 1 && d.diff.length === 0).length === 1 && [dA, dB].filter((d) => d.ok.length === 0 && d.diff.length === 1 && d.diff[0].code === 'NUT_TOMBSTONE_LIMIT').length === 1, J({ n: reg.length, a: dA, b: dB }));
     }
   }
 
@@ -404,3 +414,6 @@ module.exports.ecran = async function ecran(t, b, PORT) {
   }
 };
 
+
+/* NUT-SYNC-02 phase A : les outils du banc (le pool de vrais processus, les fabriques de données) pour `nut_phasea01.js` — une seule définition (R2), pas une copie. */
+module.exports.outils = { canon, metier, ligne, email, rid, mille, corps, lj, CODE_PERSO, pause, J, lancerPool, RACINE };

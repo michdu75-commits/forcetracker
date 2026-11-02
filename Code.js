@@ -1685,6 +1685,42 @@ function _nutPrendreVerrou_() {
     return v.tryLock(NUT_VERROU_MS_) ? v : null;
   } catch (e) { return null; }
 }
+/* ⚙️⚙️ NUT-SYNC-02 PHASE A (02/11/2026, GO du Principal) — UN SEUL VERROU POUR TOUS LES ÉCRIVAINS DU COMPTE, ET SA DURÉE EST MESURÉE.
+   Avant : seul `saveProfile` prenait le verrou ; cinq autres gestionnaires (santé de la montre ×2, confirmation d'e-mail, code perso, mémoire du coach, restauration admin) relisaient puis RÉÉCRIVAIENT l'enregistrement entier sans lui :
+   l'un d'eux, lisant avant un `saveProfile` et écrivant après, effaçait un envoi DÉJÀ accusé (fenêtre de quelques millisecondes — lue dans le code, aucun appel réseau entre sa lecture et son écriture — mais non nulle). Désormais ils passent
+   tous par `_nutVerrouPrendre_` / `_nutVerrouRendre_` : verrou → RELIRE → modifier → écrire → rendre. `_nutVerrouRendre_` rend la durée de détention (ms) et la journalise au-delà de `NUT_VERROU_ALERTE_MS_` (des nombres, jamais une donnée).
+   ⛔ Aucune opération Drive nouvelle sous ce verrou. `_nutHorloge_` est le point d'appui des bancs (une horloge lente simulée). */
+var NUT_VERROU_ALERTE_MS_ = 2000;
+var _nutHorloge_ = function() { return Date.now(); };
+function _nutVerrouPrendre_() {
+  var v = _nutPrendreVerrou_();
+  return v ? { v: v, t0: _nutHorloge_(), rendu: false, ms: 0 } : null;
+}
+function _nutVerrouRendre_(h, origine) {
+  if (!h) return 0;
+  if (h.rendu) return h.ms;                              // une seule libération, quel que soit le chemin (anticipée ou `finally`)
+  h.rendu = true;
+  h.ms = Math.max(0, _nutHorloge_() - h.t0);
+  try { h.v.releaseLock(); } catch (relErr) {}
+  if (h.ms >= NUT_VERROU_ALERTE_MS_) Logger.log('[FT VERROU] ' + origine + ' : verrou tenu ' + h.ms + ' ms (seuil ' + NUT_VERROU_ALERTE_MS_ + ' ms)');
+  return h.ms;
+}
+/* 🚪🚪 NUT-SYNC-02 PHASE A — LA PORTE DE VERSION DU VOLET NUTRITION (02/11/2026, réserve du Principal sur les anciens clients).
+   Le volet Nutrition (`foodLog`, `savedFoods`, `foodSupprimes`) suppose un appareil qui sait LIRE un accusé : `foodLogV >= NUT_PROTOCOLE_MIN_` ET un `requestId` valide. Un envoi qui contient du Nutrition sans cela vient d'un ancien client
+   (ft-v1263 et avant : réponse jamais lue, aucune identité de suppression, journal du compte REMPLACÉ par l'instantané de l'appareil). Le laisser écrire pourrait RESSUSCITER un repas supprimé (ses copies ne portent pas l'identité du registre),
+   ÉCRASER un historique (son journal, plus court, remplace celui du compte) ou être pris pour acquis alors qu'il ne l'est pas. Il est donc REFUSÉ EXPLICITEMENT, EN ENTIER : `{status:'nut_refuse', ok:false, code:'NUT_CLIENT_INCOMPATIBLE',
+   retryable:false}` — jamais `ok:true`. RIEN de Nutrition n'est lu ni écrit (les cinq champs restent octet pour octet) ; le reste du profil — séances, records, pesées — est ENREGISTRÉ comme toujours (règle d'or n°3). Ce que l'appareil a saisi n'est
+   pas perdu : cela reste sur son téléphone et partira dès sa mise à jour. Limite écrite : un client qui ignore la réponse (`no-cors`) ne peut tout simplement pas être prévenu.
+   `NUT_COMPAT_STRICT_ = false` rétablit EXACTEMENT le comportement d'avant pour ces clients (remplacement avec copie de sécurité, P1) : c'est le levier de retour arrière, une décision à prendre sciemment — le défaut est la sécurité. */
+var NUT_PROTOCOLE_MIN_ = 3;
+var NUT_COMPAT_STRICT_ = true;
+function _nutCompatibilite_(body, requestId) {
+  var v = Number(body && body.foodLogV);
+  var version = isFinite(v) ? v : 0;
+  var nutrition = !!body && (body.foodLog !== undefined || body.savedFoods !== undefined || body.foodSupprimes !== undefined);
+  if (!nutrition) return { ok: true, version: version };                       // rien de Nutrition dans cet envoi : rien à refuser
+  return { ok: !!requestId && version >= NUT_PROTOCOLE_MIN_, version: version };
+}
 function _nutRevisionDe_(l) { return (l && Number.isSafeInteger(l.rev) && l.rev > 0) ? l.rev : 0; }
 function _nutCopieLigne_(l) { return JSON.parse(JSON.stringify(l)); }
 function _nutRequestId_(x) { return (typeof x === 'string' && /^[0-9A-Za-z-]{8,64}$/.test(x)) ? x : ''; }
@@ -1745,13 +1781,19 @@ function _nutSynchroniser_(body, profile, existing, email, requestId) {
           deja: true, complet: null, lignes: vivantes.length, supprimes: (profile.foodSupprimes || []).length,
           acks: (ops[k].a || []).map(function(p) { return { i: p[0], r: p[1] }; }),
           conflits: (ops[k].k || []).filter(function(p) { return parId[p[0]]; }).map(function(p) { return { i: p[0], r: p[1], ligne: parId[p[0]] }; }),
-          rejets: []
+          rejets: [],
+          tomb: _nutTombRejeu_(profile, body, ops[k])        // NUT-SYNC-02 phase A : le même résultat pour les suppressions (acceptées / différées), rien de réappliqué
         } };
       }
     }
   }
   var avantTxt = JSON.stringify([profile.foodSupprimes || [], profile.foodLog || [], profile.savedFoods || []]);
-  if (body.foodSupprimes !== undefined) profile.foodSupprimes = _nutSupprimesFusion_(profile.foodSupprimes, body.foodSupprimes, email);
+  var tomb = { v: 1, ok: [], diff: [], n: 0 };
+  if (body.foodSupprimes !== undefined) {
+    var F = _nutSupprimesFusion_(profile.foodSupprimes, body.foodSupprimes, email);   // NUT-SYNC-02 phase A : ne lève plus — une suppression sans place est DIFFÉRÉE, le reste passe
+    profile.foodSupprimes = F.liste; tomb.ok = F.ok; tomb.diff = F.diff;
+  }
+  tomb.n = (profile.foodSupprimes || []).length;
   var ctx = { v3: v3, out: out, now: Date.now() };
   if (body.foodLog    !== undefined) profile.foodLog    = _nutProtegerListe_(existing, profile, 'foodLog',    body.foodLog,    email, v2, ctx);
   if (body.savedFoods !== undefined) profile.savedFoods = _nutProtegerListe_(existing, profile, 'savedFoods', body.savedFoods, email, false, ctx);
@@ -1761,43 +1803,69 @@ function _nutSynchroniser_(body, profile, existing, email, requestId) {
   var change = JSON.stringify([profile.foodSupprimes || [], profile.foodLog || [], profile.savedFoods || []]) !== avantTxt;
   if (change) profile.nutRev = (Number.isSafeInteger(profile.nutRev) ? profile.nutRev : 0) + 1;
   if (requestId && (change || out.acks.length || out.conflits.length || out.rejets.length)) {
-    ops.push({ r: requestId, v: profile.nutRev || 0,
+    var op = { r: requestId, v: profile.nutRev || 0,
                a: out.acks.slice(0, NUT_OPS_ACKS_MAX_).map(function(a) { return [a.i, a.r]; }),
                k: out.conflits.slice(0, NUT_OPS_CONFLITS_MAX_).map(function(c) { return [c.i, c.r]; }),
-               tr: (out.acks.length > NUT_OPS_ACKS_MAX_ || out.conflits.length > NUT_OPS_CONFLITS_MAX_) ? 1 : 0 });
+               tr: (out.acks.length > NUT_OPS_ACKS_MAX_ || out.conflits.length > NUT_OPS_CONFLITS_MAX_) ? 1 : 0 };
+    if (tomb.diff.length) {                              // NUT-SYNC-02 phase A : les suppressions DIFFÉRÉES de cet envoi, pour que son rejeu rende le même accusé (bornées ; au-delà `td` : rien n'est annoncé accepté)
+      op.d = tomb.diff.slice(0, NUT_OPS_ACKS_MAX_).map(function(d) { return [d.i, d.code]; });
+      if (tomb.diff.length > NUT_OPS_ACKS_MAX_) op.td = 1;
+    }
+    ops.push(op);
     profile.nutOps = ops.slice(-NUT_OPS_MAX_);
   }
   return { deja: false, refus: out.refus, nut: {
     deja: false, complet: out.complet === true, lignes: (profile.foodLog || []).length, supprimes: (profile.foodSupprimes || []).length,
-    acks: out.acks, conflits: out.conflits, rejets: out.rejets
+    acks: out.acks, conflits: out.conflits, rejets: out.rejets, tomb: tomb
   } };
 }
 /* ⭐⭐ NUT-SYNC-01 — LE REGISTRE DES SUPPRESSIONS VOLONTAIRES DU JOURNAL ([{i: identité de la ligne, t: instant}], `profile.foodSupprimes`).
    Union, JAMAIS un retrait : une entrée reçue s'ajoute, une entrée connue ne disparaît jamais (aucune expiration — une purge ferait revenir la ligne depuis un appareil resté absent).
-   Une identité invalide (ni chaîne de 8 à 64 caractères [0-9A-Za-z-]) est ignorée. Le PLAFOND protège le stockage partagé de 512 000 octets : au-delà, les entrées DÉJÀ connues sont
-   toutes gardées et TOUT l'envoi Nutrition qui en demande de NOUVELLES est REFUSÉ EXPLICITEMENT (`NutSyncError` NUT_TOMBSTONE_LIMIT, journalisé, réponse `ok:false`, rien d'écrit côté Nutrition).
-   Avant NUT-SYNC-01 FINAL ce refus était silencieux : la réponse restait « ok » et l'appareil croyait sa suppression propagée. */
+   Une identité invalide (ni chaîne de 8 à 64 caractères [0-9A-Za-z-]) est ignorée. Le PLAFOND protège le stockage partagé de 512 000 octets : il RESTE (NUT-SYNC-02 phase A ne le relève pas, ne le contourne pas — la phase B le remplacera par un étage
+   froid hors du compte). Au-delà, les entrées DÉJÀ connues sont toutes gardées, et chaque suppression NOUVELLE est DIFFÉRÉE, ENTRÉE PAR ENTRÉE : `{i, code:'NUT_TOMBSTONE_LIMIT'}` dans `diff`, jamais dans `ok`, journalisé. Le reste de l'envoi
+   Nutrition (repas, révisions, conflits, favoris) est APPLIQUÉ : une suppression en attente de place ne bloque plus rien. L'appareil garde sa suppression (jamais effacée) et la renvoie ; le repas reste vivant au serveur tant qu'elle n'est pas inscrite.
+   Avant NUT-SYNC-01 FINAL ce dépassement était silencieux (réponse « ok », suppression jetée) ; en FINAL il refusait TOUT le volet Nutrition, repas compris — un blocage durable que la décision produit du 02/11 interdit.
+   Rend `{liste, ok, diff, invalides}` : `ok` = les identités reçues désormais inscrites (déjà connues ou ajoutées) — la SEULE base sur laquelle un appareil peut les confirmer. */
 var NUT_SUPPR_MAX_ = 3000;
 function _nutSupprimesFusion_(actuel, recu, email) {
-  var out = [], idx = Object.create(null), refusees = 0;
-  function ajouter(e, nouvelle) {
+  var out = [], idx = Object.create(null), ok = [], diff = [], diffVu = Object.create(null), invalides = 0;
+  function identite(e) {
     var i = (e && typeof e === 'object') ? e.i : e;
-    if (typeof i !== 'string' || i.length < 8 || i.length > 64 || !/^[0-9A-Za-z-]+$/.test(i)) return;
+    return (typeof i === 'string' && i.length >= 8 && i.length <= 64 && /^[0-9A-Za-z-]+$/.test(i)) ? i : '';
+  }
+  function ajouter(e, nouvelle) {                        // rend 'invalide' · 'deja' · 'ajoutee' · 'refusee' (plafond)
+    var i = identite(e);
+    if (!i) return 'invalide';
     var t = (e && typeof e === 'object' && isFinite(+e.t) && +e.t > 0) ? Math.floor(+e.t) : 0;
-    if (idx[i] !== undefined) { var o = out[idx[i]]; if (t && (!o.t || t < o.t)) o.t = t; return; }
-    if (nouvelle && out.length >= NUT_SUPPR_MAX_) { refusees++; return; }
+    if (idx[i] !== undefined) { var o = out[idx[i]]; if (t && (!o.t || t < o.t)) o.t = t; return 'deja'; }
+    if (nouvelle && out.length >= NUT_SUPPR_MAX_) return 'refusee';
     idx[i] = out.length; out.push({ i: i, t: t });
+    return 'ajoutee';
   }
   (Array.isArray(actuel) ? actuel : []).forEach(function(e) { ajouter(e, false); });
-  (Array.isArray(recu) ? recu : []).forEach(function(e) { ajouter(e, true); });
-  /* ⛔⛔ NUT-SYNC-01 FINAL — UN DÉPASSEMENT NE PASSE PLUS EN SILENCE. Avant : les suppressions en trop étaient jetées, la réponse disait « ok », et l'appareil croyait sa suppression propagée.
-     Maintenant : TOUT l'envoi Nutrition est refusé, par une erreur métier NOMMÉE que `handleSaveProfile_` transforme en réponse structurée ; le profil Nutrition n'est jamais écrit à moitié
-     (l'appelant restitue l'état d'avant). Le plafond n'est PAS relevé et rien n'est purgé automatiquement : c'est une décision de Michel. */
-  if (refusees > 0) {
-    Logger.log('[FT GARDE-FOU foodSupprimes] REFUSÉ : ' + refusees + ' suppression(s) NOUVELLE(S) au-delà du plafond de ' + NUT_SUPPR_MAX_ + ' — tout l\'envoi Nutrition est rejeté, rien n\'est écrit');
-    throw new NutSyncError('NUT_TOMBSTONE_LIMIT', 'Registre des suppressions saturé.', { limite: NUT_SUPPR_MAX_, refusees: refusees, conservees: out.length });
-  }
-  return out;
+  (Array.isArray(recu) ? recu : []).forEach(function(e) {
+    var r = ajouter(e, true), i = identite(e);
+    if (r === 'invalide') invalides++;
+    else if (r === 'refusee') { if (!diffVu[i]) { diffVu[i] = 1; diff.push({ i: i, code: 'NUT_TOMBSTONE_LIMIT' }); } }
+    else ok.push(i);
+  });
+  if (diff.length > 0) Logger.log('[FT GARDE-FOU foodSupprimes] DIFFÉRÉ : ' + diff.length + ' suppression(s) NOUVELLE(S) au-delà du plafond de ' + NUT_SUPPR_MAX_ + ' — gardées sur l\'appareil, le reste de l\'envoi Nutrition est appliqué');
+  return { liste: out, ok: ok, diff: diff, invalides: invalides };
+}
+/* Le résultat d'un envoi REJOUÉ (même `requestId`) : les mêmes suppressions acceptées / différées qu'à l'origine, sans rien réappliquer. Les différées viennent de la mémoire des opérations (`d`) ; les acceptées sont les identités de
+   l'envoi aujourd'hui au registre (il ne perd jamais une entrée) moins les différées. Mémoire tronquée (`td`) : rien n'est annoncé accepté — l'appareil garde tout en attente et renverra. */
+function _nutTombRejeu_(profile, body, op) {
+  var liste = Array.isArray(profile.foodSupprimes) ? profile.foodSupprimes : [];
+  if (op && op.td) return { v: 1, ok: [], diff: [], n: liste.length, incomplet: true };
+  var connue = Object.create(null); liste.forEach(function(e) { if (e && e.i) connue[e.i] = 1; });
+  var dif = (op && Array.isArray(op.d) ? op.d : []).map(function(p) { return { i: p[0], code: p[1] }; });
+  var difSet = Object.create(null); dif.forEach(function(d) { difSet[d.i] = 1; });
+  var ok = [], vu = Object.create(null);
+  (Array.isArray(body.foodSupprimes) ? body.foodSupprimes : []).forEach(function(e) {
+    var i = (e && typeof e === 'object') ? e.i : e;
+    if (typeof i === 'string' && connue[i] && !difSet[i] && !vu[i]) { vu[i] = 1; ok.push(i); }
+  });
+  return { v: 1, ok: ok, diff: dif, n: liste.length };
 }
 function _nutProtegerListe_(existing, profile, nom, recu, email, v2, ctx) {
   var actuel = Array.isArray(profile[nom]) ? profile[nom] : [];
@@ -1956,11 +2024,14 @@ function handleSaveProfile_(body) {
        au script (LockService n'en offre pas par compte) : le garder pendant ces deux écritures ferait attendre tous les autres comptes. `finally` le rend aussi si une erreur éclate avant l'écriture.
        Indisponible → réponse RÉESSAYABLE, RIEN n'est écrit (l'appareil renvoie tout à la synchronisation suivante). */
     const _requestId = _nutRequestId_(body.requestId);
-    verrou = _nutPrendreVerrou_();
+    verrou = _nutVerrouPrendre_();
     if (!verrou) return json_({status:'error', ok:false, code:'NUT_LOCK_BUSY', message:'Serveur occupé, réessaie dans un instant.', retryable:true, requestId:_requestId});
+    var lockMs = 0;                                       // durée de détention du verrou, mesurée (NUT-SYNC-02 phase A), rendue dans la réponse
 
-    const isNewUser = !loadUserData_(email);
-    const existing = loadUserData_(email) || {};
+    /* NUT-SYNC-02 phase A : UNE SEULE lecture du compte (avant : deux — `loadUserData_` décompresse le compte et relit `h_` à chaque appel) : une lecture de moins SOUS le verrou global. */
+    const _lu = loadUserData_(email);
+    const isNewUser = !_lu;
+    const existing = _lu || {};
     const profile = existing.profile || {};
 
     // GARDE-FOU GLOBAL : le vide ne gagne jamais sur du rempli
@@ -2092,19 +2163,30 @@ function handleSaveProfile_(body) {
     if (body.dietNotes     !== undefined) profile.dietNotes     = _ps_(body.dietNotes,     profile.dietNotes);
     // 🛡️ NUT-SECURISATION-P1 : plus de `_pa_` ici — rien de ce que le serveur avait ne part sans copie (voir _nutProtegerListe_).
     /* 🗑️🔁 NUT-SYNC-01 FINAL — LE VOLET NUTRITION EST TOUT-OU-RIEN. Suppressions volontaires d'abord (union, jamais un retrait), puis journal (révisions, conflits, zone de récupération), puis
-       favoris — mais si l'un des trois est refusé (`NutSyncError` : registre saturé, zone de récupération saturée), l'état d'AVANT est restitué en entier : jamais un profil Nutrition à moitié
+       favoris — mais si une erreur survient (`NutSyncError` nommée, ou TOUTE erreur imprévue : NUT-SYNC-02 phase A) l'état d'AVANT est restitué en entier : jamais un profil Nutrition à moitié (le registre saturé n'en fait plus partie : une
+       suppression sans place est DIFFÉRÉE entrée par entrée, voir `_nutSupprimesFusion_`)
        fusionné. ⚖️ Le reste du profil (séances, records, pesées…) est ENREGISTRÉ quand même — règle d'or n°3 : une saturation du registre Nutrition ne doit jamais empêcher la sauvegarde d'une
        séance. La réponse dit exactement ce qui a été refusé (`ok:false`, code, `profilEnregistre:true`). */
     var nutSortie = null, nutEchec = null;
     const nutAvant = { foodSupprimes: profile.foodSupprimes, foodLog: profile.foodLog, savedFoods: profile.savedFoods, nutRev: profile.nutRev, nutOps: profile.nutOps };
-    try {
-      nutSortie = _nutSynchroniser_(body, profile, existing, email, _requestId);
-    } catch (nutErr) {
-      if (!(nutErr instanceof NutSyncError)) throw nutErr;
-      nutEchec = nutErr;
-      /* `NutSyncError` n'est levée par `_nutSynchroniser_` qu'AVANT toute écriture dans la zone de récupération (la fusion du registre est sa première instruction) : restituer ces cinq champs
-         suffit à rendre l'état d'AVANT, octet pour octet. Toute future erreur de ce type devra respecter la même règle. */
-      Object.keys(nutAvant).forEach(function(k) { if (nutAvant[k] === undefined) delete profile[k]; else profile[k] = nutAvant[k]; });
+    const zoneAvant = (existing.recupNut === undefined) ? undefined : JSON.stringify(existing.recupNut);   // la zone de récupération fait partie de l'état d'avant (une erreur tardive peut l'avoir déjà touchée)
+    const compat = _nutCompatibilite_(body, _requestId);
+    if (!compat.ok && NUT_COMPAT_STRICT_) {
+      /* NUT-SYNC-02 phase A — ANCIEN CLIENT : refus explicite et complet, AVANT toute lecture ou écriture Nutrition (voir `_nutCompatibilite_`). */
+      nutEchec = new NutSyncError('NUT_CLIENT_INCOMPATIBLE', 'Version de l\'application incompatible avec la synchronisation Nutrition.', { versionClient: compat.version, versionMin: NUT_PROTOCOLE_MIN_ });
+      Logger.log('[FT COMPAT] Nutrition refusée : client en version ' + compat.version + ' (minimum ' + NUT_PROTOCOLE_MIN_ + ') — rien de Nutrition n\'est appliqué, le reste du profil est enregistré');
+    } else {
+      try {
+        nutSortie = _nutSynchroniser_(body, profile, existing, email, _requestId);
+      } catch (nutErr) {
+        /* ⚙️ NUT-SYNC-02 phase A — CONFINEMENT. Avant : une erreur imprévue du bloc Nutrition (autre qu'une erreur métier nommée) était RELANCÉE → `SERVER_ERROR`, RIEN n'était écrit, séances, records et pesées compris. Maintenant : quelle que soit
+           l'erreur, l'état d'avant du volet Nutrition est restitué (les cinq champs ET la zone de récupération), le reste du profil est enregistré, et la réponse dit `NUT_INTERNE` (réessayable, `profilEnregistre:true`).
+           Réserve écrite : « sous réserve de réussite du stockage commun » — si l'écriture du compte elle-même échoue, tout échoue (une seule propriété, un seul point de validation). */
+        nutEchec = (nutErr instanceof NutSyncError) ? nutErr : new NutSyncError('NUT_INTERNE', 'Erreur interne de la synchronisation Nutrition.', {});
+        if (!(nutErr instanceof NutSyncError)) Logger.log('[FT NUT_INTERNE] ' + String(nutErr && nutErr.message || nutErr).replace(/[^\s@]+@[^\s@]+/g, '[adresse]').slice(0, 160));
+        Object.keys(nutAvant).forEach(function(k) { if (nutAvant[k] === undefined) delete profile[k]; else profile[k] = nutAvant[k]; });
+        if (zoneAvant === undefined) delete existing.recupNut; else existing.recupNut = JSON.parse(zoneAvant);
+      }
     }
     if (body.foodAiUses    !== undefined) profile.foodAiUses    = Math.max(parseInt(body.foodAiUses)||0, parseInt(profile.foodAiUses)||0);
     /* 🫙 LES TROIS POTS IA SÉPARÉS DE LA NUTRITION (19/09/2026, phase 3.1).
@@ -2232,7 +2314,7 @@ function handleSaveProfile_(body) {
 
     saveUserData_(email, existing);
     // ⚙️ NUT-SYNC-01 FINAL : l'écriture durable est faite → le verrou n'a plus rien à protéger (voir plus haut). `verrou = null` : le `finally` ne le rend pas deux fois.
-    if (verrou) { try { verrou.releaseLock(); } catch (relErr) {} verrou = null; }
+    lockMs = _nutVerrouRendre_(verrou, 'saveProfile'); verrou = null;   // libération anticipée ET durée mesurée (NUT-SYNC-02 phase A)
     _mirrorUserToSheet_(email, existing); // best-effort, silencieux
 
     // Email de bienvenue pour les nouveaux utilisateurs
@@ -2255,19 +2337,22 @@ function handleSaveProfile_(body) {
     }
 
     if (nutEchec) {
+      /* Réessayable : NUT_INTERNE (une erreur du serveur, qui peut passer). PAS réessayable : NUT_CLIENT_INCOMPATIBLE (renvoyer la même chose ne change rien — il faut mettre l'application à jour) ; et tout code nommé non listé ici. */
       return json_({status:'nut_refuse', ok:false, code:nutEchec.code, message:'Synchronisation Nutrition impossible.',
-                    retryable:(nutEchec.code !== 'NUT_TOMBSTONE_LIMIT'), requestId:_requestId, profilEnregistre:true, details:nutEchec.details});
+                    retryable:(nutEchec.code === 'NUT_INTERNE'), requestId:_requestId, profilEnregistre:true, details:nutEchec.details, lockMs:lockMs});
     }
     if (nutSortie && nutSortie.refus) {
       return json_({status:'nut_refuse', ok:false, code:'NUT_ZONE_DRIVE', message:'Synchronisation Nutrition incomplète.', retryable:true, requestId:_requestId,
-                    profilEnregistre:true, details:{liste:nutSortie.refus}, serverRevision:(Number.isSafeInteger(profile.nutRev) ? profile.nutRev : 0)});
+                    profilEnregistre:true, details:{liste:nutSortie.refus}, serverRevision:(Number.isSafeInteger(profile.nutRev) ? profile.nutRev : 0), lockMs:lockMs});
     }
     return json_({status:'ok', ok:true, requestId:_requestId, serverRevision:(Number.isSafeInteger(profile.nutRev) ? profile.nutRev : 0),
-                  nut:(nutSortie ? nutSortie.nut : null)});
+                  nut:(nutSortie ? nutSortie.nut : null), lockMs:lockMs});
   } catch(err) {
+    /* NUT-SYNC-02 phase A : cette erreur était SILENCIEUSE (l'app de production, en `no-cors`, ne lit rien ; Apps Script compte l'exécution comme réussie). Une ligne de journal, sans donnée ni adresse, pour qu'elle se voie. */
+    Logger.log('[FT saveProfile] ERREUR : ' + String(err && err.message || err).replace(/[^\s@]+@[^\s@]+/g, '[adresse]').slice(0, 160));
     return json_({status:'error', ok:false, code:'SERVER_ERROR', retryable:true, error: err.message});
   } finally {
-    if (verrou) { try { verrou.releaseLock(); } catch (relErr) {} }
+    if (verrou) _nutVerrouRendre_(verrou, 'saveProfile');
   }
 }
 
@@ -2702,11 +2787,14 @@ function handleVerifyConfirmCode_(body) {
     var _jetonEmis = '';
     try { _jetonEmis = _jetonPoser_(email, String(body.appareil || '')); } catch (eJ) {}
     // Marque le profil comme vérifié (voyage via loadProfile)
+    /* NUT-SYNC-02 phase A : relire-modifier-écrire le compte SOUS LE MÊME VERROU que `saveProfile`. Verrou occupé (ou compte inexistant) : le fait « e-mail vérifié » est posé dans `confirmed_` (lu par `handleAuthStatus_`) — le compte n'est pas touché. */
+    var _hv = null;
     try {
-      var data = loadUserData_(email);
+      _hv = _nutVerrouPrendre_();
+      var data = _hv ? loadUserData_(email) : null;
       if (data) { data.profile = data.profile || {}; data.profile.emailVerified = true; saveUserData_(email, data); }
       else { sp.setProperty('confirmed_' + email, new Date().toISOString().slice(0,10)); }
-    } catch(e2) {}
+    } catch(e2) {} finally { _nutVerrouRendre_(_hv, 'verifyConfirmCode'); }
     return json_({status:'ok', token:_jetonEmis});
   } catch(err) {
     return json_({status:'error', error:'verify', detail: String(err)});
@@ -2738,10 +2826,16 @@ function handleSetAccessCode_(body) {
     // 2b) Poser le code perso (salt$hash, jamais le code en clair) + marquer email vérifié
     var salt = Utilities.getUuid().replace(/-/g,'').slice(0,16);
     sp.setProperty('auth_' + email, salt + '$' + _sha256hex_(salt + '|' + newCode));
+    /* NUT-SYNC-02 phase A : même verrou que `saveProfile` pour relire-modifier-écrire le compte. Verrou occupé : le fait « e-mail vérifié » est posé dans `confirmed_` (le compte n'est pas touché). */
+    var _hv = null;
     try {
-      var data = loadUserData_(email);
-      if (data) { data.profile = data.profile || {}; data.profile.emailVerified = true; saveUserData_(email, data); }
-    } catch(e2) {}
+      _hv = _nutVerrouPrendre_();
+      if (!_hv) sp.setProperty('confirmed_' + email, new Date().toISOString().slice(0,10));
+      else {
+        var data = loadUserData_(email);
+        if (data) { data.profile = data.profile || {}; data.profile.emailVerified = true; saveUserData_(email, data); }
+      }
+    } catch(e2) {} finally { _nutVerrouRendre_(_hv, 'setAccessCode'); }
     return json_({status:'ok'});
   } catch(err) {
     return json_({status:'error', error:'setcode', detail:String(err)});
@@ -2772,6 +2866,7 @@ function handleSetAccessCode_(body) {
 var HEALTH_MAX_   = 60;     // ce n'est pas une archive, juste de quoi rattacher
 var HEALTH_JOURS_ = 45;     // au-delà, la séance est classée depuis longtemps
 function handlePushHealth_(body) {
+  var _hv = null;                                        // verrou du compte (NUT-SYNC-02 phase A), rendu par le `finally`
   try {
     /* ⭐⭐ S1 — même règle que `saveProfile` : le jeton décide, pas le payload. Les données
        de santé (bilans sanguins, bilans corporels, cycle, TRT) sont ce qu'il y a de plus
@@ -2783,6 +2878,10 @@ function handlePushHealth_(body) {
     if (!email) return json_({status:'error', error:'email required'});
     var a = _authCheck_(email, body.authCode);
     if (!a.ok) return json_({status:'error', error:'auth', blocked:a.blocked});
+    /* NUT-SYNC-02 phase A : cet écrivain relisait puis réécrivait le compte ENTIER sans verrou — il pouvait effacer un `saveProfile` déjà accusé. Verrou → relire → modifier → écrire → rendre (le `finally` en bas). Occupé : réponse
+       réessayable, RIEN n'est écrit. */
+    _hv = _nutVerrouPrendre_();
+    if (!_hv) return json_({status:'error', ok:false, code:'NUT_LOCK_BUSY', retryable:true});
     var data = loadUserData_(email);
     if (!data) return json_({status:'not_found'});
 
@@ -2916,6 +3015,8 @@ function handlePushHealth_(body) {
     return json_({status:'ok', count:ajout, total:inbox.length});
   } catch (err) {
     return json_({status:'error', error:'pushhealth'});
+  } finally {
+    _nutVerrouRendre_(_hv, 'pushHealth');
   }
 }
 
@@ -4129,11 +4230,18 @@ function handleSummarizeCoach_(body) {
     const result = JSON.parse(resp.getContentText());
     const summary = (result.content && result.content[0] && result.content[0].text) || '';
     if (email && summary) {
-      const userData = loadUserData_(email) || {};
-      if (!userData.profile) userData.profile = {};
-      userData.profile.coachMemory = summary;
-      userData.updatedAt = new Date().toISOString();
-      saveUserData_(email, userData);
+      /* NUT-SYNC-02 phase A : le résumé est calculé HORS verrou (l'appel au modèle prend des secondes) ; seule la relecture-écriture du compte est sous le verrou commun. Verrou occupé : le résumé n'est pas écrit ici — l'appareil
+         le garde (`coachMemory`) et le renvoie à son prochain `saveProfile`. */
+      const _hv = _nutVerrouPrendre_();
+      if (_hv) {
+        try {
+          const userData = loadUserData_(email) || {};
+          if (!userData.profile) userData.profile = {};
+          userData.profile.coachMemory = summary;
+          userData.updatedAt = new Date().toISOString();
+          saveUserData_(email, userData);
+        } finally { _nutVerrouRendre_(_hv, 'summarizeCoach'); }
+      }
     }
     /* Le modele est renvoye au client, comme dans worker.js : une provenance se MESURE,
        elle ne se devine pas cote client (regle d'or #16). Repli et chemin servi doivent
@@ -4767,7 +4875,10 @@ function handleAdminRestore_(body) {
 
   data.email = email;
   data.updatedAt = new Date().toISOString();
-  saveUserData_(email, data);
+  /* NUT-SYNC-02 phase A : une restauration réécrit le compte ENTIER — sous le même verrou que `saveProfile`, jamais entre sa lecture et son écriture. Occupé : réponse réessayable, rien n'est écrit. */
+  const _hv = _nutVerrouPrendre_();
+  if (!_hv) return json_({status:'error', error:'busy', ok:false, code:'NUT_LOCK_BUSY', retryable:true});
+  try { saveUserData_(email, data); } finally { _nutVerrouRendre_(_hv, 'adminRestore'); }
 
   try { _mirrorUserToSheet_(email, data); } catch(e) {
     Logger.log('[FT adminRestore] mirror sheet ignoré: ' + e.message);

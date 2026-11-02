@@ -107,6 +107,9 @@ function serveur(o) {
   };
   vm.createContext(ctx);
   vm.runInContext(o.code || CODE_SRC, ctx, { filename: 'Code.js' });   // `o.code` : une AUTRE version de Code.js (NUT-SYNC-01 : le serveur d'AVANT, pour la compatibilité) — par défaut, le vrai Code.js du dépôt
+  /* NUT-SYNC-02 phase A : la porte de version. Par défaut le serveur de banc est STRICT, comme la production (un envoi Nutrition sans `foodLogV >= 3` ET sans `requestId` est refusé). `o.compatStrict === false` rejoue le comportement d'AVANT
+     (levier de retour arrière `NUT_COMPAT_STRICT_ = false`) : réservé aux bancs qui ÉPROUVENT les anciens chemins (P1, NUT-SYNC-01), jamais à un banc de la phase A. Sans effet sur un `o.code` plus ancien qui n'a pas cette variable. */
+  if (o.compatStrict === false && 'NUT_COMPAT_STRICT_' in ctx) ctx.NUT_COMPAT_STRICT_ = false;
   const textes = [];
   const lire = r => {
     const t = (r && r.t != null) ? String(r.t) : String(r);
@@ -199,6 +202,9 @@ const court = (x, n) => String(x == null ? '' : x).slice(0, n || 200);
 const masque = s => String(s == null ? '' : s).replace(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g, '[adresse]');
 
 /* ══════════════════════════════ B-NSP1 — LE SERVEUR ══════════════════════════════ */
+/* NUT-SYNC-02 phase A : les bancs P1 éprouvent les ANCIENS chemins (un envoi SANS `foodLogV`, remplacement avec copie de sécurité). Ils tournent donc sur un serveur « legacy » — `NUT_COMPAT_STRICT_ = false`, le levier de retour arrière —
+   et NON plus sur celui de la production, dont la porte de version refuse ces envois (éprouvée par `nut_phasea01`). Sans cet enveloppeur, ces témoins ne mesureraient plus rien d'atteignable. */
+const serveurLegacy = (o) => serveur(Object.assign({ compatStrict: false }, o));
 function serveurTests(t0) {
   const t = (nom, cond, det) => t0(nom, cond, det == null ? det : masque(det));
   console.log('\n═══ B-NSP1 (session-B). NUT-SECURISATION-P1 — le vrai Code.js : journal alimentaire et favoris ═══');
@@ -207,7 +213,7 @@ function serveurTests(t0) {
 
   // ── 1 · 500 lignes remplacées par 1 (appareil remis à zéro qui saisit un repas) ──
   {
-    const X = serveur(); const avant = J(500, { tag: 'a' }); const neuf = ligne(9000, { tag: 'n' });
+    const X = serveurLegacy(); const avant = J(500, { tag: 'a' }); const neuf = ligne(9000, { tag: 'n' });
     X.compte(ALICE, { foodLog: copie(avant) });
     const r = X.envoi(ALICE, { foodLog: [neuf] }); const c = X.lireCompte(ALICE);
     const e = evts(c).slice(-1)[0] || {};
@@ -233,7 +239,7 @@ function serveurTests(t0) {
 
   // ── 2 · 40 lignes recevant 30 (sous le seuil « brutal ») ──
   {
-    const X = serveur(); const avant = J(40, { tag: 'b' });
+    const X = serveurLegacy(); const avant = J(40, { tag: 'b' });
     X.compte(BOB, { foodLog: copie(avant) });
     X.envoi(BOB, { foodLog: copie(avant.slice(0, 30)) }); const c = X.lireCompte(BOB);
     const e = evts(c).slice(-1)[0] || {};
@@ -252,7 +258,7 @@ function serveurTests(t0) {
 
   // ── 3 · Deux appareils, historiques différents (le dernier qui écrit gagne, rien ne se perd) ──
   {
-    const X = serveur(); const commun = J(100, { tag: 'c' }), seulA = J(20, { tag: 'A' }), seulB = J(10, { tag: 'B' });
+    const X = serveurLegacy(); const commun = J(100, { tag: 'c' }), seulA = J(20, { tag: 'A' }), seulB = J(10, { tag: 'B' });
     const appA = commun.concat(seulA), appB = commun.concat(seulB);
     X.compte(CAROL, { foodLog: copie(appA) });
     X.envoi(CAROL, { foodLog: copie(appB) }); const c1 = X.lireCompte(CAROL);
@@ -268,7 +274,7 @@ function serveurTests(t0) {
 
   // ── 4 · iPhone (application) et Safari : deux stockages distincts, même compte ──
   {
-    const X = serveur(); const iphone = J(300, { tag: 'i' });
+    const X = serveurLegacy(); const iphone = J(300, { tag: 'i' });
     X.compte(DAVE, { foodLog: copie(iphone) });
     // Safari : une vieille copie d'UN repas (avant sa correction sur l'iPhone) + un repas saisi dans Safari.
     const vieux = Object.assign(copie(iphone[3]), { kcal: 1, q: 10 }), safari = ligne(7000, { tag: 's' });
@@ -286,7 +292,7 @@ function serveurTests(t0) {
 
   // ── 5 · Ajout d'une nouvelle entrée depuis un appareil en retard ──
   {
-    const X = serveur(); const serv = J(60, { tag: 'r' }), neuf = ligne(8000, { tag: 'r2' });
+    const X = serveurLegacy(); const serv = J(60, { tag: 'r' }), neuf = ligne(8000, { tag: 'r2' });
     X.compte(ALICE, { foodLog: copie(serv) });
     const retard = copie(serv.slice(0, 50)).concat([neuf]);
     X.envoi(ALICE, { foodLog: retard }); const c = X.lireCompte(ALICE);
@@ -298,7 +304,7 @@ function serveurTests(t0) {
 
   // ── 6 · Modification légitime d'un repas existant ──
   {
-    const X = serveur(); const avant = J(20, { tag: 'm' });
+    const X = serveurLegacy(); const avant = J(20, { tag: 'm' });
     X.compte(BOB, { foodLog: copie(avant) });
     const apres = copie(avant); apres[5] = Object.assign(apres[5], { kcal: 999, q: 250, modifie: true });
     X.envoi(BOB, { foodLog: apres }); const c = X.lireCompte(BOB);
@@ -310,7 +316,7 @@ function serveurTests(t0) {
 
   // ── 7 · Suppression volontaire d'une entrée · suppression importante · suppression de la dernière ──
   {
-    const X = serveur(); const avant = J(20, { tag: 'd' });
+    const X = serveurLegacy(); const avant = J(20, { tag: 'd' });
     X.compte(CAROL, { foodLog: copie(avant) });
     const sans7 = copie(avant.filter((_, i) => i !== 7));
     X.envoi(CAROL, { foodLog: sans7 }); const c = X.lireCompte(CAROL);
@@ -322,7 +328,7 @@ function serveurTests(t0) {
     t('NSP1-21 · … renvoyer la même liste ne la fait pas revenir', memes(listeDe(c2, 'foodLog'), sans7) && zoneDe(c2, 'foodLog').length === 1);
   }
   {
-    const X = serveur(); const avant = J(100, { tag: 'g' });
+    const X = serveurLegacy(); const avant = J(100, { tag: 'g' });
     X.compte(DAVE, { foodLog: copie(avant) });
     const moitie = copie(avant.slice(50));
     X.envoi(DAVE, { foodLog: moitie }); const c = X.lireCompte(DAVE); const e = evts(c).slice(-1)[0] || {};
@@ -331,7 +337,7 @@ function serveurTests(t0) {
       perdues(avant, c, 'foodLog') === 0 && e.brutal === true && e.retirees === 50, court(JSON.stringify(e)));
   }
   {
-    const X = serveur(); const seule = J(1, { tag: 'u' });
+    const X = serveurLegacy(); const seule = J(1, { tag: 'u' });
     X.compte(ALICE, { foodLog: copie(seule) });
     const r = X.envoi(ALICE, { foodLog: [] }); const c = X.lireCompte(ALICE);
     t('NSP1-24 · suppression de la DERNIÈRE entrée (envoi vide) : la règle existante « le vide ne gagne jamais » tient — rien n\'est écrit',
@@ -341,7 +347,7 @@ function serveurTests(t0) {
 
   // ── 8 · Favoris 20 → 1 ──
   {
-    const X = serveur(); const avant = F(20);
+    const X = serveurLegacy(); const avant = F(20);
     X.compte(BOB, { foodLog: J(5, { tag: 'f' }), savedFoods: copie(avant) });
     X.envoi(BOB, { savedFoods: [copie(avant[4])] }); const c = X.lireCompte(BOB); const e = evts(c).slice(-1)[0] || {};
     t('⭐⭐ NSP1-25 · favoris 20 → 1 : les 19 retirés sont gardés (avant : perdus) et le journal n\'est pas touché',
@@ -355,7 +361,7 @@ function serveurTests(t0) {
   // ── 9 · Identifiants absents, instables, identiques par erreur ──
   {
     // Lignes historiques SANS identifiant : l'app leur en pose un au chargement → le même repas revient avec un id neuf.
-    const X = serveur(); const anciennes = J(30, { tag: 'h' }).map(l => { const c = copie(l); delete c.id; return c; });
+    const X = serveurLegacy(); const anciennes = J(30, { tag: 'h' }).map(l => { const c = copie(l); delete c.id; return c; });
     X.compte(CAROL, { foodLog: copie(anciennes) });
     const avecIds = copie(anciennes).map(l => Object.assign({ id: crypto.randomUUID() }, l));
     X.envoi(CAROL, { foodLog: avecIds }); const c = X.lireCompte(CAROL);
@@ -369,7 +375,7 @@ function serveurTests(t0) {
   }
   {
     // Même identifiant sur DEUX repas différents (par erreur) — l'ordre de l'envoi ne doit rien changer.
-    const X = serveur(); const A1 = ligne(1, { tag: 'k' }), B1 = Object.assign(ligne(2, { tag: 'k' }), { id: A1.id });
+    const X = serveurLegacy(); const A1 = ligne(1, { tag: 'k' }), B1 = Object.assign(ligne(2, { tag: 'k' }), { id: A1.id });
     X.compte(DAVE, { foodLog: [copie(A1), copie(B1)] });
     X.envoi(DAVE, { foodLog: [copie(B1), copie(A1)] }); const c = X.lireCompte(DAVE);
     t('⭐ NSP1-29 · identifiant en DOUBLE par erreur, envoi dans l\'autre ordre : chaque repas retrouve sa copie identique — rien n\'est pris pour une modification',
@@ -378,13 +384,13 @@ function serveurTests(t0) {
     t('⭐ NSP1-30 · … puis l\'un des deux est retiré : un identifiant en double ne couvre QU\'UNE ligne, l\'autre est gardée',
       perdues([A1, B1], c2, 'foodLog') === 0 && zoneDe(c2, 'foodLog').length === 1 && memes(zoneDe(c2, 'foodLog')[0].l, B1));
     // L'app réattribue un id neuf au doublon (`_foodLogIdentifier`) : ce n'est ni une suppression, ni une modification.
-    const X2 = serveur(); X2.compte(DAVE, { foodLog: [copie(A1), copie(B1)] });
+    const X2 = serveurLegacy(); X2.compte(DAVE, { foodLog: [copie(A1), copie(B1)] });
     X2.envoi(DAVE, { foodLog: [copie(A1), Object.assign(copie(B1), { id: crypto.randomUUID() })] });
     t('NSP1-31 · … et quand l\'app réattribue un id neuf au doublon : reconnu par le contenu, aucune copie', !X2.lireCompte(DAVE).recupNut);
   }
   {
     // Deux repas IDENTIQUES sans identifiant (deux yaourts) retirés ensemble : DEUX copies, pas une.
-    const X = serveur(); const y = copie(ligne(3, { tag: 'y' })); delete y.id; const autre = ligne(4, { tag: 'y' });
+    const X = serveurLegacy(); const y = copie(ligne(3, { tag: 'y' })); delete y.id; const autre = ligne(4, { tag: 'y' });
     X.compte(ALICE, { foodLog: [copie(y), copie(y), copie(autre)] });
     X.envoi(ALICE, { foodLog: [copie(autre)] }); const c = X.lireCompte(ALICE);
     t('⭐ NSP1-32 · deux repas IDENTIQUES sans identifiant retirés ensemble : les DEUX sont gardés (multi-ensemble, pas d\'ensemble)',
@@ -396,25 +402,25 @@ function serveurTests(t0) {
     const avant = J(40, { tag: 'v' }), favs = F(6);
     const cas = [['une chaîne', 'texte'], ['un objet', {}], ['null', null], ['un nombre', 42], ['un booléen', true]];
     const res = cas.map(([nom, val]) => {
-      const X = serveur(); X.compte(BOB, { foodLog: copie(avant), savedFoods: copie(favs) });
+      const X = serveurLegacy(); X.compte(BOB, { foodLog: copie(avant), savedFoods: copie(favs) });
       const r = X.envoi(BOB, { foodLog: val, savedFoods: val }); const c = X.lireCompte(BOB);
       return { nom, ok: r.j.status === 'ok' && memes(listeDe(c, 'foodLog'), avant) && memes(listeDe(c, 'savedFoods'), favs) };
     });
     t('⭐⭐ NSP1-33 · envoi ILLISIBLE (chaîne, objet, null, nombre, booléen) à la place d\'une liste : journal et favoris conservés intacts',
       res.every(x => x.ok), res.filter(x => !x.ok).map(x => x.nom).join(', '));
-    const X = serveur(); X.compte(BOB, { foodLog: copie(avant) });
+    const X = serveurLegacy(); X.compte(BOB, { foodLog: copie(avant) });
     const melange = [null, 5, 'x', {}, { date: '2026-09-01' }, copie(avant[0])];
     const r = X.envoi(BOB, { foodLog: melange }); const c = X.lireCompte(BOB);
     t('⭐ NSP1-34 · liste aux éléments incomplets ou invalides : pas de plantage, l\'envoi est appliqué tel quel et les 39 autres lignes sont gardées',
       r.j.status === 'ok' && memes(listeDe(c, 'foodLog'), melange) && perdues(avant, c, 'foodLog') === 0, court(r.t));
-    const X3 = serveur(); X3.compte(BOB, { foodLog: copie(avant) }); const brut0 = X3.brut(BOB);
+    const X3 = serveurLegacy(); X3.compte(BOB, { foodLog: copie(avant) }); const brut0 = X3.brut(BOB);
     const r3 = X3.post('{"action":"saveProfile","email":"' + BOB + '","foodLog":[{"id":"tronqu');
     t('NSP1-35 · corps TRONQUÉ (JSON illisible) : refusé, le compte n\'est pas touché d\'un octet', r3.j.status === 'error' && X3.brut(BOB) === brut0, court(r3.t, 80));
   }
 
   // ── 11 · Aucune donnée d'un compte ne peut être associée à un autre compte ──
   {
-    const X = serveur(); const jA = J(40, { tag: 'iso' }), jB = J(35, { tag: 'isoB' });
+    const X = serveurLegacy(); const jA = J(40, { tag: 'iso' }), jB = J(35, { tag: 'isoB' });
     X.compte(ALICE, { foodLog: copie(jA) }); X.compte(BOB, { foodLog: copie(jB) });
     const tokA = X.ctx._jetonPoser_(ALICE, 'tel'); const brutB = X.brut(BOB);
     const r = X.post({ action: 'saveProfile', email: BOB, token: tokA, foodLog: copie(jA.slice(0, 10)) });
@@ -423,7 +429,7 @@ function serveurTests(t0) {
       r.j.status === 'ok' && memes(listeDe(cA, 'foodLog'), jA.slice(0, 10)) && perdues(jA, cA, 'foodLog') === 0 && X.brut(BOB) === brutB && !cB.recupNut,
       'A journal=' + (listeDe(cA, 'foodLog') || []).length + ' zoneA=' + zoneDe(cA, 'foodLog').length);
     t('NSP1-37 · … la zone de A ne contient QUE des repas de A', lignesZone(cA, 'foodLog').every(l => /repas-fictif-iso\d/.test(l.name)));
-    const X2 = serveur(); X2.compte(CAROL, { foodLog: copie(jB), code: 'carol-code' }); const brutC = X2.brut(CAROL);
+    const X2 = serveurLegacy(); X2.compte(CAROL, { foodLog: copie(jB), code: 'carol-code' }); const brutC = X2.brut(CAROL);
     const r2 = X2.envoi(CAROL, { foodLog: [], authCode: 'faux' });
     const r2b = X2.envoi(CAROL, { foodLog: copie(jB.slice(0, 2)), authCode: 'faux' });
     const r2c = X2.post({ action: 'saveProfile', email: CAROL, token: 'faux-' + hex(20), foodLog: copie(jB.slice(0, 2)) });
@@ -435,7 +441,7 @@ function serveurTests(t0) {
 
   // ── 12 · La zone n'apparaît JAMAIS dans les réponses normales de l'application ──
   {
-    const X = serveur(); const avant = J(40, { tag: 'exp' }), favs = F(8);
+    const X = serveurLegacy(); const avant = J(40, { tag: 'exp' }), favs = F(8);
     X.compte(CAROL, { foodLog: copie(avant), savedFoods: copie(favs), code: 'carol-code' });
     X.envoi(CAROL, { foodLog: copie(avant.slice(0, 5)), savedFoods: [copie(favs[0])], authCode: 'carol-code' });
     const c = X.lireCompte(CAROL);
@@ -455,7 +461,7 @@ function serveurTests(t0) {
 
   // ── 13 · Routes A1 inchangées : elles ne lisent que le journal actif ──
   {
-    const X = serveur(); const avant = J(40, { tag: 'a1' });
+    const X = serveurLegacy(); const avant = J(40, { tag: 'a1' });
     X.compte(ALICE, { foodLog: copie(avant) }); X.compte(BOB, { foodLog: J(12, { tag: 'a1b' }) });
     X.envoi(ALICE, { foodLog: copie(avant.slice(0, 25)) });
     const inv = X.post({ action: 'nutInventory', token: TOK_IDEES });
@@ -469,7 +475,7 @@ function serveurTests(t0) {
     // La même sauvegarde SANS la zone : l'audit A1 doit rendre exactement les mêmes compteurs.
     const sansZone = copie(s); (sansZone.users || []).forEach(u => { if (u.data) delete u.data.recupNut; });
     const audit = fichiersDrive => {
-      const Y = serveur({ fichiers: fichiersDrive }); Y.compte(ALICE, { foodLog: copie(avant.slice(0, 25)) }); Y.compte(BOB, { foodLog: J(12, { tag: 'a1b' }) });
+      const Y = serveurLegacy({ fichiers: fichiersDrive }); Y.compte(ALICE, { foodLog: copie(avant.slice(0, 25)) }); Y.compte(BOB, { foodLog: J(12, { tag: 'a1b' }) });
       const r = Y.post({ action: 'nutBackupAudit', token: TOK_IDEES });
       return r.j.status === 'ok' ? { cmp: r.j.comparaison, f: (r.j.fichiers || []).map(f => [f.lisible, f.comptes, f.avecFoodLog, f.entrees]) } : null;
     };
@@ -482,7 +488,7 @@ function serveurTests(t0) {
   // ── 14 · Écriture atomique : le journal et la zone partent dans la MÊME écriture ──
   {
     const panneU = { on: false };
-    const X = serveur({ panne: k => panneU.on && k.indexOf('u_') === 0 }); const avant = J(40, { tag: 'at' });
+    const X = serveurLegacy({ panne: k => panneU.on && k.indexOf('u_') === 0 }); const avant = J(40, { tag: 'at' });
     X.compte(DAVE, { foodLog: copie(avant) }); const brut0 = X.brut(DAVE);
     panneU.on = true; const r = X.envoi(DAVE, { foodLog: copie(avant.slice(0, 3)) }); panneU.on = false;
     t('NSP1-46 · l\'écriture du compte échoue (stockage plein, panne) : ni le journal ni la zone ne sont à moitié écrits',
@@ -496,7 +502,7 @@ function serveurTests(t0) {
 
   // ── 14 bis · Deux envois SIMULTANÉS (aucun verrou dans Code.js — défaut préexistant, non corrigé par P1) ──
   {
-    const X = serveur(); const avant = J(40, { tag: 'cc' }), n1 = ligne(600, { tag: 'cc1' }), n2 = ligne(601, { tag: 'cc2' });
+    const X = serveurLegacy(); const avant = J(40, { tag: 'cc' }), n1 = ligne(600, { tag: 'cc1' }), n2 = ligne(601, { tag: 'cc2' });
     X.compte(ALICE, { foodLog: copie(avant) }); const lu = X.brut(ALICE);
     X.envoi(ALICE, { foodLog: copie(avant.slice(0, 30)).concat([n1]) });     // appareil 1 : retire 10, ajoute n1
     X.props['u_' + ALICE] = lu;                                                // appareil 2 avait lu AVANT l'écriture de 1…
@@ -510,7 +516,7 @@ function serveurTests(t0) {
 
   // ── 15 · Zone BORNÉE : au-delà, les copies les plus anciennes DÉMÉNAGENT vers Drive (relues), jamais à la poubelle ──
   {
-    const X = serveur(); const gros = J(700, { tag: 'z' });
+    const X = serveurLegacy(); const gros = J(700, { tag: 'z' });
     X.compte(ALICE, { foodLog: copie(gros) });
     X.envoi(ALICE, { foodLog: [ligne(1, { tag: 'zz' })] }); const c = X.lireCompte(ALICE); const e = evts(c).slice(-1)[0] || {};
     const taille = tailleZone(c, 'foodLog'), rf = fichiersRecup(X), dep = (c.recupNut || {}).deplacees || 0;
@@ -521,13 +527,13 @@ function serveurTests(t0) {
     t('NSP1-49 · … ce sont les plus ANCIENNES qui déménagent : les 100 repas les plus récents restent dans la zone',
       perdues(derniers, c, 'foodLog') === 0, 'absents de la zone parmi les 100 derniers=' + perdues(derniers, c, 'foodLog'));
     // Les 200 favoris que l'app envoie au plus, écrasés par 1 : la borne des favoris doit tous les tenir sans déménager.
-    const Xf = serveur(); const f200 = F(200).map((f, i) => Object.assign(f, { portionLabel: 'portion-' + i, portionWeightG: 125 }));
+    const Xf = serveurLegacy(); const f200 = F(200).map((f, i) => Object.assign(f, { portionLabel: 'portion-' + i, portionWeightG: 125 }));
     Xf.compte(DAVE, { savedFoods: copie(f200) }); Xf.envoi(DAVE, { savedFoods: [fav(9999)] }); const cf = Xf.lireCompte(DAVE);
     t('NSP1-53 · les 200 favoris que l\'app envoie au plus, écrasés par 1 : tous gardés DANS la zone, rien déplacé (borne des favoris suffisante)',
       perdues(f200, cf, 'savedFoods') === 0 && !((cf.recupNut || {}).deplacees) && fichiersRecup(Xf).length === 0,
       'zone=' + zoneDe(cf, 'savedFoods').length + ' déplacées=' + ((cf.recupNut || {}).deplacees || 0));
     // Deux appareils qui ont chacun UN repas que l'autre n'a pas, et qui se resynchronisent 60 fois tour à tour.
-    const X2 = serveur(); const base = J(10, { tag: 'ev' }), x1 = ligne(1, { tag: 'ev1' }), x2 = ligne(2, { tag: 'ev2' });
+    const X2 = serveurLegacy(); const base = J(10, { tag: 'ev' }), x1 = ligne(1, { tag: 'ev1' }), x2 = ligne(2, { tag: 'ev2' });
     X2.compte(BOB, { foodLog: copie(base) });
     for (let k = 0; k < 60; k++) X2.envoi(BOB, { foodLog: copie(base).concat([k % 2 ? x2 : x1]) });
     const c2 = X2.lireCompte(BOB);
@@ -535,7 +541,7 @@ function serveurTests(t0) {
       evts(c2).length === 50 && zoneDe(c2, 'foodLog').length === 2 && perdues([x1, x2], c2, 'foodLog') === 0,
       'evts=' + evts(c2).length + ' zone=' + zoneDe(c2, 'foodLog').length);
     // Ce que coûte une zone pleine dans le stockage RÉEL du serveur (compressé par le vrai _packUser_).
-    const X3 = serveur(); const j500 = J(500, { tag: 'w' }).map(l => Object.assign(l, { id: crypto.randomUUID() }));
+    const X3 = serveurLegacy(); const j500 = J(500, { tag: 'w' }).map(l => Object.assign(l, { id: crypto.randomUUID() }));
     X3.compte(DAVE, { foodLog: copie(j500) }); const t0b = (X3.brut(DAVE) || '').length;
     X3.envoi(DAVE, { foodLog: [ligne(1, { tag: 'w2' })] }); const t1b = (X3.brut(DAVE) || '').length;
     X3.envoi(DAVE, { foodLog: copie(j500) }); const t2b = (X3.brut(DAVE) || '').length;
@@ -544,7 +550,7 @@ function serveurTests(t0) {
     t('NSP1-51 · coût mesuré d\'une zone pleine : moins de 40 000 octets compressés par compte (journal de 500 repas rétabli + zone)',
       String(X3.brut(DAVE)).slice(0, 3) === 'GZ:' && t2b - t0b < 40000, 'surcoût=' + (t2b - t0b) + ' octets');
     // Le temps du garde-fou sur le plus gros journal que l'app envoie (8 000 lignes) : rien n'a changé · une ligne retirée.
-    const X4 = serveur(); const j8k = J(8000, { tag: 'p' }); X4.compte(ALICE, { foodLog: copie(j8k) });
+    const X4 = serveurLegacy(); const j8k = J(8000, { tag: 'p' }); X4.compte(ALICE, { foodLog: copie(j8k) });
     let d0 = Date.now(); X4.envoi(ALICE, { foodLog: copie(j8k) }); const dSame = Date.now() - d0;
     d0 = Date.now(); X4.envoi(ALICE, { foodLog: copie(j8k.slice(1)) }); const dUne = Date.now() - d0;
     console.log('   ℹ️  MESURE (Node, saveProfile complet) — journal de 8 000 lignes : envoi inchangé ' + dSame + ' ms · une ligne retirée ' + dUne + ' ms');
@@ -555,7 +561,7 @@ function serveurTests(t0) {
   // ── 16 · DÉBORDEMENT (conditions 2, 3 et 5 de Michel, 23/10) : rien de ce qui n'est pas encore sauvegardé ne se perd ──
   {
     // Une nuit : sauvegarde. Le lendemain, AVANT la sauvegarde suivante : 10 repas du jour, puis deux écrasements.
-    const X = serveur(); const vieux = J(700, { tag: 'nv' }), jour = J(10, { tag: 'nj' });
+    const X = serveurLegacy(); const vieux = J(700, { tag: 'nv' }), jour = J(10, { tag: 'nj' });
     X.compte(ALICE, { foodLog: copie(vieux) });
     X.ctx.backupAllUserData_();                                                    // la nuit : les 700 sont sauvegardés
     X.envoi(ALICE, { foodLog: copie(vieux).concat(copie(jour)) });                 // le jour : 10 repas, dans AUCUNE sauvegarde
@@ -576,7 +582,7 @@ function serveurTests(t0) {
   }
   {
     // Drive refuse le fichier de débordement : rien ne sort de la zone, l'envoi est refusé — retardé, jamais perdu.
-    const X = serveur({ drivePanne: nom => /^recup-nut-/.test(nom) }); const j = J(600, { tag: 'dp' });
+    const X = serveurLegacy({ drivePanne: nom => /^recup-nut-/.test(nom) }); const j = J(600, { tag: 'dp' });
     X.compte(BOB, { foodLog: copie(j) });
     const r = X.envoi(BOB, { foodLog: [ligne(1, { tag: 'dp1' })] }); const c = X.lireCompte(BOB);
     t('⭐⭐ NSP1-59 · Drive refuse le fichier de débordement : RIEN ne sort de la zone, l\'envoi du journal est REFUSÉ (le serveur garde ses 600 repas, l\'appareil les siens)',
@@ -587,7 +593,7 @@ function serveurTests(t0) {
       (evts(c).slice(-1)[0] || {}).refus === 'drive' && X.journal.some(l => /REFUSÉ/.test(l)) && X.journal.every(l => !PII.test(l)),
       court(JSON.stringify(evts(c).slice(-1)[0])));
     // Drive écrit, mais la relecture ne rend pas ce qui a été écrit : un échec, pas une réussite.
-    const X2 = serveur({ driveAltere: nom => /^recup-nut-/.test(nom) });
+    const X2 = serveurLegacy({ driveAltere: nom => /^recup-nut-/.test(nom) });
     X2.compte(BOB, { foodLog: copie(j) });
     X2.envoi(BOB, { foodLog: [ligne(1, { tag: 'dp1' })] }); const c2 = X2.lireCompte(BOB);
     t('⭐ NSP1-61 · Drive écrit mais RELIT autre chose (fichier tronqué) : traité comme un échec — rien ne sort, envoi refusé',
@@ -596,7 +602,7 @@ function serveurTests(t0) {
   }
   {
     // Une journée d'écrasements RÉPÉTÉS avant la sauvegarde de la nuit : cinq appareils aux contenus différents, trois tours.
-    const X = serveur(); const base = J(300, { tag: 'jb' }), vus = [];
+    const X = serveurLegacy(); const base = J(300, { tag: 'jb' }), vus = [];
     X.compte(CAROL, { foodLog: copie(base) }); vus.push(...base);
     const appareils = [0, 1, 2, 3, 4].map(k => copie(base.slice(k * 40)).concat(J(150, { tag: 'ja' + k })));
     let pire = 0, maxZone = 0;
@@ -615,7 +621,7 @@ function serveurTests(t0) {
       !!(u && u.data && u.data.recupNut && Array.isArray(u.data.recupNut.foodLog)) && fichiersRecup(X).length >= 1 && perduesPartout(vus, X, CAROL, 'foodLog') === 0,
       'recup=' + fichiersRecup(X).length);
     // L'audit A1 ne lit que les « backup-… » : mêmes compteurs avec ou sans les fichiers de débordement dans le dossier.
-    const audit = fl => { const Y = serveur({ fichiers: fl }); Y.compte(CAROL, { foodLog: copie(base) });
+    const audit = fl => { const Y = serveurLegacy({ fichiers: fl }); Y.compte(CAROL, { foodLog: copie(base) });
       const r = Y.post({ action: 'nutBackupAudit', token: TOK_IDEES }); return r.j.status === 'ok' ? canon({ n: r.j.nbFichiers, cmp: r.j.comparaison }) : null; };
     const tous = X.fichiers.map(f => Object.assign({}, f)), a1 = audit(tous), a2 = audit(tous.filter(f => !/^recup-nut-/.test(f.name)));
     t('NSP1-65 · l\'audit A1 rend les MÊMES compteurs avec ou sans les fichiers de débordement (il ne lit que les sauvegardes)',
@@ -624,7 +630,7 @@ function serveurTests(t0) {
   {
     // Favoris : écrasements répétés au-delà de la borne (60 000) — même règle que le journal.
     const lots = [0, 1, 2, 3].map(k => F(200).map(f => Object.assign(f, { name: f.name + '-lot' + k, portionLabel: 'portion', portionWeightG: 125 })));
-    const X = serveur(); const vus = [];
+    const X = serveurLegacy(); const vus = [];
     X.compte(DAVE, { savedFoods: copie(lots[0]) }); vus.push(...lots[0]);
     let pire = 0, maxZ = 0;
     [1, 2, 3, 0, 2].forEach(k => {
@@ -639,7 +645,7 @@ function serveurTests(t0) {
        envoi REFUSÉ » (D-109). La vérification 5 a mesuré que ce refus PERD des favoris si la personne restaure son compte
        pendant la panne (sa restauration REMPLACE les favoris de l'appareil) : le contrat change, le témoin le suit — il ne
        se relâche pas. Il exige maintenant LES DEUX branches : accepté sous le plafond, refusé au-delà. */
-    const Xp = serveur({ drivePanne: nom => /^recup-nut-/.test(nom) });
+    const Xp = serveurLegacy({ drivePanne: nom => /^recup-nut-/.test(nom) });
     Xp.compte(DAVE, { savedFoods: copie(lots[0]) });
     const pas = [1, 2, 3].map(k => { Xp.envoi(DAVE, { savedFoods: copie(lots[k]) }); const c = Xp.lireCompte(DAVE);
       return { zone: tailleZone(c, 'savedFoods'), e: evts(c).slice(-1)[0] || {}, actif: canon(listeDe(c, 'savedFoods')) }; });
@@ -657,7 +663,7 @@ function serveurTests(t0) {
     let pire = 0, maxZ = 0, refus = 0, etapes = 0; const ecarts = [];
     for (let g = 1; g <= 8; g++) {
       const R = alea(g); let panne = false;
-      const X = serveur({ drivePanne: () => panne });
+      const X = serveurLegacy({ drivePanne: () => panne });
       X.ctx.NUT_RECUP_BORNES_ = { foodLog: 6000, savedFoods: 3000 };
       const vus = new Map(); let n = 0;
       const neuf = () => ligne(n++, { tag: 'fz' + g });
@@ -688,7 +694,7 @@ function serveurTests(t0) {
 
   // ── 17 · Après un débordement, le RYTHME des fichiers ; la reprise quand Drive revient ; le coût d'une zone PLEINE ──
   {
-    const X = serveur(); const gros = J(700, { tag: 'hy' });
+    const X = serveurLegacy(); const gros = J(700, { tag: 'hy' });
     X.compte(EVE, { foodLog: copie(gros) });
     X.envoi(EVE, { foodLog: [ligne(1, { tag: 'hy1' })] });                         // débordement : 1 fichier
     X.envoi(EVE, { foodLog: [ligne(2, { tag: 'hy2' })] });                         // une seule ligne retirée ensuite
@@ -699,7 +705,7 @@ function serveurTests(t0) {
   }
   {
     // Drive refuse, puis revient : le même envoi, renvoyé par l'appareil, passe — et rien ne s'est perdu entre-temps.
-    let panne = true; const X = serveur({ drivePanne: () => panne }); const j = J(600, { tag: 'rv' }), un = [ligne(1, { tag: 'rv1' })];
+    let panne = true; const X = serveurLegacy({ drivePanne: () => panne }); const j = J(600, { tag: 'rv' }), un = [ligne(1, { tag: 'rv1' })];
     X.compte(BOB, { foodLog: copie(j) });
     X.envoi(BOB, { foodLog: copie(un) }); const refuse = memes(listeDe(X.lireCompte(BOB), 'foodLog'), j);
     panne = false; X.envoi(BOB, { foodLog: copie(un) }); const c = X.lireCompte(BOB);
@@ -710,7 +716,7 @@ function serveurTests(t0) {
   }
   {
     // Le PIRE cas pour le stockage partagé : une zone PLEINE sur les deux listes, avec des noms aléatoires (peu compressibles).
-    const X = serveur(); const alea8 = () => crypto.randomBytes(15).toString('hex');
+    const X = serveurLegacy(); const alea8 = () => crypto.randomBytes(15).toString('hex');
     const remplir = (borne, fab) => { const l = []; let tot = 0; for (let i = 0; ; i++) {
       const x = fab(i), s2 = JSON.stringify({ t: new Date().toISOString(), m: 'brutal', l: x }).length;
       if (tot + s2 > borne - 2000) return l; tot += s2; l.push(x); } };
@@ -733,7 +739,7 @@ function serveurTests(t0) {
      refus de D-109 reprend ; le journal garde D-109 tel quel (sa restauration fusionne). */
   {
     const lot = k => F(200).map(f => Object.assign(f, { name: f.name + '-d110-' + k, portionLabel: 'portion', portionWeightG: 125 }));
-    let panne = false; const X = serveur({ drivePanne: () => panne });
+    let panne = false; const X = serveurLegacy({ drivePanne: () => panne });
     X.compte(EVE, { savedFoods: copie(lot(0)) });
     X.envoi(EVE, { savedFoods: copie(lot(1)) });                                    // 200 copies : la zone tient sous sa borne
     const z1 = tailleZone(X.lireCompte(EVE), 'savedFoods');
@@ -759,7 +765,7 @@ function serveurTests(t0) {
   {
     // Le JOURNAL garde D-109 : dans le MÊME envoi, les deux listes débordent pendant la panne — le journal est refusé,
     // les favoris passent. (La condition de D-110 ne doit pas fuir vers le journal, ni l'inverse.)
-    const X = serveur({ drivePanne: nom => /^recup-nut-/.test(nom) }); const j = J(600, { tag: 'mx' });
+    const X = serveurLegacy({ drivePanne: nom => /^recup-nut-/.test(nom) }); const j = J(600, { tag: 'mx' });
     const lot = k => F(200).map(f => Object.assign(f, { name: f.name + '-mx-' + k, portionLabel: 'portion', portionWeightG: 125 }));
     X.compte(FONDATEUR, { foodLog: copie(j), savedFoods: copie(lot(0)) });
     X.envoi(FONDATEUR, { savedFoods: copie(lot(1)) });
@@ -774,7 +780,7 @@ function serveurTests(t0) {
   {
     // Deux appareils qui s'écrasent l'un l'autre PENDANT toute la panne (10 allers-retours) : la zone ne grossit plus après
     // le premier tour (une version déjà gardée ne se recopie pas), tous les envois passent, rien n'est perdu.
-    const X = serveur({ drivePanne: nom => /^recup-nut-/.test(nom) });
+    const X = serveurLegacy({ drivePanne: nom => /^recup-nut-/.test(nom) });
     const A = F(200).map(f => Object.assign(f, { name: f.name + '-pa' })), B = F(200).map(f => Object.assign(f, { name: f.name + '-pb' }));
     X.compte(ALICE, { savedFoods: copie(A) }); const zones = [], etats = [];
     for (let i = 0; i < 10; i++) { const L = i % 2 ? A : B; X.envoi(ALICE, { savedFoods: copie(L) }); const c = X.lireCompte(ALICE);
@@ -786,7 +792,7 @@ function serveurTests(t0) {
   {
     // PANNE LONGUE : des favoris toujours NOUVEAUX s'accumulent. La zone monte jusqu'au plafond, jamais au-delà ; au-delà le
     // refus (D-109) prend le relais ; Drive revenu, tout déménage. Aucune version passée par le serveur n'est perdue.
-    let panne = true; const X = serveur({ drivePanne: () => panne }); const vus = []; let maxZ = 0, acc = 0, ref = 0;
+    let panne = true; const X = serveurLegacy({ drivePanne: () => panne }); const vus = []; let maxZ = 0, acc = 0, ref = 0;
     const lot = k => F(120).map(f => Object.assign(f, { name: f.name + '-pl-' + k, portionLabel: 'portion', portionWeightG: 125 }));
     X.compte(BOB, { savedFoods: copie(lot(0)) }); vus.push(...lot(0));
     for (let k = 1; k <= 8; k++) {
@@ -807,7 +813,7 @@ function serveurTests(t0) {
     // compression) — ce qu'elle coûte de plus, par compte, dans le stockage partagé de 512 000 octets.
     const alea8 = () => crypto.randomBytes(15).toString('hex');
     const lot = () => F(200).map(f => Object.assign(f, { name: 'fav-fictif-' + alea8(), kcal: Math.floor(Math.random() * 900) }));
-    let panne = false; const X = serveur({ drivePanne: () => panne });
+    let panne = false; const X = serveurLegacy({ drivePanne: () => panne });
     X.compte(CAROL, { savedFoods: lot() });
     X.envoi(CAROL, { savedFoods: lot() }); const cBorne = X.lireCompte(CAROL);
     panne = true; X.envoi(CAROL, { savedFoods: lot() }); const cPlaf = X.lireCompte(CAROL);
@@ -826,7 +832,7 @@ function serveurTests(t0) {
        l'appareil 1 avait envoyé manque jusqu'à SA prochaine synchro (la limite de NSP1-55, inchangée), qui passe encore
        pendant la panne. Les états intermédiaires sont VÉRIFIÉS (« différé » à chaque envoi) : sinon le test ne prouverait
        rien sur D-110. */
-    let panne = false; const X = serveur({ drivePanne: () => panne });
+    let panne = false; const X = serveurLegacy({ drivePanne: () => panne });
     const lot = k => F(150).map(f => Object.assign(f, { name: f.name + '-cc110-' + k, portionLabel: 'portion', portionWeightG: 125 }));
     X.compte(BOB, { savedFoods: copie(lot(0)) });
     X.envoi(BOB, { savedFoods: copie(lot(1)) });                                    // Drive OK : 150 copies, sous la borne
@@ -851,7 +857,7 @@ function serveurTests(t0) {
     /* La sonde « Santé du système → sauvegardes » (`checkBackup`) annonce le fichier le plus RÉCENT du dossier comme la
        dernière sauvegarde. Un fichier de débordement écrit dans la journée ne doit pas masquer une sauvegarde de nuit
        arrêtée (36 jours sans sauvegarde en août : c'est précisément ce que cette sonde surveille). */
-    const X = serveur(); const gros = J(700, { tag: 'cb' });
+    const X = serveurLegacy(); const gros = J(700, { tag: 'cb' });
     X.compte(ALICE, { foodLog: copie(gros) });
     X.ctx.backupAllUserData_();
     const sonde = () => { const r = X.get({ action: 'checkBackup', token: TOK_IDEES }); return r.j.status === 'ok' ? { n: r.j.fileCount, nom: r.j.lastName, d: r.j.lastDate } : null; };
