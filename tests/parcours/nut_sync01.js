@@ -84,18 +84,25 @@ module.exports.ecran = async function ecran(t, b, PORT) {
     /* graine : le journal EST ce tableau (écrit comme le ferait l'app : S puis persist) */
     D.graine = async (lignes) => { await D.ev((l) => { S.foodLog = l; persist(); }, lignes); };
     /* synchro cloud : la VRAIE `_cloudSync`, on attend que le serveur ait reçu l'envoi */
+    /* ↪️ DURCI LE 01/11/2026 (NUT-SYNC-01 FINAL). `D.sync` rendait la main dès que le serveur avait REÇU l'envoi, avant que la page ait fini de TRAITER la réponse. Or la réponse est désormais lue et agit (accusés : `rev`
+       posée sur les repas, journal réécrit). Sous charge, la suite du test (lever le quota, recharger la page, lire le journal) pouvait passer devant ce traitement — rouge sous charge, vert sinon (T12 observé
+       à la mise au point des mutations). On attend maintenant que le traitement soit FINI (ou que l'envoi ait échoué) : `_nutTraiterReponse` et `_nutNonConfirme` sont les deux seules sorties de la chaîne. */
+    D.espionnerSync = () => D.ev(() => { if (window.__nutTraites === undefined) { window.__nutTraites = 0; ['_nutTraiterReponse', '_nutNonConfirme'].forEach((nom) => { const o = window[nom]; if (typeof o !== 'function' || o.__esp) return; const w = function () { try { return o.apply(this, arguments); } finally { window.__nutTraites++; } }; w.__esp = 1; window[nom] = w; }); } });
     D.sync = async () => {
       const n = D.srv.recus || 0;
+      const t0 = await D.ev(() => window.__nutTraites || 0);
       await D.ev(() => { _cloudSync(); });
       for (let i = 0; i < 60 && !D.horsLigne && (D.srv.recus || 0) <= n; i++) await pause(50);
+      for (let i = 0; i < 200 && (await D.ev(() => window.__nutTraites || 0)) <= t0; i++) await pause(50);   // jusqu'à 10 s : la réponse est TRAITÉE (ou l'envoi a échoué)
       await pause(120);
     };
     /* restauration : la VRAIE `_fetchRestoreRaw` + `_applyRestoreData`, puis la sauvegarde que l'app fait */
     D.restaurer = async () => { await D.ev(async (email) => { const raw = await _fetchRestoreRaw(email); _applyRestoreData(raw); persist(); }, EMAIL); };
     /* redémarrage : on recharge la page (autoConnect relit le profil et applique les suppressions du compte) */
-    D.redemarrer = async () => { await pg.reload(); await pause(1800); await D.espionner(); };
+    D.redemarrer = async () => { await pg.reload(); await pause(1800); await D.espionner(); await D.espionnerSync(); };
     D.fermer = () => cx.close();
     await D.espionner();
+    await D.espionnerSync();
     return D;
   }
   const noms = (l) => (l || []).map((x) => x.name).sort();
@@ -146,7 +153,10 @@ module.exports.ecran = async function ecran(t, b, PORT) {
     ligne('Café vieux', { ts: 1750000000005, kcal: 2, prot: 0, carbs: 0, fat: 0 }),             // INDISCERNABLE de la précédente (tous les champs égaux)
   ];
   const stockageAncien = (liste) => ({ ft4_foodlog: J(liste) });
-  const champsMetier = (l) => sans(l, 'id').map((x) => J(x)).sort();
+  /* ↪️ DURCI LE 01/11/2026 (NUT-SYNC-01 FINAL). `champsMetier` comparait tous les champs sauf l'identité. Depuis que le SERVEUR pose sur chaque repas sa révision (`rev`) et son horodatage (`modifiedAt`), une
+     ligne qui a déjà été synchronisée les porte : la synchronisation de démarrage de la page pouvait donc arriver AVANT la lecture du journal par le témoin (une course, rouge sous charge, vert sinon — observée
+     à la mise au point des mutations). Ce ne sont pas des données métier : l'invariant (calories, macros, quantité, date, repas, nom, ts identiques à l'octet) reste exigé sur TOUT le reste. */
+  const champsMetier = (l) => sans(l, 'id', 'rev', 'modifiedAt').map((x) => J(x)).sort();
   {
     const srv = P1.serveur({ code: CODE_NEUF });
     const A = await appareil('A', srv, { stockage: stockageAncien(ANCIENNES) });
@@ -430,8 +440,12 @@ module.exports.ecran = async function ecran(t, b, PORT) {
     srv4.compte(EMAIL, {});
     const mille = (a, b2) => Array.from({ length: b2 - a }, (_, k) => ({ i: 'tmb' + String(100000 + a + k) + '-aaaa', t: 1 + k }));
     srv4.envoi(EMAIL, { foodSupprimes: mille(0, 3000) });
-    srv4.envoi(EMAIL, { foodSupprimes: mille(0, 3000).concat(mille(3000, 3010)) });
-    t('B-NS01 S06 ⭐ plafond du registre (3000, protège le stockage partagé) : les 3000 entrées connues sont conservées, les 10 NOUVELLES sont refusées ET journalisées (jamais en silence)', serveurReg(srv4).length === 3000 && srv4.journal.some((m) => /foodSupprimes\] 10 suppression/.test(m)), J({ n: serveurReg(srv4).length }));
+    const rSat = srv4.envoi(EMAIL, { foodSupprimes: mille(0, 3000).concat(mille(3000, 3010)) });
+    /* ↪️ ADAPTÉ LE 01/11/2026 (NUT-SYNC-01 FINAL, ordre de Michel). Avant : les 10 suppressions en trop étaient jetées et la réponse restait « ok » (refus SILENCIEUX côté appareil). Désormais :
+       l'envoi Nutrition est refusé EN ENTIER, par une réponse explicite (`ok:false`, `NUT_TOMBSTONE_LIMIT`, non réessayable), et le registre reste exactement ce qu'il était (3000). L'exigence « conservé
+       + journalisé » est gardée telle quelle. */
+    t('B-NS01 S06 ⭐ plafond du registre (3000, protège le stockage partagé) : les 3000 entrées connues sont conservées, les 10 NOUVELLES sont refusées EXPLICITEMENT (ok:false, NUT_TOMBSTONE_LIMIT) ET journalisées',
+      serveurReg(srv4).length === 3000 && rSat.j.ok === false && rSat.j.code === 'NUT_TOMBSTONE_LIMIT' && rSat.j.retryable === false && srv4.journal.some((m) => /foodSupprimes\] REFUSÉ : 10 suppression/.test(m)), J({ n: serveurReg(srv4).length, r: rSat.j.code }));
     // coût : octets stockés par suppression (mesure, pas une promesse)
     const srv5 = P1.serveur({ code: CODE_NEUF }); srv5.compte(EMAIL, {});
     const avant5 = (srv5.brut(EMAIL) || '').length;
@@ -450,8 +464,10 @@ module.exports.ecran = async function ecran(t, b, PORT) {
       corps(app, 'removeFoodEntry').indexOf('_foodSupprimer(') > 0 && corps(app, 'removeFoodEntry').indexOf('_foodSupprimer(') < corps(app, 'removeFoodEntry').indexOf('splice(i,1)'), '');
   t('B-NS01 G02 ⭐ `persist()` écrit le registre AVANT le journal (si le journal est écrit, les suppressions qu\'il suppose le sont aussi)',
     corps(state, 'persist').indexOf('_ecrireSuppressionsLocal()') > 0 && corps(state, 'persist').indexOf('_ecrireSuppressionsLocal()') < corps(state, 'persist').indexOf('_ecrireJournalLocal()'), '');
-  t('B-NS01 G03 le corps envoyé au compte porte `foodSupprimes` et le drapeau `foodLogV:2` ; le serveur lit `body.foodSupprimes` AVANT `body.foodLog`',
-    /foodSupprimes:_foodSupprimesNormaliser\(S\.foodSupprimes\)/.test(setup) && /foodLogV:2/.test(setup) && code.indexOf('body.foodSupprimes !== undefined') > 0 && code.indexOf('body.foodSupprimes !== undefined') < code.indexOf("body.foodLog       !== undefined"), '');
+  /* ↪️ ADAPTÉ LE 01/11/2026 (NUT-SYNC-01 FINAL) : le corps envoyé au compte porte désormais `foodLogV:3` et un `requestId` (et le registre voyage sous `_foodSupprimesPourEnvoi()`, qui n'envoie que l'identité
+     et l'instant) ; le serveur applique `body.foodSupprimes` AVANT `body.foodLog` dans `_nutSynchroniser_`. Même exigence : le registre est à jour quand la liste reçue est jugée. */
+  t('B-NS01 G03 le corps envoyé au compte porte `foodSupprimes`, le drapeau `foodLogV:3` et un `requestId` ; le serveur lit `body.foodSupprimes` AVANT `body.foodLog`',
+    /foodSupprimes:_foodSupprimesPourEnvoi\(\)/.test(setup) && /foodLogV:3/.test(setup) && /requestId:_requestId/.test(setup) && code.indexOf('body.foodSupprimes !== undefined') > 0 && code.indexOf('body.foodSupprimes !== undefined') < code.indexOf("body.foodLog    !== undefined"), '');
   t('B-NS01 G04 aucune erreur JavaScript inattendue pendant tout le banc', erreursGlobales.filter((e) => !/quota|refus|faute|écriture/i.test(e)).length === 0, J(erreursGlobales.slice(0, 3)));
 
   function crypto4(k) { return require('crypto').randomUUID(); }

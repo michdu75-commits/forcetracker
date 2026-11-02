@@ -22,11 +22,11 @@ BASE_AVANT = '677cf50b'   # master juste AVANT P1 (@192) ; ⛔ pas « origin/mas
 MUT = [
     ("M00 le Code.js d'AVANT P1 (master @192, 677cf50b) : `_pa_` remplace le journal et les favoris sans rien garder", 'AVANT', 'GARDE'),
     ("M01 le journal repasse par `_pa_` (les favoris restent proteges)",
-     "    if (body.foodLog       !== undefined) profile.foodLog       = _nutProtegerListe_(existing, profile, 'foodLog',    body.foodLog,    email, Number(body.foodLogV) >= 2);\n",
-     "    if (body.foodLog       !== undefined) profile.foodLog       = _pa_(body.foodLog, profile.foodLog);\n", 'GARDE'),   # ancre rafraichie le 01/11/2026 (NUT-SYNC-01 : 6e argument `v2`), meme intention
+     "  if (body.foodLog    !== undefined) profile.foodLog    = _nutProtegerListe_(existing, profile, 'foodLog',    body.foodLog,    email, v2, ctx);\n",
+     "  if (body.foodLog    !== undefined) profile.foodLog    = _pa_(body.foodLog, profile.foodLog);\n", 'GARDE'),   # ancre rafraichie le 01/11/2026 (NUT-SYNC-01 FINAL : le volet Nutrition vit dans `_nutSynchroniser_`), meme intention
     ("M02 les favoris repassent par `_pa_` (le journal reste protege)",
-     "    if (body.savedFoods    !== undefined) profile.savedFoods    = _nutProtegerListe_(existing, profile, 'savedFoods', body.savedFoods, email);\n",   # ancre rafraichie le 01/11/2026 : `_favRecus` n'existe plus sur master (deja perimee avant NUT-SYNC-01), meme intention
-     "    if (body.savedFoods    !== undefined) profile.savedFoods    = _pa_(body.savedFoods, profile.savedFoods);\n", 'GARDE'),
+     "  if (body.savedFoods !== undefined) profile.savedFoods = _nutProtegerListe_(existing, profile, 'savedFoods', body.savedFoods, email, false, ctx);\n",
+     "  if (body.savedFoods !== undefined) profile.savedFoods = _pa_(body.savedFoods, profile.savedFoods);\n", 'GARDE'),   # ancre rafraichie le 01/11/2026 (NUT-SYNC-01 FINAL : le volet Nutrition vit dans `_nutSynchroniser_`), meme intention
     ("M03 les lignes RETIREES ne sont plus copiees dans la zone",
      "  aCopier.forEach(function(l) { garder(l, brutal ? 'brutal' : 'retiree'); });\n", "", 'GARDE'),   # ancre rafraichie le 01/11/2026 (NUT-SYNC-01 : `aCopier`) — elle etait deja perimee sur master (`motif` n'existe plus), meme intention
     ("M04 l'ancienne version d'une ligne MODIFIEE n'est plus copiee",
@@ -57,13 +57,16 @@ MUT = [
     ("M13 ce qui demenage n'est plus COMPTE dans le compte",
      "    z.deplacees = (z.deplacees || 0) + n;\n", "", 'GARDE'),
     ("M14 le retrecissement brutal n'est plus signale",
-     "  var brutal = !(v2 && nom === 'foodLog') && actuel.length >= 30 && (actuel.length - ec.retirees.length) < actuel.length * 0.6;   // le seuil des séances\n",
-     "  var brutal = false;\n", 'GARDE'),   # ancre rafraichie le 01/11/2026 (NUT-SYNC-01 : la regle ne vaut que pour les anciens clients), meme intention
+     "  var brutal = !v2j && actuel.length >= 30 && (actuel.length - ec.retirees.length) < actuel.length * 0.6;   // le seuil des séances\n",
+     "  var brutal = false;\n", 'GARDE'),   # ancre rafraichie le 01/11/2026 (NUT-SYNC-01 : la regle ne vaut que pour les anciens clients, `v2j`), meme intention
     ("M15 un envoi illisible (une chaine...) est de nouveau stocke tel quel",
      "    Logger.log('[FT GARDE-FOU ' + nom + '] envoi non lisible : ignoré, liste conservée');\n    return profile[nom];\n",
      "    return recu;\n", 'GARDE'),
     ("M16 la regle existante « le vide ne gagne jamais » est perdue au passage",
-     "  if (recu.length === 0 && actuel.length > 0) return nom === 'foodLog' ? actuel : profile[nom];   // règle existante de _pa_ : le vide ne gagne jamais (le journal sans ses lignes supprimées)\n",   # ancre rafraichie le 01/11/2026 (`motif !== 'raz'` n'existe plus ; NUT-SYNC-01 a modifie cette ligne), meme intention
+     "  var vide = recu.length === 0 && actuel.length > 0;     // règle existante de _pa_ : le vide ne gagne jamais\n",
+     "  var vide = false;\n", 'GARDE'),   # ancre rafraichie le 01/11/2026 (`motif !== 'raz'` n'existe plus ; NUT-SYNC-01 FINAL en a fait le drapeau `vide`), meme intention
+    ("M45 le refus de la zone de recuperation (Drive) redevient SILENCIEUX (la reponse dit « ok » alors que le journal n'a pas ete ecrit)",
+     "        if (ctx) ctx.out.refus = nom;                    // NUT-SYNC-01 FINAL : ce refus était SILENCIEUX (réponse « ok ») — il est désormais annoncé à l'appareil (NUT_ZONE_DRIVE, réessayable)\n",
      "", 'GARDE'),
     ("M17 le journal du serveur cite un aliment retire (donnee personnelle)",
      "  Logger.log('[FT GARDE-FOU ' + nom + '] ' + ec.retirees.length",

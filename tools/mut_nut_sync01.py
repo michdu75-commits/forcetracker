@@ -40,35 +40,35 @@ MUT = [
      [(ST, "  const reg=S.foodSupprimes||[]; if(!reg.length || !Array.isArray(S.foodLog)) return 0;", "  return 0;\n  const reg=S.foodSupprimes||[];")], G('T09d', 'T10c', 'T10f'), 'GARDE'),
     ('K10 persist() n ecrit plus le registre',
      [(ST, "  _ecrireSuppressionsLocal();   // NUT-SYNC-01 : le registre des suppressions AVANT le journal — si le journal est écrit, les suppressions qu'il suppose le sont aussi\n", "")], G('G02'), 'GARDE'),
-    ('K11 la restauration ignore les suppressions du compte',
-     [(SU, "  try{ if(Array.isArray(d.foodSupprimes)) S.foodSupprimes=_foodSupprimesFusion(S.foodSupprimes,d.foodSupprimes); _foodAppliquerSuppressions(); }catch(e){console.warn('[FT restore] suppressions',e);}", "")], G('T10f'), 'GARDE'),
+    # K11 (« la restauration ignore les suppressions du compte ») est DEPLACEE dans tools/mut_nut_sync02.py (K52), AVEC SA RAISON (R30 : un controle retire s'ecrit) : depuis NUT-SYNC-01 FINAL, le serveur
+    # RENVOIE a un appareil en retard « supprime ailleurs » dans la reponse de sa synchronisation (voie `rejets`), si bien que T10/T10f retirent la ligne par cette voie meme quand la restauration
+    # n'applique plus le registre : la mutation laissait ce banc VERT. Le chemin de restauration est isole, lui, par E03c (nut_sync02), qui ne passe par aucune synchronisation.
     ('K12 le demarrage n applique plus les suppressions venues d un autre appareil',
-     [(A, "if(Array.isArray(_s)&&_s.length){ S.foodSupprimes=_foodSupprimesFusion(S.foodSupprimes,_s); _foodAppliquerSuppressions(); }", "")], G('T10c'), 'GARDE'),
+     [(A, "if(Array.isArray(_s)&&_s.length){ S.foodSupprimes=_foodSupprimesFusion(S.foodSupprimes,_s,true); _foodAppliquerSuppressions(); }", "")], G('T14'), 'GARDE'),   # ancre rafraichie le 01/11/2026 (NUT-SYNC-01 FINAL), meme intention. ATTENDU AJUSTE (T10c retire, T14 seul rougit) : la voie « rejets » de la reponse de synchronisation compense dans T10/T10c ; le DEMARRAGE seul est isole par E03d (nut_sync02, mutation K53).
     ('K13 la synchro n envoie plus le registre',
-     [(SU, "      foodSupprimes:_foodSupprimesNormaliser(S.foodSupprimes),\n", "")], G('T10', 'T10b'), 'GARDE'),
+     [(SU, "      foodSupprimes:_foodSupprimesPourEnvoi(),\n", "")], G('T10', 'T10b'), 'GARDE'),   # ancre rafraichie le 01/11/2026 (NUT-SYNC-01 FINAL : le registre voyage dans `_corpsSync`, le constructeur UNIQUE du corps d'envoi — R2), meme intention : la synchro n'envoie plus le registre
     ('K14 la synchro ne declare plus le drapeau V2',
-     [(SU, "      foodLogV:2,", "      foodLogV:1,")], G('T12'), 'GARDE'),
+     [(SU, "foodLogV:3, requestId:_requestId,", "foodLogV:1, requestId:_requestId,")], G('T12'), 'GARDE'),   # ancre rafraichie le 01/11/2026 (NUT-SYNC-01 FINAL : transport lisible, registre dans le corps d'envoi, volet Nutrition dans `_nutSynchroniser_`), meme intention
     ('K15 le registre expire (suppressions de plus de 90 jours oubliees) cote telephone',
-     [(ST, "    const t=(e && typeof e==='object' && isFinite(+e.t) && +e.t>0) ? Math.floor(+e.t) : 0;\n    if(idx[i]!==undefined)", "    const t=(e && typeof e==='object' && isFinite(+e.t) && +e.t>0) ? Math.floor(+e.t) : 0;\n    if(t && t<Date.now()-90*86400000) return;\n    if(idx[i]!==undefined)")], G('T11'), 'GARDE'),
+     [(ST, "    const t=(isFinite(+o2.t) && +o2.t>0) ? Math.floor(+o2.t) : 0;\n", "    const t=(isFinite(+o2.t) && +o2.t>0) ? Math.floor(+o2.t) : 0;\n    if(t && t<Date.now()-90*86400000) return;\n")], G('T11'), 'GARDE'),   # ancre rafraichie le 01/11/2026 (NUT-SYNC-01 FINAL : transport lisible, registre dans le corps d'envoi, volet Nutrition dans `_nutSynchroniser_`), meme intention
     # ── serveur ──
     ('K16 le serveur REMPLACE son registre au lieu de l additionner',
      [(CO, "  (Array.isArray(actuel) ? actuel : []).forEach(function(e) { ajouter(e, false); });\n", "")], G('S03'), 'GARDE'),
     ('K17 le serveur accepte une ligne dont la suppression est declaree',
      [(CO, "    recu = recu.filter(function(l) { return !estSupp(l); });\n", "")], G('T10', 'T16'), 'GARDE'),
     ('K18 le serveur ignore le drapeau V2 (une absence redevient une suppression)',
-     [(CO, "  var gardees = (v2 && nom === 'foodLog') ? ec.retirees : [];", "  var gardees = [];"),
-      (CO, "  var aCopier = (v2 && nom === 'foodLog') ? [] : ec.retirees;", "  var aCopier = ec.retirees;")], G('T12', 'S01'), 'GARDE'),
+     [(CO, "  var v2j = v2 && nom === 'foodLog';", "  var v2j = false;")], G('S01', 'S02'), 'GARDE'),   # ancre rafraichie le 01/11/2026 (NUT-SYNC-01 FINAL), meme intention. ATTENDU AJUSTE (T12 retire) : depuis NUT-SYNC-01 FINAL un SECOND etage protege aussi les lignes deja REVISEES (un appareil sans revision ne retire pas ce que le serveur a revise) et celles de T12 le sont — l'absence reste donc protegee pour elles meme quand le drapeau est ignore. Pour les lignes NON revisees, seul le drapeau protege : S01/S02 (niveau serveur) rougissent, et la mutation reste TUEE.
     ('K19 le serveur laisse dans son journal une ligne dont la suppression est declaree',
      [(CO, "    actuel = actuel.filter(function(l) { return !estSupp(l); });\n", "")], G('S02'), 'GARDE'),
     ('K20 le serveur lit le journal AVANT le registre de la meme requete',
-     [(CO, "    if (body.foodSupprimes !== undefined) profile.foodSupprimes = _nutSupprimesFusion_(profile.foodSupprimes, body.foodSupprimes, email);\n", ""),
-      (CO, "    if (body.savedFoods    !== undefined) profile.savedFoods    = _nutProtegerListe_(existing, profile, 'savedFoods', body.savedFoods, email);", "    if (body.foodSupprimes !== undefined) profile.foodSupprimes = _nutSupprimesFusion_(profile.foodSupprimes, body.foodSupprimes, email);\n    if (body.savedFoods    !== undefined) profile.savedFoods    = _nutProtegerListe_(existing, profile, 'savedFoods', body.savedFoods, email);")], G('G03', 'S02'), 'GARDE'),
+     [(CO, "  if (body.foodSupprimes !== undefined) profile.foodSupprimes = _nutSupprimesFusion_(profile.foodSupprimes, body.foodSupprimes, email);\n", ""),
+      (CO, "  if (body.savedFoods !== undefined) profile.savedFoods = _nutProtegerListe_(existing, profile, 'savedFoods', body.savedFoods, email, false, ctx);", "  if (body.savedFoods !== undefined) profile.savedFoods = _nutProtegerListe_(existing, profile, 'savedFoods', body.savedFoods, email, false, ctx);\n  if (body.foodSupprimes !== undefined) profile.foodSupprimes = _nutSupprimesFusion_(profile.foodSupprimes, body.foodSupprimes, email);")], G('G03', 'S02'), 'GARDE'),   # ancre rafraichie le 01/11/2026 (NUT-SYNC-01 FINAL : transport lisible, registre dans le corps d'envoi, volet Nutrition dans `_nutSynchroniser_`), meme intention
     ('K21 le serveur n a plus de plafond de registre',
      [(CO, "    if (nouvelle && out.length >= NUT_SUPPR_MAX_) { refusees++; return; }\n", "")], G('S06'), 'GARDE'),
     ('K22 le serveur accepte n importe quelle identite',
      [(CO, "    if (typeof i !== 'string' || i.length < 8 || i.length > 64 || !/^[0-9A-Za-z-]+$/.test(i)) return;", "    if (typeof i !== 'string' || !i) return;")], G('S03'), 'GARDE'),
     ('K23 un envoi vide renvoie le journal ANCIEN (avec ses lignes supprimees)',
-     [(CO, "return nom === 'foodLog' ? actuel : profile[nom];", "return profile[nom];")], G('S04'), 'GARDE'),
+     [(CO, "    recu = actuel.slice();", "    recu = (profile[nom] || []).slice();")], G('S04'), 'GARDE'),   # ancre rafraichie le 01/11/2026 (NUT-SYNC-01 FINAL : transport lisible, registre dans le corps d'envoi, volet Nutrition dans `_nutSynchroniser_`), meme intention
     ('K24 les lignes supprimees ne sont plus copiees en zone de recuperation',
      [(CO, "  supprimees.forEach(function(l) { garder(l, 'supprimee'); });\n", "")], G('S02'), 'GARDE'),
     ('K25 le serveur garde l instant de suppression le plus RECENT (au lieu du plus ancien)',

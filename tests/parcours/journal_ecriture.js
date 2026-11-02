@@ -46,11 +46,15 @@ const SEED = `(() => { const f = 'x'.repeat(900);
   S.foodLog = Array.from({ length: 12 }, (_, i) => ({ id: 'seed' + String(i).padStart(8, '0'), date: today(), meal: 'dejeuner', name: 'Aliment ' + i, q: 100, u: 'g', kcal: 100, prot: 5, carbs: 10, fat: 2, ts: 1000 + i, per100: null, v: 1, saisie: 'liste', origine: 'reprise', n2: { s: 1, m: 'd', no: [], st: 'declaree' } }));
   S.savedFoods = []; S.hiddenFoods = []; S.bodyScans = []; persist(); })()`;
 
+/* Toutes les erreurs de page de TOUT le banc, pour le témoin G6e. Ce témoin valait `true` en dur (un vert qui ne pouvait pas rougir ; refusé par
+   D031S-IV ① dans la passe D-031 du 01/11/2026) : il lit maintenant ce que les pages ont réellement levé. */
+const ERREURS_BANC = [];
+
 async function nouvellePage(b, PORT, maitre) {
   const cx = await b.newContext({ serviceWorkers: 'block', viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
   const pg = await cx.newPage();
   const erreurs = [];
-  pg.on('pageerror', (e) => erreurs.push(String(e && e.message || e).slice(0, 160)));
+  pg.on('pageerror', (e) => { const m = String(e && e.message || e).slice(0, 160); erreurs.push(m); ERREURS_BANC.push(m); });
   pg.on('dialog', (d) => d.accept());
   await pg.addInitScript(() => { if (sessionStorage.getItem('__jw')) return; sessionStorage.setItem('__jw', '1'); localStorage.clear();
     localStorage.setItem('ft4_ob2', '1'); localStorage.setItem('ft4_guide_shown', '1'); localStorage.setItem('ft4_wn_seen', '99'); });
@@ -65,6 +69,7 @@ async function nouvellePage(b, PORT, maitre) {
 }
 
 module.exports.ecran = async function ecran(t, b, PORT) {
+  ERREURS_BANC.length = 0;
   console.log('\n-- B-JEC. Le journal alimentaire : écrivain dédié, persist() scindé, repli quota des séances, écrivains Nutrition --');
   const maitre = persistMaitreSource();
   const lu = (pg, f, a) => pg.evaluate(f, a);
@@ -276,5 +281,6 @@ module.exports.ecran = async function ecran(t, b, PORT) {
     ['addFoodEntry', 'quickAddFood', 'saveEditFood', 'removeFoodEntry', '_habApresInsertion'].every((n) => { const c = corps(app, n); return c !== '' && /_journalPersister\(\)/.test(c) && !/[^_a-zA-Z]persist\(\)/.test(c); }), '');
   t('B-JEC G6d ⭐ les mécanismes compensatoires de NUT-REF-HIST-02 n\'existent plus (table d\'attente, relecture du stockage, nouvelle tentative par re-toucher) : ils ne protègent plus aucun cas — le statut vient de l\'écrivain, la nouvelle tentative est « Réessayer » (réécriture, jamais de création)',
     !/_habNonConfirme|_habDurable|_habReessayer|_habPurger|_habCourantes|_HAB_MSG_NON_DURABLE|_HAB_CHAMPS/.test(app), '');
-  t('B-JEC G6e aucune erreur JavaScript inattendue pendant tout le banc', true, '');
+  const inattendues = ERREURS_BANC.filter((e) => !/quota|refus/i.test(e));   // les fautes de stockage SIMULÉES (« quota », « refus ») sont attendues ; toute autre exception non rattrapée ne l'est pas
+  t('B-JEC G6e aucune erreur JavaScript inattendue pendant tout le banc (seules les fautes de stockage simulées — « quota » / « refus » — sont attendues)', inattendues.length === 0, J({ levees: ERREURS_BANC.length, inattendues: inattendues.slice(0, 5) }));
 };

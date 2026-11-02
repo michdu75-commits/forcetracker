@@ -90,6 +90,9 @@ MUT = [
     ('J24 le message d echec ne dit plus que ce sera PERDU',
      [(A, "c\\'est à l\\'écran mais ce sera PERDU si tu fermes l\\'application. ", "c\\'est à l\\'écran. ")],
      G('G4d'), 'GARDE'),
+    ('J25 l ecrivain du journal leve une exception NON rattrapee (le temoin G6e ne valait plus que « true » en dur avant le 01/11/2026)',
+     [(ST, "function _ecrireJournalLocal(){\n  _journalSeq++;", "function _ecrireJournalLocal(){\n  _journalSeq++;\n  setTimeout(function(){ throw new Error('exception inattendue du journal'); },0);")],
+     G('G6e'), 'GARDE'),
 ]
 
 def banc(arbre):

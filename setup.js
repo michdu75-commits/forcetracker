@@ -1062,6 +1062,93 @@ function showChartTooltip(i){
 // ─── SESSION DETAIL / EDIT ───────────────────────────────────
 let _sessId=null,_sessEdits=null,_sdDelConfirm=false,_sdDelTimer=null;
 
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+   📨 NUT-SYNC-01 FINAL — L'ACCUSÉ DE RÉCEPTION DU SERVEUR. Trois états de la suppression, jamais confondus (voir `_foodSupprimesNormaliser`) : en attente · confirmée · rejetée.
+   ⛔ Règles : « Synchronisation réussie » n'est JAMAIS affiché sur une requête sans accusé valide (il n'existe d'ailleurs aucun message de succès ici) · une suppression non confirmée n'est
+   JAMAIS effacée · un échec se dit clairement mais sans spammer (un message par cause toutes les 10 minutes, sauf un conflit : chaque conflit est une information nouvelle).
+   ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
+const _N_MSG_SYNC_PLEIN='Synchronisation Nutrition impossible : le registre des suppressions du compte est plein. Rien n\'est perdu — tes repas et tes suppressions restent sur ce téléphone. Préviens le support.';
+const _N_MSG_SYNC_ZONE='Synchronisation Nutrition incomplète : la sauvegarde de sécurité du serveur est indisponible. Rien n\'est perdu, elle sera retentée.';
+const _N_MSG_SYNC_ATTENTE='Suppression pas encore confirmée par le serveur : elle est gardée sur ce téléphone et sera renvoyée.';
+const _N_MSG_SYNC_CONFLIT='Ce repas a été modifié sur un autre appareil en même temps : les deux versions sont gardées dans ton journal. Supprime celle que tu ne veux pas.';
+const _N_MSG_SYNC_SUPPRIME_AILLEURS='Un repas que tu venais de modifier avait été supprimé sur un autre appareil : il a été retiré d\'ici.';
+const _nutAvertis=Object.create(null);
+function _nutAvertir(code,msg){
+  const t=Date.now();
+  if(_nutAvertis[code] && t-_nutAvertis[code]<600000) return;
+  _nutAvertis[code]=t;
+  try{ toast(msg,'error'); }catch(e){}
+}
+let _nutRelance={n:0,timer:null};
+/* Une nouvelle tentative PLANIFIÉE (30 s), au plus 5 de suite — le réseau ou le serveur peuvent revenir sans que la personne touche à rien. */
+function _nutPlanifierRelance(){
+  if(_nutRelance.timer || _nutRelance.n>=5) return;
+  _nutRelance.n++;
+  _nutRelance.timer=setTimeout(function(){ _nutRelance.timer=null; try{ _cloudSync(); }catch(e){} },30000);
+}
+/* Pas d'accusé valide (réseau coupé, réponse illisible, ce n'est pas la réponse à CETTE requête) : on ne SAIT pas. Rien n'est confirmé, rien n'est effacé. */
+function _nutNonConfirme(envoi,code){
+  if(_foodSupprimesEnAttente().length){ _nutAvertir('ATTENTE',_N_MSG_SYNC_ATTENTE); _nutPlanifierRelance(); }
+  return 'non_confirme';
+}
+function _nutTraiterReponse(d,envoi){
+  if(!d || typeof d!=='object' || d.requestId!==envoi.requestId) return _nutNonConfirme(envoi,'ACCUSE_ABSENT');
+  const sup=new Set(envoi.sup||[]);
+  if(d.ok!==true){
+    const code=String(d.code||'REFUS').replace(/[^0-9A-Za-z_]/g,'').slice(0,40)||'REFUS';
+    if(d.retryable===true){                                    // verrou occupé, zone de sécurité indisponible… : réessayable, rien n'est rejeté
+      if(code==='NUT_ZONE_DRIVE') _nutAvertir(code,_N_MSG_SYNC_ZONE);
+      _nutPlanifierRelance();
+      return 'refuse_reessayable';
+    }
+    if(code!=='REFUS' && d.status==='nut_refuse'){             // refus explicite et définitif : les suppressions envoyées et non confirmées sont REJETÉES (jamais effacées)
+      let marque=false;
+      S.foodSupprimes=_foodSupprimesNormaliser(S.foodSupprimes).map(e=>{ if(sup.has(e.i) && !e.c && e.x!==code){ marque=true; return Object.assign({},e,{x:code}); } return e; });
+      if(marque) _ecrireSuppressionsLocal();
+      if(code==='NUT_TOMBSTONE_LIMIT') _nutAvertir(code,_N_MSG_SYNC_PLEIN);
+      return 'refuse';
+    }
+    return _nutNonConfirme(envoi,code);                        // erreur serveur sans code métier : non confirmé
+  }
+  /* ✅ ACCUSÉ VALIDE (ok:true, notre requestId). */
+  _nutRelance.n=0;
+  const nut=(d.nut && typeof d.nut==='object') ? d.nut : {};
+  let journal=false, registre=false, conflits=0, retires=0;
+  const maintenant=Date.now();
+  S.foodSupprimes=_foodSupprimesNormaliser(S.foodSupprimes).map(e=>{ if(sup.has(e.i) && (!e.c || e.x)){ registre=true; const o=Object.assign({},e,{c:maintenant}); delete o.x; return o; } return e; });
+  const parId=new Map(); (S.foodLog||[]).forEach(l=>{ if(l && typeof l.id==='string') parId.set(l.id,l); });
+  (Array.isArray(nut.acks)?nut.acks:[]).forEach(a=>{                                       // la révision du serveur : jamais en arrière
+    const l=a && parId.get(a.i);
+    if(l && Number.isSafeInteger(a.r) && a.r>=0 && a.r>=(Number.isSafeInteger(l.rev)?l.rev:0) && l.rev!==a.r){ l.rev=a.r; journal=true; }
+  });
+  (Array.isArray(nut.conflits)?nut.conflits:[]).forEach(c=>{                               // DEUX modifications du même repas : on garde les deux
+    const l=c && parId.get(c.i); if(!l || !c.ligne || typeof c.ligne!=='object') return;
+    if(_empreinteFood(l)===_empreinteFood(c.ligne)) { if(Number.isSafeInteger(c.r) && l.rev!==c.r){ l.rev=c.r; journal=true; } return; }   // déjà identiques
+    const copie=JSON.parse(JSON.stringify(l)); delete copie.rev; delete copie.modifiedAt; copie.id=_foodLineId();                       // la version de la PERSONNE devient un repas neuf
+    const k=S.foodLog.indexOf(l);
+    S.foodLog[k]=Object.assign({},c.ligne);                                                // la ligne d'origine reprend la version du serveur (avec sa révision)
+    S.foodLog.push(copie); conflits++; journal=true;
+  });
+  (Array.isArray(nut.rejets)?nut.rejets:[]).forEach(r=>{                                   // modifié ici, supprimé ailleurs : la suppression gagne, la ligne part
+    if(r && r.code==='NUT_ENTRY_DELETED' && parId.has(r.i)){
+      S.foodSupprimes=_foodSupprimesFusion(S.foodSupprimes,[{i:r.i,t:maintenant}],true); registre=true; retires++;
+    }
+  });
+  if(retires){ _foodAppliquerSuppressions(); journal=true; }
+  if(journal){ try{ _journalPersister(); }catch(e){} }
+  else if(registre){ _ecrireSuppressionsLocal(); }
+  if(journal){ try{ if(typeof renderFoodJournal==='function') renderFoodJournal(); }catch(e){} }
+  if(conflits){ try{ toast(_N_MSG_SYNC_CONFLIT,'error'); }catch(e){} try{ _cloudSyncDebounced(); }catch(e){} }
+  if(retires){ try{ toast(_N_MSG_SYNC_SUPPRIME_AILLEURS,'error'); }catch(e){} }
+  /* 🪞 MIROIR : le journal et le registre n'y vont QU'APRÈS un accusé valide qui dit que l'envoi couvrait tout le journal du compte (`complet`) et que ce téléphone connaît au moins autant de
+     suppressions que le compte. Un instantané partiel ne remplace jamais un historique complet : la porte du miroir retire ces deux champs de tout autre envoi (voir `sbEnvoyer`, supabase.js). */
+  try{
+    if(nut.complet===true && typeof sbEnvoyerJournal==='function' && (S.foodSupprimes||[]).length>=(Number(nut.supprimes)||0)){
+      sbEnvoyerJournal((S.foodLog||[]).slice(-8000),_foodSupprimesPourEnvoi());
+    }
+  }catch(e){}
+  return 'confirme';
+}
 function _cloudSync(){
   if(window._demoMode)return; // mode démo : aucune écriture cloud
   if(!S.email||!S.url)return;
@@ -1155,10 +1242,13 @@ function _cloudSync(){
       dietRestrictions:S.dietRestrictions||[],
       dietNotes:S.dietNotes||'',
       foodLog:(S.foodLog||[]).slice(-8000), // ~journal nutrition sur plusieurs annees (entrees minuscules)
-      /* 🗑️ NUT-SYNC-01 — LES SUPPRESSIONS VOLONTAIRES VOYAGENT EN CLAIR, avec le drapeau « je sais les déclarer » (`foodLogV:2`). Sans lui le serveur garde l'ancien comportement (une absence
-         dans l'envoi = un retrait, avec copie de sécurité) ; avec lui, une ABSENCE n'est plus jamais une suppression : seule une suppression DÉCLARÉE retire une ligne du journal du compte. */
-      foodSupprimes:_foodSupprimesNormaliser(S.foodSupprimes),
-      foodLogV:2,
+      /* 🗑️ NUT-SYNC-01 — LES SUPPRESSIONS VOLONTAIRES VOYAGENT EN CLAIR (l'identité et l'instant, jamais l'état local). Le drapeau « je sais déclarer et lire un accusé » (`foodLogV:3`) et l'identifiant
+         d'opération s'ajoutent AU TRANSPORT Apps Script seulement, ci-dessous.
+         ⛔ NUT-SYNC-01 FINAL — CE CORPS RESTE LE SEUL CONSTRUCTEUR (R2), servi aux deux destinations. Mais le miroir Supabase REMPLACE un champ présent (migration 0003 : « un champ absent garde sa
+         valeur ») : un journal plus COURT que celui du compte — appareil neuf, historique local raccourci par une panne — y remplacerait l'historique complet. La PORTE du miroir (`sbEnvoyer`,
+         supabase.js) retire donc `foodLog` et `foodSupprimes` de tout envoi, comme elle retire déjà les justificatifs (la règle appartient à la porte, pas à l'appelant) ; ils n'y vont que par
+         `sbEnvoyerJournal`, appelée plus bas APRÈS un accusé valide qui dit que l'envoi couvrait tout le journal du compte (`complet`). */
+      foodSupprimes:_foodSupprimesPourEnvoi(),
       savedFoods:(S.savedFoods||[]).slice(0,200), // aliments favoris (re-ajout rapide)
       /* NV2-FIAB (24/10) — les masquages (« ✕ ») et la remise à zéro voyagent : des dates de départ, fusionnées par le max
          (`_nutMasquesNormaliser`). Sans eux, un aliment retiré revenait sur un autre appareil ou après « Restaurer » (N2). */
@@ -1179,12 +1269,24 @@ function _cloudSync(){
      Apps Script en a besoin : c'est le jeton qui décide du compte écrit (S1), et le code
      perso qui autorise l'écriture d'un compte protégé. Il est donc ajouté ICI, au moment de
      l'envoi, et jamais posé dans `_corpsSync` — qui part aussi ailleurs. */
-  fetch(S.url,{method:'POST',mode:'no-cors',
-    headers:{'Content-Type':'text/plain;charset=utf-8'},
-    body:JSON.stringify(Object.assign({},_corpsSync,{
-      authCode:_authCode(), token:_ftToken()
-    }))
-  }).catch(()=>{});
+  /* 📨 NUT-SYNC-01 FINAL — LA RÉPONSE DU SERVEUR EST LUE. Avant : `mode:'no-cors'`, une réponse OPAQUE — l'app ne pouvait pas savoir si le serveur avait écrit, refusé ou jeté, et la sauvegarde
+     « réussissait » dans tous les cas. Maintenant : `redirect:'follow'` + `text/plain` (pas de requête préliminaire CORS), exactement le schéma des appels qui lisent déjà leur réponse en production
+     (`loadProfile` en POST, `_protectPost`, `sendConfirmCode`). L'authentification est celle de l'envoi lui-même (jeton + code perso) : un accusé n'est la réponse qu'à SA requête (`requestId`).
+     ⛔ Une requête dont la réponse n'est pas lisible n'est JAMAIS une sauvegarde confirmée : elle est « non confirmée », rien n'est effacé, tout est renvoyé à la synchronisation suivante
+     (le serveur est idempotent). */
+  const _requestId=_nutNouvelIdOperation();
+  const _envoi={requestId:_requestId, sup:_foodSupprimesPourEnvoi().map(e=>e.i)};
+  let _p;
+  try{
+    _p=fetch(S.url,{method:'POST',redirect:'follow',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify(Object.assign({},_corpsSync,{
+        foodLogV:3, requestId:_requestId,
+        authCode:_authCode(), token:_ftToken()
+      }))
+    });
+  }catch(e){ _p=Promise.reject(e); }
+  Promise.resolve(_p).then(r=>r.json()).then(d=>_nutTraiterReponse(d,_envoi)).catch(()=>{ try{ _nutNonConfirme(_envoi,'RESEAU'); }catch(e){} });
   /* MIROIR SUPABASE — deuxième copie, en écriture seule. Apps Script reste la source de
      vérité ; ceci n'ajoute qu'un filet. Non configuré ou injoignable → il ne se passe rien,
      et surtout : ça ne retarde ni ne bloque JAMAIS la sauvegarde principale (règle d'or #3).
@@ -1193,7 +1295,7 @@ function _cloudSync(){
      jeton S1 résolu côté serveur. ⛔ `sbMirror` n'est PAS supprimée : elle reste disponible
      pour le retour en arrière, qui tient en une ligne (`SB_VOIE` dans `supabase.js`).
      ⛔ Le corps reste le MÊME que celui d'Apps Script (R2) : on ne construit pas un second
-     instantané métier, qui finirait par diverger. */
+     instantané métier, qui finirait par diverger. (NUT-SYNC-01 FINAL : la porte en retire le journal et le registre — voir plus haut.) */
   try{ if(typeof sbEnvoyer==='function')sbEnvoyer(_corpsSync); }catch(e){}
 }
 // Alias pour compatibilité
@@ -3845,7 +3947,7 @@ function _applyRestoreData(raw){
   try{if(Array.isArray(d.foodLog)){S.foodLog=_fusionnerFoodLogRestauration(S.foodLog,d.foodLog).liste;_foodLogIdentifier(S.foodLog);}}catch(e){console.warn('[FT restore] foodLog',e);}
   /* 🗑️ NUT-SYNC-01 — UNE RESTAURATION NE RAMÈNE PAS CE QUI A ÉTÉ SUPPRIMÉ À DESSEIN : les suppressions du compte s'ajoutent à celles du téléphone (union), puis le registre fait foi sur le journal
      fusionné — les lignes du cloud comme celles du téléphone. */
-  try{ if(Array.isArray(d.foodSupprimes)) S.foodSupprimes=_foodSupprimesFusion(S.foodSupprimes,d.foodSupprimes); _foodAppliquerSuppressions(); }catch(e){console.warn('[FT restore] suppressions',e);}
+  try{ if(Array.isArray(d.foodSupprimes)) S.foodSupprimes=_foodSupprimesFusion(S.foodSupprimes,d.foodSupprimes,true); _foodAppliquerSuppressions(); }catch(e){console.warn('[FT restore] suppressions',e);}   // venues du COMPTE : déjà confirmées
   try{if(Array.isArray(d.savedFoods)&&d.savedFoods.length)S.savedFoods=d.savedFoods;}catch(e){console.warn('[FT restore] savedFoods',e);}
   /* 🙈 NV2-FIAB (24/10, décision de Michel) — CE QUI A ÉTÉ MASQUÉ OU REMIS À ZÉRO NE REVIENT PAS PAR LA RESTAURATION. Les dates
      de départ du cloud s'AJOUTENT à celles du téléphone (le plus tard gagne : rien n'est démasqué), puis les favoris qui en

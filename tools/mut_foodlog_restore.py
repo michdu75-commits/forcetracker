@@ -19,13 +19,13 @@ ST, SE = 'state.js', 'setup.js'
 FICHIERS = (ST, SE)
 
 APPEL = "S.foodLog=_fusionnerFoodLogRestauration(S.foodLog,d.foodLog).liste;_foodLogIdentifier(S.foodLog);"
-ABS = "      if(absorbe.has(k)){ vus.push(e); cloudParId.set(c.id,vus); return; }"
+ABS = '      if(absorbe.has(k)){                                                        // la version de la ligne du téléphone : il garde la sienne\n        vus.push(e); cloudParId.set(c.id,vus);\n        /* NUT-SYNC-01 FINAL — il APPREND seulement la révision du serveur, et seulement si le contenu est identique (sa révision de base est alors vraie). Sinon il garde la sienne telle quelle :\n           au prochain envoi le serveur dira « conflit » et les DEUX versions seront gardées. */\n        const lo=objLocal.get(c.id);\n        if(lo && Number.isSafeInteger(c.rev) && c.rev>(Number.isSafeInteger(lo.rev)?lo.rev:0) && _empreinteFood(lo)===e){ lo.rev=c.rev; if(c.modifiedAt) lo.modifiedAt=c.modifiedAt; }\n        return;\n      }'   # ancre rafraichie le 01/11/2026 (NUT-SYNC-01 FINAL : le bloc « absorbe » apprend la revision du serveur) — meme bloc, meme intention
 AJOUT = "      out.push(c); ajoutees++; return;\n    }"
 IDEM = "        if(n>0){ libres.set(e,n-1); return; }                                  // déjà préservé sur le téléphone"
 CHOIX = "    if(premier>=0) absorbe.add(identique>=0?identique:premier);"
 IDV = "  const idValide=l=>(typeof l.id==='string' && l.id.length>=8);"
 MULTI = "    const e=_empreinteFood(c), n=libres.get(e)||0;\n    if(n>0){ libres.set(e,n-1); return; }"
-EMP = "Object.keys(v).filter(k=>k!=='id')"
+EMP = "Object.keys(v).filter(k=>k!=='id' && !(haut && (k==='rev'||k==='modifiedAt')))"   # ancre rafraichie le 01/11/2026 (NUT-SYNC-01 FINAL : `rev` et `modifiedAt` de la LIGNE ne comptent pas dans l'empreinte)
 DEDUP = "      if(vus.indexOf(e)>=0 || parIdLocal.get(c.id)===e) return;"
 RET = "  return {liste:out, ajoutees};"
 

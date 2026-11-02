@@ -85,6 +85,14 @@ function _sbActif(){ return !!(SB_URL && SB_ANON); }
    ⛔ Et il ne touche à AUCUNE donnée métier : la liste est fermée et nommée. */
 const _SB_JUSTIFICATIFS = ['token','authCode','code','confirmCode','apikey','authorization'];
 
+/* Les deux champs dont un envoi PARTIEL écraserait l'historique complet du miroir. */
+const _SB_SNAPSHOT_NUTRITION=['foodLog','foodSupprimes'];
+function _sbSansSnapshotNutrition(payload, autorise){
+  if(autorise===true || !payload || typeof payload!=='object') return payload;
+  const propre={};
+  for(const k in payload){ if(_SB_SNAPSHOT_NUTRITION.indexOf(k)===-1) propre[k]=payload[k]; }
+  return propre;
+}
 function _sbSansJustificatifs(payload){
   if(!payload || typeof payload!=='object') return payload;
   const propre={};
@@ -178,7 +186,11 @@ function _sbNoter(e){
  * LA PORTE DE LA SAUVEGARDE MIROIR. Un seul appelant : `_cloudSync`.
  * @param {object} payload — exactement le corps métier envoyé à Apps Script.
  */
-function sbEnvoyer(payload){
+function sbEnvoyer(payload, journalAutorise){
+  /* NUT-SYNC-01 FINAL — LE JOURNAL ET LE REGISTRE DES SUPPRESSIONS NE PARTENT PAS PAR DÉFAUT. Le miroir remplace un champ PRÉSENT en entier (migration 0003) : un journal plus court que celui du compte
+     y écraserait l'historique complet. Comme les justificatifs, c'est la PORTE qui les retire (R2 : la règle n'appartient pas à l'appelant) ; seul `sbEnvoyerJournal` les autorise, et il n'est appelé
+     qu'après un accusé valide du serveur principal qui dit que l'envoi couvrait tout le journal du compte. */
+  payload=_sbSansSnapshotNutrition(payload, journalAutorise===true);
   if(SB_VOIE !== 'worker') return sbMirror(payload);
   try{
     if(typeof window!=='undefined' && window._demoMode)return;   // mode démo : aucune écriture
@@ -206,6 +218,14 @@ function sbEnvoyer(payload){
       _sbNoter({ok:false, voie:'', info:'réseau'});
     });
   }catch(e){ /* jamais bloquant (règle d'or #3) */ }
+}
+
+/**
+ * L'envoi du JOURNAL et du REGISTRE des suppressions au miroir (NUT-SYNC-01 FINAL). Un seul appelant : `_nutTraiterReponse` (setup.js), et seulement après un accusé VALIDE du serveur principal qui dit
+ * `complet` : l'envoi couvrait tout le journal du compte, donc ce qu'on écrit au miroir ne peut pas être plus court que ce qu'il avait. Ce n'est PAS un second corps métier : deux champs, rien d'autre.
+ */
+function sbEnvoyerJournal(foodLog, foodSupprimes){
+  return sbEnvoyer({action:'saveProfile', foodLog:foodLog, foodSupprimes:foodSupprimes}, true);
 }
 
 /**

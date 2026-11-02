@@ -9,7 +9,8 @@
      les propriétés avant/après, le fichier de sauvegarde écrit, les compteurs des routes A1.
    NE COUVRE PAS : le vrai déploiement Apps Script, les vraies Script Properties (leur plafond réel de 512 Ko n'est pas
      simulé : la taille est MESURÉE et affichée), le vrai Drive (création et RELECTURE simulées en mémoire : la relecture
-     d'Apps Script n'est pas éprouvée ici), deux envois SIMULTANÉS (aucun verrou dans Code.js — défaut préexistant),
+     d'Apps Script n'est pas éprouvée ici), deux envois SIMULTANÉS (ce banc-ci est séquentiel dans UN processus ; depuis NUT-SYNC-01 FINAL
+     Code.js prend un verrou autour de `saveProfile` et la concurrence est éprouvée à part : `tests/parcours/nut_sync02.js`, vrais processus),
      le client (P1 ne modifie aucun fichier de l'app : les envois ont la forme de `_cloudSync`, setup.js).
    ⛔⛔ DONNÉES INVENTÉES SEULEMENT : adresses du domaine réservé example.test (RFC 2606), repas « repas-fictif-… »,
      favoris « fav-fictif-… ». La liste premium en dur de Code.js est remplacée avant exécution (remplacement COMPTÉ).
@@ -81,7 +82,7 @@ function serveur(o) {
   const mails = [];
   const ctx = {
     console: { log() {}, warn() {}, error() {} },
-    PropertiesService: { getScriptProperties: () => sp },
+    PropertiesService: { getScriptProperties: () => (o.sp || sp) },   // `o.sp` : des propriétés PARTAGÉES entre processus (banc de concurrence NUT-SYNC-01 FINAL) — par défaut, celles de ce serveur-ci
     Utilities: {
       getUuid: () => crypto.randomUUID(), DigestAlgorithm: { SHA_256: 1 }, Charset: { UTF_8: 1 },
       computeDigest: (a, s) => [...crypto.createHash('sha256').update(String(s), 'utf8').digest()].map(x => (x > 127 ? x - 256 : x)),
@@ -102,7 +103,7 @@ function serveur(o) {
     ScriptApp: { getProjectTriggers: () => [], newTrigger: refuse('ScriptApp.newTrigger'), deleteTrigger: refuse('ScriptApp.deleteTrigger') },
     ContentService: { createTextOutput: x => ({ t: x, setMimeType() { return this; } }), MimeType: { JSON: 1 } },
     CacheService: { getScriptCache: () => ({ get: () => null, put() {}, remove() {} }) },
-    LockService: { getScriptLock: () => ({ tryLock: () => true, waitLock() {}, releaseLock() {} }) },
+    LockService: o.LockService || { getScriptLock: () => ({ tryLock: () => true, waitLock() {}, releaseLock() {} }) },   // `o.LockService` : un VRAI verrou entre processus (même banc)
   };
   vm.createContext(ctx);
   vm.runInContext(o.code || CODE_SRC, ctx, { filename: 'Code.js' });   // `o.code` : une AUTRE version de Code.js (NUT-SYNC-01 : le serveur d'AVANT, pour la compatibilité) — par défaut, le vrai Code.js du dépôt
@@ -446,7 +447,10 @@ function serveurTests(t0) {
     t('⭐⭐ NSP1-41 · … et `loadProfile` (POST et GET, restauration de l\'app) ne la renvoie PAS : ni la clé, ni un seul repas ou favori écarté',
       absent(lp) && absent(lg), court(lp.t.replace(/"foodLog":\[.*?\]\]?/, '…'), 160));
     const sv = X.envoi(CAROL, { foodLog: copie(avant.slice(0, 4)), authCode: 'carol-code' });
-    t('NSP1-42 · la réponse de `saveProfile` reste { status: ok } — rien de la zone ne revient à l\'appareil', sv.t === '{"status":"ok"}', court(sv.t));
+    /* ↪️ ADAPTÉ LE 01/11/2026 (NUT-SYNC-01 FINAL, ordre de Michel) : la réponse n'est plus le seul `{"status":"ok"}` — elle porte désormais l'accusé métier (`ok`, `requestId`, `serverRevision`, `nut`). L'INVARIANT
+       que ce témoin protège est INCHANGÉ et reste exigé aussi strictement : RIEN de la zone de récupération ne revient à l'appareil (ni la clé, ni un repas ou un favori écarté). */
+    t('NSP1-42 · la réponse de `saveProfile` porte l\'accusé métier (status ok, ok:true) — et rien de la zone ne revient à l\'appareil',
+      sv.j.status === 'ok' && sv.j.ok === true && !/recupNut/.test(sv.t) && !/repas-fictif-exp/.test(sv.t) && !/fav-fictif-/.test(sv.t), court(sv.t));
   }
 
   // ── 13 · Routes A1 inchangées : elles ne lisent que le journal actif ──
@@ -576,7 +580,8 @@ function serveurTests(t0) {
     X.compte(BOB, { foodLog: copie(j) });
     const r = X.envoi(BOB, { foodLog: [ligne(1, { tag: 'dp1' })] }); const c = X.lireCompte(BOB);
     t('⭐⭐ NSP1-59 · Drive refuse le fichier de débordement : RIEN ne sort de la zone, l\'envoi du journal est REFUSÉ (le serveur garde ses 600 repas, l\'appareil les siens)',
-      r.j.status === 'ok' && memes(listeDe(c, 'foodLog'), j) && zoneDe(c, 'foodLog').length === 0 && fichiersRecup(X).length === 0,
+      /* ↪️ ADAPTÉ LE 01/11/2026 (NUT-SYNC-01 FINAL) : ce refus était SILENCIEUX (`status: ok`). Il est désormais ANNONCÉ — `ok:false`, `NUT_ZONE_DRIVE`, réessayable. Tout le reste est exigé comme avant. */
+      r.j.ok === false && r.j.code === 'NUT_ZONE_DRIVE' && r.j.retryable === true && memes(listeDe(c, 'foodLog'), j) && zoneDe(c, 'foodLog').length === 0 && fichiersRecup(X).length === 0,
       'journal=' + (listeDe(c, 'foodLog') || []).length + ' zone=' + zoneDe(c, 'foodLog').length);
     t('NSP1-60 · … le refus est daté (événement « drive ») et tracé sans donnée personnelle',
       (evts(c).slice(-1)[0] || {}).refus === 'drive' && X.journal.some(l => /REFUSÉ/.test(l)) && X.journal.every(l => !PII.test(l)),

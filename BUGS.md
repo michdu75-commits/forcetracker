@@ -5855,3 +5855,47 @@ lignes qui n'en avaient pas : ici la comparaison de `D-131`, qui n'avait jamais 
 Aucun témoin de la mission ne le voyait ; **le banc d'un chantier voisin (`nut2_parcours`) l'a vu** — et c'est pour cela que la non-régression
 se joue sur les bancs des *autres* chantiers, pas seulement sur le sien.
 
+
+## §126 — ⛔⛔ LA DERNIÈRE ÉCRITURE GAGNAIT EN SILENCE, ET LE SERVEUR « ACQUITTAIT » CE QU'IL AVAIT JETÉ *(01/11/2026, NUT-SYNC-01 FINAL — ordre de Michel après une contre-validation indépendante qui avait mesuré le défaut)*
+
+**Ce qui se passait.** Trois choses, une seule famille — *l'appareil ne sait pas ce que le serveur a réellement fait* :
+① le registre des suppressions était plafonné à 3 000 : au-delà, les suppressions en trop étaient **jetées**, journalisées côté serveur, et la réponse
+restait « ok » (mesuré par la contre-validation : 3 001 demandées, 3 000 gardées, 1 rejetée sans un mot) ; ② deux appareils qui modifiaient le **même repas**
+(même identité) ne se voyaient pas : le dernier arrivé écrasait l'autre ; ③ `saveProfile` ne prenait **aucun verrou** — lecture, décision et écriture n'étaient
+pas atomiques (le banc de la brique précédente l'écrivait dans son en-tête : « aucun verrou dans Code.js — défaut préexistant »). Et l'appareil ne pouvait
+rien voir de tout cela : `_cloudSync` envoyait en `mode:'no-cors'`, une réponse **opaque**.
+
+**Ce qui a été fait (code réel, pas un contournement).** `NutSyncError` + `_nutSupprimesFusion_` qui **refuse** (`NUT_TOMBSTONE_LIMIT`, `ok:false`, non réessayable,
+rien d'écrit côté Nutrition) ; une **révision par repas** (`rev`) posée par le **serveur** (jamais l'horloge d'un téléphone), `nutDecisionModification`
+(création · mise à jour · conflit · rejet), la version perdante gardée en zone de récupération **et** renvoyée à l'appareil, qui garde les deux versions ;
+`saveProfile` sous `LockService` (verrou indisponible = réponse **réessayable**, rien d'écrit) ; une mémoire des opérations (`requestId`) écrite dans le MÊME
+enregistrement que les données ; `_cloudSync` **lit** la réponse (`redirect:'follow'` + `text/plain`, le schéma qui lit déjà `loadProfile` en production) et
+distingue trois états de suppression (en attente · confirmée · rejetée). Le refus de Drive (D-109), qui répondait lui aussi « ok », est annoncé (`NUT_ZONE_DRIVE`).
+
+**Pourquoi les tests précédents ne le voyaient pas.** Ils jouaient les envois **l'un après l'autre dans un seul processus** : la concurrence n'y existait pas. Le
+banc `nut_sync02` lance de **vrais processus serveur** (le vrai `Code.js`, des propriétés partagées, un vrai verrou entre processus) et fait lire le MÊME état
+périmé aux deux grâce à une barrière ; son **propre contrôle négatif** (un verrou qui ne verrouille rien) fait apparaître la perte de mise à jour — *un banc de
+concurrence qui ne sait pas échouer sans verrou ne prouve rien.*
+
+**À quoi on le reconnaît.** Une réponse `ok` à un envoi dont une partie n'a pas été écrite ; deux acceptations à la **même** révision d'un même repas ; une
+modification qui « disparaît » sans conflit ; un registre qui plafonne sans le dire. *Un accusé que l'appelant ne peut pas lire n'est pas une confirmation.*
+
+**Limites écrites (à ne pas redécouvrir).** ① Seul `saveProfile` prend le verrou : les autres écrivains du compte (santé, code d'accès, mémoire du coach)
+relisent puis réécrivent l'enregistrement entier **sans** verrou — fenêtre de quelques millisecondes, non fermée ici. ② Registre plein = les nouvelles
+suppressions sont **refusées** et ne se propagent plus : c'est le prix du refus explicite, la personne en est avertie ; le plafond (3 000, ≈ 33 octets chacune,
+≈ 100 Ko par compte au plafond) et le lieu de stockage sont une **décision de Michel**. ③ Un ancien client ne peut modifier qu'un repas jamais révisé ; ses autres
+modifications sont gardées en zone, jamais appliquées. ④ **Non testé** (cause mesurée : `CONNECT tunnel failed, response 403` vers `script.google.com` et le
+Worker depuis le conteneur) : le vrai déploiement Apps Script (vrai `LockService`, vrai 302), le vrai Supabase. ⑤ Le miroir ne reçoit plus le journal ni le registre
+par défaut (la **porte** les retire) ; il les reçoit après un accusé valide qui dit que l'envoi couvrait tout le journal du compte. ⑥ Le verrou est **global au
+script** (LockService n'en offre pas par compte) : tenu de la lecture à l'écriture du compte, il est **rendu avant** le miroir Sheets et l'e-mail de bienvenue
+(témoin `C15` — je l'avais d'abord laissé tenu jusqu'au bout et mon commentaire affirmait le contraire) ; sa durée réelle de détention n'est **pas mesurée**
+(bac en mémoire seulement). ⑦ `LockService` n'était utilisé **nulle part** dans `Code.js` avant ce lot (0 occurrence) et le manifeste déclare ses autorisations une
+à une : qu'il n'en exige aucune de plus est **non vérifié** — à contrôler au premier déploiement (service refusé = réponse `NUT_LOCK_BUSY` à tous les envois : rien
+n'est écrit côté serveur, rien n'est perdu côté téléphone, mais plus rien ne se synchronise). ⑧ **Saturation, MESURÉE (`E01e`)** : le refus est tout-ou-rien par envoi et le téléphone
+renvoie tout son registre à chaque synchronisation — tant que le registre du compte est plein, un appareil qui porte une suppression que le compte ne connaît pas voit **tout** son
+volet Nutrition refusé : ses repas restent sur le téléphone, ils ne rejoignent plus le compte. ⑨ **Accusé perdu puis modification du même repas, MESURÉ (`E11`)** : l'appareil ignore
+sa révision (base 0) alors que le compte est à 1 ; le serveur déclare un conflit avec la propre création de l'appareil — les deux versions sont gardées (jamais de perte), mais il
+reste un doublon à supprimer à la main et le message parle d'« un autre appareil ». ⑩ La mémoire des opérations (6) est bornée : une retransmission arrivant après plus de six
+opérations plus récentes est rejugée (déduit du code, non joué). **Leçon de méthode** : les mutations ont révélé trois trous dans MES témoins (la reprise « réseau coupé »,
+la confirmation au démarrage, une attente du miroir mal écrite) et un témoin ancien instable sous charge (`nut_sync01` T04, T12) — un vert obtenu sur machine calme ne dit pas
+qu'un témoin tient ; les mutations se rejouent après chaque changement de code, y compris un changement « de commentaire ».

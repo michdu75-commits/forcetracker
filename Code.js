@@ -1634,10 +1634,149 @@ function _nutDeplacerVersDrive_(email, nom, sortantes) {
   if (relu !== contenu) throw new Error('relecture différente de l\'écrit');
   return nomFichier;
 }
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+   ⭐⭐ NUT-SYNC-01 FINAL (01/11/2026, ordre de Michel) — DEUX DÉFAUTS BLOQUANTS CORRIGÉS DANS LE CODE RÉEL
+   ① Le registre des suppressions (plafond 3 000) jetait les suppressions en trop SANS LE DIRE : la réponse restait « ok », l'appareil croyait sa suppression propagée.
+      → désormais une erreur métier NOMMÉE (`NutSyncError`, code `NUT_TOMBSTONE_LIMIT`), une réponse structurée `{ok:false, code, message, retryable:false}`, et RIEN de Nutrition n'est écrit.
+   ② Deux appareils pouvaient modifier le même repas (même identité) et le dernier écrasait l'autre sans que personne le sache.
+      → chaque repas porte une RÉVISION (`rev`) posée par le SERVEUR ; une modification fondée sur une révision périmée est un CONFLIT explicite : la version du serveur reste, celle de
+        l'appareil est gardée en zone de récupération ET renvoyée à l'appareil, qui garde les deux versions dans son journal. Jamais l'horloge d'un téléphone ne départage rien.
+   ⚙️ ATOMICITÉ : tout `saveProfile` s'exécute sous `LockService.getScriptLock()` (lecture → décision → écriture du compte → libération aussitôt après ; `finally` la garantit si une erreur éclate avant). Verrou indisponible → réponse
+      RÉESSAYABLE, rien n'est écrit. Limite connue, écrite : seul `saveProfile` prend le verrou ; les autres écrivains du compte (santé, code d'accès, mémoire du coach) relisent puis réécrivent
+      l'enregistrement entier SANS verrou — fenêtre de quelques millisecondes, jamais ouverte par ce lot, non fermée par lui. LockService ne protège que les exécutions qui l'utilisent.
+   ⚙️ IDEMPOTENCE : chaque envoi porte un `requestId` ; les 6 derniers résultats vivent DANS le même enregistrement (`profile.nutOps`), donc écrits ou perdus AVEC les données — une
+      retransmission après coupure rend le même accusé sans rien réappliquer.
+   ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
+function NutSyncError(code, message, details) {
+  this.name = 'NutSyncError';
+  this.code = code;
+  this.message = message;
+  this.details = details || {};
+}
+NutSyncError.prototype = Object.create(Error.prototype);
+NutSyncError.prototype.constructor = NutSyncError;
+
+/* La décision pour UNE modification d'une ligne existante. Pure : aucun accès au stockage. `server` = l'état du serveur pour cette identité (`null` = inconnue), `incoming.baseRevision` = la
+   révision du serveur sur laquelle l'appareil a fondé sa modification. */
+function nutDecisionModification(server, incoming) {
+  incoming = incoming || {};
+  if (!server) {
+    return { action: 'create' };
+  }
+  if (server.deleted === true) {
+    return { action: 'reject', code: 'NUT_ENTRY_DELETED' };
+  }
+  if (!Number.isSafeInteger(incoming.baseRevision) || incoming.baseRevision < 0) {
+    return { action: 'reject', code: 'NUT_INVALID_REVISION' };
+  }
+  if (incoming.baseRevision !== server.revision) {
+    return { action: 'conflict', code: 'NUT_REVISION_CONFLICT' };
+  }
+  return { action: 'update', nextRevision: server.revision + 1 };
+}
+var NUT_VERROU_MS_ = 20000;
+var NUT_OPS_MAX_ = 6, NUT_OPS_ACKS_MAX_ = 12, NUT_OPS_CONFLITS_MAX_ = 6;
+/* Le verrou du script, ou `null` s'il est indisponible. Hors Apps Script (certains bancs de test : service absent, ou objet vide sans `getScriptLock`) on rend un verrou factice : en production
+   le service existe toujours et complet. ⛔ Un service PRÉSENT et complet qui refuse le verrou (délai dépassé, exception) n'est JAMAIS traité comme absent : c'est `null` — réponse réessayable. */
+function _nutPrendreVerrou_() {
+  if (typeof LockService === 'undefined' || !LockService || typeof LockService.getScriptLock !== 'function') return { releaseLock: function() {} };
+  try {
+    var v = LockService.getScriptLock();
+    return v.tryLock(NUT_VERROU_MS_) ? v : null;
+  } catch (e) { return null; }
+}
+function _nutRevisionDe_(l) { return (l && Number.isSafeInteger(l.rev) && l.rev > 0) ? l.rev : 0; }
+function _nutCopieLigne_(l) { return JSON.parse(JSON.stringify(l)); }
+function _nutRequestId_(x) { return (typeof x === 'string' && /^[0-9A-Za-z-]{8,64}$/.test(x)) ? x : ''; }
+/* Applique la décision de révision à chaque ligne reçue d'un appareil. Rend la liste « telle que le serveur la retient » : pour une ligne inchangée, en conflit ou rejetée c'est la ligne du
+   SERVEUR elle-même (le rapprochement qui suit ne verra donc aucune modification) ; pour une création ou une mise à jour acceptée, c'est la ligne reçue avec sa révision de serveur.
+   `ctx.v3` : l'appareil sait lire les accusés. Un appareil plus ancien (jamais lu un accusé) n'a pas de révision à citer : il ne peut modifier QUE ce qui n'a jamais été révisé (révision 0) —
+   jamais une ligne que le serveur a révisée, sauf s'il en cite la révision (ligne restaurée du compte). Ses modifications acceptées ne font pas monter la révision (il ne la verrait pas),
+   mais l'ancienne version reste copiée en zone de récupération par le rapprochement habituel. */
+function _nutRevisions_(actuel, recu, ctx) {
+  var parId = Object.create(null);
+  actuel.forEach(function(s) { var id = _nutIdLigne_(s); if (id && !parId[id]) parId[id] = s; });
+  var out = ctx.out, v3 = !!ctx.v3, now = ctx.now, liste = [], zone = [], vus = Object.create(null);
+  recu.forEach(function(l) {
+    var id = _nutIdLigne_(l);
+    if (!id || vus[id]) { liste.push(l); return; }       // sans identité, ou identité en double dans l'envoi : laissé au rapprochement par contenu
+    vus[id] = true;
+    var s = parId[id];
+    var revS = s ? _nutRevisionDe_(s) : 0;
+    if (s && _nutEmpreinte_(l) === _nutEmpreinte_(s)) {   // même contenu : rien à décider, seulement apprendre sa révision à l'appareil
+      liste.push(s);
+      if (v3 && _nutRevisionDe_(l) !== revS) out.acks.push({ i: id, r: revS });
+      return;
+    }
+    var base = v3 ? _nutRevisionDe_(l)
+                  : (Number.isSafeInteger(l.rev) && l.rev >= 0 ? l.rev : (revS === 0 ? 0 : NaN));
+    var d = nutDecisionModification(s ? { revision: revS, deleted: false } : null, { baseRevision: base });
+    if (d.action === 'create') {                          // la révision d'une création est celle du SERVEUR, jamais celle que le client prétend
+      var n = _nutCopieLigne_(l);
+      if (v3) { n.rev = 1; n.modifiedAt = now; out.acks.push({ i: id, r: 1 }); } else { delete n.rev; delete n.modifiedAt; }
+      liste.push(n); return;
+    }
+    if (d.action === 'update') {
+      var u = _nutCopieLigne_(l);
+      var suivante = (!v3 && revS === 0) ? 0 : d.nextRevision;
+      if (suivante > 0) { u.rev = suivante; u.modifiedAt = now; } else { delete u.rev; delete u.modifiedAt; }
+      liste.push(u);
+      if (v3) out.acks.push({ i: id, r: suivante });
+      return;
+    }
+    liste.push(s);                                        // conflit ou rejet : la version du serveur RESTE, celle de l'appareil est GARDÉE (zone) et renvoyée
+    zone.push([l, d.action === 'conflict' ? 'conflit' : 'sans_revision']);
+    if (d.action === 'conflict') out.conflits.push({ i: id, r: revS, ligne: s }); else out.rejets.push({ i: id, code: d.code });
+  });
+  return { liste: liste, zone: zone };
+}
+/* TOUT LE VOLET NUTRITION d'un envoi, d'un seul tenant : registre, journal, favoris, révision du compte, mémoire des opérations. Lève `NutSyncError` AVANT d'avoir tout écrit ; l'appelant restitue
+   alors l'état d'avant (jamais un profil Nutrition à moitié fusionné). Rend ce qu'il faut pour l'accusé. */
+function _nutSynchroniser_(body, profile, existing, email, requestId) {
+  var v2 = Number(body.foodLogV) >= 2, v3 = Number(body.foodLogV) >= 3;
+  var out = { acks: [], conflits: [], rejets: [], complet: false, refus: '' };
+  var ops = Array.isArray(profile.nutOps) ? profile.nutOps : [];
+  if (requestId) {
+    for (var k = 0; k < ops.length; k++) {
+      if (ops[k] && ops[k].r === requestId && !ops[k].tr) {                 // retransmission d'un envoi DÉJÀ appliqué : même accusé, rien de réappliqué
+        var vivantes = Array.isArray(profile.foodLog) ? profile.foodLog : [];
+        var parId = Object.create(null); vivantes.forEach(function(l) { var id = _nutIdLigne_(l); if (id) parId[id] = l; });
+        return { deja: true, nut: {
+          deja: true, complet: null, lignes: vivantes.length, supprimes: (profile.foodSupprimes || []).length,
+          acks: (ops[k].a || []).map(function(p) { return { i: p[0], r: p[1] }; }),
+          conflits: (ops[k].k || []).filter(function(p) { return parId[p[0]]; }).map(function(p) { return { i: p[0], r: p[1], ligne: parId[p[0]] }; }),
+          rejets: []
+        } };
+      }
+    }
+  }
+  var avantTxt = JSON.stringify([profile.foodSupprimes || [], profile.foodLog || [], profile.savedFoods || []]);
+  if (body.foodSupprimes !== undefined) profile.foodSupprimes = _nutSupprimesFusion_(profile.foodSupprimes, body.foodSupprimes, email);
+  var ctx = { v3: v3, out: out, now: Date.now() };
+  if (body.foodLog    !== undefined) profile.foodLog    = _nutProtegerListe_(existing, profile, 'foodLog',    body.foodLog,    email, v2, ctx);
+  if (body.savedFoods !== undefined) profile.savedFoods = _nutProtegerListe_(existing, profile, 'savedFoods', body.savedFoods, email, false, ctx);
+  /* ⚖️ D-109 / D-110 RESTENT (décisions de Michel, 23/10) : si Drive ne garde pas le surplus de la zone du JOURNAL, ce journal-là est refusé (liste du serveur inchangée) pendant que les FAVORIS passent.
+     Ce n'est plus SILENCIEUX : la réponse dit `ok:false` / `NUT_ZONE_DRIVE` / réessayable, et ne contient AUCUN accusé pour ce qui n'a pas été écrit (l'appareil renvoie tout à la suivante). */
+  if (out.refus) { out.acks = []; out.conflits = []; out.rejets = []; }
+  var change = JSON.stringify([profile.foodSupprimes || [], profile.foodLog || [], profile.savedFoods || []]) !== avantTxt;
+  if (change) profile.nutRev = (Number.isSafeInteger(profile.nutRev) ? profile.nutRev : 0) + 1;
+  if (requestId && (change || out.acks.length || out.conflits.length || out.rejets.length)) {
+    ops.push({ r: requestId, v: profile.nutRev || 0,
+               a: out.acks.slice(0, NUT_OPS_ACKS_MAX_).map(function(a) { return [a.i, a.r]; }),
+               k: out.conflits.slice(0, NUT_OPS_CONFLITS_MAX_).map(function(c) { return [c.i, c.r]; }),
+               tr: (out.acks.length > NUT_OPS_ACKS_MAX_ || out.conflits.length > NUT_OPS_CONFLITS_MAX_) ? 1 : 0 });
+    profile.nutOps = ops.slice(-NUT_OPS_MAX_);
+  }
+  return { deja: false, refus: out.refus, nut: {
+    deja: false, complet: out.complet === true, lignes: (profile.foodLog || []).length, supprimes: (profile.foodSupprimes || []).length,
+    acks: out.acks, conflits: out.conflits, rejets: out.rejets
+  } };
+}
 /* ⭐⭐ NUT-SYNC-01 — LE REGISTRE DES SUPPRESSIONS VOLONTAIRES DU JOURNAL ([{i: identité de la ligne, t: instant}], `profile.foodSupprimes`).
    Union, JAMAIS un retrait : une entrée reçue s'ajoute, une entrée connue ne disparaît jamais (aucune expiration — une purge ferait revenir la ligne depuis un appareil resté absent).
    Une identité invalide (ni chaîne de 8 à 64 caractères [0-9A-Za-z-]) est ignorée. Le PLAFOND protège le stockage partagé de 512 000 octets : au-delà, les entrées DÉJÀ connues sont
-   toutes gardées, seules les NOUVELLES sont refusées — et le refus est journalisé, pas silencieux (effet : ces lignes-là pourraient revenir, jamais une perte). */
+   toutes gardées et TOUT l'envoi Nutrition qui en demande de NOUVELLES est REFUSÉ EXPLICITEMENT (`NutSyncError` NUT_TOMBSTONE_LIMIT, journalisé, réponse `ok:false`, rien d'écrit côté Nutrition).
+   Avant NUT-SYNC-01 FINAL ce refus était silencieux : la réponse restait « ok » et l'appareil croyait sa suppression propagée. */
 var NUT_SUPPR_MAX_ = 3000;
 function _nutSupprimesFusion_(actuel, recu, email) {
   var out = [], idx = Object.create(null), refusees = 0;
@@ -1651,10 +1790,16 @@ function _nutSupprimesFusion_(actuel, recu, email) {
   }
   (Array.isArray(actuel) ? actuel : []).forEach(function(e) { ajouter(e, false); });
   (Array.isArray(recu) ? recu : []).forEach(function(e) { ajouter(e, true); });
-  if (refusees) Logger.log('[FT GARDE-FOU foodSupprimes] ' + refusees + ' suppression(s) NOUVELLE(S) refusée(s) : plafond de ' + NUT_SUPPR_MAX_ + ' atteint');
+  /* ⛔⛔ NUT-SYNC-01 FINAL — UN DÉPASSEMENT NE PASSE PLUS EN SILENCE. Avant : les suppressions en trop étaient jetées, la réponse disait « ok », et l'appareil croyait sa suppression propagée.
+     Maintenant : TOUT l'envoi Nutrition est refusé, par une erreur métier NOMMÉE que `handleSaveProfile_` transforme en réponse structurée ; le profil Nutrition n'est jamais écrit à moitié
+     (l'appelant restitue l'état d'avant). Le plafond n'est PAS relevé et rien n'est purgé automatiquement : c'est une décision de Michel. */
+  if (refusees > 0) {
+    Logger.log('[FT GARDE-FOU foodSupprimes] REFUSÉ : ' + refusees + ' suppression(s) NOUVELLE(S) au-delà du plafond de ' + NUT_SUPPR_MAX_ + ' — tout l\'envoi Nutrition est rejeté, rien n\'est écrit');
+    throw new NutSyncError('NUT_TOMBSTONE_LIMIT', 'Registre des suppressions saturé.', { limite: NUT_SUPPR_MAX_, refusees: refusees, conservees: out.length });
+  }
   return out;
 }
-function _nutProtegerListe_(existing, profile, nom, recu, email, v2) {
+function _nutProtegerListe_(existing, profile, nom, recu, email, v2, ctx) {
   var actuel = Array.isArray(profile[nom]) ? profile[nom] : [];
   if (!Array.isArray(recu)) {                              // un envoi illisible ne remplace rien (avant : stocké tel quel)
     Logger.log('[FT GARDE-FOU ' + nom + '] envoi non lisible : ignoré, liste conservée');
@@ -1666,22 +1811,45 @@ function _nutProtegerListe_(existing, profile, nom, recu, email, v2) {
      · pour les clients V2 SEULEMENT : toute ligne du compte ABSENTE de l'envoi RESTE dans le journal actif (union) — un historique local raccourci par une panne, un appareil neuf
        ou en retard ne retire plus rien. Les anciens clients gardent le comportement d'avant (remplacement, avec copie de sécurité) : ils ne savent pas déclarer une suppression.
      · en cas de modification et de suppression concurrentes de la même ligne, LA SUPPRESSION GAGNE (déterministe, quel que soit l'ordre d'arrivée). */
-  var supprimees = [];
+  var supprimees = [], extras = [];
   if (nom === 'foodLog') {
     var tomb = Object.create(null);
     (Array.isArray(profile.foodSupprimes) ? profile.foodSupprimes : []).forEach(function(e) { if (e && e.i) tomb[e.i] = true; });
     var estSupp = function(l) { var id = _nutIdLigne_(l); return !!(id && tomb[id]); };
+    /* ⭐ UNE MODIFICATION D'UN REPAS SUPPRIMÉ NE LE FAIT JAMAIS REVENIR : la décision est celle de `nutDecisionModification` (NUT_ENTRY_DELETED). La version reçue est refusée, renvoyée
+       à l'appareil comme « rejetée » (il retire la ligne de son journal) et GARDÉE en zone de récupération si elle diffère de ce que le serveur avait. */
+    var stockeesSupp = Object.create(null);
+    actuel.forEach(function(l) { if (estSupp(l)) stockeesSupp[_nutIdLigne_(l)] = _nutEmpreinte_(l); });
+    recu.filter(estSupp).forEach(function(l) {
+      var id = _nutIdLigne_(l), dd = nutDecisionModification({ revision: 0, deleted: true }, {});
+      if (ctx) ctx.out.rejets.push({ i: id, code: dd.code });
+      if (stockeesSupp[id] === undefined || stockeesSupp[id] !== _nutEmpreinte_(l)) extras.push([l, 'modif_supprimee']);
+    });
     recu = recu.filter(function(l) { return !estSupp(l); });
     supprimees = actuel.filter(estSupp);
     actuel = actuel.filter(function(l) { return !estSupp(l); });
+    if (ctx) {                                         // révisions par repas (NUT-SYNC-01 FINAL)
+      var R = _nutRevisions_(actuel, recu, ctx);
+      recu = R.liste; extras = extras.concat(R.zone);
+    }
   }
-  if (recu.length === 0 && actuel.length > 0) return nom === 'foodLog' ? actuel : profile[nom];   // règle existante de _pa_ : le vide ne gagne jamais (le journal sans ses lignes supprimées)
+  var vide = recu.length === 0 && actuel.length > 0;     // règle existante de _pa_ : le vide ne gagne jamais
+  if (vide) {
+    if (nom !== 'foodLog') return profile[nom];
+    recu = actuel.slice();                               // le journal reste tel quel (sans ses lignes supprimées) — mais les copies de sécurité ci-dessous sont quand même faites
+  }
   var ec = _nutEcartees_(actuel, recu);
-  var gardees = (v2 && nom === 'foodLog') ? ec.retirees : [];          // V2 : une absence n'est pas une suppression → ces lignes RESTENT
-  var aCopier = (v2 && nom === 'foodLog') ? [] : ec.retirees;           // anciens clients : retirées, donc copiées en zone de récupération
+  var v2j = v2 && nom === 'foodLog';
+  /* Une ligne ABSENTE de l'envoi : client à jour (V2+) → elle RESTE (une absence n'est pas une suppression). Ancien client → retirée ET copiée en zone, SAUF si le serveur l'a déjà révisée :
+     un ancien client ne sait ni la révision ni les suppressions, il ne peut pas retirer ce qu'un appareil à jour a touché. */
+  var protegees = (!v2j && nom === 'foodLog') ? ec.retirees.filter(function(l) { return _nutRevisionDe_(l) > 0; }) : [];
+  var retireesReelles = protegees.length ? ec.retirees.filter(function(l) { return _nutRevisionDe_(l) === 0; }) : ec.retirees;
+  var gardees = v2j ? ec.retirees : protegees;          // ces lignes RESTENT au journal actif
+  var aCopier = v2j ? [] : retireesReelles;             // anciens clients : retirées, donc copiées en zone de récupération
   var resultat = gardees.length ? recu.concat(gardees) : recu;
-  if (!aCopier.length && !ec.modifiees.length && !supprimees.length) return resultat;
-  var brutal = !(v2 && nom === 'foodLog') && actuel.length >= 30 && (actuel.length - ec.retirees.length) < actuel.length * 0.6;   // le seuil des séances
+  if (ctx && nom === 'foodLog') ctx.out.complet = !vide && v2j && gardees.length === 0;   // l'envoi couvrait TOUT le journal du compte : un instantané complet
+  if (!aCopier.length && !ec.modifiees.length && !supprimees.length && !extras.length) return resultat;
+  var brutal = !v2j && actuel.length >= 30 && (actuel.length - ec.retirees.length) < actuel.length * 0.6;   // le seuil des séances
   var z = existing.recupNut || (existing.recupNut = { v: 1 });
   // On travaille sur une COPIE de la zone : si le débordement ne peut pas être mis à l'abri, rien de ce calcul n'est gardé.
   var liste = (z[nom] || []).slice();
@@ -1697,6 +1865,7 @@ function _nutProtegerListe_(existing, profile, nom, recu, email, v2) {
   aCopier.forEach(function(l) { garder(l, brutal ? 'brutal' : 'retiree'); });
   ec.modifiees.forEach(function(l) { garder(l, 'modifiee'); });
   supprimees.forEach(function(l) { garder(l, 'supprimee'); });
+  extras.forEach(function(x) { garder(x[0], x[1]); });   // NUT-SYNC-01 FINAL : la version PERDANTE d'un conflit (ou d'une modification sans révision, ou d'un repas supprimé) n'est jamais jetée
   /* ⛔ BORNÉE, ET RIEN N'EST JAMAIS JETÉ (condition 3 de Michel, 23/10) : une copie peut n'être dans AUCUNE sauvegarde
      (un repas saisi le jour même, retiré avant la nuit). Au-delà de la borne, les copies les plus ANCIENNES DÉMÉNAGENT
      dans Drive jusqu'à la moitié de la borne (un fichier par débordement, pas un par synchronisation) — RELUES d'abord,
@@ -1719,6 +1888,7 @@ function _nutProtegerListe_(existing, profile, nom, recu, email, v2) {
                             modifiees: ec.modifiees.length, copiees: 0, deplacees: 0, brutal: brutal, refus: 'drive' });
         Logger.log('[FT GARDE-FOU ' + nom + '] REFUSÉ : la zone de récupération déborde et Drive n\'a pas gardé le surplus ('
                    + cause + ') — liste du serveur conservée (' + actuel.length + '), envoi de ' + recu.length + ' ignoré');
+        if (ctx) ctx.out.refus = nom;                    // NUT-SYNC-01 FINAL : ce refus était SILENCIEUX (réponse « ok ») — il est désormais annoncé à l'appareil (NUT_ZONE_DRIVE, réessayable)
         return profile[nom];
       }
     }
@@ -1729,6 +1899,7 @@ function _nutProtegerListe_(existing, profile, nom, recu, email, v2) {
   var e = { t: quand, liste: nom, avant: actuel.length, recu: recu.length, retirees: aCopier.length,
             modifiees: ec.modifiees.length, copiees: copiees, deplacees: n, brutal: brutal };
   if (supprimees.length) e.supprimees = supprimees.length;   // NUT-SYNC-01 : suppressions DÉCLARÉES appliquées (copiées en zone, motif « supprimee »)
+  if (extras.length) e.conflits = extras.length;              // NUT-SYNC-01 FINAL : versions perdantes gardées (conflit de révision, sans révision, repas supprimé)
   if (gardees.length) e.gardees = gardees.length;             // NUT-SYNC-01 : lignes absentes de l'envoi, GARDÉES dans le journal actif (clients V2)
   if (fichier) e.fichier = fichier;
   if (differe) e.differe = 'drive';                      // D-110 : accepté malgré Drive, la zone attend au-delà de sa borne
@@ -1763,6 +1934,7 @@ function _logHistShrink_(email, recues, enBase) {
 }
 
 function handleSaveProfile_(body) {
+  var verrou = null;
   try {
     /* ⭐⭐ S1 — L'IDENTITÉ VIENT DU JETON, PLUS DU PAYLOAD (16/09/2026).
        Avant, `email` était pris tel quel : quiconque connaissait une adresse pouvait écraser
@@ -1777,6 +1949,15 @@ function handleSaveProfile_(body) {
 
     const _a = _authCheck_(email, body.authCode);
     if (!_a.ok) return json_({status:'error', error:'auth', blocked:_a.blocked});
+
+    /* ⚙️⚙️ NUT-SYNC-01 FINAL — TOUT LE CYCLE LECTURE → DÉCISION → ÉCRITURE → RÉPONSE SE FAIT SOUS VERROU. Sans lui, deux appareils du même compte lisaient le même état, décidaient chacun
+       de leur côté, et le dernier à écrire effaçait l'autre — le défaut même qu'on corrige. Pris APRÈS l'identité et le code d'accès, tenu pendant lecture → décision → ÉCRITURE du compte
+       (`saveUserData_` : la santé `h_…` d'abord, puis `u_…` où vit TOUT le volet Nutrition — son point de validation), puis RENDU AUSSITÔT : le miroir Sheets et l'e-mail de bienvenue (lents, sans effet sur le compte) s'exécutent HORS verrou. Le verrou est global
+       au script (LockService n'en offre pas par compte) : le garder pendant ces deux écritures ferait attendre tous les autres comptes. `finally` le rend aussi si une erreur éclate avant l'écriture.
+       Indisponible → réponse RÉESSAYABLE, RIEN n'est écrit (l'appareil renvoie tout à la synchronisation suivante). */
+    const _requestId = _nutRequestId_(body.requestId);
+    verrou = _nutPrendreVerrou_();
+    if (!verrou) return json_({status:'error', ok:false, code:'NUT_LOCK_BUSY', message:'Serveur occupé, réessaie dans un instant.', retryable:true, requestId:_requestId});
 
     const isNewUser = !loadUserData_(email);
     const existing = loadUserData_(email) || {};
@@ -1910,10 +2091,21 @@ function handleSaveProfile_(body) {
     if (body.dietRestrictions!== undefined) profile.dietRestrictions = _pa_(body.dietRestrictions, profile.dietRestrictions);
     if (body.dietNotes     !== undefined) profile.dietNotes     = _ps_(body.dietNotes,     profile.dietNotes);
     // 🛡️ NUT-SECURISATION-P1 : plus de `_pa_` ici — rien de ce que le serveur avait ne part sans copie (voir _nutProtegerListe_).
-    /* 🗑️ NUT-SYNC-01 — LES SUPPRESSIONS VOLONTAIRES D'ABORD (union, jamais un retrait), PUIS le journal : le registre doit être à jour quand la liste reçue est jugée. */
-    if (body.foodSupprimes !== undefined) profile.foodSupprimes = _nutSupprimesFusion_(profile.foodSupprimes, body.foodSupprimes, email);
-    if (body.foodLog       !== undefined) profile.foodLog       = _nutProtegerListe_(existing, profile, 'foodLog',    body.foodLog,    email, Number(body.foodLogV) >= 2);
-    if (body.savedFoods    !== undefined) profile.savedFoods    = _nutProtegerListe_(existing, profile, 'savedFoods', body.savedFoods, email);
+    /* 🗑️🔁 NUT-SYNC-01 FINAL — LE VOLET NUTRITION EST TOUT-OU-RIEN. Suppressions volontaires d'abord (union, jamais un retrait), puis journal (révisions, conflits, zone de récupération), puis
+       favoris — mais si l'un des trois est refusé (`NutSyncError` : registre saturé, zone de récupération saturée), l'état d'AVANT est restitué en entier : jamais un profil Nutrition à moitié
+       fusionné. ⚖️ Le reste du profil (séances, records, pesées…) est ENREGISTRÉ quand même — règle d'or n°3 : une saturation du registre Nutrition ne doit jamais empêcher la sauvegarde d'une
+       séance. La réponse dit exactement ce qui a été refusé (`ok:false`, code, `profilEnregistre:true`). */
+    var nutSortie = null, nutEchec = null;
+    const nutAvant = { foodSupprimes: profile.foodSupprimes, foodLog: profile.foodLog, savedFoods: profile.savedFoods, nutRev: profile.nutRev, nutOps: profile.nutOps };
+    try {
+      nutSortie = _nutSynchroniser_(body, profile, existing, email, _requestId);
+    } catch (nutErr) {
+      if (!(nutErr instanceof NutSyncError)) throw nutErr;
+      nutEchec = nutErr;
+      /* `NutSyncError` n'est levée par `_nutSynchroniser_` qu'AVANT toute écriture dans la zone de récupération (la fusion du registre est sa première instruction) : restituer ces cinq champs
+         suffit à rendre l'état d'AVANT, octet pour octet. Toute future erreur de ce type devra respecter la même règle. */
+      Object.keys(nutAvant).forEach(function(k) { if (nutAvant[k] === undefined) delete profile[k]; else profile[k] = nutAvant[k]; });
+    }
     if (body.foodAiUses    !== undefined) profile.foodAiUses    = Math.max(parseInt(body.foodAiUses)||0, parseInt(profile.foodAiUses)||0);
     /* 🫙 LES TROIS POTS IA SÉPARÉS DE LA NUTRITION (19/09/2026, phase 3.1).
        ⛔ LA LISTE BLANCHE EST LA RAISON DE CES TROIS LIGNES : ce qu'elle ne nomme pas
@@ -2039,6 +2231,8 @@ function handleSaveProfile_(body) {
     existing.updatedAt = new Date().toISOString();
 
     saveUserData_(email, existing);
+    // ⚙️ NUT-SYNC-01 FINAL : l'écriture durable est faite → le verrou n'a plus rien à protéger (voir plus haut). `verrou = null` : le `finally` ne le rend pas deux fois.
+    if (verrou) { try { verrou.releaseLock(); } catch (relErr) {} verrou = null; }
     _mirrorUserToSheet_(email, existing); // best-effort, silencieux
 
     // Email de bienvenue pour les nouveaux utilisateurs
@@ -2060,9 +2254,20 @@ function handleSaveProfile_(body) {
       } catch(mailErr) {}
     }
 
-    return json_({status:'ok'});
+    if (nutEchec) {
+      return json_({status:'nut_refuse', ok:false, code:nutEchec.code, message:'Synchronisation Nutrition impossible.',
+                    retryable:(nutEchec.code !== 'NUT_TOMBSTONE_LIMIT'), requestId:_requestId, profilEnregistre:true, details:nutEchec.details});
+    }
+    if (nutSortie && nutSortie.refus) {
+      return json_({status:'nut_refuse', ok:false, code:'NUT_ZONE_DRIVE', message:'Synchronisation Nutrition incomplète.', retryable:true, requestId:_requestId,
+                    profilEnregistre:true, details:{liste:nutSortie.refus}, serverRevision:(Number.isSafeInteger(profile.nutRev) ? profile.nutRev : 0)});
+    }
+    return json_({status:'ok', ok:true, requestId:_requestId, serverRevision:(Number.isSafeInteger(profile.nutRev) ? profile.nutRev : 0),
+                  nut:(nutSortie ? nutSortie.nut : null)});
   } catch(err) {
-    return json_({status:'error', error: err.message});
+    return json_({status:'error', ok:false, code:'SERVER_ERROR', retryable:true, error: err.message});
+  } finally {
+    if (verrou) { try { verrou.releaseLock(); } catch (relErr) {} }
   }
 }
 
@@ -2264,16 +2469,18 @@ function _nutIdLigne_(e) {
   return (e && typeof e.id === 'string' && e.id.length >= 8) ? e.id : null;
 }
 function _nutEmpreinte_(e) {
-  function tri(v) {
-    if (Array.isArray(v)) return v.map(tri);
+  /* NUT-SYNC-01 FINAL : `rev` (révision) et `modifiedAt` (horodatage) sont posés par le SERVEUR sur la ligne — ils ne décrivent pas le repas. Ignorés AU NIVEAU DE LA LIGNE seulement
+     (`haut`) : sans cela, deux copies du même repas ne se reconnaîtraient plus dès qu'une seule a reçu sa révision. */
+  function tri(v, haut) {
+    if (Array.isArray(v)) return v.map(function(x) { return tri(x, false); });
     if (v && typeof v === 'object') {
       var o = {};
-      Object.keys(v).filter(function(k) { return k !== 'id'; }).sort().forEach(function(k) { o[k] = tri(v[k]); });
+      Object.keys(v).filter(function(k) { return k !== 'id' && !(haut && (k === 'rev' || k === 'modifiedAt')); }).sort().forEach(function(k) { o[k] = tri(v[k], false); });
       return o;
     }
     return v;
   }
-  try { return JSON.stringify(tri(e)); } catch (x) { return 'illisible:' + Math.random(); }  // jamais égale : comptée, pas cachée
+  try { return JSON.stringify(tri(e, true)); } catch (x) { return 'illisible:' + Math.random(); }  // jamais égale : comptée, pas cachée
 }
 /* Les deux clés d'une ligne, calculées UNE fois (l'empreinte coûte : on la lit dans chaque sauvegarde). */
 function _nutCles_(e) { return { id: _nutIdLigne_(e), emp: _nutEmpreinte_(e) }; }

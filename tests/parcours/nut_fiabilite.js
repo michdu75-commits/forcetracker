@@ -1757,6 +1757,11 @@ async function identiteFiab(t, b, PORT) {
     const plus = { ft4_foodlog: J([PAT_ID1, PAT_ID2, PAT_OLD]), ft4_savedfoods: '[]', ft4_admin_ok: '1' };
     const canon = (v) => J((function tri(x) { if (Array.isArray(x)) return x.map(tri); if (x && typeof x === 'object') { const r = {}; Object.keys(x).sort().forEach((k) => { r[k] = tri(x[k]); }); return r; } return x; })(v));
     const empreinte = (L) => canon((L || []).slice().sort((a, c) => (a.id < c.id ? -1 : 1)));
+    /* ↪️ ADAPTÉ LE 01/11/2026 (NUT-SYNC-01 FINAL) : le SERVEUR pose sur chaque repas qu'il reçoit sa révision (`rev`) et son horodatage (`modifiedAt`) — ce n'est pas le contenu du repas. L'égalité reste
+       exigée À L'OCTET sur tout le reste (identité, pour-100 g, `n2`, valeurs) ET on exige que la SEULE différence entre la ligne du téléphone et celle du serveur soit exactement ces deux champs :
+       tout autre champ ajouté, retiré ou changé par la synchronisation fait toujours rougir. */
+    const sansServeur = (l) => { if (!l || typeof l !== 'object') return l; const o = JSON.parse(JSON.stringify(l)); delete o.rev; delete o.modifiedAt; return o; };
+    const memeLigne = (a, c) => canon(sansServeur(a)) === canon(sansServeur(c));
     const D1 = await CR.appareil(b, PORT, X, etatSrv, tok, 'nidt-a1', plus); const p1 = D1.pg;
     let g = (await clic(p1, '#nb-nutrition')) && (await pause(p1, 350), await clic(p1, '#ntab-journal')); await pause(p1, 300);
     g = g && await ouvrirAjout(p1); g = g && await ouvrirLigne(p1, PAT_OLD.id); g = g && await choisir(p1, 0);
@@ -1765,14 +1770,15 @@ async function identiteFiab(t, b, PORT) {
     await CR.synchroniser(p1);
     const chezSrv = ((X.compte(CR.ALICE) || {}).profile || {}).foodLog || [], lSrv = l ? chezSrv.find((x) => x && x.id === l.id) : null;
     t('B-NIDT X ① ⭐ LA SYNCHRO ENVOIE LA LIGNE TELLE QUELLE : au serveur (le vrai Code.js), la ligne écrite après le choix est identique à celle du téléphone (identité ciqual:9810, pour-100 g, `n2`) et les trois anciennes aussi — ' + chezSrv.length + ' lignes',
-      g && !!l && !!lSrv && canon(lSrv) === canon(l) && chezSrv.length === 4 && [PAT_ID1, PAT_ID2, PAT_OLD].every((x) => canon(chezSrv.find((y) => y && y.id === x.id)) === canon(x)), J({ n: chezSrv.length, l, lSrv }));
+      g && !!l && !!lSrv && memeLigne(lSrv, l) && Object.keys(lSrv).filter((k) => !(k in l)).sort().join() === 'modifiedAt,rev' && Object.keys(l).every((k) => k in lSrv) && chezSrv.length === 4
+      && [PAT_ID1, PAT_ID2, PAT_OLD].every((x) => memeLigne(chezSrv.find((y) => y && y.id === x.id), x)), J({ n: chezSrv.length, l, lSrv }));
     const avantRel = empreinte(await CR.journalApp(p1)); await CR.redemarrer(p1); const apresRel = empreinte(await CR.journalApp(p1));
     t('B-NIDT X ② le téléphone fermé puis rouvert (le démarrage relit le stockage ET le serveur) : le journal est identique à l\'octet, la ligne neuve y compris', avantRel === apresRel && apresRel.indexOf('ciqual:9810') >= 0, J({ n: JSON.parse(apresRel).length }));
     /* un téléphone NEUF, démarré hors ligne, puis « 🔄 Restaurer » : la ligne neuve arrive intacte, et l'ancienne saisie propose toujours sa fiche */
     etatSrv.reseauCoupe = true;
     const D2 = await CR.appareil(b, PORT, X, etatSrv, tok, 'nidt-a2', { ft4_admin_ok: '1' }); const p2 = D2.pg; etatSrv.reseauCoupe = false;
     await CR.restaurer(p2); const j2 = await CR.journalApp(p2);
-    const intactes2 = !!l && canon(j2.find((x) => x && x.id === l.id)) === canon(l) && [PAT_ID1, PAT_ID2, PAT_OLD].every((x) => canon(j2.find((y) => y && y.id === x.id)) === canon(x));
+    const intactes2 = !!l && memeLigne(j2.find((x) => x && x.id === l.id), l) && [PAT_ID1, PAT_ID2, PAT_OLD].every((x) => memeLigne(j2.find((y) => y && y.id === x.id), x));
     t('B-NIDT X ③ ⭐ « 🔄 RESTAURER » SUR UN TÉLÉPHONE NEUF : les ' + j2.length + ' lignes arrivent, la ligne neuve et les trois anciennes IDENTIQUES (identité, pour-100 g, copie d\'origine)', j2.length === 4 && intactes2, J({ n: j2.length }));
     let g2 = (await clic(p2, '#nb-nutrition')) && (await pause(p2, 350), await clic(p2, '#ntab-journal')); await pause(p2, 300);
     g2 = g2 && await ouvrirAjout(p2); const ok2 = await ouvrirLigne(p2, PAT_OLD.id), pn2 = await panneau(p2);

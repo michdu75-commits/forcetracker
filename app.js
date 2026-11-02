@@ -1594,6 +1594,11 @@ function _n2Enregistrer(entree, porte){
   if(!groupe && entree.remplace){
     const i=S.foodLog.indexOf(entree.remplace);
     if(i<0) return {ok:false, erreur:'LIGNE_INTROUVABLE'};
+    /* 🔁 NUT-SYNC-01 FINAL — LA RÉVISION SUIT LA LIGNE. Le moteur reconstruit la ligne et ne connaît pas `rev` (posée par le serveur) : sans cette recopie, la modification suivante partirait sans
+       révision de base et le serveur y verrait un FAUX conflit avec elle-même (trouvé par le banc : « modifier un repas déjà synchronisé » donnait deux repas). La révision de base est celle de
+       la ligne REMPLACÉE ; le serveur seul la fait avancer. */
+    const _r=entree.remplace;
+    if(_r && Number.isSafeInteger(_r.rev) && rs[0].ligne && typeof rs[0].ligne==='object'){ rs[0].ligne.rev=_r.rev; if(_r.modifiedAt) rs[0].ligne.modifiedAt=_r.modifiedAt; }
     S.foodLog[i]=rs[0].ligne;
   }else S.foodLog.push(...rs.map(r=>r.ligne));
   return groupe ? {ok:true, lignes:rs.map(r=>r.ligne)} : rs[0];
@@ -12639,8 +12644,10 @@ async function _ftBootstrapJeton(){
         /* 🗑️ NUT-SYNC-01 — UNE SUPPRESSION FAITE SUR UN AUTRE APPAREIL ARRIVE ICI, avec le profil déjà chargé (aucun appel en plus, règle d'or #4) : le registre s'ADDITIONNE au nôtre
            (union, jamais un retrait), puis les lignes concernées quittent le journal local. La suppression gagne sur toute version de la ligne. */
         try{ const _s=d2.profile&&d2.profile.foodSupprimes;
-          if(Array.isArray(_s)&&_s.length){ S.foodSupprimes=_foodSupprimesFusion(S.foodSupprimes,_s); _foodAppliquerSuppressions(); } }catch(e){}
+          if(Array.isArray(_s)&&_s.length){ S.foodSupprimes=_foodSupprimesFusion(S.foodSupprimes,_s,true); _foodAppliquerSuppressions(); } }catch(e){}   // venues du COMPTE : déjà confirmées
         persist();
+        /* NUT-SYNC-01 FINAL — la REPRISE des suppressions pas encore confirmées ne demande aucun code ici : le `persist()` qui suit déclenche déjà la synchronisation différée (`_cloudSyncDebounced`, fin de
+           `persist()`), et c'est elle qui les renvoie. Une ligne qui l'aurait redoublée a été retirée : une mutation (K43) a prouvé qu'elle ne servait à rien. Le témoin E12 (réseau coupé : le serveur n'a jamais reçu la suppression) garde le comportement. */
         try{if(typeof _renderEmailVerifyCard==='function')_renderEmailVerifyCard();}catch(e){}
         window._premiumPending=false;
         updateCoachHeader();

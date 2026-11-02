@@ -253,17 +253,55 @@ function _foodLogIdentifier(liste){
      · Il ne s'efface JAMAIS (aucune expiration : une purge ferait revenir la ligne depuis un appareil resté absent) ; une entrée coûte une soixantaine d'octets.
      · Il VOYAGE avec la synchro (`setup.js`) et s'additionne partout (union) : la suppression gagne sur toute version de la ligne, modification comprise. */
 function _foodSupprimesNormaliser(x){
+  /* NUT-SYNC-01 FINAL — TROIS ÉTATS, JAMAIS CONFONDUS, lisibles sur l'entrée elle-même (aucune clé de stockage de plus) :
+       · ni `c` ni `x`  = ENREGISTRÉE SUR CE TÉLÉPHONE, EN ATTENTE de la confirmation du serveur ;
+       · `c` (instant)  = CONFIRMÉE : le serveur l'a écrite et l'a dit dans un accusé valide ;
+       · `x` (code)     = REJETÉE : le serveur a répondu qu'il ne pouvait pas (ex. NUT_TOMBSTONE_LIMIT) — elle reste ici, et fait toujours loi sur ce téléphone.
+     Une entrée n'est JAMAIS effacée, quel que soit son état. */
   const out=[], idx=Object.create(null);
   (Array.isArray(x)?x:[]).forEach(e=>{
     const i=(e && typeof e==='object') ? e.i : e;
     if(typeof i!=='string' || i.length<8 || i.length>64 || !/^[0-9A-Za-z-]+$/.test(i)) return;
-    const t=(e && typeof e==='object' && isFinite(+e.t) && +e.t>0) ? Math.floor(+e.t) : 0;
-    if(idx[i]!==undefined){ const o=out[idx[i]]; if(t && (!o.t || t<o.t)) o.t=t; return; }
-    idx[i]=out.length; out.push({i:i, t:t});
+    const o2=(e && typeof e==='object') ? e : {};
+    const t=(isFinite(+o2.t) && +o2.t>0) ? Math.floor(+o2.t) : 0;
+    const c=(isFinite(+o2.c) && +o2.c>0) ? Math.floor(+o2.c) : 0;
+    const xx=(typeof o2.x==='string') ? o2.x.replace(/[^0-9A-Za-z_\-]/g,'').slice(0,40) : '';
+    if(idx[i]!==undefined){
+      const o=out[idx[i]];
+      if(t && (!o.t || t<o.t)) o.t=t;
+      if(c && (!o.c || c>o.c)) o.c=c;
+      if(xx && !o.x) o.x=xx;
+      if(o.c) delete o.x;
+      return;
+    }
+    const n={i:i, t:t}; if(c) n.c=c; else if(xx) n.x=xx;
+    idx[i]=out.length; out.push(n);
   });
   return out;
 }
-function _foodSupprimesFusion(a,b){ return _foodSupprimesNormaliser((Array.isArray(a)?a:[]).concat(Array.isArray(b)?b:[])); }
+/* `deServeur` : la liste vient du COMPTE (profil chargé au démarrage, restauration) — ces entrées sont par définition déjà chez le serveur, donc confirmées. */
+function _foodSupprimesFusion(a,b,deServeur){
+  const dessus=(Array.isArray(b)?b:[]).map(e=>{
+    if(!deServeur) return e;
+    const o=(e && typeof e==='object') ? e : {i:e};
+    return Object.assign({}, o, {c:Date.now()});
+  });
+  return _foodSupprimesNormaliser((Array.isArray(a)?a:[]).concat(dessus));
+}
+/* Ce qui part au serveur : l'identité et l'instant, jamais l'état local. */
+function _foodSupprimesPourEnvoi(){ return _foodSupprimesNormaliser(S.foodSupprimes).map(e=>({i:e.i, t:e.t})); }
+/* Les suppressions que le serveur n'a PAS encore confirmées (en attente OU rejetées) : à renvoyer, à ne jamais perdre. */
+function _foodSupprimesEnAttente(){ return _foodSupprimesNormaliser(S.foodSupprimes).filter(e=>!e.c); }
+/* Un identifiant d'opération par envoi : le serveur l'écho, l'appareil ne croit un accusé que s'il porte le SIEN. */
+function _nutNouvelIdOperation(){
+  try{
+    if(typeof crypto!=='undefined' && typeof crypto.randomUUID==='function') return crypto.randomUUID();
+    if(typeof crypto!=='undefined' && typeof crypto.getRandomValues==='function'){
+      const a=new Uint8Array(16); crypto.getRandomValues(a); return Array.from(a,b=>b.toString(16).padStart(2,'0')).join('');
+    }
+  }catch(e){}
+  return 'op'+Date.now().toString(36)+Math.random().toString(36).slice(2,12);
+}
 /* Retire du journal (sur place) les lignes dont l'identité figure au registre. Rend le nombre de lignes retirées. */
 function _foodAppliquerSuppressions(){
   const reg=S.foodSupprimes||[]; if(!reg.length || !Array.isArray(S.foodLog)) return 0;
@@ -309,17 +347,20 @@ function _foodSupprimer(id){
        ajoutée. *Un doublon vaut mieux qu'une perte silencieuse.*
    ⛔ Aucune ressemblance approximative (nom, date, calories…) ne fait disparaître une ligne. */
 function _empreinteFood(l){
-  const tri=v=>Array.isArray(v)?v.map(tri):(v&&typeof v==='object')
-    ?Object.keys(v).filter(k=>k!=='id').sort().reduce((o,k)=>{o[k]=tri(v[k]);return o;},{}):v;
-  try{ return JSON.stringify(tri(l)); }catch(e){ return String(Math.random()); }
+  /* NUT-SYNC-01 FINAL : `rev` (révision) et `modifiedAt` sont posés par le SERVEUR sur la ligne, ils ne DÉCRIVENT pas le repas — ignorés AU NIVEAU DE LA LIGNE seulement (`haut`). Sans cela une ligne
+     et sa copie identique ne se reconnaîtraient plus dès que l'une a reçu sa révision (restauration, identité des anciennes lignes). Une ancienne ligne n'a pas ces champs : son empreinte, donc
+     l'identité déterministe qui en dérive, ne change pas d'un octet. */
+  const tri=(v,haut)=>Array.isArray(v)?v.map(x=>tri(x,false)):(v&&typeof v==='object')
+    ?Object.keys(v).filter(k=>k!=='id' && !(haut && (k==='rev'||k==='modifiedAt'))).sort().reduce((o,k)=>{o[k]=tri(v[k],false);return o;},{}):v;
+  try{ return JSON.stringify(tri(l,true)); }catch(e){ return String(Math.random()); }
 }
 function _fusionnerFoodLogRestauration(local, cloud){
   const out=Array.isArray(local)?local.slice():[];
   const idValide=l=>(typeof l.id==='string' && l.id.length>=8);
-  const parIdLocal=new Map(), libres=new Map(), cloudParId=new Map();
+  const parIdLocal=new Map(), libres=new Map(), cloudParId=new Map(), objLocal=new Map();
   out.forEach(l=>{
     if(!l||typeof l!=='object') return;
-    if(idValide(l) && !parIdLocal.has(l.id)) parIdLocal.set(l.id,_empreinteFood(l));
+    if(idValide(l) && !parIdLocal.has(l.id)){ parIdLocal.set(l.id,_empreinteFood(l)); objLocal.set(l.id,l); }
     const e=_empreinteFood(l); libres.set(e,(libres.get(e)||0)+1);
   });
   const nuage=(Array.isArray(cloud)?cloud:[]).filter(c=>c&&typeof c==='object');
@@ -339,7 +380,14 @@ function _fusionnerFoodLogRestauration(local, cloud){
   nuage.forEach((c,k)=>{
     if(idValide(c)){
       const e=_empreinteFood(c), vus=cloudParId.get(c.id)||[];
-      if(absorbe.has(k)){ vus.push(e); cloudParId.set(c.id,vus); return; }      // la version de la ligne du téléphone : il garde la sienne
+      if(absorbe.has(k)){                                                        // la version de la ligne du téléphone : il garde la sienne
+        vus.push(e); cloudParId.set(c.id,vus);
+        /* NUT-SYNC-01 FINAL — il APPREND seulement la révision du serveur, et seulement si le contenu est identique (sa révision de base est alors vraie). Sinon il garde la sienne telle quelle :
+           au prochain envoi le serveur dira « conflit » et les DEUX versions seront gardées. */
+        const lo=objLocal.get(c.id);
+        if(lo && Number.isSafeInteger(c.rev) && c.rev>(Number.isSafeInteger(lo.rev)?lo.rev:0) && _empreinteFood(lo)===e){ lo.rev=c.rev; if(c.modifiedAt) lo.modifiedAt=c.modifiedAt; }
+        return;
+      }
       if(vus.indexOf(e)>=0 || parIdLocal.get(c.id)===e) return;                 // copie strictement identique
       vus.push(e); cloudParId.set(c.id,vus);
       if(vus.length>1 || parIdLocal.has(c.id)){                                // un exemplaire SUPPLÉMENTAIRE de cet id
