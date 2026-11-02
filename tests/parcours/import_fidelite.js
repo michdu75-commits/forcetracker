@@ -33,19 +33,27 @@ module.exports.pur = function (t, ROOT, fs, path) {
   const FERMES = [['3 mins', 180], ['2 mins', 120], ['1.30 mins', 90], ['2.30 mins', 150], ['3 min', 180], ['2.5 min', 150], ['1.5 minutes', 90],
     ['3mn', 180], ['2minutes', 120], ['90s', 90], ['90 sec', 90], ['90 secondes', 90], ['1:30', 90], ["1'30", 90], ['1min30', 90],
     ['1 min 30', 90], ['1m30', 90], ['2minutes30', 150], ['1 minute 30 s', 90], ['120', 120], ['180', 180], [180, 180], ['2', 120],
-    ['1.30', 90], ['40 sec', 40], ['repos 40 sec', 40], ['Repos : 2 min', 120], ['Récup 90 s', 90], ['Repos 1.30 mins', 90], ['2 min', 120]];
+    ['1.30', 90], ['40 sec', 40], ['repos 40 sec', 40], ['Repos : 2 min', 120], ['Récup 90 s', 90], ['Repos 1.30 mins', 90], ['2 min', 120],
+    // ce que les coachs écrivent AUTOUR du chiffre (6 vrais programmes, ~650 repos) : un PLAFOND (« max », « maxi »), une approximation, un blanc de PDF
+    ['2 min max', 120], ['repos 30 sec maxi', 30], ['Repos 45 sec max', 45], ['1 min 30 max', 90], ['1.15 min max', 75], ['1.30 max', 90],
+    ['1 . 15 min', 75], ['environ 90 s', 90], ['~2 min', 120], ['2 minutes maximum', 120]];
   const ecartF = FERMES.filter(([v, a]) => { const r = lire(v); return !(r.sec === a && !r.min && !r.max && r.txt === ''); }).map(([v, a]) => v + ' → ' + js(lire(v)) + ' (attendu ' + a + ')');
   t('IIF-R01 ⭐ ' + FERMES.length + ' écritures FERMES lues (« 3 mins », « 1.30 mins », « 2.30 mins »… dont celles du coach réel)', ecartF.length === 0, ecartF.join(' | '));
   const PLAGES = [['60-90 s', 60, 90], ['3-4 min', 180, 240], ['2-3 min', 120, 180], ['2 à 3 mins', 120, 180], ['2 -3 mins', 120, 180], ['1 à 2 mins', 60, 120],
     ['90-120 s', 90, 120], ['90–120s', 90, 120], ['2 à 4 minutes', 120, 240], ['1.30 à 2 mins', 90, 120], ['60 s à 90 s', 60, 90], ['2-3', 120, 180],
-    ['60-90', 60, 90], ['1 à 2 min', 60, 120], ['repos 2-3 min', 120, 180]];
+    ['60-90', 60, 90], ['1 à 2 min', 60, 120], ['repos 2-3 min', 120, 180], ['2 à 3 mins max', 120, 180]];
   const ecartP = PLAGES.filter(([v, a, b]) => { const r = lire(v); return !(r.sec === 0 && r.min === a && r.max === b && r.txt && r.txt.length > 0); }).map(([v, a, b]) => v + ' → ' + js(lire(v)) + ' (attendu ' + a + '–' + b + ')');
   t('IIF-R02 ⛔⛔ ' + PLAGES.length + ' PLAGES : jamais converties en repos (sec 0), bornes lues, TEXTE ÉCRIT conservé (rien n\'est perdu)', ecartP.length === 0, ecartP.join(' | '));
-  const RIEN = ['selon ressenti', 'au feeling', 'quand tu es prêt', 'bientôt', '', null, '-', '—', '0', -5, 'abc', '10', '13', '4-3', 'repos', 'pause', 'n/a'];
+  const RIEN = ['selon ressenti', 'au feeling', 'quand tu es prêt', 'bientôt', '', null, '-', '—', '0', -5, 'abc', '10', '13', '4-3', 'repos', 'pause', 'n/a',
+    'max', 'maxi', 'repos maximum', '1.15/30 min max', '1.15/30 min', '75 s à 30 min'];
   const ecartN = RIEN.filter(v => sec(v) !== 0).map(v => js(v) + ' → ' + sec(v));
   t('IIF-R03 ⛔ un texte flou, vide, un tiret ou une valeur ambiguë n\'invente JAMAIS de repos (sec 0)', ecartN.length === 0, ecartN.join(' | '));
   const txtGarde = ['selon ressenti', 'au feeling'].every(v => lire(v).txt === v) && lire('').txt === '' && lire('-').txt === '';
   t('IIF-R04 un texte non chiffré est CONSERVÉ tel quel (`txt`), un vide ou un tiret ne laisse rien', txtGarde, js([lire('selon ressenti'), lire('-')]));
+  // « 1.15/30 min » : un coach qui écrit 1 min 15 à 1 min 30. Lu comme une plage, c'était 75 s → 30 MINUTES. Le texte reste, rien n'est appliqué.
+  const bizarre = lire('1.15/30 min max');
+  t('IIF-R06 ⛔ une « plage » dont la borne haute dépasse 5 fois la basse (« 1.15/30 min max ») n\'est PAS une plage : aucun chiffre, le texte écrit est conservé',
+    bizarre.sec === 0 && bizarre.min === 0 && bizarre.max === 0 && bizarre.txt === '1.15/30 min max', js(bizarre));
   // compatibilité : tout ce que l'ancien parseur lisait est lu à l'identique (voir CCLXXIV, calculs)
   const ANCIEN = [[180, 180], ['180', 180], ['3 min', 180], ['3min', 180], ['90 s', 90], ['1 min 30', 90], ['1:30', 90], ['', 0], [null, 0], ['bientôt', 0], [-5, 0],
     ['2 min', 120], ['90s', 90], ['120', 120], ['2 minutes', 120], ['90 sec', 90], ["1'30", 90], ['3mn', 180], ['2min', 120], ['1min30', 90], ['1m30', 90], ['2minutes30', 150], ['2,5 min', 150],
@@ -491,6 +499,37 @@ module.exports.ecran = async function (t, b, PORT) {
   });
   t('IIF-H05 ⭐ confirmé : SEULE la cible (n°…02) est remplacée ; son homonyme (n°…01) reste intact, à la même place',
     ok2.ids.length === 2 && ok2.ex0 === 'Squat à la Barre' && ok2.ex1.some(n => /zeta/i.test(n)) && ok2.noms.join() === 'Powerbuilding,Powerbuilding', js(ok2));
+  });
+  await section('I', async () => {
+  // ── I. CE QUE LES PROGRAMMES RÉELS DE COACHS ONT RÉVÉLÉ (corpus anonymisé, tests/parcours/corpus_import) ──
+  const R0 = await vue([L('Élévation frontales haltères', 1, 0, 0, '', { rest: '1.30 mins' })]);
+  t('IIF-I01 ⭐ des reps que le document n\'écrit PAS ne passent pas pour une prescription : 10 proposées comme avant (la séance a besoin d\'un nombre), mais la note le DIT',
+    R0.ex[0].sets[0].reps === 10 && /Répétitions non écrites dans le document/.test(R0.ex[0].note) && R0.ap[0].note === R0.ex[0].note, js(R0.ex[0]));
+  const R1 = await vue([L('Curl barre EZ', 3, 12, 20, 'RIR 2', { rest: '90 s' })]);
+  t('IIF-I02 … et des reps écrites ne reçoivent AUCUNE mention (la note du coach reste intacte)', !/Répétitions non écrites/.test(R1.ex[0].note) && R1.ex[0].sets.every(s => s.reps === 12) && R1.ex[0].note === 'RIR 2', js(R1.ex[0]));
+  const statut = () => pg.evaluate(() => { const ex = _impExtracted.days[0].exercises[0]; return { nom: ex.name, sugg: ex._vmSuggest || '', from: ex._vmFrom || '', k: _impStatut(ex, _catalogueConnu()).k }; });
+  await importer(jour([L('Front Squat', 4, 8, 0, 'Lourd | Smith machine', { rest: '2 min 30' })]));
+  const sm = await statut();
+  t('IIF-I03 ⛔⛔ « Front Squat » dont la NOTE dit « Smith machine » n\'est PAS rattaché d\'office à l\'exercice à la barre : proposition « À confirmer », nom du document gardé',
+    sm.k === 'conf' && !sm.from && sm.nom === 'Front Squat' && /squat avant/i.test(sm.sugg), js(sm));
+  await importer(jour([L('Front Squat', 4, 8, 0, 'Lourd | pieds alignés avec les genoux', { rest: '2 min 30' })]));
+  const sb = await statut();
+  t('IIF-I04 … sans matériel dans la note, le rattachement d\'office existe toujours (la garde ne bloque pas tout : « Front Squat » → « Squat Avant »)', sb.k === 'ok' && /squat avant/i.test(sb.nom) && sb.from === 'Front Squat', js(sb));
+  await importer(jour([L('Front Squat', 4, 8, 0, 'Lourd | à la barre', { rest: '2 min 30' })]));
+  const sbb = await statut();
+  t('IIF-I05 … et une note qui dit « barre » ne contredit pas une cible non marquée (barre par défaut) : rattaché d\'office', sbb.k === 'ok' && /squat avant/i.test(sbb.nom), js(sbb));
+  // ce que le serveur a dû écarter se DIT dans l'aperçu ; la simple conservation d'une plage n'est pas une perte
+  const pertes = async (norm) => { await importer(Object.assign(jour([L('Curl barre EZ', 3, 12, 20, '', { rest: '90 s' })]), norm === undefined ? {} : { normalisation: norm }));
+    return pg.evaluate(() => { _renderImpConfirm(); const e = document.querySelector('#imp-preview .imp-perte'); return e ? e.textContent : ''; }); };
+  const p1 = await pertes({ joursEcartes: 1, exercicesIllisibles: 2, startDateRefusee: 1, plagesReps: 3 });
+  t('IIF-I06 ⭐ ce que le serveur a dû ÉCARTER se dit avant d\'enregistrer (1 séance sans exercice, 2 lignes illisibles, la date de début non gardée)',
+    /1 séance sans exercice lisible a été écartée/.test(p1) && /2 lignes illisibles ont été ignorées/.test(p1) && /date de début/.test(p1), js(p1));
+  const p2 = await pertes({ plagesReps: 5, plagesCharge: 2, repsNonChiffrees: 2, chargesNonChiffrees: 1, tableauxRealignes: 1 });
+  t('IIF-I07 ⛔ la simple CONSERVATION (plages gardées dans la note, charges « à calibrer ») n\'est pas annoncée comme une perte', p2 === '', js(p2));
+  const p3 = await pertes(undefined);
+  t('IIF-I08 ⛔ l\'ancien serveur (Apps Script) ne compte rien : on ne dit RIEN plutôt qu\'un « tout va bien » inventé', p3 === '', js(p3));
+  const p4 = await pg.evaluate(() => { finalImportProg(); const pr = S.programmes[S.programmes.length - 1]; return JSON.stringify(pr).indexOf('normalisation') >= 0; });
+  t('IIF-I09 ⛔ les compteurs du serveur ne sont jamais ENREGISTRÉS dans le programme (aucune donnée persistée en plus)', p4 === false, 'normalisation présente dans le programme enregistré');
   });
   t('IIF-C04 aucune erreur de page, aucun appel réel', errs.length === 0 && reels === 0, js({ errs, reels }));
   await cx.close();

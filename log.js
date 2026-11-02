@@ -7539,6 +7539,7 @@ async function analyzeImportPhotos(){
                                  // L'ordre compte : il rend au nom sa forme nue (« Développé couché »), et c'est CE nom-là que le catalogue sait
                                  // reconnaître. Après, on rattacherait « Développé couché (échauffement) » — c'est-à-dire rien.
     _impConserverSpeciales();    // les séries « en couleur » du document ne sont plus jetées en silence
+    _impSignalerRepsAbsentes();  // et un « 10 reps » qui vient de l'app, pas du coach, se DIT
     _vmMatchExtracted();   // VM : rattache aux références EXLIB (évite les doublons) AVANT l'aperçu
     _impOuverts.clear(); _impRepos=null;   // un NOUVEAU scan repart d'un aperçu fermé (l'état d'écran d'avant ne le concerne plus)
     _renderImpConfirm();
@@ -7672,13 +7673,18 @@ function _restBrut(ex,s){
 // (repsPerSet s'il existe, sinon `sets` × `reps` uniformes) — R2, une seule règle de lecture.
 function _seriesImport(ex){
   const n=(ex.repsPerSet&&ex.repsPerSet.length)?ex.repsPerSet.length:Math.max(1,parseInt(ex.sets)||1);
-  const reps=[],kgs=[],rests=[];
+  const reps=[],kgs=[],rests=[],repsDef=[];
   for(let s=0;s<n;s++){
-    reps.push((ex.repsPerSet&&ex.repsPerSet[s]!=null)?ex.repsPerSet[s]:(ex.reps!=null?ex.reps:10));
+    /* Les reps d'une série : ce que le document écrit, sinon 10 — comme AVANT, la séance a besoin d'un nombre (`_loadProgDayVraiment`
+       en remet 10 pour un 0). Mais ce 10 est une valeur de l'APP, pas du document : `repsDef` le marque pour que `_impSignalerRepsAbsentes`
+       le DISE dans la note, au lieu de le laisser passer pour une prescription du coach (IMPORT-IA-FIDELITE-01). Une seule lecture (R2) :
+       l'aperçu et l'enregistrement passent tous deux ici. */
+    const lu=parseInt((ex.repsPerSet&&ex.repsPerSet[s]!=null)?ex.repsPerSet[s]:ex.reps);
+    reps.push(lu>0?lu:10); repsDef.push(!(lu>0));
     kgs .push((ex.kgPerSet &&ex.kgPerSet [s]!=null)?ex.kgPerSet [s]:(ex.kg||0));
     rests.push(_restBrut(ex,s));          // `null` = rien d'écrit : le défaut de l'app s'applique, exactement comme avant
   }
-  return {n,reps,kgs,rests};
+  return {n,reps,kgs,rests,repsDef};
 }
 /* 📥 IMPORT-ECH-01 (06/10/2026) — LE MÊME FILET, QUAND LE NOM NE PORTE PLUS DE MARQUEUR.
    ⛔⛔ CE QUI A CHANGÉ, ET C'EST MESURÉ. Le filet ci-dessus ne reconnaît un échauffement qu'à un parenthésé EN FIN de
@@ -7769,6 +7775,18 @@ function _impConserverSpeciales(){
     delete ex.specialSets;
     if(!idx.length)return;
     if(String(ex.note||'').indexOf('Séries en couleur')<0)ex.note=(ex.note?ex.note+' | ':'')+'Séries en couleur dans le document : n° '+idx.map(k=>k+1).join(', ');
+  }));
+}
+/* 🔟 DES REPS QUE LE DOCUMENT N'ÉCRIT PAS (IMPORT-IA-FIDELITE-01). Le serveur rend 0 pour une répétition non écrite (il n'en invente plus) ;
+   la séance, elle, a besoin d'un nombre et en met 10. Ce 10 est une valeur de l'APP : il ne doit pas passer pour la prescription du coach.
+   On le DIT dans la note de l'exercice (visible dans l'aperçu et à la séance), on ne le cache pas, on ne le retire pas. Mesuré sur un vrai
+   programme de coach : « Élévation frontales Haltères 1.30 mins », ni séries ni reps. */
+function _impSignalerRepsAbsentes(){
+  ((_impExtracted&&_impExtracted.days)||[]).forEach(day=>(day.exercises||[]).forEach(ex=>{
+    if(!ex)return;
+    const x=_seriesImport(ex), nb=x.repsDef.filter(Boolean).length;
+    if(!nb||String(ex.note||'').indexOf('Répétitions non écrites')>=0)return;
+    ex.note=(ex.note?ex.note+' | ':'')+'Répétitions non écrites dans le document : 10 proposées'+(nb<x.n?' pour '+nb+' série'+(nb>1?'s':'')+' sur '+x.n:'')+', à corriger';
   }));
 }
 /* ═══ L'IDENTITÉ D'UN EXERCICE IMPORTÉ — TROIS RÉPONSES, PAS DEUX (IMPORT-IA-FIDELITE-01, 02/11/2026) ═══════════════
@@ -7928,6 +7946,20 @@ function _exerciceInconnu(nom,connus){
 // Palier auto (confiance ≥90) = rattaché direct (nom remplacé, original gardé pour « annuler »).
 // Palier confirm (zone grise) = proposé à l'utilisateur (« ≈ Rattacher à X ? »), nom inchangé
 // tant qu'il n'a pas dit oui. Palier nouveau = laissé tel quel → exercice créé (comme avant).
+/* 🏷️ LE MATÉRIEL ÉCRIT DANS LA NOTE (IMPORT-IA-FIDELITE-01). Les garde-fous IMPORT-MAP lisent le NOM : un « Front Squat » dont la note dit
+   « Smith machine » était rattaché d'office au « Squat Avant » à la barre — le programme enregistrait un autre mouvement, et l'historique de
+   la barre recevait les charges de la Smith (mesuré sur un vrai programme de coach, corpus C05). Le modèle range parfois le matériel dans la
+   note plutôt que dans le nom ; on ne lui en veut pas, on le LIT. ⛔ Ce n'est jamais un refus : le rattachement d'office devient une
+   PROPOSITION (« À confirmer »), la personne tranche (R29 : l'erreur touche ses records, donc on demande). Le nom qui dit DÉJÀ son matériel
+   garde son propre garde-fou ; une cible non marquée est lue comme barre / poids du corps, que seule une note « Smith / machine / poulie /
+   haltères » contredit (un « barre » en note ne la contredit pas). */
+function _materielNoteContredit(ex,cible){
+  const mn=_materielsEcrits(ex.note);
+  if(!mn.length||_materielsEcrits(ex.name).length)return false;
+  const mc=_materielsEcrits(cible);
+  if(mc.length)return !mn.some(x=>mc.includes(x));
+  return mn.some(x=>x!=='barre');
+}
 function _vmMatchEx(ex){
   if(typeof _matchExercise!=='function'||!ex||!ex.name)return;
   delete ex._vmFrom; delete ex._vmSuggest; delete ex._vmConf;
@@ -7935,6 +7967,7 @@ function _vmMatchEx(ex){
   if(!r||!r.match||r.match===ex.name)return; // rien à faire / déjà EXACTEMENT le nom canonique
   // (une simple différence de casse/accents « Pec deck » → « Pec Deck » est un rattachement utile :
   //  sinon l'exo importé ne partagerait ni stats ni figurine avec la référence EXLIB)
+  if(r.tier==='auto'&&_materielNoteContredit(ex,r.match)){ ex._vmSuggest=r.match; ex._vmConf=r.confidence; return; }
   if(r.tier==='auto'){ ex._vmFrom=ex.name; ex._vmConf=r.confidence; ex.name=r.match; }
   else if(r.tier==='confirm'){ ex._vmSuggest=r.match; ex._vmConf=r.confidence; }
 }
@@ -8184,6 +8217,19 @@ function _impDetailSeries(di,ei,v){
     return h;
   }).join('')}</div>`;
 }
+/* ⚠️ CE QUE LE SERVEUR A DÛ ÉCARTER (IMPORT-IA-FIDELITE-01). Le Worker valide la réponse du modèle et COMPTE ce qu'il ne peut pas garder
+   (`data.normalisation` : des compteurs entiers, jamais un mot du document — Constitution P3). Ce qui disparaît du programme se DIT avant
+   d'enregistrer, on ne le découvre pas à la salle : une séance sans aucun exercice lisible, une ligne illisible, une date de début refusée.
+   ⛔ Les compteurs de simple CONSERVATION (plages de reps, charges « à calibrer ») ne sont PAS des pertes : leur texte est déjà dans la note.
+   Une seule source (R2) : l'ancien serveur (Apps Script) ne sait pas compter → rien n'est dit, on n'invente pas un « tout va bien ». */
+function _impPertes(d){
+  const n=d&&d.normalisation; if(!n||typeof n!=='object')return '';
+  const j=+n.joursEcartes||0, e=+n.exercicesIllisibles||0, dt=+n.startDateRefusee||0, p=[];
+  if(j>0)p.push(j+(j>1?' séances sans exercice lisible ont été écartées':' séance sans exercice lisible a été écartée'));
+  if(e>0)p.push(e+(e>1?' lignes illisibles ont été ignorées':' ligne illisible a été ignorée'));
+  if(dt>0)p.push("la date de début écrite n'a pas été gardée (impossible, ou cycle déjà terminé)");
+  return p.length?'Ce que l\'import n\'a pas pu garder : '+p.join(' · ')+'. Relis le document avant d\'enregistrer.':'';
+}
 function _renderImpConfirm(){
   const d=_impExtracted;if(!d)return;
   const nameEl=document.getElementById('imp-prog-name');
@@ -8203,7 +8249,8 @@ function _renderImpConfirm(){
   (d.days||[]).forEach(day=>(day.exercises||[]).forEach(ex=>{ nEx++; _impVueSeries(ex).forEach(x=>{ nSer++; if(x.type==='É')nEch++; if(!x.repos.sec&&x.repos.txt)nPlage++; }); }));
   const nj=(d.days||[]).length;
   const total=`<div style="font-size:12px;color:var(--t2);line-height:1.5;margin-bottom:8px;"><b style="color:var(--t1);">${nj} séance${nj>1?'s':''} · ${nEx} exercice${nEx>1?'s':''} · ${nSer} série${nSer>1?'s':''}</b> (dont ${nEch} d'échauffement)`
-    +(nPlage?`<br>⚑ ${nPlage} repos écrit${nPlage>1?'s':''} en plage ou en texte : conservé${nPlage>1?'s':''} tel${nPlage>1?'s':''} qu'écrit${nPlage>1?'s':''}, jamais converti${nPlage>1?'s':''} en durée. Touche un repos pour en choisir un.`:'')+`</div>`;
+    +(nPlage?`<br>⚑ ${nPlage} repos écrit${nPlage>1?'s':''} en plage ou en texte : conservé${nPlage>1?'s':''} tel${nPlage>1?'s':''} qu'écrit${nPlage>1?'s':''}, jamais converti${nPlage>1?'s':''} en durée. Touche un repos pour en choisir un.`:'')
+    +(_impPertes(d)?`<br><span class="imp-perte">⚠️ ${_escNote(_impPertes(d))}</span>`:'')+`</div>`;
   const carte=(di,ei)=>{
     const ex=d.days[di].exercises[ei], o=_impOuverts.has(di+'-'+ei);
     const v=_impVueSeries(ex), st=_impStatut(ex,_connus), g=_impGroupesSeries(v);
@@ -8436,11 +8483,8 @@ function finalImportProg(){
            (la séance le montrera, la personne choisira). Rien n'est supprimé ni inventé. */
         const _restAt=si=>_reposSerieImport(ex,si);  // IMPORT-IA-FIDELITE-01 : la MÊME fonction que l'aperçu (R2) — voir `_restBrutSerieImport`
         const _setDe=(si,kg,reps)=>{ const r=_restAt(si); const o={kg,reps,type:_typeAt(si) /* échec auto à l'import désactivé (ft-v292) — ex.specialSets plus converti en 'E' */,rest:r.sec}; if(r.txt)o.restTxt=r.txt; return o; };
-        if(ex.repsPerSet&&ex.repsPerSet.length>0){
-          sets=ex.repsPerSet.map((r,si)=>_setDe(si,(ex.kgPerSet&&ex.kgPerSet[si]!=null?ex.kgPerSet[si]:(ex.kg||0)),parseInt(r)||10));
-        }else{
-          sets=Array.from({length:Math.max(1,ex.sets||3)},(_,si)=>_setDe(si,(ex.kgPerSet&&ex.kgPerSet[si]!=null?ex.kgPerSet[si]:(ex.kg||0)),ex.reps||10));
-        }
+        const _SI=_seriesImport(ex);        // IMPORT-IA-FIDELITE-01 : la MÊME lecture que l'aperçu (nombre de séries, reps, charges) — R2
+        sets=_SI.reps.map((r,si)=>_setDe(si,_SI.kgs[si],r));
         const obj={name:ex.name,note:ex.note||'',sets};
         if(group){obj.group=group;obj.groupType='super';} // FIX Emma : sans groupType='super' le superset importé n'était pas reconnu
         return obj;

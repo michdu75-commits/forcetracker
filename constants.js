@@ -2661,7 +2661,13 @@ function _reposLire(v){
   let s=String(v).replace(/[  ]/g,' ').replace(/[‘’]/g,"'").replace(/\s+/g,' ').trim();
   if(!s||/^[-–—_.\/·•]+$/.test(s)||/^(n\/?a|aucun|aucune|none|nc|0)$/i.test(s)) return vide;
   const txt=s.length>40?s.slice(0,40).trim():s;
-  const bas=s.toLowerCase().replace(/^(?:repos|r\u00e9cup(?:\u00e9ration)?|recup(?:eration)?|rest|pause)\s*:?\s*/,'');   // « repos 40 sec » → « 40 sec »
+  let bas=s.toLowerCase().replace(/^(?:repos|r\u00e9cup(?:\u00e9ration)?|recup(?:eration)?|rest|pause)\s*:?\s*/,'');   // « repos 40 sec » → « 40 sec »
+  /* Ce que les coachs ÉCRIVENT autour du chiffre (mesuré sur 6 vrais programmes, ~650 repos) : « 2 min max », « repos 30 sec maxi »,
+     « 1.15 min max » = un PLAFOND, donc le chiffre écrit EST le repos (la colonne s'intitule « Repos maximum ») ; « environ 90 s » ;
+     et le blanc d'extraction d'un PDF « 1 . 15 min ». Avant : tout cela restait du texte, 0 seconde, et la séance prenait le réglage
+     global (130 s) pour un coach qui écrivait 45 s. ⛔ On n'enlève QUE ces mots-là : « selon ressenti », « 1.15/30 min max » (format
+     que rien ne permet de lire sans deviner) restent du TEXTE conservé, sans repos appliqué. */
+  bas=bas.replace(/(\d)\s*\.\s*(\d)/g,'$1.$2').replace(/\s*\b(?:au\s+)?max(?:i|imum)?\b\.?$/,'').replace(/^(?:environ|env\.?|~|\u2248)\s*/,'').trim();
   if(!bas) return vide;                                         // le mot « repos » seul n'est pas une valeur
   const un=_reposQte(bas);
   if(un&&un.sec>0&&un.sec<=3600) return {sec:un.sec,min:0,max:0,txt:''};
@@ -2670,7 +2676,9 @@ function _reposLire(v){
   if(p.length===2&&/\d/.test(p[0])&&/\d/.test(p[1])){
     const d=_reposQte(p[1]);                                   // le côté droit porte l'unité s'il y en a une
     const g=d&&_reposQte(p[0],d.u);
-    if(d&&g&&g.sec>0&&d.sec>g.sec&&d.sec<=3600) return {sec:0,min:g.sec,max:d.sec,txt};
+    // ⛔ Une plage dont la borne haute vaut plus de 5 fois la basse n'est pas une plage de repos : « 1.15/30 min » (un coach qui écrit
+    //    1 min 15 à 1 min 30) se lisait 75 s → 30 MINUTES. On garde le texte, on n'applique rien (la personne lit et choisit).
+    if(d&&g&&g.sec>0&&d.sec>g.sec&&d.sec<=3600&&d.sec<=g.sec*5) return {sec:0,min:g.sec,max:d.sec,txt};
     // « 3-4 » sans aucune unité : minutes si les deux sont petits, sinon secondes
     const nb=bas.match(/^(\d+)\s*(?:[-–—\/]|à|to|a)\s*(\d+)$/);
     if(nb){ const a=+nb[1],b=+nb[2];
