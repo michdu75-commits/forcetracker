@@ -20,7 +20,7 @@ Programmes RÉELS transcrits (PDF privés, hors dépôt) + méthodes SYNTHÉTIQU
 
 ## Conventions de transcription
 - Accents restitués (le PDF de C01 n'en a pas) ; fautes du document gardées. Le mot « repos » des cellules « Répétitions et Repos » est gardé (« repos 40 sec »).
-- « par bras / jambe / côté » : séries non doublées. Durées tenues (gainage) : secondes dans `reps`. Dégressif : `setType` D, séries = nombre de tours. `reps` absent : 0, jamais 10.
+- « par bras / jambe / côté » : séries non doublées. Durées tenues (gainage) : secondes dans `reps`. Dégressif : `setType` D, séries = nombre de tours ; le repos écrit UNE fois vaut pour la FIN de la série dégressive (`repos` 0 sur les paliers avant le dernier, comme l'outil de dropset de la séance) alors que `aiOutput.restPerSet` le recopie sur chaque palier (un modèle le fait). `reps` absent : 0 dans `attendu` (le serveur n'invente pas) ; l'app propose 10 à la séance ET le dit dans la note (« Répétitions non écrites dans le document »).
 - Les titres de groupes musculaires sont les jours (C02 et C04 n'ont aucun « Séance N »). `specialSets` vide : couleurs illisibles.
 - « A + B » : superset si chaque partie a ses propres reps, sinon mouvement combiné (un seul exercice).
 
@@ -31,3 +31,6 @@ Prénoms, pseudos, marque et nom du coach retirés de tous les champs (noms de p
 - L'extraction texte mélange les colonnes : rattachements faits par le sens et dits dans `incertitudes` ; un chiffre ambigu n'est jamais deviné en silence.
 - Couleurs, images et vidéos non lues. C03 : pas de « Séance 1 » dans le texte lu.
 - S-methodes est inventé : la définition du « dead set » y est supposée.
+
+## Qui lit ce corpus
+`tests/parcours/import_corpus.js` (banc `B-IIC`, lanceur `tools/banc_import_corpus.js`, contrôle négatif `tools/mut_import_corpus.py`) passe CHAQUE fixture par la vraie chaîne de l'application et compare le programme enregistré à `attendu`, série par série, puis valide chaque série dans une séance et relève la durée réellement passée au chronomètre. `catalogueAttendu` n'est PAS exigé : le banc vérifie qu'aucun exercice n'est rattaché à une AUTRE cible (limites connues nommées dans le banc) et qu'au moins 76 des 114 exercices du catalogue sont reconnus ou proposés avec la bonne cible.

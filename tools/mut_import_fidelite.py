@@ -115,6 +115,8 @@ MUT = [
      [(LO, "  const n=d&&d.normalisation; if(!n||typeof n!=='object')return '';", "  const n=null; if(!n||typeof n!=='object')return '';")], 'GARDE'),
     ('M45 la simple CONSERVATION d\'une plage (compteur plagesReps) est annoncée comme une perte',
      [(LO, "  const j=+n.joursEcartes||0, e=+n.exercicesIllisibles||0,", "  const j=(+n.joursEcartes||0)+(+n.plagesReps||0), e=+n.exercicesIllisibles||0,")], 'GARDE'),
+    ('M46 un import ÉCRIT dans les données de la personne (une séance fantôme dans l\'historique) : le témoin de protection des données doit rougir',
+     [(LO, "  S.programmes.push(prog);\n  persist();\n  impRecommencer(true);                                  // ft-v1178 : scan consommé → on le vide", "  S.programmes.push(prog);\n  (S.sessions||[]).push({date:'2000-01-01',exs:[],vol:0});\n  persist();\n  impRecommencer(true);                                  // ft-v1178 : scan consommé → on le vide")], 'GARDE'),
 ]
 
 BANC = os.path.join('tools', 'banc_import_fidelite.js')

@@ -503,6 +503,24 @@ module.exports.ecran = async function (t, b, PORT) {
   });
   await section('I', async () => {
   // ── I. CE QUE LES PROGRAMMES RÉELS DE COACHS ONT RÉVÉLÉ (corpus anonymisé, tests/parcours/corpus_import) ──
+  // ⛔⛔ PROTECTION DES DONNÉES (mission §11) : un import n'écrit QUE le nouveau programme (et ses exercices perso nouveaux)
+  PROG = jour([L('Presse Zeta Prototype', 3, 10, 120, '', { rest: '2 min' }), L('Développé couché', 3, 5, 90, 'RIR 2', { rest: '3 mins' })]);
+  const prot = await pg.evaluate(async () => {
+    S.premium = true;
+    S.sessions = [{ date: '2026-10-20', exs: [{ name: 'Développé Couché', sets: [{ kg: 80, reps: 5, done: true, type: 'N', rm1: 93 }] }], vol: 400 }];
+    S.prs = { 'Développé Couché': { rm1: 93, kg: 80, reps: 5, date: '2026-10-20' } };
+    S.exRestPref = { 'Développé Couché': 150 }; S.defRest = 111; S.weightLog = [{ date: '2026-10-20', kg: 80 }];
+    S.customExercises = [{ n: 'Mon exo perso', g: 'Autres', custom: true }];
+    S.programmes = [{ id: 'pExistant', name: 'Mon programme', weeks: 4, startDate: '2026-10-05', days: [{ label: 'J1', exs: [{ name: 'Squat à la Barre', sets: [{ kg: 100, reps: 5, type: 'N', rest: 120 }] }] }] }];
+    persist();
+    const etat = () => JSON.stringify({ s: S.sessions, p: S.prs, e: S.exRestPref, d: S.defRest, w: S.weightLog, c: (S.customExercises || []).filter(x => x.n === 'Mon exo perso'), pr: S.programmes.filter(x => x.id === 'pExistant') });
+    const avant = etat();
+    _impPhotos = [{ type: 'text/plain', data: 'programme', name: 'prog.txt', isText: true }]; _impMode = 'new';
+    await analyzeImportPhotos(); finalImportProg();
+    return { egal: avant === etat(), nProg: S.programmes.length, neuf: S.programmes.some(x => x.id !== 'pExistant') };
+  });
+  t('IIF-I10 ⛔⛔ DONNÉES PROTÉGÉES — importer puis enregistrer un programme ne touche NI aux séances passées, NI aux records, NI aux préférences de repos, NI au réglage global, NI aux pesées, NI à un exercice perso, NI à un programme existant ; il AJOUTE le nouveau',
+    prot.egal && prot.nProg === 2 && prot.neuf, js(prot));
   const R0 = await vue([L('Élévation frontales haltères', 1, 0, 0, '', { rest: '1.30 mins' })]);
   t('IIF-I01 ⭐ des reps que le document n\'écrit PAS ne passent pas pour une prescription : 10 proposées comme avant (la séance a besoin d\'un nombre), mais la note le DIT',
     R0.ex[0].sets[0].reps === 10 && /Répétitions non écrites dans le document/.test(R0.ex[0].note) && R0.ap[0].note === R0.ex[0].note, js(R0.ex[0]));
