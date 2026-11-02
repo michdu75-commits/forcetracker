@@ -270,6 +270,22 @@ Aucune donnée utilisateur lue ni modifiée · aucun programme existant touché 
 
 À ajouter au registre « SUIVI DES BUGS » puis à la passation maître, **sans rien effacer** : *IMPORT-IA-FIDELITE-01 — corrigé sur branche `claude/import-ia-fidelite-01` (base `e2b942f3`), commits locaux, non poussé, non intégré, non publié, non vérifié iPhone. Causes : Worker à prompt ancien et sans validation ; lecture des repos ; deux filets ECH ; aperçu muet ; semaine sans date ; homonymes. Preuves : B-IIF 91/0, B-IIC 67/0, IIF-W 196/0 ; code publié 27 OK / 36 rouge, 55 / 12, 42 / 154. Limites : IA réelle et iPhone non testés ; règle 0 (documents sans « Séance N ») non mesurée ; 30 exercices du catalogue non reconnus. Décisions en attente : A à F.*
 
+## 18. Les commits de la branche (locaux, **non poussés**) — base `e2b942f3`
+
+| SHA | Contenu |
+|---|---|
+| `52bb3de0` | journal de partage : réservation |
+| `d3ad635f` | Lot B (1/3) : repos lus comme les coachs les écrivent, regroupement échauffement / travail en UNE règle, chrono et consigne de plage |
+| `f71b0267` | Lot B (2/3) + Lot C : aperçu fidèle, semaine sans date, éditeur « Aujourd'hui », programmes homonymes |
+| `4d9fbfd5` | Lot B (3/3) : séries « en couleur » conservées, banc B-IIF, outil de mutations, enregistrement dans la passe |
+| `7b5d2523` | corpus réel : repos « max » lus, matériel de la note, reps non écrites dites, pertes du serveur dites |
+| `8af49d6a` | **Lot A** : le contrat d'import du Worker (`worker.js` + banc + mutations) |
+| `df238c7a` | corpus de 19 programmes, banc B-IIC, dropset à repos uniforme — **dernier commit de code applicatif** |
+| `36110085` · `1f1363b4` · `dd13d3d7` | témoins : texte de repos jusqu'à la séance, lanceurs gardés (D031S-VII), protection des données (M46) |
+| `bef32417` + correctif | dossier, inventaire, journal de partage |
+
+↩️ **Retour arrière** : la branche n'a rien changé hors d'elle-même ; `master` reste `e2b942f3` (= `ft-v1263`). Abandonner = ne pas fusionner la branche (ou `git branch -D claude/import-ia-fidelite-01`).
+
 ---
 
 *Fichiers du lot* — `worker.js` · `constants.js` (`_reposLire`) · `log.js` · `index.html` · `style.css` · banc client `tests/parcours/import_fidelite.js` · corpus `tests/parcours/corpus_import/` + `tests/parcours/import_corpus.js` · Worker `tests/parcours/import_worker_contrat.js` · lanceurs `tools/banc_import_*.js` · contrôles négatifs `tools/mut_import_*.py`.
