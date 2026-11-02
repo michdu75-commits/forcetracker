@@ -8114,7 +8114,13 @@ function _typeSerieImport(ex,si){
    paliers qui s'enchaînent). Un repos écrit pour un palier précis (`restPerSet`) reste à ce palier. */
 function _restBrutSerieImport(ex,si){
   const n=_seriesImport(ex).n;
-  const proprio=!!(ex.restPerSet&&ex.restPerSet[si]!=null&&String(ex.restPerSet[si]).trim()!=='');
+  const vide=v=>v==null||String(v).trim()==='';
+  /* Un repos écrit pour un palier PRÉCIS reste à ce palier. Mais un `restPerSet` UNIFORME (la même valeur sur chaque série) ne dit rien de
+     plus que le repos de l'exercice : c'est le modèle qui a recopié « 2 mins » sur chaque palier (mesuré : 2 des 6 vrais programmes de
+     coachs, C04 et C05) — le document, lui, l'écrit UNE fois, au bout de la série dégressive. */
+  const rp=ex.restPerSet||[];
+  const uniforme=rp.length>1&&!vide(rp[0])&&rp.every(v=>!vide(v)&&String(v).trim()===String(rp[0]).trim());
+  const proprio=!vide(rp[si])&&!uniforme;
   if((ex.setType||'N')==='D'&&!proprio&&si<n-1)return null;
   return _restBrut(ex,si);
 }

@@ -1,0 +1,305 @@
+{
+  "id": "C03-coach-A-11sept",
+  "synthetique": false,
+  "source": "coach-A-11sept",
+  "decrit": "Programme d'un coach en texte à colonnes : un bloc d'abdominaux à faire 4 fois par semaine et une « Séance 2 » avec mouvements enchaînés, unilatéral, tempo et consignes, repos en notation de coach.",
+  "incertitudes": [
+    "Le texte lu ne contient que le bloc abdominaux et la « Seance 2 » : aucune « Seance 1 » n'y figure (document peut-être incomplet à la lecture).",
+    "Colonnes mélangées par l'extraction : pour les abdos, « 3 x15/20 Repos 30/40 sec » est rattaché au relevé sur chaise romaine (consigne « Plaques ton dos contre le siège ») et « 3 x 25 léger Repos 45 sec max » à l'oblique poulie (consigne « Rotation de buste »).",
+    "« Écarté incliné haltère + pull over » avec « 1 + 1 = 1 rep » : lu comme UN mouvement enchaîné (4 x 12), pas comme un superset de deux exercices (le « + » de la règle 5 pourrait le scinder).",
+    "« 4 x 10 + 10 » (poulie basse en unilatérale, « Bloque 2 sec + 10 rapides ») : lu 4 séries de 10 reps, le « + 10 rapides » reste en note ; ni 8 séries (unilatéral) ni superset.",
+    "« Press machine » : la cellule d'exécution est confuse (« Prise serré 10Progressif 8 », « 6 rapides » ailleurs) ; recopiée en note, 3 x 12 pris pour les séries.",
+    "« 1 . 15 min » (espaces autour du point) lu 1 min 15 s = 75 s ; « 1.15 min » aussi ; « Repos 45 sec max » et « 2 min max » lus comme des valeurs fermes (45 s, 120 s) alors que « max » est un plafond.",
+    "« Monté lente 5 sec » conserve la faute du document ; « 3 x 25 léger » : charge « léger » -> kg 0 et « Charge : léger » en note.",
+    "Repos des abdos : le mot « repos » de la cellule « Répétitions et Repos » est gardé dans le texte (« Repos 30 sec »), comme l'exemple du contrat du Worker.",
+    "Le titre du document contient un prénom et une marque de coach : retirés du nom du programme et de tout champ.",
+    "catalogueAttendu null pour tous les mouvements sauf « Dev.couché haltère » (matériel écrit) : « Press machine » et « Dips machine » ne disent pas quelle machine."
+  ],
+  "aiOutput": {
+    "name": "Programme sportif 11 sept",
+    "weeks": 0,
+    "startDate": "",
+    "days": [
+      {
+        "label": "Abdominaux (4 fois par semaine, avant l'entraînement, après l'échauffement)",
+        "exercises": [
+          {
+            "name": "Relevé de jambes pliés sur banc décliné",
+            "sets": 4,
+            "reps": 15,
+            "repsPerSet": [],
+            "specialSets": [],
+            "kg": 0,
+            "kgPerSet": [],
+            "supersetGroup": "",
+            "setType": "",
+            "setTypePerSet": [],
+            "rest": "Repos 30 sec",
+            "restPerSet": ["Repos 30 sec", "Repos 30 sec", "Repos 30 sec", "Repos 30 sec"],
+            "note": "Descente lente"
+          },
+          {
+            "name": "Relevé de jambes sur chaise romaine",
+            "sets": 3,
+            "reps": 15,
+            "repsPerSet": [],
+            "specialSets": [],
+            "kg": 0,
+            "kgPerSet": [],
+            "supersetGroup": "",
+            "setType": "",
+            "setTypePerSet": [],
+            "rest": "Repos 30/40 sec",
+            "restPerSet": ["Repos 30/40 sec", "Repos 30/40 sec", "Repos 30/40 sec"],
+            "note": "Plaques ton dos contre le siège | Reps 15/20"
+          },
+          {
+            "name": "Oblique poulie avec poignée",
+            "sets": 3,
+            "reps": 25,
+            "repsPerSet": [],
+            "specialSets": [],
+            "kg": 0,
+            "kgPerSet": [],
+            "supersetGroup": "",
+            "setType": "",
+            "setTypePerSet": [],
+            "rest": "Repos 45 sec max",
+            "restPerSet": ["Repos 45 sec max", "Repos 45 sec max", "Repos 45 sec max"],
+            "note": "Charge : léger | Rotation de buste"
+          }
+        ]
+      },
+      {
+        "label": "Séance 2",
+        "exercises": [
+          {
+            "name": "Dev.couché haltère",
+            "sets": 3,
+            "reps": 10,
+            "repsPerSet": [],
+            "specialSets": [],
+            "kg": 0,
+            "kgPerSet": [],
+            "supersetGroup": "",
+            "setType": "",
+            "setTypePerSet": [],
+            "rest": "1.15 min",
+            "restPerSet": ["1.15 min", "1.15 min", "1.15 min"],
+            "note": "Double contraction | Reps 10/12"
+          },
+          {
+            "name": "Écarté incliné haltère + pull over",
+            "sets": 4,
+            "reps": 12,
+            "repsPerSet": [],
+            "specialSets": [],
+            "kg": 0,
+            "kgPerSet": [],
+            "supersetGroup": "",
+            "setType": "",
+            "setTypePerSet": [],
+            "rest": "1 . 15 min",
+            "restPerSet": ["1 . 15 min", "1 . 15 min", "1 . 15 min", "1 . 15 min"],
+            "note": "1 + 1 = 1 rep"
+          },
+          {
+            "name": "Poulie basse en unilatérale",
+            "sets": 4,
+            "reps": 10,
+            "repsPerSet": [],
+            "specialSets": [],
+            "kg": 0,
+            "kgPerSet": [],
+            "supersetGroup": "",
+            "setType": "",
+            "setTypePerSet": [],
+            "rest": "1 à 2 min",
+            "restPerSet": ["1 à 2 min", "1 à 2 min", "1 à 2 min", "1 à 2 min"],
+            "note": "Unilatéral | Bloque 2 sec + 10 rapides | 4 x 10 + 10"
+          },
+          {
+            "name": "Dv. serré haltère",
+            "sets": 3,
+            "reps": 12,
+            "repsPerSet": [],
+            "specialSets": [],
+            "kg": 0,
+            "kgPerSet": [],
+            "supersetGroup": "",
+            "setType": "",
+            "setTypePerSet": [],
+            "rest": "1 min",
+            "restPerSet": ["1 min", "1 min", "1 min"],
+            "note": "Monté lente 5 sec"
+          },
+          {
+            "name": "Press machine",
+            "sets": 3,
+            "reps": 12,
+            "repsPerSet": [],
+            "specialSets": [],
+            "kg": 0,
+            "kgPerSet": [],
+            "supersetGroup": "",
+            "setType": "",
+            "setTypePerSet": [],
+            "rest": "2 min max",
+            "restPerSet": ["2 min max", "2 min max", "2 min max"],
+            "note": "Prise serré 10 Progressif 8 | 6 rapides"
+          },
+          {
+            "name": "Dips machine",
+            "sets": 3,
+            "reps": 12,
+            "repsPerSet": [],
+            "specialSets": [],
+            "kg": 0,
+            "kgPerSet": [],
+            "supersetGroup": "",
+            "setType": "",
+            "setTypePerSet": [],
+            "rest": "1 min",
+            "restPerSet": ["1 min", "1 min", "1 min"],
+            "note": "Reps 12/15"
+          }
+        ]
+      }
+    ]
+  },
+  "aiOutputLegacy": null,
+  "attendu": {
+    "totaux": {"jours": 2, "exercices": 9, "series": 30, "seriesEch": 0},
+    "jours": [
+      {
+        "label": "Abdominaux (4 fois par semaine, avant l'entraînement, après l'échauffement)",
+        "cardioAvant": null,
+        "exercices": [
+          {
+            "nom": "Relevé de jambes pliés sur banc décliné",
+            "catalogueAttendu": null,
+            "series": [
+              {"type": "N", "kg": 0, "reps": 15, "repos": 30, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 15, "repos": 30, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 15, "repos": 30, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 15, "repos": 30, "reposTxt": ""}
+            ],
+            "noteContient": ["Descente lente"],
+            "superset": ""
+          },
+          {
+            "nom": "Relevé de jambes sur chaise romaine",
+            "catalogueAttendu": null,
+            "series": [
+              {"type": "N", "kg": 0, "reps": 15, "repos": 0, "reposTxt": "Repos 30/40 sec"},
+              {"type": "N", "kg": 0, "reps": 15, "repos": 0, "reposTxt": "Repos 30/40 sec"},
+              {"type": "N", "kg": 0, "reps": 15, "repos": 0, "reposTxt": "Repos 30/40 sec"}
+            ],
+            "noteContient": ["Plaques ton dos contre le siège", "Reps 15/20"],
+            "superset": ""
+          },
+          {
+            "nom": "Oblique poulie avec poignée",
+            "catalogueAttendu": null,
+            "series": [
+              {"type": "N", "kg": 0, "reps": 25, "repos": 45, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 25, "repos": 45, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 25, "repos": 45, "reposTxt": ""}
+            ],
+            "noteContient": ["Charge : léger", "Rotation de buste"],
+            "superset": ""
+          }
+        ]
+      },
+      {
+        "label": "Séance 2",
+        "cardioAvant": null,
+        "exercices": [
+          {
+            "nom": "Dev.couché haltère",
+            "catalogueAttendu": "Développé Couché Haltères",
+            "series": [
+              {"type": "N", "kg": 0, "reps": 10, "repos": 75, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 10, "repos": 75, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 10, "repos": 75, "reposTxt": ""}
+            ],
+            "noteContient": ["Double contraction", "Reps 10/12"],
+            "superset": ""
+          },
+          {
+            "nom": "Écarté incliné haltère + pull over",
+            "catalogueAttendu": null,
+            "series": [
+              {"type": "N", "kg": 0, "reps": 12, "repos": 75, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 12, "repos": 75, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 12, "repos": 75, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 12, "repos": 75, "reposTxt": ""}
+            ],
+            "noteContient": ["1 + 1 = 1 rep"],
+            "superset": ""
+          },
+          {
+            "nom": "Poulie basse en unilatérale",
+            "catalogueAttendu": null,
+            "series": [
+              {"type": "N", "kg": 0, "reps": 10, "repos": 0, "reposTxt": "1 à 2 min"},
+              {"type": "N", "kg": 0, "reps": 10, "repos": 0, "reposTxt": "1 à 2 min"},
+              {"type": "N", "kg": 0, "reps": 10, "repos": 0, "reposTxt": "1 à 2 min"},
+              {"type": "N", "kg": 0, "reps": 10, "repos": 0, "reposTxt": "1 à 2 min"}
+            ],
+            "noteContient": ["Bloque 2 sec + 10 rapides"],
+            "superset": ""
+          },
+          {
+            "nom": "Dv. serré haltère",
+            "catalogueAttendu": null,
+            "series": [
+              {"type": "N", "kg": 0, "reps": 12, "repos": 60, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 12, "repos": 60, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 12, "repos": 60, "reposTxt": ""}
+            ],
+            "noteContient": ["Monté lente 5 sec"],
+            "superset": ""
+          },
+          {
+            "nom": "Press machine",
+            "catalogueAttendu": null,
+            "series": [
+              {"type": "N", "kg": 0, "reps": 12, "repos": 120, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 12, "repos": 120, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 12, "repos": 120, "reposTxt": ""}
+            ],
+            "noteContient": ["Prise serré 10 Progressif 8", "6 rapides"],
+            "superset": ""
+          },
+          {
+            "nom": "Dips machine",
+            "catalogueAttendu": null,
+            "series": [
+              {"type": "N", "kg": 0, "reps": 12, "repos": 60, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 12, "repos": 60, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 12, "repos": 60, "reposTxt": ""}
+            ],
+            "noteContient": ["Reps 12/15"],
+            "superset": ""
+          }
+        ]
+      }
+    ],
+    "propositions": [],
+    "methodes": [
+      {"element": "Mouvement enchaîné « 1 + 1 = 1 rep » (écarté puis pull-over)", "statut": "COMPRIS_MAIS_NOTE"},
+      {"element": "Unilatéral (poulie basse) et « bloque 2 sec + 10 rapides » (10 + 10)", "statut": "COMPRIS_MAIS_NOTE"},
+      {"element": "Tempo / exécution lente (« descente lente », « monté lente 5 sec », « double contraction »)", "statut": "COMPRIS_MAIS_NOTE"},
+      {"element": "Plages de reps écrites avec une barre oblique (10/12, 15/20, 12/15)", "statut": "PARTIELLEMENT_REPRÉSENTABLE"},
+      {"element": "Repos « 45 sec max » et « 2 min max » (plafond lu comme valeur ferme)", "statut": "PARTIELLEMENT_REPRÉSENTABLE"},
+      {"element": "Repos fermes (30 sec, 1.15 min, 1 min)", "statut": "COMPRIS_STRUCTURÉ"},
+      {"element": "Repos en plage (30/40 sec, 1 à 2 min)", "statut": "COMPRIS_MAIS_NOTE"},
+      {"element": "Charge « léger »", "statut": "COMPRIS_MAIS_NOTE"},
+      {"element": "Colonne Tips (consignes d'exécution)", "statut": "COMPRIS_MAIS_NOTE"},
+      {"element": "Bloc abdominaux « 4 fois par semaine avant l'entraînement, après l'échauffement »", "statut": "PARTIELLEMENT_REPRÉSENTABLE"},
+      {"element": "Exécution illisible de « Press machine » recopiée telle quelle", "statut": "COMPRIS_MAIS_NOTE"}
+    ],
+    "nonRepresentable": []
+  }
+}

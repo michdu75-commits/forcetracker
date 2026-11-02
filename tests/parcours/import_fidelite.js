@@ -184,8 +184,9 @@ module.exports.ecran = async function (t, b, PORT) {
     const avant = S.programmes;                                            // on AJOUTE un programme, on n'écrase pas ceux des autres tests
     S.programmes = avant.concat([{ id: 'p9', name: 'Mixte', weeks: 0, startDate: '', days: [{ label: 'J1', exs: [{ name: 'Squat à la Barre', sets: [{ kg: 100, reps: 5, type: 'N', rest: 150, restTxt: '2-3 min' }, { kg: 100, reps: 5, type: 'N', rest: 0, restTxt: '2-3 min' }] }] }] }]);
     S.wkt = null; _loadProgDayVraiment(S.programmes.length - 1, 0); stopRest();
-    toggleSet(0, 0); const a = { tot: restTot, cons: (document.getElementById('rest-consigne') || {}).style && document.getElementById('rest-consigne').style.display };
-    stopRest(); toggleSet(0, 1); const b2 = { tot: restTot, cons: document.getElementById('rest-consigne').style.display, txt: document.getElementById('rest-consigne').textContent };
+    const rcs = () => { const e = document.getElementById('rest-consigne'); return e ? { d: e.style.display, t: e.textContent } : { d: '(absent)', t: '' }; };   // absent sur le code d'avant : un rouge, pas un plantage
+    toggleSet(0, 0); const a = { tot: restTot, cons: rcs().d };
+    stopRest(); toggleSet(0, 1); const b2 = { tot: restTot, cons: rcs().d, txt: rcs().t };
     const garde = S.wkt.exs[0].sets[0].restTxt;
     stopRest(); S.programmes = avant; S.wkt = null; persist();
     return { a, b: b2, restTxtGarde: garde };

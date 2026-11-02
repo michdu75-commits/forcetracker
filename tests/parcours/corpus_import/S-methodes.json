@@ -1,0 +1,1101 @@
+{
+  "id": "S-methodes",
+  "synthetique": true,
+  "source": "synthetique-methodes",
+  "decrit": "Mini-programmes SYNTHÉTIQUES (aucun document réel) couvrant les méthodes que les programmes réels de référence emploient : rest-pause, myo-reps, 10x10, 8+2+2+2, top set + back-off, %1RM + RPE, séance facultative / rappel / jours de repos, unilatéral, tempo contrast, isométrie progressive, ramping reps, dead set. Chaque élément de `fixtures` suit le format d'une fixture.",
+  "fixtures": [
+    {
+      "id": "S01-rest-pause",
+      "synthetique": true,
+      "source": "synthetique-rest-pause",
+      "decrit": "Rest-pause : dernière série du développé couché poussée à l'échec, trois mini-séries séparées de 15 s.",
+      "texteSource": "Séance A - Pectoraux\nDéveloppé couché : 3 x 8 à 80 kg, repos 2 min. Dernière série en rest-pause : aller à l'échec, 15 s de pause, reprendre jusqu'à l'échec, 15 s de pause, reprendre une dernière fois.\nÉcarté poulie : 3 x 12 à 20 kg, repos 90 s.",
+      "incertitudes": ["Fixture SYNTHÉTIQUE : texte rédigé pour couvrir la méthode, ce n'est pas un document réel."],
+      "aiOutput": {
+        "name": "Programme synthétique S01 - rest-pause",
+        "weeks": 0,
+        "startDate": "",
+        "days": [
+          {
+            "label": "Séance A - Pectoraux",
+            "exercises": [
+              {
+                "name": "Développé couché",
+                "sets": 3,
+                "reps": 8,
+                "repsPerSet": [],
+                "specialSets": [],
+                "kg": 80,
+                "kgPerSet": [],
+                "supersetGroup": "",
+                "setType": "",
+                "setTypePerSet": [],
+                "rest": "2 min",
+                "restPerSet": ["2 min", "2 min", "2 min"],
+                "note": "Dernière série en rest-pause : aller à l'échec, 15 s de pause, reprendre jusqu'à l'échec, 15 s de pause, reprendre une dernière fois"
+              },
+              {
+                "name": "Écarté poulie",
+                "sets": 3,
+                "reps": 12,
+                "repsPerSet": [],
+                "specialSets": [],
+                "kg": 20,
+                "kgPerSet": [],
+                "supersetGroup": "",
+                "setType": "",
+                "setTypePerSet": [],
+                "rest": "90 s",
+                "restPerSet": ["90 s", "90 s", "90 s"],
+                "note": ""
+              }
+            ]
+          }
+        ]
+      },
+      "aiOutputLegacy": null,
+      "attendu": {
+        "totaux": {"jours": 1, "exercices": 2, "series": 6, "seriesEch": 0},
+        "jours": [
+          {
+            "label": "Séance A - Pectoraux",
+            "cardioAvant": null,
+            "exercices": [
+              {
+                "nom": "Développé couché",
+                "catalogueAttendu": "Développé Couché",
+                "series": [
+                  {"type": "N", "kg": 80, "reps": 8, "repos": 120, "reposTxt": ""},
+                  {"type": "N", "kg": 80, "reps": 8, "repos": 120, "reposTxt": ""},
+                  {"type": "N", "kg": 80, "reps": 8, "repos": 120, "reposTxt": ""}
+                ],
+                "noteContient": ["rest-pause", "15 s de pause"],
+                "superset": ""
+              },
+              {
+                "nom": "Écarté poulie",
+                "catalogueAttendu": "Écarté Poulie",
+                "series": [
+                  {"type": "N", "kg": 20, "reps": 12, "repos": 90, "reposTxt": ""},
+                  {"type": "N", "kg": 20, "reps": 12, "repos": 90, "reposTxt": ""},
+                  {"type": "N", "kg": 20, "reps": 12, "repos": 90, "reposTxt": ""}
+                ],
+                "noteContient": [],
+                "superset": ""
+              }
+            ]
+          }
+        ],
+        "propositions": [],
+        "methodes": [
+          {"element": "Rest-pause sur la dernière série (mini-séries à l'échec séparées de 15 s)", "statut": "COMPRIS_MAIS_NOTE"},
+          {"element": "Repos fermes (2 min, 90 s)", "statut": "COMPRIS_STRUCTURÉ"}
+        ],
+        "nonRepresentable": []
+      }
+    },
+    {
+      "id": "S02-myo-reps",
+      "synthetique": true,
+      "source": "synthetique-myo-reps",
+      "decrit": "Myo-reps : série d'activation de 15 reps puis quatre mini-séries de 5 reps à 15 s de repos.",
+      "texteSource": "Jour B - Épaules\nÉlévations latérales (haltères, 12 kg) en myo-reps : série d'activation de 15 reps (repos 15 s), puis 4 mini-séries de 5 reps avec 15 s de repos entre chaque ; repos 2 min après la dernière mini-série.",
+      "incertitudes": ["Fixture SYNTHÉTIQUE : texte rédigé pour couvrir la méthode, ce n'est pas un document réel."],
+      "aiOutput": {
+        "name": "Programme synthétique S02 - myo-reps",
+        "weeks": 0,
+        "startDate": "",
+        "days": [
+          {
+            "label": "Jour B - Épaules",
+            "exercises": [
+              {
+                "name": "Élévations latérales",
+                "sets": 5,
+                "reps": 5,
+                "repsPerSet": [15, 5, 5, 5, 5],
+                "specialSets": [],
+                "kg": 12,
+                "kgPerSet": [],
+                "supersetGroup": "",
+                "setType": "",
+                "setTypePerSet": [],
+                "rest": "",
+                "restPerSet": ["15 s", "15 s", "15 s", "15 s", "2 min"],
+                "note": "Myo-reps : série d'activation de 15 reps puis 4 mini-séries de 5 reps, 15 s de repos entre chaque"
+              }
+            ]
+          }
+        ]
+      },
+      "aiOutputLegacy": null,
+      "attendu": {
+        "totaux": {"jours": 1, "exercices": 1, "series": 5, "seriesEch": 0},
+        "jours": [
+          {
+            "label": "Jour B - Épaules",
+            "cardioAvant": null,
+            "exercices": [
+              {
+                "nom": "Élévations latérales",
+                "catalogueAttendu": "Élévations Latérales (Lateral Raise)",
+                "series": [
+                  {"type": "N", "kg": 12, "reps": 15, "repos": 15, "reposTxt": ""},
+                  {"type": "N", "kg": 12, "reps": 5, "repos": 15, "reposTxt": ""},
+                  {"type": "N", "kg": 12, "reps": 5, "repos": 15, "reposTxt": ""},
+                  {"type": "N", "kg": 12, "reps": 5, "repos": 15, "reposTxt": ""},
+                  {"type": "N", "kg": 12, "reps": 5, "repos": 120, "reposTxt": ""}
+                ],
+                "noteContient": ["Myo-reps", "4 mini-séries de 5 reps"],
+                "superset": ""
+              }
+            ]
+          }
+        ],
+        "propositions": [],
+        "methodes": [
+          {
+            "element": "Myo-reps : l'activation et chaque mini-série deviennent des séries à repos court ; le lien « grappe » n'existe pas",
+            "statut": "PARTIELLEMENT_REPRÉSENTABLE"
+          }
+        ],
+        "nonRepresentable": []
+      }
+    },
+    {
+      "id": "S03-10x10",
+      "synthetique": true,
+      "source": "synthetique-10x10",
+      "decrit": "Méthode 10 x 10 : dix séries de dix répétitions à charge constante.",
+      "texteSource": "Séance volume - Cuisses\nSquat : méthode 10x10, 10 séries de 10 reps à 60 kg, repos 90 s entre les séries (même charge sur les 10 séries).",
+      "incertitudes": ["Fixture SYNTHÉTIQUE : texte rédigé pour couvrir la méthode, ce n'est pas un document réel."],
+      "aiOutput": {
+        "name": "Programme synthétique S03 - 10x10",
+        "weeks": 0,
+        "startDate": "",
+        "days": [
+          {
+            "label": "Séance volume - Cuisses",
+            "exercises": [
+              {
+                "name": "Squat",
+                "sets": 10,
+                "reps": 10,
+                "repsPerSet": [],
+                "specialSets": [],
+                "kg": 60,
+                "kgPerSet": [],
+                "supersetGroup": "",
+                "setType": "",
+                "setTypePerSet": [],
+                "rest": "90 s",
+                "restPerSet": ["90 s", "90 s", "90 s", "90 s", "90 s", "90 s", "90 s", "90 s", "90 s", "90 s"],
+                "note": "Méthode 10x10 : même charge sur les 10 séries"
+              }
+            ]
+          }
+        ]
+      },
+      "aiOutputLegacy": null,
+      "attendu": {
+        "totaux": {"jours": 1, "exercices": 1, "series": 10, "seriesEch": 0},
+        "jours": [
+          {
+            "label": "Séance volume - Cuisses",
+            "cardioAvant": null,
+            "exercices": [
+              {
+                "nom": "Squat",
+                "catalogueAttendu": "Squat à la Barre",
+                "series": [
+                  {"type": "N", "kg": 60, "reps": 10, "repos": 90, "reposTxt": ""},
+                  {"type": "N", "kg": 60, "reps": 10, "repos": 90, "reposTxt": ""},
+                  {"type": "N", "kg": 60, "reps": 10, "repos": 90, "reposTxt": ""},
+                  {"type": "N", "kg": 60, "reps": 10, "repos": 90, "reposTxt": ""},
+                  {"type": "N", "kg": 60, "reps": 10, "repos": 90, "reposTxt": ""},
+                  {"type": "N", "kg": 60, "reps": 10, "repos": 90, "reposTxt": ""},
+                  {"type": "N", "kg": 60, "reps": 10, "repos": 90, "reposTxt": ""},
+                  {"type": "N", "kg": 60, "reps": 10, "repos": 90, "reposTxt": ""},
+                  {"type": "N", "kg": 60, "reps": 10, "repos": 90, "reposTxt": ""},
+                  {"type": "N", "kg": 60, "reps": 10, "repos": 90, "reposTxt": ""}
+                ],
+                "noteContient": ["Méthode 10x10"],
+                "superset": ""
+              }
+            ]
+          }
+        ],
+        "propositions": [],
+        "methodes": [
+          {"element": "10 x 10 (dix séries de 10 reps à charge constante)", "statut": "COMPRIS_STRUCTURÉ"}
+        ],
+        "nonRepresentable": []
+      }
+    },
+    {
+      "id": "S04-8-2-2-2",
+      "synthetique": true,
+      "source": "synthetique-8-2-2-2",
+      "decrit": "Méthode 8+2+2+2 : trois séries composées de 8 reps puis trois grappes de 2 reps à repos très court.",
+      "texteSource": "Séance bras\nCurl barre EZ : 3 séries de 8+2+2+2 à 30 kg (8 reps, 10 s de repos, puis 3 fois 2 reps avec 10 s de repos), repos 90 s entre les séries.",
+      "incertitudes": [
+        "Fixture SYNTHÉTIQUE : texte rédigé pour couvrir la méthode, ce n'est pas un document réel.",
+        "reps lu 8 (valeur principale). La règle 1 du prompt donne pour « 8+10 » la DERNIÈRE valeur et pour « 15+(3-5 reps)x5 » la première : la règle est ambiguë, la fixture retient la première."
+      ],
+      "aiOutput": {
+        "name": "Programme synthétique S04 - 8-2-2-2",
+        "weeks": 0,
+        "startDate": "",
+        "days": [
+          {
+            "label": "Séance bras",
+            "exercises": [
+              {
+                "name": "Curl barre EZ",
+                "sets": 3,
+                "reps": 8,
+                "repsPerSet": [],
+                "specialSets": [],
+                "kg": 30,
+                "kgPerSet": [],
+                "supersetGroup": "",
+                "setType": "",
+                "setTypePerSet": [],
+                "rest": "90 s",
+                "restPerSet": ["90 s", "90 s", "90 s"],
+                "note": "8+2+2+2 : 8 reps, 10 s de repos, puis 3 fois 2 reps avec 10 s de repos"
+              }
+            ]
+          }
+        ]
+      },
+      "aiOutputLegacy": null,
+      "attendu": {
+        "totaux": {"jours": 1, "exercices": 1, "series": 3, "seriesEch": 0},
+        "jours": [
+          {
+            "label": "Séance bras",
+            "cardioAvant": null,
+            "exercices": [
+              {
+                "nom": "Curl barre EZ",
+                "catalogueAttendu": "Curl EZ",
+                "series": [
+                  {"type": "N", "kg": 30, "reps": 8, "repos": 90, "reposTxt": ""},
+                  {"type": "N", "kg": 30, "reps": 8, "repos": 90, "reposTxt": ""},
+                  {"type": "N", "kg": 30, "reps": 8, "repos": 90, "reposTxt": ""}
+                ],
+                "noteContient": ["8+2+2+2"],
+                "superset": ""
+              }
+            ]
+          }
+        ],
+        "propositions": [],
+        "methodes": [
+          {"element": "8+2+2+2 : reps = 8 (valeur principale), les 3 grappes de 2 reps restent en note", "statut": "PARTIELLEMENT_REPRÉSENTABLE"}
+        ],
+        "nonRepresentable": []
+      }
+    },
+    {
+      "id": "S05-top-set-back-off",
+      "synthetique": true,
+      "source": "synthetique-top-set-back-off",
+      "decrit": "Top set suivi de séries de back-off à charge réduite, avec RPE.",
+      "texteSource": "Séance Force - Squat\nSquat : top set 1 x 3 à 120 kg (RPE 8), puis back-off 3 x 5 à 100 kg (RPE 7). Repos 3 min.",
+      "incertitudes": ["Fixture SYNTHÉTIQUE : texte rédigé pour couvrir la méthode, ce n'est pas un document réel."],
+      "aiOutput": {
+        "name": "Programme synthétique S05 - top-set-back-off",
+        "weeks": 0,
+        "startDate": "",
+        "days": [
+          {
+            "label": "Séance Force - Squat",
+            "exercises": [
+              {
+                "name": "Squat",
+                "sets": 4,
+                "reps": 5,
+                "repsPerSet": [3, 5, 5, 5],
+                "specialSets": [],
+                "kg": 0,
+                "kgPerSet": [120, 100, 100, 100],
+                "supersetGroup": "",
+                "setType": "",
+                "setTypePerSet": [],
+                "rest": "3 min",
+                "restPerSet": ["3 min", "3 min", "3 min", "3 min"],
+                "note": "Top set 1 x 3 à 120 kg RPE 8 | Back-off 3 x 5 à 100 kg RPE 7"
+              }
+            ]
+          }
+        ]
+      },
+      "aiOutputLegacy": null,
+      "attendu": {
+        "totaux": {"jours": 1, "exercices": 1, "series": 4, "seriesEch": 0},
+        "jours": [
+          {
+            "label": "Séance Force - Squat",
+            "cardioAvant": null,
+            "exercices": [
+              {
+                "nom": "Squat",
+                "catalogueAttendu": "Squat à la Barre",
+                "series": [
+                  {"type": "N", "kg": 120, "reps": 3, "repos": 180, "reposTxt": ""},
+                  {"type": "N", "kg": 100, "reps": 5, "repos": 180, "reposTxt": ""},
+                  {"type": "N", "kg": 100, "reps": 5, "repos": 180, "reposTxt": ""},
+                  {"type": "N", "kg": 100, "reps": 5, "repos": 180, "reposTxt": ""}
+                ],
+                "noteContient": ["Top set", "Back-off", "RPE 8"],
+                "superset": ""
+              }
+            ]
+          }
+        ],
+        "propositions": [],
+        "methodes": [
+          {"element": "Top set puis back-off : une charge différente par série", "statut": "COMPRIS_STRUCTURÉ"},
+          {"element": "RPE par groupe de séries", "statut": "COMPRIS_MAIS_NOTE"}
+        ],
+        "nonRepresentable": []
+      }
+    },
+    {
+      "id": "S06-pct1rm-rpe",
+      "synthetique": true,
+      "source": "synthetique-pct1rm-rpe",
+      "decrit": "Pourcentages de 1RM avec 1RM fournis (kg calculés pour la semaine 1), RPE et progression sur 4 semaines.",
+      "texteSource": "Programme force 4 semaines\n1RM de départ : squat 150 kg, développé couché 100 kg. Pourcentages : semaine 1 70 %, semaine 2 75 %, semaine 3 80 %, semaine 4 60 % (décharge).\nSquat : 4 x 5 au pourcentage de la semaine, RPE 7, repos 3 min.\nDéveloppé couché : 5 x 5 au pourcentage de la semaine, RPE 8, repos 3 min.",
+      "incertitudes": ["Fixture SYNTHÉTIQUE : texte rédigé pour couvrir la méthode, ce n'est pas un document réel."],
+      "aiOutput": {
+        "name": "Programme force synthétique",
+        "weeks": 4,
+        "startDate": "",
+        "days": [
+          {
+            "label": "Séance Force",
+            "exercises": [
+              {
+                "name": "Squat",
+                "sets": 4,
+                "reps": 5,
+                "repsPerSet": [],
+                "specialSets": [],
+                "kg": 105,
+                "kgPerSet": [],
+                "supersetGroup": "",
+                "setType": "",
+                "setTypePerSet": [],
+                "rest": "3 min",
+                "restPerSet": ["3 min", "3 min", "3 min", "3 min"],
+                "note": "70% 1RM (S1), 1RM 150 kg | Progression : S2 75% - S3 80% - S4 60% (décharge) | RPE 7"
+              },
+              {
+                "name": "Développé couché",
+                "sets": 5,
+                "reps": 5,
+                "repsPerSet": [],
+                "specialSets": [],
+                "kg": 70,
+                "kgPerSet": [],
+                "supersetGroup": "",
+                "setType": "",
+                "setTypePerSet": [],
+                "rest": "3 min",
+                "restPerSet": ["3 min", "3 min", "3 min", "3 min", "3 min"],
+                "note": "70% 1RM (S1), 1RM 100 kg | Progression : S2 75% - S3 80% - S4 60% (décharge) | RPE 8"
+              }
+            ]
+          }
+        ]
+      },
+      "aiOutputLegacy": null,
+      "attendu": {
+        "totaux": {"jours": 1, "exercices": 2, "series": 9, "seriesEch": 0},
+        "jours": [
+          {
+            "label": "Séance Force",
+            "cardioAvant": null,
+            "exercices": [
+              {
+                "nom": "Squat",
+                "catalogueAttendu": "Squat à la Barre",
+                "series": [
+                  {"type": "N", "kg": 105, "reps": 5, "repos": 180, "reposTxt": ""},
+                  {"type": "N", "kg": 105, "reps": 5, "repos": 180, "reposTxt": ""},
+                  {"type": "N", "kg": 105, "reps": 5, "repos": 180, "reposTxt": ""},
+                  {"type": "N", "kg": 105, "reps": 5, "repos": 180, "reposTxt": ""}
+                ],
+                "noteContient": ["70% 1RM", "RPE 7"],
+                "superset": ""
+              },
+              {
+                "nom": "Développé couché",
+                "catalogueAttendu": "Développé Couché",
+                "series": [
+                  {"type": "N", "kg": 70, "reps": 5, "repos": 180, "reposTxt": ""},
+                  {"type": "N", "kg": 70, "reps": 5, "repos": 180, "reposTxt": ""},
+                  {"type": "N", "kg": 70, "reps": 5, "repos": 180, "reposTxt": ""},
+                  {"type": "N", "kg": 70, "reps": 5, "repos": 180, "reposTxt": ""},
+                  {"type": "N", "kg": 70, "reps": 5, "repos": 180, "reposTxt": ""}
+                ],
+                "noteContient": ["70% 1RM", "RPE 8"],
+                "superset": ""
+              }
+            ]
+          }
+        ],
+        "propositions": [],
+        "methodes": [
+          {"element": "%1RM : kg de la semaine 1 calculés par le modèle (150 x 0,70 = 105 ; 100 x 0,70 = 70)", "statut": "PARTIELLEMENT_REPRÉSENTABLE"},
+          {"element": "RPE cible", "statut": "COMPRIS_MAIS_NOTE"},
+          {"element": "Progression des pourcentages sur 4 semaines (75 %, 80 %, 60 %)", "statut": "COMPRIS_MAIS_NOTE"},
+          {"element": "Durée du programme : 4 semaines", "statut": "COMPRIS_STRUCTURÉ"}
+        ],
+        "nonRepresentable": []
+      }
+    },
+    {
+      "id": "S07-facultative-repos-rappel",
+      "synthetique": true,
+      "source": "synthetique-facultative-repos-rappel",
+      "decrit": "Séance facultative, séance de rappel et jours de repos dans la répartition de la semaine.",
+      "texteSource": "Programme 4 jours\nJour 1 - Haut du corps : développé couché 4 x 8, tirage vertical 4 x 10.\nJour 2 - Bas du corps : squat 4 x 6, soulevé de terre roumain 3 x 8.\nJour 3 (facultatif) - Bras et abdos : curl barre 3 x 12, triceps poulie 3 x 12, gainage 3 x 30 s.\nJour 4 - Rappel dos (séance courte, charge modérée) : tirage poulie basse 3 x 15.\nRépartition : lundi Jour 1, mardi Jour 2, jeudi Jour 4, samedi Jour 3 (facultatif) ; mercredi, vendredi et dimanche : repos.",
+      "incertitudes": ["Fixture SYNTHÉTIQUE : texte rédigé pour couvrir la méthode, ce n'est pas un document réel.", "Aucune charge ni repos dans le texte : kg 0 et rest vide, rien n'est inventé."],
+      "aiOutput": {
+        "name": "Programme synthétique S07 - facultative-repos-rappel",
+        "weeks": 0,
+        "startDate": "",
+        "days": [
+          {
+            "label": "Jour 1 - Haut du corps",
+            "exercises": [
+              {
+                "name": "Développé couché",
+                "sets": 4,
+                "reps": 8,
+                "repsPerSet": [],
+                "specialSets": [],
+                "kg": 0,
+                "kgPerSet": [],
+                "supersetGroup": "",
+                "setType": "",
+                "setTypePerSet": [],
+                "rest": "",
+                "restPerSet": ["", "", "", ""],
+                "note": ""
+              },
+              {
+                "name": "Tirage vertical",
+                "sets": 4,
+                "reps": 10,
+                "repsPerSet": [],
+                "specialSets": [],
+                "kg": 0,
+                "kgPerSet": [],
+                "supersetGroup": "",
+                "setType": "",
+                "setTypePerSet": [],
+                "rest": "",
+                "restPerSet": ["", "", "", ""],
+                "note": ""
+              }
+            ]
+          },
+          {
+            "label": "Jour 2 - Bas du corps",
+            "exercises": [
+              {
+                "name": "Squat",
+                "sets": 4,
+                "reps": 6,
+                "repsPerSet": [],
+                "specialSets": [],
+                "kg": 0,
+                "kgPerSet": [],
+                "supersetGroup": "",
+                "setType": "",
+                "setTypePerSet": [],
+                "rest": "",
+                "restPerSet": ["", "", "", ""],
+                "note": ""
+              },
+              {
+                "name": "Soulevé de terre roumain",
+                "sets": 3,
+                "reps": 8,
+                "repsPerSet": [],
+                "specialSets": [],
+                "kg": 0,
+                "kgPerSet": [],
+                "supersetGroup": "",
+                "setType": "",
+                "setTypePerSet": [],
+                "rest": "",
+                "restPerSet": ["", "", ""],
+                "note": ""
+              }
+            ]
+          },
+          {
+            "label": "Jour 3 - Bras et abdos (facultative)",
+            "exercises": [
+              {
+                "name": "Curl barre",
+                "sets": 3,
+                "reps": 12,
+                "repsPerSet": [],
+                "specialSets": [],
+                "kg": 0,
+                "kgPerSet": [],
+                "supersetGroup": "",
+                "setType": "",
+                "setTypePerSet": [],
+                "rest": "",
+                "restPerSet": ["", "", ""],
+                "note": ""
+              },
+              {
+                "name": "Triceps poulie",
+                "sets": 3,
+                "reps": 12,
+                "repsPerSet": [],
+                "specialSets": [],
+                "kg": 0,
+                "kgPerSet": [],
+                "supersetGroup": "",
+                "setType": "",
+                "setTypePerSet": [],
+                "rest": "",
+                "restPerSet": ["", "", ""],
+                "note": ""
+              },
+              {
+                "name": "Gainage",
+                "sets": 3,
+                "reps": 30,
+                "repsPerSet": [],
+                "specialSets": [],
+                "kg": 0,
+                "kgPerSet": [],
+                "supersetGroup": "",
+                "setType": "",
+                "setTypePerSet": [],
+                "rest": "",
+                "restPerSet": ["", "", ""],
+                "note": "Durée : 30 s par série"
+              }
+            ]
+          },
+          {
+            "label": "Jour 4 - Rappel dos",
+            "exercises": [
+              {
+                "name": "Tirage poulie basse",
+                "sets": 3,
+                "reps": 15,
+                "repsPerSet": [],
+                "specialSets": [],
+                "kg": 0,
+                "kgPerSet": [],
+                "supersetGroup": "",
+                "setType": "",
+                "setTypePerSet": [],
+                "rest": "",
+                "restPerSet": ["", "", ""],
+                "note": "Séance courte, charge modérée"
+              }
+            ]
+          }
+        ]
+      },
+      "aiOutputLegacy": null,
+      "attendu": {
+        "totaux": {"jours": 4, "exercices": 8, "series": 27, "seriesEch": 0},
+        "jours": [
+          {
+            "label": "Jour 1 - Haut du corps",
+            "cardioAvant": null,
+            "exercices": [
+              {
+                "nom": "Développé couché",
+                "catalogueAttendu": "Développé Couché",
+                "series": [
+                  {"type": "N", "kg": 0, "reps": 8, "repos": 0, "reposTxt": ""},
+                  {"type": "N", "kg": 0, "reps": 8, "repos": 0, "reposTxt": ""},
+                  {"type": "N", "kg": 0, "reps": 8, "repos": 0, "reposTxt": ""},
+                  {"type": "N", "kg": 0, "reps": 8, "repos": 0, "reposTxt": ""}
+                ],
+                "noteContient": [],
+                "superset": ""
+              },
+              {
+                "nom": "Tirage vertical",
+                "catalogueAttendu": "Tirage Poulie Haute (Lat Pulldown)",
+                "series": [
+                  {"type": "N", "kg": 0, "reps": 10, "repos": 0, "reposTxt": ""},
+                  {"type": "N", "kg": 0, "reps": 10, "repos": 0, "reposTxt": ""},
+                  {"type": "N", "kg": 0, "reps": 10, "repos": 0, "reposTxt": ""},
+                  {"type": "N", "kg": 0, "reps": 10, "repos": 0, "reposTxt": ""}
+                ],
+                "noteContient": [],
+                "superset": ""
+              }
+            ]
+          },
+          {
+            "label": "Jour 2 - Bas du corps",
+            "cardioAvant": null,
+            "exercices": [
+              {
+                "nom": "Squat",
+                "catalogueAttendu": "Squat à la Barre",
+                "series": [
+                  {"type": "N", "kg": 0, "reps": 6, "repos": 0, "reposTxt": ""},
+                  {"type": "N", "kg": 0, "reps": 6, "repos": 0, "reposTxt": ""},
+                  {"type": "N", "kg": 0, "reps": 6, "repos": 0, "reposTxt": ""},
+                  {"type": "N", "kg": 0, "reps": 6, "repos": 0, "reposTxt": ""}
+                ],
+                "noteContient": [],
+                "superset": ""
+              },
+              {
+                "nom": "Soulevé de terre roumain",
+                "catalogueAttendu": "Soulevé de Terre Roumain Barre",
+                "series": [
+                  {"type": "N", "kg": 0, "reps": 8, "repos": 0, "reposTxt": ""},
+                  {"type": "N", "kg": 0, "reps": 8, "repos": 0, "reposTxt": ""},
+                  {"type": "N", "kg": 0, "reps": 8, "repos": 0, "reposTxt": ""}
+                ],
+                "noteContient": [],
+                "superset": ""
+              }
+            ]
+          },
+          {
+            "label": "Jour 3 - Bras et abdos (facultative)",
+            "cardioAvant": null,
+            "exercices": [
+              {
+                "nom": "Curl barre",
+                "catalogueAttendu": "Curl Barre",
+                "series": [
+                  {"type": "N", "kg": 0, "reps": 12, "repos": 0, "reposTxt": ""},
+                  {"type": "N", "kg": 0, "reps": 12, "repos": 0, "reposTxt": ""},
+                  {"type": "N", "kg": 0, "reps": 12, "repos": 0, "reposTxt": ""}
+                ],
+                "noteContient": [],
+                "superset": ""
+              },
+              {
+                "nom": "Triceps poulie",
+                "catalogueAttendu": "Triceps Poulie",
+                "series": [
+                  {"type": "N", "kg": 0, "reps": 12, "repos": 0, "reposTxt": ""},
+                  {"type": "N", "kg": 0, "reps": 12, "repos": 0, "reposTxt": ""},
+                  {"type": "N", "kg": 0, "reps": 12, "repos": 0, "reposTxt": ""}
+                ],
+                "noteContient": [],
+                "superset": ""
+              },
+              {
+                "nom": "Gainage",
+                "catalogueAttendu": "Gainage",
+                "series": [
+                  {"type": "N", "kg": 0, "reps": 30, "repos": 0, "reposTxt": ""},
+                  {"type": "N", "kg": 0, "reps": 30, "repos": 0, "reposTxt": ""},
+                  {"type": "N", "kg": 0, "reps": 30, "repos": 0, "reposTxt": ""}
+                ],
+                "noteContient": ["Durée : 30 s par série"],
+                "superset": ""
+              }
+            ]
+          },
+          {
+            "label": "Jour 4 - Rappel dos",
+            "cardioAvant": null,
+            "exercices": [
+              {
+                "nom": "Tirage poulie basse",
+                "catalogueAttendu": null,
+                "series": [
+                  {"type": "N", "kg": 0, "reps": 15, "repos": 0, "reposTxt": ""},
+                  {"type": "N", "kg": 0, "reps": 15, "repos": 0, "reposTxt": ""},
+                  {"type": "N", "kg": 0, "reps": 15, "repos": 0, "reposTxt": ""}
+                ],
+                "noteContient": ["Séance courte, charge modérée"],
+                "superset": ""
+              }
+            ]
+          }
+        ],
+        "propositions": [],
+        "methodes": [
+          {"element": "Séance facultative : mention « (facultative) » dans le libellé du jour", "statut": "COMPRIS_MAIS_NOTE"},
+          {"element": "Séance de rappel (« Rappel dos », courte, charge modérée) : libellé et note", "statut": "COMPRIS_MAIS_NOTE"},
+          {"element": "Gainage 30 s : secondes stockées dans reps", "statut": "PARTIELLEMENT_REPRÉSENTABLE"},
+          {"element": "Répartition hebdomadaire et jours de repos (mercredi, vendredi, dimanche)", "statut": "NON_REPRÉSENTABLE"}
+        ],
+        "nonRepresentable": ["Répartition hebdomadaire et jours de repos"]
+      }
+    },
+    {
+      "id": "S08-unilateral",
+      "synthetique": true,
+      "source": "synthetique-unilateral",
+      "decrit": "Unilatéral : lignes « NxN » = deux séries (une par bras) et « par jambe » en note.",
+      "texteSource": "Séance bras\nCurl haltère bras/bras : 15x2, 12x2, 8x2, 8x2 à 10 kg (chaque ligne = 2 séries, une par bras), repos 1 min 30.\nFentes : 3 x 10 par jambe à 20 kg, repos 90 s.",
+      "incertitudes": ["Fixture SYNTHÉTIQUE : texte rédigé pour couvrir la méthode, ce n'est pas un document réel."],
+      "aiOutput": {
+        "name": "Programme synthétique S08 - unilateral",
+        "weeks": 0,
+        "startDate": "",
+        "days": [
+          {
+            "label": "Séance bras",
+            "exercises": [
+              {
+                "name": "Curl haltère bras/bras",
+                "sets": 8,
+                "reps": 8,
+                "repsPerSet": [15, 15, 12, 12, 8, 8, 8, 8],
+                "specialSets": [],
+                "kg": 10,
+                "kgPerSet": [],
+                "supersetGroup": "",
+                "setType": "",
+                "setTypePerSet": [],
+                "rest": "1 min 30",
+                "restPerSet": ["1 min 30", "1 min 30", "1 min 30", "1 min 30", "1 min 30", "1 min 30", "1 min 30", "1 min 30"],
+                "note": "Unilatéral bras/bras : chaque ligne = 2 séries, une par bras"
+              },
+              {
+                "name": "Fentes",
+                "sets": 3,
+                "reps": 10,
+                "repsPerSet": [],
+                "specialSets": [],
+                "kg": 20,
+                "kgPerSet": [],
+                "supersetGroup": "",
+                "setType": "",
+                "setTypePerSet": [],
+                "rest": "90 s",
+                "restPerSet": ["90 s", "90 s", "90 s"],
+                "note": "Par jambe"
+              }
+            ]
+          }
+        ]
+      },
+      "aiOutputLegacy": null,
+      "attendu": {
+        "totaux": {"jours": 1, "exercices": 2, "series": 11, "seriesEch": 0},
+        "jours": [
+          {
+            "label": "Séance bras",
+            "cardioAvant": null,
+            "exercices": [
+              {
+                "nom": "Curl haltère bras/bras",
+                "catalogueAttendu": "Curl Haltères",
+                "series": [
+                  {"type": "N", "kg": 10, "reps": 15, "repos": 90, "reposTxt": ""},
+                  {"type": "N", "kg": 10, "reps": 15, "repos": 90, "reposTxt": ""},
+                  {"type": "N", "kg": 10, "reps": 12, "repos": 90, "reposTxt": ""},
+                  {"type": "N", "kg": 10, "reps": 12, "repos": 90, "reposTxt": ""},
+                  {"type": "N", "kg": 10, "reps": 8, "repos": 90, "reposTxt": ""},
+                  {"type": "N", "kg": 10, "reps": 8, "repos": 90, "reposTxt": ""},
+                  {"type": "N", "kg": 10, "reps": 8, "repos": 90, "reposTxt": ""},
+                  {"type": "N", "kg": 10, "reps": 8, "repos": 90, "reposTxt": ""}
+                ],
+                "noteContient": ["bras/bras"],
+                "superset": ""
+              },
+              {
+                "nom": "Fentes",
+                "catalogueAttendu": "Fentes",
+                "series": [
+                  {"type": "N", "kg": 20, "reps": 10, "repos": 90, "reposTxt": ""},
+                  {"type": "N", "kg": 20, "reps": 10, "repos": 90, "reposTxt": ""},
+                  {"type": "N", "kg": 20, "reps": 10, "repos": 90, "reposTxt": ""}
+                ],
+                "noteContient": ["Par jambe"],
+                "superset": ""
+              }
+            ]
+          }
+        ],
+        "propositions": [],
+        "methodes": [
+          {
+            "element": "Unilatéral bras/bras : chaque ligne « NxN » = 2 séries (règle 1 du prompt) ; le côté n'est pas enregistré",
+            "statut": "PARTIELLEMENT_REPRÉSENTABLE"
+          },
+          {"element": "« par jambe » : séries non doublées, le côté reste en note", "statut": "COMPRIS_MAIS_NOTE"}
+        ],
+        "nonRepresentable": []
+      }
+    },
+    {
+      "id": "S09-tempo-contrast",
+      "synthetique": true,
+      "source": "synthetique-tempo-contrast",
+      "decrit": "Tempo contrast : séries alternées lourdes à tempo lent et plus légères explosives.",
+      "texteSource": "Séance jambes\nSquat : tempo contrast, 4 séries de 6. Séries 1 et 3 : 100 kg, tempo lent 4-0-1 (descente 4 s). Séries 2 et 4 : 80 kg, explosives. Repos 2 min.",
+      "incertitudes": ["Fixture SYNTHÉTIQUE : texte rédigé pour couvrir la méthode, ce n'est pas un document réel."],
+      "aiOutput": {
+        "name": "Programme synthétique S09 - tempo-contrast",
+        "weeks": 0,
+        "startDate": "",
+        "days": [
+          {
+            "label": "Séance jambes",
+            "exercises": [
+              {
+                "name": "Squat",
+                "sets": 4,
+                "reps": 6,
+                "repsPerSet": [],
+                "specialSets": [],
+                "kg": 0,
+                "kgPerSet": [100, 80, 100, 80],
+                "supersetGroup": "",
+                "setType": "",
+                "setTypePerSet": [],
+                "rest": "2 min",
+                "restPerSet": ["2 min", "2 min", "2 min", "2 min"],
+                "note": "Tempo contrast : séries 1 et 3 tempo lent 4-0-1 (descente 4 s) à 100 kg, séries 2 et 4 explosives à 80 kg"
+              }
+            ]
+          }
+        ]
+      },
+      "aiOutputLegacy": null,
+      "attendu": {
+        "totaux": {"jours": 1, "exercices": 1, "series": 4, "seriesEch": 0},
+        "jours": [
+          {
+            "label": "Séance jambes",
+            "cardioAvant": null,
+            "exercices": [
+              {
+                "nom": "Squat",
+                "catalogueAttendu": "Squat à la Barre",
+                "series": [
+                  {"type": "N", "kg": 100, "reps": 6, "repos": 120, "reposTxt": ""},
+                  {"type": "N", "kg": 80, "reps": 6, "repos": 120, "reposTxt": ""},
+                  {"type": "N", "kg": 100, "reps": 6, "repos": 120, "reposTxt": ""},
+                  {"type": "N", "kg": 80, "reps": 6, "repos": 120, "reposTxt": ""}
+                ],
+                "noteContient": ["Tempo contrast", "4-0-1"],
+                "superset": ""
+              }
+            ]
+          }
+        ],
+        "propositions": [],
+        "methodes": [
+          {"element": "Charges alternées par série (100 / 80 / 100 / 80 kg)", "statut": "COMPRIS_STRUCTURÉ"},
+          {"element": "Tempo 4-0-1 (descente / pause / montée) et séries explosives", "statut": "COMPRIS_MAIS_NOTE"}
+        ],
+        "nonRepresentable": []
+      }
+    },
+    {
+      "id": "S10-isometrie-progressive",
+      "synthetique": true,
+      "source": "synthetique-isometrie-progressive",
+      "decrit": "Isométrie progressive : trois maintiens de 20, 30 puis 40 secondes.",
+      "texteSource": "Gainage\nPlanche : 3 séries en isométrie progressive, 20 s puis 30 s puis 40 s, repos 45 s.",
+      "incertitudes": ["Fixture SYNTHÉTIQUE : texte rédigé pour couvrir la méthode, ce n'est pas un document réel."],
+      "aiOutput": {
+        "name": "Programme synthétique S10 - isometrie-progressive",
+        "weeks": 0,
+        "startDate": "",
+        "days": [
+          {
+            "label": "Gainage",
+            "exercises": [
+              {
+                "name": "Planche",
+                "sets": 3,
+                "reps": 40,
+                "repsPerSet": [20, 30, 40],
+                "specialSets": [],
+                "kg": 0,
+                "kgPerSet": [],
+                "supersetGroup": "",
+                "setType": "",
+                "setTypePerSet": [],
+                "rest": "45 s",
+                "restPerSet": ["45 s", "45 s", "45 s"],
+                "note": "Isométrie progressive : 20 s, 30 s, 40 s"
+              }
+            ]
+          }
+        ]
+      },
+      "aiOutputLegacy": null,
+      "attendu": {
+        "totaux": {"jours": 1, "exercices": 1, "series": 3, "seriesEch": 0},
+        "jours": [
+          {
+            "label": "Gainage",
+            "cardioAvant": null,
+            "exercices": [
+              {
+                "nom": "Planche",
+                "catalogueAttendu": "Gainage",
+                "series": [
+                  {"type": "N", "kg": 0, "reps": 20, "repos": 45, "reposTxt": ""},
+                  {"type": "N", "kg": 0, "reps": 30, "repos": 45, "reposTxt": ""},
+                  {"type": "N", "kg": 0, "reps": 40, "repos": 45, "reposTxt": ""}
+                ],
+                "noteContient": ["Isométrie progressive"],
+                "superset": ""
+              }
+            ]
+          }
+        ],
+        "propositions": [],
+        "methodes": [
+          {"element": "Isométrie progressive : durées en secondes stockées dans reps (20, 30, 40)", "statut": "PARTIELLEMENT_REPRÉSENTABLE"}
+        ],
+        "nonRepresentable": []
+      }
+    },
+    {
+      "id": "S11-ramping-reps",
+      "synthetique": true,
+      "source": "synthetique-ramping-reps",
+      "decrit": "Ramping reps : 3+4+5+6+7 répétitions par cycle (règle 1 du prompt), trois cycles.",
+      "texteSource": "Séance épaules\nDéveloppé militaire à 40 kg, méthode Ramping reps : 3+4+5+6+7 reps par cycle, 3 cycles, repos 2 min.",
+      "incertitudes": ["Fixture SYNTHÉTIQUE : texte rédigé pour couvrir la méthode, ce n'est pas un document réel."],
+      "aiOutput": {
+        "name": "Programme synthétique S11 - ramping-reps",
+        "weeks": 0,
+        "startDate": "",
+        "days": [
+          {
+            "label": "Séance épaules",
+            "exercises": [
+              {
+                "name": "Développé militaire",
+                "sets": 5,
+                "reps": 7,
+                "repsPerSet": [3, 4, 5, 6, 7],
+                "specialSets": [],
+                "kg": 40,
+                "kgPerSet": [],
+                "supersetGroup": "",
+                "setType": "",
+                "setTypePerSet": [],
+                "rest": "2 min",
+                "restPerSet": ["2 min", "2 min", "2 min", "2 min", "2 min"],
+                "note": "Méthode Ramping reps : 3+4+5+6+7 par cycle | 3 cycles"
+              }
+            ]
+          }
+        ]
+      },
+      "aiOutputLegacy": null,
+      "attendu": {
+        "totaux": {"jours": 1, "exercices": 1, "series": 5, "seriesEch": 0},
+        "jours": [
+          {
+            "label": "Séance épaules",
+            "cardioAvant": null,
+            "exercices": [
+              {
+                "nom": "Développé militaire",
+                "catalogueAttendu": "Développé Militaire",
+                "series": [
+                  {"type": "N", "kg": 40, "reps": 3, "repos": 120, "reposTxt": ""},
+                  {"type": "N", "kg": 40, "reps": 4, "repos": 120, "reposTxt": ""},
+                  {"type": "N", "kg": 40, "reps": 5, "repos": 120, "reposTxt": ""},
+                  {"type": "N", "kg": 40, "reps": 6, "repos": 120, "reposTxt": ""},
+                  {"type": "N", "kg": 40, "reps": 7, "repos": 120, "reposTxt": ""}
+                ],
+                "noteContient": ["Ramping reps", "3+4+5+6+7"],
+                "superset": ""
+              }
+            ]
+          }
+        ],
+        "propositions": [],
+        "methodes": [
+          {"element": "Ramping reps : un cycle = 5 séries (3,4,5,6,7) ; le nombre de cycles reste en note", "statut": "PARTIELLEMENT_REPRÉSENTABLE"}
+        ],
+        "nonRepresentable": []
+      }
+    },
+    {
+      "id": "S12-dead-set",
+      "synthetique": true,
+      "source": "synthetique-dead-set",
+      "decrit": "Dead set : série dont chaque répétition repart de la position basse (définition posée pour la fixture).",
+      "texteSource": "Séance dos\nSoulevé de terre : dead set, 1 série de 5 reps à 120 kg ; chaque répétition repart de la position basse, barre reposée au sol. Repos 3 min.",
+      "incertitudes": [
+        "Fixture SYNTHÉTIQUE : texte rédigé pour couvrir la méthode, ce n'est pas un document réel.",
+        "La définition du « dead set » (départ arrêté à chaque répétition) est posée par le rédacteur de la fixture : le document d'origine du coach n'était pas lisible. À remplacer par la définition du coach."
+      ],
+      "aiOutput": {
+        "name": "Programme synthétique S12 - dead-set",
+        "weeks": 0,
+        "startDate": "",
+        "days": [
+          {
+            "label": "Séance dos",
+            "exercises": [
+              {
+                "name": "Soulevé de terre",
+                "sets": 1,
+                "reps": 5,
+                "repsPerSet": [],
+                "specialSets": [],
+                "kg": 120,
+                "kgPerSet": [],
+                "supersetGroup": "",
+                "setType": "",
+                "setTypePerSet": [],
+                "rest": "3 min",
+                "restPerSet": ["3 min"],
+                "note": "Dead set : chaque répétition repart de la position basse, barre reposée au sol"
+              }
+            ]
+          }
+        ]
+      },
+      "aiOutputLegacy": null,
+      "attendu": {
+        "totaux": {"jours": 1, "exercices": 1, "series": 1, "seriesEch": 0},
+        "jours": [
+          {
+            "label": "Séance dos",
+            "cardioAvant": null,
+            "exercices": [
+              {
+                "nom": "Soulevé de terre",
+                "catalogueAttendu": "Soulevé de Terre",
+                "series": [
+                  {"type": "N", "kg": 120, "reps": 5, "repos": 180, "reposTxt": ""}
+                ],
+                "noteContient": ["Dead set"],
+                "superset": ""
+              }
+            ]
+          }
+        ],
+        "propositions": [],
+        "methodes": [
+          {"element": "Dead set (définition supposée, en note)", "statut": "COMPRIS_MAIS_NOTE"}
+        ],
+        "nonRepresentable": []
+      }
+    }
+  ]
+}

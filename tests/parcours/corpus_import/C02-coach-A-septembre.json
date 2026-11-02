@@ -1,0 +1,856 @@
+{
+  "id": "C02-coach-A-septembre",
+  "synthetique": false,
+  "source": "coach-A-septembre",
+  "decrit": "Programme d'un coach : un bloc d'abdos puis cinq séances nommées par groupes musculaires, colonnes exercice / exécution / répétitions / repos, séries en pyramide (« 1 x 5 3x 3 3x 2 ») et repos écrits « 1.30 mins ».",
+  "incertitudes": [
+    "Aucun titre « Séance N » : les jours sont les titres de groupes musculaires (Dos et Biceps, Jambes et fessiers, Pectoraux, Épaules et triceps, Rappel pecs) plus le bloc d'abdos. La règle 0 du prompt (un groupe musculaire ne crée jamais une séance) pourrait fusionner le tout en une seule séance : cas à surveiller.",
+    "L'extraction texte mélange l'ordre des colonnes et place les titres après leur tableau : chaque titre est rattaché à son tableau par le sens (abdos, dos+biceps, jambes, pecs, épaules, rappel pecs). Le titre « Épaules et triceps » ne contient aucun exercice de triceps dans le texte lu.",
+    "« repos 30 sec » (ligne seule entre Crunch et Roulette) rattaché au Crunch, qui le précède ; « Roulette à abdominaux 5 x 12 » n'a pas de repos.",
+    "« Élévation frontales Haltères » : seul le repos « 1.30 mins » figure dans le texte lu, ni séries ni reps. aiOutput met sets 1 et reps 0 (rien n'est inventé) ; attendu garde reps 0 (le client remplace aujourd'hui un 0 par 10 : ex.reps||10).",
+    "Repos des abdos : le mot « repos » de la cellule « Répétitions et Repos » est gardé dans le texte (« repos 40 sec »), comme l'exemple du contrat du Worker.",
+    "Chaque tableau porte « maximum » sous l'en-tête Repos : probablement « Repos maximum », donc des plafonds ; les textes de repos restent ceux de la cellule, sans « max ».",
+    "« 1.30 mins » = 1 min 30 s et « 2.30 mins » = 2 min 30 s (notation du coach) ; « 2 -3 mins » est recopié avec son espace.",
+    "« Monté en charge » et « série longue de chauffe » sont du texte de la colonne Exécution, pas une colonne de type : seulement dans la note, aucune série n'est typée É. Le « 2 x 50 » (chauffe longue) n'est donc pas typé non plus.",
+    "L'objectif « Former un cul rond et gagner des cannes » suit le titre « Jambes et fessiers » : placé dans la note du premier exercice de ce jour (pas de champ de jour). Le nom du programme a été débarrassé du prénom du bénéficiaire.",
+    "catalogueAttendu : null pour « Oiseaux inversé sur banc » (matériel non écrit), « Relevé de jambes à la chaise romaine » (deux entrées voisines) et « Board Press » (absent). « Dc » -> « Développé Couché » suit l'alias « dc » de l'app."
+  ],
+  "aiOutput": {
+    "name": "Programme Sportif Septembre",
+    "weeks": 0,
+    "startDate": "",
+    "days": [
+      {
+        "label": "Abdos - à effectuer avant l'entraînement, après échauffement",
+        "exercises": [
+          {
+            "name": "Relevé de jambes à la chaise romaine",
+            "sets": 4,
+            "reps": 15,
+            "repsPerSet": [],
+            "specialSets": [],
+            "kg": 0,
+            "kgPerSet": [],
+            "supersetGroup": "",
+            "setType": "",
+            "setTypePerSet": [],
+            "rest": "repos 40 sec",
+            "restPerSet": ["repos 40 sec", "repos 40 sec", "repos 40 sec", "repos 40 sec"],
+            "note": ""
+          },
+          {
+            "name": "Crunch à la poulie",
+            "sets": 3,
+            "reps": 15,
+            "repsPerSet": [],
+            "specialSets": [],
+            "kg": 0,
+            "kgPerSet": [],
+            "supersetGroup": "",
+            "setType": "",
+            "setTypePerSet": [],
+            "rest": "repos 30 sec",
+            "restPerSet": ["repos 30 sec", "repos 30 sec", "repos 30 sec"],
+            "note": ""
+          },
+          {
+            "name": "Roulette à abdominaux",
+            "sets": 5,
+            "reps": 12,
+            "repsPerSet": [],
+            "specialSets": [],
+            "kg": 0,
+            "kgPerSet": [],
+            "supersetGroup": "",
+            "setType": "",
+            "setTypePerSet": [],
+            "rest": "",
+            "restPerSet": ["", "", "", "", ""],
+            "note": ""
+          }
+        ]
+      },
+      {
+        "label": "Dos et Biceps",
+        "exercises": [
+          {
+            "name": "Soulever de terre",
+            "sets": 7,
+            "reps": 2,
+            "repsPerSet": [5, 3, 3, 3, 2, 2, 2],
+            "specialSets": [],
+            "kg": 0,
+            "kgPerSet": [],
+            "supersetGroup": "",
+            "setType": "",
+            "setTypePerSet": [],
+            "rest": "3 mins",
+            "restPerSet": ["3 mins", "3 mins", "3 mins", "3 mins", "3 mins", "3 mins", "3 mins"],
+            "note": "Monté en charge"
+          },
+          {
+            "name": "Rowing barre",
+            "sets": 4,
+            "reps": 8,
+            "repsPerSet": [],
+            "specialSets": [],
+            "kg": 0,
+            "kgPerSet": [],
+            "supersetGroup": "",
+            "setType": "",
+            "setTypePerSet": [],
+            "rest": "2 mins",
+            "restPerSet": ["2 mins", "2 mins", "2 mins", "2 mins"],
+            "note": "Lourd"
+          },
+          {
+            "name": "Pull over poulie",
+            "sets": 3,
+            "reps": 15,
+            "repsPerSet": [],
+            "specialSets": [],
+            "kg": 0,
+            "kgPerSet": [],
+            "supersetGroup": "",
+            "setType": "",
+            "setTypePerSet": [],
+            "rest": "1.30 mins",
+            "restPerSet": ["1.30 mins", "1.30 mins", "1.30 mins"],
+            "note": ""
+          },
+          {
+            "name": "Curl Barre EZ",
+            "sets": 4,
+            "reps": 20,
+            "repsPerSet": [],
+            "specialSets": [],
+            "kg": 0,
+            "kgPerSet": [],
+            "supersetGroup": "",
+            "setType": "",
+            "setTypePerSet": [],
+            "rest": "2 mins",
+            "restPerSet": ["2 mins", "2 mins", "2 mins", "2 mins"],
+            "note": ""
+          },
+          {
+            "name": "Curl poulie Corde",
+            "sets": 4,
+            "reps": 20,
+            "repsPerSet": [],
+            "specialSets": [],
+            "kg": 0,
+            "kgPerSet": [],
+            "supersetGroup": "",
+            "setType": "",
+            "setTypePerSet": [],
+            "rest": "1.30 mins",
+            "restPerSet": ["1.30 mins", "1.30 mins", "1.30 mins", "1.30 mins"],
+            "note": ""
+          }
+        ]
+      },
+      {
+        "label": "Jambes et fessiers",
+        "exercises": [
+          {
+            "name": "Legs extension",
+            "sets": 6,
+            "reps": 8,
+            "repsPerSet": [50, 50, 12, 8, 8, 8],
+            "specialSets": [],
+            "kg": 0,
+            "kgPerSet": [],
+            "supersetGroup": "",
+            "setType": "",
+            "setTypePerSet": [],
+            "rest": "2.30 mins",
+            "restPerSet": ["2.30 mins", "2.30 mins", "2.30 mins", "2.30 mins", "2.30 mins", "2.30 mins"],
+            "note": "Objectif de la séance : Former un cul rond et gagner des cannes | Série longue de chauffe suivis de série en lourd"
+          },
+          {
+            "name": "Squat",
+            "sets": 6,
+            "reps": 2,
+            "repsPerSet": [12, 6, 6, 6, 2, 2],
+            "specialSets": [],
+            "kg": 0,
+            "kgPerSet": [],
+            "supersetGroup": "",
+            "setType": "",
+            "setTypePerSet": [],
+            "rest": "2 -3 mins",
+            "restPerSet": ["2 -3 mins", "2 -3 mins", "2 -3 mins", "2 -3 mins", "2 -3 mins", "2 -3 mins"],
+            "note": "Lourd"
+          },
+          {
+            "name": "Presse incliné",
+            "sets": 5,
+            "reps": 8,
+            "repsPerSet": [],
+            "specialSets": [],
+            "kg": 0,
+            "kgPerSet": [],
+            "supersetGroup": "",
+            "setType": "",
+            "setTypePerSet": [],
+            "rest": "2 à 3 mins",
+            "restPerSet": ["2 à 3 mins", "2 à 3 mins", "2 à 3 mins", "2 à 3 mins", "2 à 3 mins"],
+            "note": "Lourd"
+          },
+          {
+            "name": "Leg Curl allongé",
+            "sets": 4,
+            "reps": 15,
+            "repsPerSet": [],
+            "specialSets": [],
+            "kg": 0,
+            "kgPerSet": [],
+            "supersetGroup": "",
+            "setType": "",
+            "setTypePerSet": [],
+            "rest": "1.30 mins",
+            "restPerSet": ["1.30 mins", "1.30 mins", "1.30 mins", "1.30 mins"],
+            "note": ""
+          },
+          {
+            "name": "Sdt Jambes tendu",
+            "sets": 5,
+            "reps": 15,
+            "repsPerSet": [],
+            "specialSets": [],
+            "kg": 0,
+            "kgPerSet": [],
+            "supersetGroup": "",
+            "setType": "",
+            "setTypePerSet": [],
+            "rest": "1 à 2 mins",
+            "restPerSet": ["1 à 2 mins", "1 à 2 mins", "1 à 2 mins", "1 à 2 mins", "1 à 2 mins"],
+            "note": ""
+          }
+        ]
+      },
+      {
+        "label": "Pectoraux",
+        "exercises": [
+          {
+            "name": "DC Barre",
+            "sets": 8,
+            "reps": 2,
+            "repsPerSet": [10, 6, 3, 3, 2, 2, 2, 2],
+            "specialSets": [],
+            "kg": 0,
+            "kgPerSet": [],
+            "supersetGroup": "",
+            "setType": "",
+            "setTypePerSet": [],
+            "rest": "2-3 mins",
+            "restPerSet": ["2-3 mins", "2-3 mins", "2-3 mins", "2-3 mins", "2-3 mins", "2-3 mins", "2-3 mins", "2-3 mins"],
+            "note": ""
+          },
+          {
+            "name": "Board Press",
+            "sets": 6,
+            "reps": 2,
+            "repsPerSet": [8, 4, 2, 2, 2, 2],
+            "specialSets": [],
+            "kg": 0,
+            "kgPerSet": [],
+            "supersetGroup": "",
+            "setType": "",
+            "setTypePerSet": [],
+            "rest": "2 mins",
+            "restPerSet": ["2 mins", "2 mins", "2 mins", "2 mins", "2 mins", "2 mins"],
+            "note": ""
+          },
+          {
+            "name": "Développé décliné",
+            "sets": 5,
+            "reps": 8,
+            "repsPerSet": [],
+            "specialSets": [],
+            "kg": 0,
+            "kgPerSet": [],
+            "supersetGroup": "",
+            "setType": "",
+            "setTypePerSet": [],
+            "rest": "2.30 mins",
+            "restPerSet": ["2.30 mins", "2.30 mins", "2.30 mins", "2.30 mins", "2.30 mins"],
+            "note": ""
+          },
+          {
+            "name": "Pull over Haltère",
+            "sets": 3,
+            "reps": 20,
+            "repsPerSet": [],
+            "specialSets": [],
+            "kg": 0,
+            "kgPerSet": [],
+            "supersetGroup": "",
+            "setType": "",
+            "setTypePerSet": [],
+            "rest": "1 à 2 mins",
+            "restPerSet": ["1 à 2 mins", "1 à 2 mins", "1 à 2 mins"],
+            "note": ""
+          }
+        ]
+      },
+      {
+        "label": "Épaules et triceps",
+        "exercises": [
+          {
+            "name": "Oiseaux inversé sur banc",
+            "sets": 4,
+            "reps": 15,
+            "repsPerSet": [],
+            "specialSets": [],
+            "kg": 0,
+            "kgPerSet": [],
+            "supersetGroup": "",
+            "setType": "",
+            "setTypePerSet": [],
+            "rest": "1.30 mins",
+            "restPerSet": ["1.30 mins", "1.30 mins", "1.30 mins", "1.30 mins"],
+            "note": "Arrière épaules"
+          },
+          {
+            "name": "Face pull",
+            "sets": 4,
+            "reps": 12,
+            "repsPerSet": [],
+            "specialSets": [],
+            "kg": 0,
+            "kgPerSet": [],
+            "supersetGroup": "",
+            "setType": "",
+            "setTypePerSet": [],
+            "rest": "2 mins",
+            "restPerSet": ["2 mins", "2 mins", "2 mins", "2 mins"],
+            "note": ""
+          },
+          {
+            "name": "Développé arnold",
+            "sets": 5,
+            "reps": 12,
+            "repsPerSet": [],
+            "specialSets": [],
+            "kg": 0,
+            "kgPerSet": [],
+            "supersetGroup": "",
+            "setType": "",
+            "setTypePerSet": [],
+            "rest": "2 mins",
+            "restPerSet": ["2 mins", "2 mins", "2 mins", "2 mins", "2 mins"],
+            "note": ""
+          },
+          {
+            "name": "Élévation frontales Haltères",
+            "sets": 1,
+            "reps": 0,
+            "repsPerSet": [],
+            "specialSets": [],
+            "kg": 0,
+            "kgPerSet": [],
+            "supersetGroup": "",
+            "setType": "",
+            "setTypePerSet": [],
+            "rest": "1.30 mins",
+            "restPerSet": ["1.30 mins"],
+            "note": ""
+          },
+          {
+            "name": "Élévation latérales à la poulie",
+            "sets": 4,
+            "reps": 10,
+            "repsPerSet": [],
+            "specialSets": [],
+            "kg": 0,
+            "kgPerSet": [],
+            "supersetGroup": "",
+            "setType": "",
+            "setTypePerSet": [],
+            "rest": "2 mins",
+            "restPerSet": ["2 mins", "2 mins", "2 mins", "2 mins"],
+            "note": "Reps 10-15"
+          }
+        ]
+      },
+      {
+        "label": "Rappel pecs",
+        "exercises": [
+          {
+            "name": "Dc",
+            "sets": 5,
+            "reps": 2,
+            "repsPerSet": [8, 4, 4, 2, 2],
+            "specialSets": [],
+            "kg": 0,
+            "kgPerSet": [],
+            "supersetGroup": "",
+            "setType": "",
+            "setTypePerSet": [],
+            "rest": "2.30 mins",
+            "restPerSet": ["2.30 mins", "2.30 mins", "2.30 mins", "2.30 mins", "2.30 mins"],
+            "note": ""
+          },
+          {
+            "name": "Dv Incliné Haltères",
+            "sets": 4,
+            "reps": 8,
+            "repsPerSet": [],
+            "specialSets": [],
+            "kg": 0,
+            "kgPerSet": [],
+            "supersetGroup": "",
+            "setType": "",
+            "setTypePerSet": [],
+            "rest": "2 mins",
+            "restPerSet": ["2 mins", "2 mins", "2 mins", "2 mins"],
+            "note": ""
+          },
+          {
+            "name": "Dv décliné",
+            "sets": 4,
+            "reps": 8,
+            "repsPerSet": [],
+            "specialSets": [],
+            "kg": 0,
+            "kgPerSet": [],
+            "supersetGroup": "",
+            "setType": "",
+            "setTypePerSet": [],
+            "rest": "2 mins",
+            "restPerSet": ["2 mins", "2 mins", "2 mins", "2 mins"],
+            "note": ""
+          },
+          {
+            "name": "Écarté poulie",
+            "sets": 4,
+            "reps": 10,
+            "repsPerSet": [],
+            "specialSets": [],
+            "kg": 0,
+            "kgPerSet": [],
+            "supersetGroup": "",
+            "setType": "",
+            "setTypePerSet": [],
+            "rest": "1.30 mins",
+            "restPerSet": ["1.30 mins", "1.30 mins", "1.30 mins", "1.30 mins"],
+            "note": "Hauteur épaules | Contraction 2 sec par rep"
+          },
+          {
+            "name": "Pompe mains largeur épaules",
+            "sets": 4,
+            "reps": 25,
+            "repsPerSet": [],
+            "specialSets": [],
+            "kg": 0,
+            "kgPerSet": [],
+            "supersetGroup": "",
+            "setType": "",
+            "setTypePerSet": [],
+            "rest": "2 à 3 mins",
+            "restPerSet": ["2 à 3 mins", "2 à 3 mins", "2 à 3 mins", "2 à 3 mins"],
+            "note": ""
+          }
+        ]
+      }
+    ]
+  },
+  "aiOutputLegacy": null,
+  "attendu": {
+    "totaux": {"jours": 6, "exercices": 27, "series": 121, "seriesEch": 0},
+    "jours": [
+      {
+        "label": "Abdos - à effectuer avant l'entraînement, après échauffement",
+        "cardioAvant": null,
+        "exercices": [
+          {
+            "nom": "Relevé de jambes à la chaise romaine",
+            "catalogueAttendu": null,
+            "series": [
+              {"type": "N", "kg": 0, "reps": 15, "repos": 40, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 15, "repos": 40, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 15, "repos": 40, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 15, "repos": 40, "reposTxt": ""}
+            ],
+            "noteContient": [],
+            "superset": ""
+          },
+          {
+            "nom": "Crunch à la poulie",
+            "catalogueAttendu": "Crunch Poulie",
+            "series": [
+              {"type": "N", "kg": 0, "reps": 15, "repos": 30, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 15, "repos": 30, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 15, "repos": 30, "reposTxt": ""}
+            ],
+            "noteContient": [],
+            "superset": ""
+          },
+          {
+            "nom": "Roulette à abdominaux",
+            "catalogueAttendu": "Roue Abdominale (Ab Wheel)",
+            "series": [
+              {"type": "N", "kg": 0, "reps": 12, "repos": 0, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 12, "repos": 0, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 12, "repos": 0, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 12, "repos": 0, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 12, "repos": 0, "reposTxt": ""}
+            ],
+            "noteContient": [],
+            "superset": ""
+          }
+        ]
+      },
+      {
+        "label": "Dos et Biceps",
+        "cardioAvant": null,
+        "exercices": [
+          {
+            "nom": "Soulever de terre",
+            "catalogueAttendu": "Soulevé de Terre",
+            "series": [
+              {"type": "N", "kg": 0, "reps": 5, "repos": 180, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 3, "repos": 180, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 3, "repos": 180, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 3, "repos": 180, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 2, "repos": 180, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 2, "repos": 180, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 2, "repos": 180, "reposTxt": ""}
+            ],
+            "noteContient": ["Monté en charge"],
+            "superset": ""
+          },
+          {
+            "nom": "Rowing barre",
+            "catalogueAttendu": "Rowing Barre (Tirage Horizontal)",
+            "series": [
+              {"type": "N", "kg": 0, "reps": 8, "repos": 120, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 8, "repos": 120, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 8, "repos": 120, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 8, "repos": 120, "reposTxt": ""}
+            ],
+            "noteContient": ["Lourd"],
+            "superset": ""
+          },
+          {
+            "nom": "Pull over poulie",
+            "catalogueAttendu": "Pull-over Poulie",
+            "series": [
+              {"type": "N", "kg": 0, "reps": 15, "repos": 90, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 15, "repos": 90, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 15, "repos": 90, "reposTxt": ""}
+            ],
+            "noteContient": [],
+            "superset": ""
+          },
+          {
+            "nom": "Curl Barre EZ",
+            "catalogueAttendu": "Curl EZ",
+            "series": [
+              {"type": "N", "kg": 0, "reps": 20, "repos": 120, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 20, "repos": 120, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 20, "repos": 120, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 20, "repos": 120, "reposTxt": ""}
+            ],
+            "noteContient": [],
+            "superset": ""
+          },
+          {
+            "nom": "Curl poulie Corde",
+            "catalogueAttendu": "Curl Poulie",
+            "series": [
+              {"type": "N", "kg": 0, "reps": 20, "repos": 90, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 20, "repos": 90, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 20, "repos": 90, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 20, "repos": 90, "reposTxt": ""}
+            ],
+            "noteContient": [],
+            "superset": ""
+          }
+        ]
+      },
+      {
+        "label": "Jambes et fessiers",
+        "cardioAvant": null,
+        "exercices": [
+          {
+            "nom": "Legs extension",
+            "catalogueAttendu": "Extension Quadriceps (Leg Extension)",
+            "series": [
+              {"type": "N", "kg": 0, "reps": 50, "repos": 150, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 50, "repos": 150, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 12, "repos": 150, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 8, "repos": 150, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 8, "repos": 150, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 8, "repos": 150, "reposTxt": ""}
+            ],
+            "noteContient": ["Objectif de la séance", "Série longue de chauffe"],
+            "superset": ""
+          },
+          {
+            "nom": "Squat",
+            "catalogueAttendu": "Squat à la Barre",
+            "series": [
+              {"type": "N", "kg": 0, "reps": 12, "repos": 0, "reposTxt": "2 -3 mins"},
+              {"type": "N", "kg": 0, "reps": 6, "repos": 0, "reposTxt": "2 -3 mins"},
+              {"type": "N", "kg": 0, "reps": 6, "repos": 0, "reposTxt": "2 -3 mins"},
+              {"type": "N", "kg": 0, "reps": 6, "repos": 0, "reposTxt": "2 -3 mins"},
+              {"type": "N", "kg": 0, "reps": 2, "repos": 0, "reposTxt": "2 -3 mins"},
+              {"type": "N", "kg": 0, "reps": 2, "repos": 0, "reposTxt": "2 -3 mins"}
+            ],
+            "noteContient": ["Lourd"],
+            "superset": ""
+          },
+          {
+            "nom": "Presse incliné",
+            "catalogueAttendu": "Press Jambes Inclinée",
+            "series": [
+              {"type": "N", "kg": 0, "reps": 8, "repos": 0, "reposTxt": "2 à 3 mins"},
+              {"type": "N", "kg": 0, "reps": 8, "repos": 0, "reposTxt": "2 à 3 mins"},
+              {"type": "N", "kg": 0, "reps": 8, "repos": 0, "reposTxt": "2 à 3 mins"},
+              {"type": "N", "kg": 0, "reps": 8, "repos": 0, "reposTxt": "2 à 3 mins"},
+              {"type": "N", "kg": 0, "reps": 8, "repos": 0, "reposTxt": "2 à 3 mins"}
+            ],
+            "noteContient": ["Lourd"],
+            "superset": ""
+          },
+          {
+            "nom": "Leg Curl allongé",
+            "catalogueAttendu": "Leg Curl Couché Machine",
+            "series": [
+              {"type": "N", "kg": 0, "reps": 15, "repos": 90, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 15, "repos": 90, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 15, "repos": 90, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 15, "repos": 90, "reposTxt": ""}
+            ],
+            "noteContient": [],
+            "superset": ""
+          },
+          {
+            "nom": "Sdt Jambes tendu",
+            "catalogueAttendu": "Soulevé de Terre Jambes Tendues",
+            "series": [
+              {"type": "N", "kg": 0, "reps": 15, "repos": 0, "reposTxt": "1 à 2 mins"},
+              {"type": "N", "kg": 0, "reps": 15, "repos": 0, "reposTxt": "1 à 2 mins"},
+              {"type": "N", "kg": 0, "reps": 15, "repos": 0, "reposTxt": "1 à 2 mins"},
+              {"type": "N", "kg": 0, "reps": 15, "repos": 0, "reposTxt": "1 à 2 mins"},
+              {"type": "N", "kg": 0, "reps": 15, "repos": 0, "reposTxt": "1 à 2 mins"}
+            ],
+            "noteContient": [],
+            "superset": ""
+          }
+        ]
+      },
+      {
+        "label": "Pectoraux",
+        "cardioAvant": null,
+        "exercices": [
+          {
+            "nom": "DC Barre",
+            "catalogueAttendu": "Développé Couché",
+            "series": [
+              {"type": "N", "kg": 0, "reps": 10, "repos": 0, "reposTxt": "2-3 mins"},
+              {"type": "N", "kg": 0, "reps": 6, "repos": 0, "reposTxt": "2-3 mins"},
+              {"type": "N", "kg": 0, "reps": 3, "repos": 0, "reposTxt": "2-3 mins"},
+              {"type": "N", "kg": 0, "reps": 3, "repos": 0, "reposTxt": "2-3 mins"},
+              {"type": "N", "kg": 0, "reps": 2, "repos": 0, "reposTxt": "2-3 mins"},
+              {"type": "N", "kg": 0, "reps": 2, "repos": 0, "reposTxt": "2-3 mins"},
+              {"type": "N", "kg": 0, "reps": 2, "repos": 0, "reposTxt": "2-3 mins"},
+              {"type": "N", "kg": 0, "reps": 2, "repos": 0, "reposTxt": "2-3 mins"}
+            ],
+            "noteContient": [],
+            "superset": ""
+          },
+          {
+            "nom": "Board Press",
+            "catalogueAttendu": null,
+            "series": [
+              {"type": "N", "kg": 0, "reps": 8, "repos": 120, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 4, "repos": 120, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 2, "repos": 120, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 2, "repos": 120, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 2, "repos": 120, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 2, "repos": 120, "reposTxt": ""}
+            ],
+            "noteContient": [],
+            "superset": ""
+          },
+          {
+            "nom": "Développé décliné",
+            "catalogueAttendu": "Développé Décliné",
+            "series": [
+              {"type": "N", "kg": 0, "reps": 8, "repos": 150, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 8, "repos": 150, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 8, "repos": 150, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 8, "repos": 150, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 8, "repos": 150, "reposTxt": ""}
+            ],
+            "noteContient": [],
+            "superset": ""
+          },
+          {
+            "nom": "Pull over Haltère",
+            "catalogueAttendu": "Pull-over Haltère",
+            "series": [
+              {"type": "N", "kg": 0, "reps": 20, "repos": 0, "reposTxt": "1 à 2 mins"},
+              {"type": "N", "kg": 0, "reps": 20, "repos": 0, "reposTxt": "1 à 2 mins"},
+              {"type": "N", "kg": 0, "reps": 20, "repos": 0, "reposTxt": "1 à 2 mins"}
+            ],
+            "noteContient": [],
+            "superset": ""
+          }
+        ]
+      },
+      {
+        "label": "Épaules et triceps",
+        "cardioAvant": null,
+        "exercices": [
+          {
+            "nom": "Oiseaux inversé sur banc",
+            "catalogueAttendu": null,
+            "series": [
+              {"type": "N", "kg": 0, "reps": 15, "repos": 90, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 15, "repos": 90, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 15, "repos": 90, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 15, "repos": 90, "reposTxt": ""}
+            ],
+            "noteContient": ["Arrière épaules"],
+            "superset": ""
+          },
+          {
+            "nom": "Face pull",
+            "catalogueAttendu": "Tirage Visage (Face Pull)",
+            "series": [
+              {"type": "N", "kg": 0, "reps": 12, "repos": 120, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 12, "repos": 120, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 12, "repos": 120, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 12, "repos": 120, "reposTxt": ""}
+            ],
+            "noteContient": [],
+            "superset": ""
+          },
+          {
+            "nom": "Développé arnold",
+            "catalogueAttendu": "Développé Arnold (Arnold Press)",
+            "series": [
+              {"type": "N", "kg": 0, "reps": 12, "repos": 120, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 12, "repos": 120, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 12, "repos": 120, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 12, "repos": 120, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 12, "repos": 120, "reposTxt": ""}
+            ],
+            "noteContient": [],
+            "superset": ""
+          },
+          {
+            "nom": "Élévation frontales Haltères",
+            "catalogueAttendu": "Élévations Frontales",
+            "series": [
+              {"type": "N", "kg": 0, "reps": 0, "repos": 90, "reposTxt": ""}
+            ],
+            "noteContient": [],
+            "superset": ""
+          },
+          {
+            "nom": "Élévation latérales à la poulie",
+            "catalogueAttendu": "Élévations Latérales Câble",
+            "series": [
+              {"type": "N", "kg": 0, "reps": 10, "repos": 120, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 10, "repos": 120, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 10, "repos": 120, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 10, "repos": 120, "reposTxt": ""}
+            ],
+            "noteContient": ["Reps 10-15"],
+            "superset": ""
+          }
+        ]
+      },
+      {
+        "label": "Rappel pecs",
+        "cardioAvant": null,
+        "exercices": [
+          {
+            "nom": "Dc",
+            "catalogueAttendu": "Développé Couché",
+            "series": [
+              {"type": "N", "kg": 0, "reps": 8, "repos": 150, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 4, "repos": 150, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 4, "repos": 150, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 2, "repos": 150, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 2, "repos": 150, "reposTxt": ""}
+            ],
+            "noteContient": [],
+            "superset": ""
+          },
+          {
+            "nom": "Dv Incliné Haltères",
+            "catalogueAttendu": "Développé Incliné Haltères",
+            "series": [
+              {"type": "N", "kg": 0, "reps": 8, "repos": 120, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 8, "repos": 120, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 8, "repos": 120, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 8, "repos": 120, "reposTxt": ""}
+            ],
+            "noteContient": [],
+            "superset": ""
+          },
+          {
+            "nom": "Dv décliné",
+            "catalogueAttendu": "Développé Décliné",
+            "series": [
+              {"type": "N", "kg": 0, "reps": 8, "repos": 120, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 8, "repos": 120, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 8, "repos": 120, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 8, "repos": 120, "reposTxt": ""}
+            ],
+            "noteContient": [],
+            "superset": ""
+          },
+          {
+            "nom": "Écarté poulie",
+            "catalogueAttendu": "Écarté Poulie",
+            "series": [
+              {"type": "N", "kg": 0, "reps": 10, "repos": 90, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 10, "repos": 90, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 10, "repos": 90, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 10, "repos": 90, "reposTxt": ""}
+            ],
+            "noteContient": ["Contraction 2 sec par rep"],
+            "superset": ""
+          },
+          {
+            "nom": "Pompe mains largeur épaules",
+            "catalogueAttendu": "Pompes (Push-up)",
+            "series": [
+              {"type": "N", "kg": 0, "reps": 25, "repos": 0, "reposTxt": "2 à 3 mins"},
+              {"type": "N", "kg": 0, "reps": 25, "repos": 0, "reposTxt": "2 à 3 mins"},
+              {"type": "N", "kg": 0, "reps": 25, "repos": 0, "reposTxt": "2 à 3 mins"},
+              {"type": "N", "kg": 0, "reps": 25, "repos": 0, "reposTxt": "2 à 3 mins"}
+            ],
+            "noteContient": [],
+            "superset": ""
+          }
+        ]
+      }
+    ],
+    "propositions": [],
+    "methodes": [
+      {"element": "Séries en pyramide / montée en charge (« 1 x 5 3x 3 3x 2 »)", "statut": "COMPRIS_STRUCTURÉ"},
+      {"element": "« Monté en charge » et « série longue de chauffe » en prose (pas de colonne de type)", "statut": "COMPRIS_MAIS_NOTE"},
+      {"element": "Repos fermes écrits « 1.30 mins », « 2.30 mins », « 3 mins », « 40 sec »", "statut": "COMPRIS_STRUCTURÉ"},
+      {"element": "Repos en plage (« 2 -3 mins », « 2 à 3 mins », « 1 à 2 mins », « 2-3 mins »)", "statut": "COMPRIS_MAIS_NOTE"},
+      {"element": "Plage de reps « 4x10-15 »", "statut": "PARTIELLEMENT_REPRÉSENTABLE"},
+      {"element": "Colonne Exécution : « Lourd », « arrière épaules », « contraction 2 sec par rep »", "statut": "COMPRIS_MAIS_NOTE"},
+      {
+        "element": "Bloc d'abdos « à effectuer avant l'entraînement, après échauffement » : jour Abdos séparé, l'ordre avant chaque séance n'est pas planifié",
+        "statut": "PARTIELLEMENT_REPRÉSENTABLE"
+      },
+      {"element": "Objectif de séance (texte libre)", "statut": "COMPRIS_MAIS_NOTE"},
+      {"element": "Séance « Rappel pecs » (rappel d'un muscle déjà travaillé) : libellé du jour", "statut": "COMPRIS_MAIS_NOTE"},
+      {"element": "Colonne Image (illustrations du PDF)", "statut": "NON_REPRÉSENTABLE"}
+    ],
+    "nonRepresentable": ["Illustrations de la colonne Image du PDF"]
+  }
+}

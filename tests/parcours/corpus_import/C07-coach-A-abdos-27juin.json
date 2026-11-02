@@ -1,0 +1,124 @@
+{
+  "id": "C07-coach-A-abdos-27juin",
+  "synthetique": false,
+  "source": "coach-A-abdos-27juin",
+  "decrit": "Court programme d'abdos d'un coach (une page) : trois exercices à faire avant l'entraînement, repos écrits « repos 30 sec », le dernier sans repos.",
+  "incertitudes": [
+    "Le titre à l'intérieur du PDF reprend la date d'un autre programme (« 10 mars ») alors que le fichier est celui du 27 juin : name suit le titre lu dans le texte, la date n'est jamais utilisée comme startDate.",
+    "Repos des abdos : le mot « repos » de la cellule « Répétitions et Repos » est gardé dans le texte (« repos 40 sec »), comme l'exemple du contrat du Worker.",
+    "« Cocon 5 x 12 » n'a pas de repos dans le texte : rest vide, rien n'est inventé. Le nom du programme a été débarrassé du prénom du bénéficiaire.",
+    "catalogueAttendu null pour les trois : « Rotations du buste avec barre », « Sit-up avec médecine ball contre un mur » et « Cocon » ne figurent pas au catalogue (« Relevé de Buste (Sit-up) » est retiré du sélecteur)."
+  ],
+  "aiOutput": {
+    "name": "Programme Sportif 10 mars",
+    "weeks": 0,
+    "startDate": "",
+    "days": [
+      {
+        "label": "Abdos - à effectuer avant l'entraînement, après échauffement",
+        "exercises": [
+          {
+            "name": "Rotations du buste avec barre",
+            "sets": 4,
+            "reps": 15,
+            "repsPerSet": [],
+            "specialSets": [],
+            "kg": 0,
+            "kgPerSet": [],
+            "supersetGroup": "",
+            "setType": "",
+            "setTypePerSet": [],
+            "rest": "repos 30 sec",
+            "restPerSet": ["repos 30 sec", "repos 30 sec", "repos 30 sec", "repos 30 sec"],
+            "note": ""
+          },
+          {
+            "name": "Sit-up avec médecine ball contre un mur",
+            "sets": 3,
+            "reps": 15,
+            "repsPerSet": [],
+            "specialSets": [],
+            "kg": 0,
+            "kgPerSet": [],
+            "supersetGroup": "",
+            "setType": "",
+            "setTypePerSet": [],
+            "rest": "repos 40 sec",
+            "restPerSet": ["repos 40 sec", "repos 40 sec", "repos 40 sec"],
+            "note": ""
+          },
+          {
+            "name": "Cocon",
+            "sets": 5,
+            "reps": 12,
+            "repsPerSet": [],
+            "specialSets": [],
+            "kg": 0,
+            "kgPerSet": [],
+            "supersetGroup": "",
+            "setType": "",
+            "setTypePerSet": [],
+            "rest": "",
+            "restPerSet": ["", "", "", "", ""],
+            "note": ""
+          }
+        ]
+      }
+    ]
+  },
+  "aiOutputLegacy": null,
+  "attendu": {
+    "totaux": {"jours": 1, "exercices": 3, "series": 12, "seriesEch": 0},
+    "jours": [
+      {
+        "label": "Abdos - à effectuer avant l'entraînement, après échauffement",
+        "cardioAvant": null,
+        "exercices": [
+          {
+            "nom": "Rotations du buste avec barre",
+            "catalogueAttendu": null,
+            "series": [
+              {"type": "N", "kg": 0, "reps": 15, "repos": 30, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 15, "repos": 30, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 15, "repos": 30, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 15, "repos": 30, "reposTxt": ""}
+            ],
+            "noteContient": [],
+            "superset": ""
+          },
+          {
+            "nom": "Sit-up avec médecine ball contre un mur",
+            "catalogueAttendu": null,
+            "series": [
+              {"type": "N", "kg": 0, "reps": 15, "repos": 40, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 15, "repos": 40, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 15, "repos": 40, "reposTxt": ""}
+            ],
+            "noteContient": [],
+            "superset": ""
+          },
+          {
+            "nom": "Cocon",
+            "catalogueAttendu": null,
+            "series": [
+              {"type": "N", "kg": 0, "reps": 12, "repos": 0, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 12, "repos": 0, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 12, "repos": 0, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 12, "repos": 0, "reposTxt": ""},
+              {"type": "N", "kg": 0, "reps": 12, "repos": 0, "reposTxt": ""}
+            ],
+            "noteContient": [],
+            "superset": ""
+          }
+        ]
+      }
+    ],
+    "propositions": [],
+    "methodes": [
+      {"element": "Repos fermes (« repos 30 sec », « repos 40 sec »)", "statut": "COMPRIS_STRUCTURÉ"},
+      {"element": "Bloc d'abdos « à effectuer avant l'entraînement, après échauffement »", "statut": "PARTIELLEMENT_REPRÉSENTABLE"},
+      {"element": "Colonne Image (illustrations du PDF)", "statut": "NON_REPRÉSENTABLE"}
+    ],
+    "nonRepresentable": ["Illustrations de la colonne Image du PDF"]
+  }
+}

@@ -1,0 +1,1425 @@
+{
+ "id": "C04-coach-A-10mars",
+ "synthetique": false,
+ "source": "coach-A-10mars",
+ "decrit": "Programme d'un coach : abdos puis quatre séances par groupes musculaires, avec montée en charge, pourcentages de 1RM sans 1RM fourni, séries dégressives, unilatéral et alternatives de matériel dans un même nom.",
+ "incertitudes": [
+  "Aucun titre « Séance N » : les jours sont les titres de groupes musculaires (voir C02) ; la règle 0 du prompt pourrait les fusionner. Les titres sont rattachés à leur tableau par le sens ; le tableau « Pectoraux » contient aussi deux exercices de triceps (barre au front, extension verticale) et le tableau « Épaules et triceps » n'en contient aucun.",
+  "Les objectifs de séance (« Gagner en force pour passer progressivement en power… », « Former un cul rond et gagner des cannes ») suivent les titres Dos et Biceps / Jambes et fessiers : placés dans la note du premier exercice de chaque jour (pas de champ de jour).",
+  "Soulever de terre : « 1 x 8, 1 x 5, 1 x 3 » puis « 2 x 1 » (déplacé après le repos par l'extraction) = 5 séries [8,5,3,1,1].",
+  "Dv couché Barre : « 1 x 50% 1 RM 6 reps … 1x 1RM 1reps » = 7 séries [6,4,2,2,1,1,1] ; aucun 1RM n'est donné dans le document, donc kg 0 partout (le % reste en note, rien n'est calculé ; la dernière série est écrite « 1RM » sans pourcentage).",
+  "« Élévation latéral / Haltères 3 charges dégressif / 3x10+10+10 » : lu 3 séries de type D (dropset à 3 paliers de 10 reps), les charges des paliers ne sont pas données (kg 0). Autre lecture possible : 9 lignes de 10 reps ; non retenue (rien n'est multiplié).",
+  "Barre au front : « 2 x 8 mi-lourd 2 x 12-15 plus léger » = 4 séries [8,8,12,12] ; la plage 12-15 ne concerne que les séries 3-4 (le document écrit « mi-lourd » pour les deux premières, « plus léger » pour les deux dernières).",
+  "« Curl haltère » + « Prise marto » = curl marteau : catalogueAttendu null exprès (un rapprochement automatique sur « Curl Haltères » changerait la prise). « Hip trust » (faute du document conservée) : « barre libre ou machine » -> null.",
+  "Repos des abdos : le mot « repos » de la cellule « Répétitions et Repos » est gardé dans le texte (« repos 45 sec »), comme l'exemple du contrat du Worker.",
+  "Repos : « 1.15mins » lu 1 min 15 s ; les plages (« 2 à 4 mins », « 3 à 4 mins », « 2-3 mins », « 1 à 2 mins », « 2 à 3 mins ») ne sont pas converties. En-tête « maximum » sous Repos : probablement « Repos maximum ».",
+  "Une consigne familière de « Leg curl allongé » a été raccourcie en « Machine | Ancre le bassin » (sans effet sur les chiffres). Le nom du programme a été débarrassé du prénom du bénéficiaire. Variante « 10 mars-5 » du même coach lue mais non retenue (contenu différent).",
+  "Dropset « Élévation latéral » : le repos écrit une seule fois (120 s) vaut pour la FIN de la série dégressive ; les paliers s'enchaînent (repos 0 sur chaque palier avant le dernier), comme l'outil de dropset de la séance."
+ ],
+ "aiOutput": {
+  "name": "Programme Sportif 10 mars",
+  "weeks": 0,
+  "startDate": "",
+  "days": [
+   {
+    "label": "Abdos - à effectuer avant l'entraînement, après échauffement",
+    "exercises": [
+     {
+      "name": "Sit-up décliné",
+      "sets": 3,
+      "reps": 20,
+      "repsPerSet": [],
+      "specialSets": [],
+      "kg": 0,
+      "kgPerSet": [],
+      "supersetGroup": "",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "repos 45 sec",
+      "restPerSet": [
+       "repos 45 sec",
+       "repos 45 sec",
+       "repos 45 sec"
+      ],
+      "note": ""
+     },
+     {
+      "name": "Roulette à abdominaux",
+      "sets": 2,
+      "reps": 40,
+      "repsPerSet": [],
+      "specialSets": [],
+      "kg": 0,
+      "kgPerSet": [],
+      "supersetGroup": "",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "repos 1 min",
+      "restPerSet": [
+       "repos 1 min",
+       "repos 1 min"
+      ],
+      "note": ""
+     },
+     {
+      "name": "Flexions des obliques au banc à lombaire à 45°",
+      "sets": 3,
+      "reps": 15,
+      "repsPerSet": [],
+      "specialSets": [],
+      "kg": 0,
+      "kgPerSet": [],
+      "supersetGroup": "",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "repos 30 sec",
+      "restPerSet": [
+       "repos 30 sec",
+       "repos 30 sec",
+       "repos 30 sec"
+      ],
+      "note": "Par côté"
+     }
+    ]
+   },
+   {
+    "label": "Dos et Biceps",
+    "exercises": [
+     {
+      "name": "Soulever de terre",
+      "sets": 5,
+      "reps": 1,
+      "repsPerSet": [
+       8,
+       5,
+       3,
+       1,
+       1
+      ],
+      "specialSets": [],
+      "kg": 0,
+      "kgPerSet": [],
+      "supersetGroup": "",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "2-3 mins",
+      "restPerSet": [
+       "2-3 mins",
+       "2-3 mins",
+       "2-3 mins",
+       "2-3 mins",
+       "2-3 mins"
+      ],
+      "note": "Monté en charge | Objectif de la séance : Gagner en force pour passer progressivement en power on va faire cela par étape pour pas te blesser ni choquer ton corps"
+     },
+     {
+      "name": "Rowing Barre",
+      "sets": 6,
+      "reps": 4,
+      "repsPerSet": [],
+      "specialSets": [],
+      "kg": 0,
+      "kgPerSet": [],
+      "supersetGroup": "",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "2 à 4 mins",
+      "restPerSet": [
+       "2 à 4 mins",
+       "2 à 4 mins",
+       "2 à 4 mins",
+       "2 à 4 mins",
+       "2 à 4 mins",
+       "2 à 4 mins"
+      ],
+      "note": "Barre libre"
+     },
+     {
+      "name": "Gorille à la poulie",
+      "sets": 3,
+      "reps": 5,
+      "repsPerSet": [],
+      "specialSets": [],
+      "kg": 0,
+      "kgPerSet": [],
+      "supersetGroup": "",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "1.15mins",
+      "restPerSet": [
+       "1.15mins",
+       "1.15mins",
+       "1.15mins"
+      ],
+      "note": "Petite barre"
+     },
+     {
+      "name": "Curl pupitre Barre EZ",
+      "sets": 4,
+      "reps": 6,
+      "repsPerSet": [
+       8,
+       8,
+       6,
+       6
+      ],
+      "specialSets": [],
+      "kg": 0,
+      "kgPerSet": [],
+      "supersetGroup": "",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "2 à 4 mins",
+      "restPerSet": [
+       "2 à 4 mins",
+       "2 à 4 mins",
+       "2 à 4 mins",
+       "2 à 4 mins"
+      ],
+      "note": ""
+     },
+     {
+      "name": "Curl haltère",
+      "sets": 3,
+      "reps": 5,
+      "repsPerSet": [],
+      "specialSets": [],
+      "kg": 0,
+      "kgPerSet": [],
+      "supersetGroup": "",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "1.15mins",
+      "restPerSet": [
+       "1.15mins",
+       "1.15mins",
+       "1.15mins"
+      ],
+      "note": "Prise marto"
+     }
+    ]
+   },
+   {
+    "label": "Jambes et fessiers",
+    "exercises": [
+     {
+      "name": "Hack squat ou Squat libre",
+      "sets": 6,
+      "reps": 1,
+      "repsPerSet": [
+       8,
+       8,
+       4,
+       4,
+       1,
+       1
+      ],
+      "specialSets": [],
+      "kg": 0,
+      "kgPerSet": [],
+      "supersetGroup": "",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "3 à 4 mins",
+      "restPerSet": [
+       "3 à 4 mins",
+       "3 à 4 mins",
+       "3 à 4 mins",
+       "3 à 4 mins",
+       "3 à 4 mins",
+       "3 à 4 mins"
+      ],
+      "note": "Chauffes avant fais pas le ouf | Objectif de la séance : Former un cul rond et gagner des cannes"
+     },
+     {
+      "name": "Legs extension",
+      "sets": 3,
+      "reps": 5,
+      "repsPerSet": [],
+      "specialSets": [],
+      "kg": 0,
+      "kgPerSet": [],
+      "supersetGroup": "",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "2 mins",
+      "restPerSet": [
+       "2 mins",
+       "2 mins",
+       "2 mins"
+      ],
+      "note": ""
+     },
+     {
+      "name": "SDT jambes tendues",
+      "sets": 5,
+      "reps": 10,
+      "repsPerSet": [],
+      "specialSets": [],
+      "kg": 0,
+      "kgPerSet": [],
+      "supersetGroup": "",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "2 à 3 mins",
+      "restPerSet": [
+       "2 à 3 mins",
+       "2 à 3 mins",
+       "2 à 3 mins",
+       "2 à 3 mins",
+       "2 à 3 mins"
+      ],
+      "note": "Barre libre"
+     },
+     {
+      "name": "Hip trust",
+      "sets": 5,
+      "reps": 6,
+      "repsPerSet": [],
+      "specialSets": [],
+      "kg": 0,
+      "kgPerSet": [],
+      "supersetGroup": "",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "1.30 mins",
+      "restPerSet": [
+       "1.30 mins",
+       "1.30 mins",
+       "1.30 mins",
+       "1.30 mins",
+       "1.30 mins"
+      ],
+      "note": "Barre libre ou machine si tu as"
+     },
+     {
+      "name": "Leg curl allongé",
+      "sets": 3,
+      "reps": 3,
+      "repsPerSet": [],
+      "specialSets": [],
+      "kg": 0,
+      "kgPerSet": [],
+      "supersetGroup": "",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "1 à 2 mins",
+      "restPerSet": [
+       "1 à 2 mins",
+       "1 à 2 mins",
+       "1 à 2 mins"
+      ],
+      "note": "Machine | Ancre le bassin | Reps 3/5"
+     }
+    ]
+   },
+   {
+    "label": "Pectoraux",
+    "exercises": [
+     {
+      "name": "Dv couché Barre",
+      "sets": 7,
+      "reps": 1,
+      "repsPerSet": [
+       6,
+       4,
+       2,
+       2,
+       1,
+       1,
+       1
+      ],
+      "specialSets": [],
+      "kg": 0,
+      "kgPerSet": [],
+      "supersetGroup": "",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "3 à 4 mins",
+      "restPerSet": [
+       "3 à 4 mins",
+       "3 à 4 mins",
+       "3 à 4 mins",
+       "3 à 4 mins",
+       "3 à 4 mins",
+       "3 à 4 mins",
+       "3 à 4 mins"
+      ],
+      "note": "Charges en pourcentage du 1RM, 1RM non fourni (kg 0) : 50% x6, 60% x4, 70% x2 (2 séries), 90% x1 (2 séries), 1RM x1"
+     },
+     {
+      "name": "Dv incliné Barre",
+      "sets": 3,
+      "reps": 4,
+      "repsPerSet": [
+       8,
+       8,
+       4
+      ],
+      "specialSets": [],
+      "kg": 0,
+      "kgPerSet": [],
+      "supersetGroup": "",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "2 mins",
+      "restPerSet": [
+       "2 mins",
+       "2 mins",
+       "2 mins"
+      ],
+      "note": ""
+     },
+     {
+      "name": "Barre au front",
+      "sets": 4,
+      "reps": 12,
+      "repsPerSet": [
+       8,
+       8,
+       12,
+       12
+      ],
+      "specialSets": [],
+      "kg": 0,
+      "kgPerSet": [],
+      "supersetGroup": "",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "2 mins",
+      "restPerSet": [
+       "2 mins",
+       "2 mins",
+       "2 mins",
+       "2 mins"
+      ],
+      "note": "Couché sur un banc | 2 x 8 mi-lourd | 2 x 12-15 plus léger | Reps 12-15 (séries 3-4)"
+     },
+     {
+      "name": "Extension vertical à la poulie haute",
+      "sets": 3,
+      "reps": 4,
+      "repsPerSet": [],
+      "specialSets": [],
+      "kg": 0,
+      "kgPerSet": [],
+      "supersetGroup": "",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "1 à 2 mins",
+      "restPerSet": [
+       "1 à 2 mins",
+       "1 à 2 mins",
+       "1 à 2 mins"
+      ],
+      "note": "Unilatéral en concentré (Lent) | Par bras | Reps 4/5"
+     }
+    ]
+   },
+   {
+    "label": "Épaules et triceps",
+    "exercises": [
+     {
+      "name": "Dv militaire",
+      "sets": 3,
+      "reps": 12,
+      "repsPerSet": [],
+      "specialSets": [],
+      "kg": 0,
+      "kgPerSet": [],
+      "supersetGroup": "",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "2 mins",
+      "restPerSet": [
+       "2 mins",
+       "2 mins",
+       "2 mins"
+      ],
+      "note": "Debout"
+     },
+     {
+      "name": "Élévation Frontale Haltère",
+      "sets": 4,
+      "reps": 10,
+      "repsPerSet": [],
+      "specialSets": [],
+      "kg": 0,
+      "kgPerSet": [],
+      "supersetGroup": "",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "2 mins",
+      "restPerSet": [
+       "2 mins",
+       "2 mins",
+       "2 mins",
+       "2 mins"
+      ],
+      "note": ""
+     },
+     {
+      "name": "Élévation latéral",
+      "sets": 3,
+      "reps": 10,
+      "repsPerSet": [],
+      "specialSets": [],
+      "kg": 0,
+      "kgPerSet": [],
+      "supersetGroup": "",
+      "setType": "D",
+      "setTypePerSet": [],
+      "rest": "2 mins",
+      "restPerSet": [
+       "2 mins",
+       "2 mins",
+       "2 mins"
+      ],
+      "note": "Haltères | 3 charges dégressif | 3x10+10+10"
+     },
+     {
+      "name": "Oiseau sur banc incliné Haltère",
+      "sets": 4,
+      "reps": 12,
+      "repsPerSet": [],
+      "specialSets": [],
+      "kg": 0,
+      "kgPerSet": [],
+      "supersetGroup": "",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "1.30 mins",
+      "restPerSet": [
+       "1.30 mins",
+       "1.30 mins",
+       "1.30 mins",
+       "1.30 mins"
+      ],
+      "note": ""
+     },
+     {
+      "name": "Peck deck inversé",
+      "sets": 3,
+      "reps": 6,
+      "repsPerSet": [],
+      "specialSets": [],
+      "kg": 0,
+      "kgPerSet": [],
+      "supersetGroup": "",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "2 à 3 mins",
+      "restPerSet": [
+       "2 à 3 mins",
+       "2 à 3 mins",
+       "2 à 3 mins"
+      ],
+      "note": ""
+     }
+    ]
+   }
+  ]
+ },
+ "aiOutputLegacy": null,
+ "attendu": {
+  "totaux": {
+   "jours": 5,
+   "exercices": 22,
+   "series": 85,
+   "seriesEch": 0
+  },
+  "jours": [
+   {
+    "label": "Abdos - à effectuer avant l'entraînement, après échauffement",
+    "cardioAvant": null,
+    "exercices": [
+     {
+      "nom": "Sit-up décliné",
+      "catalogueAttendu": null,
+      "series": [
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 20,
+        "repos": 45,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 20,
+        "repos": 45,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 20,
+        "repos": 45,
+        "reposTxt": ""
+       }
+      ],
+      "noteContient": [],
+      "superset": ""
+     },
+     {
+      "nom": "Roulette à abdominaux",
+      "catalogueAttendu": "Roue Abdominale (Ab Wheel)",
+      "series": [
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 40,
+        "repos": 60,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 40,
+        "repos": 60,
+        "reposTxt": ""
+       }
+      ],
+      "noteContient": [],
+      "superset": ""
+     },
+     {
+      "nom": "Flexions des obliques au banc à lombaire à 45°",
+      "catalogueAttendu": null,
+      "series": [
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 15,
+        "repos": 30,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 15,
+        "repos": 30,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 15,
+        "repos": 30,
+        "reposTxt": ""
+       }
+      ],
+      "noteContient": [
+       "Par côté"
+      ],
+      "superset": ""
+     }
+    ]
+   },
+   {
+    "label": "Dos et Biceps",
+    "cardioAvant": null,
+    "exercices": [
+     {
+      "nom": "Soulever de terre",
+      "catalogueAttendu": "Soulevé de Terre",
+      "series": [
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 8,
+        "repos": 0,
+        "reposTxt": "2-3 mins"
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 5,
+        "repos": 0,
+        "reposTxt": "2-3 mins"
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 3,
+        "repos": 0,
+        "reposTxt": "2-3 mins"
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 1,
+        "repos": 0,
+        "reposTxt": "2-3 mins"
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 1,
+        "repos": 0,
+        "reposTxt": "2-3 mins"
+       }
+      ],
+      "noteContient": [
+       "Monté en charge",
+       "Objectif de la séance"
+      ],
+      "superset": ""
+     },
+     {
+      "nom": "Rowing Barre",
+      "catalogueAttendu": "Rowing Barre (Tirage Horizontal)",
+      "series": [
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 4,
+        "repos": 0,
+        "reposTxt": "2 à 4 mins"
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 4,
+        "repos": 0,
+        "reposTxt": "2 à 4 mins"
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 4,
+        "repos": 0,
+        "reposTxt": "2 à 4 mins"
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 4,
+        "repos": 0,
+        "reposTxt": "2 à 4 mins"
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 4,
+        "repos": 0,
+        "reposTxt": "2 à 4 mins"
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 4,
+        "repos": 0,
+        "reposTxt": "2 à 4 mins"
+       }
+      ],
+      "noteContient": [
+       "Barre libre"
+      ],
+      "superset": ""
+     },
+     {
+      "nom": "Gorille à la poulie",
+      "catalogueAttendu": null,
+      "series": [
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 5,
+        "repos": 75,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 5,
+        "repos": 75,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 5,
+        "repos": 75,
+        "reposTxt": ""
+       }
+      ],
+      "noteContient": [
+       "Petite barre"
+      ],
+      "superset": ""
+     },
+     {
+      "nom": "Curl pupitre Barre EZ",
+      "catalogueAttendu": "Curl Pupitre Barre EZ (Larry Scott)",
+      "series": [
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 8,
+        "repos": 0,
+        "reposTxt": "2 à 4 mins"
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 8,
+        "repos": 0,
+        "reposTxt": "2 à 4 mins"
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 6,
+        "repos": 0,
+        "reposTxt": "2 à 4 mins"
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 6,
+        "repos": 0,
+        "reposTxt": "2 à 4 mins"
+       }
+      ],
+      "noteContient": [],
+      "superset": ""
+     },
+     {
+      "nom": "Curl haltère",
+      "catalogueAttendu": null,
+      "series": [
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 5,
+        "repos": 75,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 5,
+        "repos": 75,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 5,
+        "repos": 75,
+        "reposTxt": ""
+       }
+      ],
+      "noteContient": [
+       "Prise marto"
+      ],
+      "superset": ""
+     }
+    ]
+   },
+   {
+    "label": "Jambes et fessiers",
+    "cardioAvant": null,
+    "exercices": [
+     {
+      "nom": "Hack squat ou Squat libre",
+      "catalogueAttendu": null,
+      "series": [
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 8,
+        "repos": 0,
+        "reposTxt": "3 à 4 mins"
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 8,
+        "repos": 0,
+        "reposTxt": "3 à 4 mins"
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 4,
+        "repos": 0,
+        "reposTxt": "3 à 4 mins"
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 4,
+        "repos": 0,
+        "reposTxt": "3 à 4 mins"
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 1,
+        "repos": 0,
+        "reposTxt": "3 à 4 mins"
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 1,
+        "repos": 0,
+        "reposTxt": "3 à 4 mins"
+       }
+      ],
+      "noteContient": [
+       "Chauffes avant fais pas le ouf",
+       "Objectif de la séance"
+      ],
+      "superset": ""
+     },
+     {
+      "nom": "Legs extension",
+      "catalogueAttendu": "Extension Quadriceps (Leg Extension)",
+      "series": [
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 5,
+        "repos": 120,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 5,
+        "repos": 120,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 5,
+        "repos": 120,
+        "reposTxt": ""
+       }
+      ],
+      "noteContient": [],
+      "superset": ""
+     },
+     {
+      "nom": "SDT jambes tendues",
+      "catalogueAttendu": "Soulevé de Terre Jambes Tendues",
+      "series": [
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 0,
+        "reposTxt": "2 à 3 mins"
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 0,
+        "reposTxt": "2 à 3 mins"
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 0,
+        "reposTxt": "2 à 3 mins"
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 0,
+        "reposTxt": "2 à 3 mins"
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 0,
+        "reposTxt": "2 à 3 mins"
+       }
+      ],
+      "noteContient": [
+       "Barre libre"
+      ],
+      "superset": ""
+     },
+     {
+      "nom": "Hip trust",
+      "catalogueAttendu": null,
+      "series": [
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 6,
+        "repos": 90,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 6,
+        "repos": 90,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 6,
+        "repos": 90,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 6,
+        "repos": 90,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 6,
+        "repos": 90,
+        "reposTxt": ""
+       }
+      ],
+      "noteContient": [
+       "Barre libre ou machine si tu as"
+      ],
+      "superset": ""
+     },
+     {
+      "nom": "Leg curl allongé",
+      "catalogueAttendu": "Leg Curl Couché Machine",
+      "series": [
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 3,
+        "repos": 0,
+        "reposTxt": "1 à 2 mins"
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 3,
+        "repos": 0,
+        "reposTxt": "1 à 2 mins"
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 3,
+        "repos": 0,
+        "reposTxt": "1 à 2 mins"
+       }
+      ],
+      "noteContient": [
+       "Ancre le bassin",
+       "Reps 3/5"
+      ],
+      "superset": ""
+     }
+    ]
+   },
+   {
+    "label": "Pectoraux",
+    "cardioAvant": null,
+    "exercices": [
+     {
+      "nom": "Dv couché Barre",
+      "catalogueAttendu": "Développé Couché",
+      "series": [
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 6,
+        "repos": 0,
+        "reposTxt": "3 à 4 mins"
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 4,
+        "repos": 0,
+        "reposTxt": "3 à 4 mins"
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 2,
+        "repos": 0,
+        "reposTxt": "3 à 4 mins"
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 2,
+        "repos": 0,
+        "reposTxt": "3 à 4 mins"
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 1,
+        "repos": 0,
+        "reposTxt": "3 à 4 mins"
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 1,
+        "repos": 0,
+        "reposTxt": "3 à 4 mins"
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 1,
+        "repos": 0,
+        "reposTxt": "3 à 4 mins"
+       }
+      ],
+      "noteContient": [
+       "50% x6",
+       "90% x1",
+       "1RM"
+      ],
+      "superset": ""
+     },
+     {
+      "nom": "Dv incliné Barre",
+      "catalogueAttendu": "Développé Incliné",
+      "series": [
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 8,
+        "repos": 120,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 8,
+        "repos": 120,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 4,
+        "repos": 120,
+        "reposTxt": ""
+       }
+      ],
+      "noteContient": [],
+      "superset": ""
+     },
+     {
+      "nom": "Barre au front",
+      "catalogueAttendu": "Barre au Front",
+      "series": [
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 8,
+        "repos": 120,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 8,
+        "repos": 120,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 12,
+        "repos": 120,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 12,
+        "repos": 120,
+        "reposTxt": ""
+       }
+      ],
+      "noteContient": [
+       "Couché sur un banc",
+       "Reps 12-15"
+      ],
+      "superset": ""
+     },
+     {
+      "nom": "Extension vertical à la poulie haute",
+      "catalogueAttendu": null,
+      "series": [
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 4,
+        "repos": 0,
+        "reposTxt": "1 à 2 mins"
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 4,
+        "repos": 0,
+        "reposTxt": "1 à 2 mins"
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 4,
+        "repos": 0,
+        "reposTxt": "1 à 2 mins"
+       }
+      ],
+      "noteContient": [
+       "Unilatéral en concentré (Lent)",
+       "Reps 4/5"
+      ],
+      "superset": ""
+     }
+    ]
+   },
+   {
+    "label": "Épaules et triceps",
+    "cardioAvant": null,
+    "exercices": [
+     {
+      "nom": "Dv militaire",
+      "catalogueAttendu": "Développé Militaire",
+      "series": [
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 12,
+        "repos": 120,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 12,
+        "repos": 120,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 12,
+        "repos": 120,
+        "reposTxt": ""
+       }
+      ],
+      "noteContient": [
+       "Debout"
+      ],
+      "superset": ""
+     },
+     {
+      "nom": "Élévation Frontale Haltère",
+      "catalogueAttendu": "Élévations Frontales",
+      "series": [
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 120,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 120,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 120,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 120,
+        "reposTxt": ""
+       }
+      ],
+      "noteContient": [],
+      "superset": ""
+     },
+     {
+      "nom": "Élévation latéral",
+      "catalogueAttendu": "Élévations Latérales (Lateral Raise)",
+      "series": [
+       {
+        "type": "D",
+        "kg": 0,
+        "reps": 10,
+        "repos": 0,
+        "reposTxt": ""
+       },
+       {
+        "type": "D",
+        "kg": 0,
+        "reps": 10,
+        "repos": 0,
+        "reposTxt": ""
+       },
+       {
+        "type": "D",
+        "kg": 0,
+        "reps": 10,
+        "repos": 120,
+        "reposTxt": ""
+       }
+      ],
+      "noteContient": [
+       "3 charges dégressif",
+       "3x10+10+10"
+      ],
+      "superset": ""
+     },
+     {
+      "nom": "Oiseau sur banc incliné Haltère",
+      "catalogueAttendu": "Oiseau",
+      "series": [
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 12,
+        "repos": 90,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 12,
+        "repos": 90,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 12,
+        "repos": 90,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 12,
+        "repos": 90,
+        "reposTxt": ""
+       }
+      ],
+      "noteContient": [],
+      "superset": ""
+     },
+     {
+      "nom": "Peck deck inversé",
+      "catalogueAttendu": "Machine Oiseau",
+      "series": [
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 6,
+        "repos": 0,
+        "reposTxt": "2 à 3 mins"
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 6,
+        "repos": 0,
+        "reposTxt": "2 à 3 mins"
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 6,
+        "repos": 0,
+        "reposTxt": "2 à 3 mins"
+       }
+      ],
+      "noteContient": [],
+      "superset": ""
+     }
+    ]
+   }
+  ],
+  "propositions": [],
+  "methodes": [
+   {
+    "element": "Montée en charge en pyramide (8-5-3-1-1) avec la mention « Monté en charge »",
+    "statut": "COMPRIS_STRUCTURÉ"
+   },
+   {
+    "element": "Pourcentages de 1RM sans 1RM fourni (50 % 60 % 70 % 90 % 100 %)",
+    "statut": "COMPRIS_MAIS_NOTE"
+   },
+   {
+    "element": "Séries dégressives à 3 charges (3x10+10+10)",
+    "statut": "PARTIELLEMENT_REPRÉSENTABLE"
+   },
+   {
+    "element": "Unilatéral « par bras » / « par côté » (séries non doublées)",
+    "statut": "COMPRIS_MAIS_NOTE"
+   },
+   {
+    "element": "Intensité écrite en prose (« mi-lourd », « plus léger », « lent »)",
+    "statut": "COMPRIS_MAIS_NOTE"
+   },
+   {
+    "element": "Plages de reps (4/5, 3/5, 12-15)",
+    "statut": "PARTIELLEMENT_REPRÉSENTABLE"
+   },
+   {
+    "element": "Alternative dans le nom (« Hack squat ou Squat libre », « barre libre ou machine »)",
+    "statut": "COMPRIS_MAIS_NOTE"
+   },
+   {
+    "element": "Objectif de séance (texte libre)",
+    "statut": "COMPRIS_MAIS_NOTE"
+   },
+   {
+    "element": "Repos fermes (45 sec, 1 min, 1.15mins, 1.30 mins, 2 mins)",
+    "statut": "COMPRIS_STRUCTURÉ"
+   },
+   {
+    "element": "Repos en plage (2-3 mins, 2 à 4 mins, 3 à 4 mins, 2 à 3 mins, 1 à 2 mins)",
+    "statut": "COMPRIS_MAIS_NOTE"
+   },
+   {
+    "element": "Bloc d'abdos « avant l'entraînement, après échauffement »",
+    "statut": "PARTIELLEMENT_REPRÉSENTABLE"
+   },
+   {
+    "element": "Colonne Image (illustrations du PDF)",
+    "statut": "NON_REPRÉSENTABLE"
+   }
+  ],
+  "nonRepresentable": [
+   "Illustrations de la colonne Image du PDF"
+  ]
+ }
+}

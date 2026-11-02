@@ -1,0 +1,2189 @@
+{
+ "id": "C05-coach-A-4fev",
+ "synthetique": false,
+ "source": "coach-A-4fev",
+ "decrit": "Programme d'un coach : un circuit d'abdominaux (4 tours) et six séances avec tempos, séries « 4 fois », dégressif, mouvements enchaînés, gainage chronométré et consignes de technique.",
+ "incertitudes": [
+  "Le préambule (zones de charge « 1 à 10 reps lourds, 10 à 15 modéré, 15 à 50 plus léger », hydratation, respiration) n'a pas de champ : non reporté.",
+  "Circuit d'abdos : « 1 série de chaque exercice, repos 1 min, on recommence 4 fois » = 4 exercices liés (groupe A) de 4 séries ; le repos 1 min est recopié sur chacun (en réalité il suit le tour). « Oblique au sol couché + relevé de jambe » et « Relevé de jambes + crunch bras tendu disque » sont lus comme des mouvements combinés (une seule valeur de reps), pas comme des supersets de deux exercices.",
+  "« Gainage côté 45 sec de chaque côté » : durée stockée dans reps (45, en secondes, convention déjà utilisée par l'app pour les gainages). « 20 par côté » : séries non doublées.",
+  "Séance 1, legs extension : « 10 pieds vers l'extérieur » lu comme 10 reps (le 10 est collé à la consigne) ; « 5 fois » = 5 séries. Tempo « monte 3 sec / bloque 3 sec / descente 3 sec » en note.",
+  "Séance 1, « Front Squat » : « Smith machine » est dans la colonne suivante ; garde en note et catalogueAttendu null exprès (« Squat Avant » est à la barre). « Press » seul n'indique pas la machine : null.",
+  "Séance 1, « Hack squat + fente marché » avec « 8 rep lourd press + 20 fentes par jambes » : deux exercices liés (groupe A) car chaque partie a ses propres reps ; 4 séries chacun, repos 3 min recopié.",
+  "Séance 2 : l'extraction mélange les cellules des deux écartés ; « 4 x 10 lourd / 2 min 30 » est rattaché à l'écarté haltère incliné et « 4 x 15 / 1 min 30 » à l'écarté poulies (ordre des lignes), le nombre de secondes de « \" sec bloqué » est illisible (note le dit).",
+  "Séance 3 : « 4 x 10 lourd 2 min » est rattaché à « Leg curls couché » et « 4 x 10 lours 2m30 » à « SDT jambes tendus haltères » (ordre des lignes). « 1.15/30 min max » = plage de repos avec plafond, laissée en texte. « Leg curl unilatéral » : catalogue null (seule l'entrée « debout » existe).",
+  "Séance 4 : « Élévation latérale 10 10 10 10 / 4 x 10 par côté / Dégressif 4 charges » lu 4 séries de type D (4 charges de 10 reps chacune), charges non données (kg 0) ; autre lecture possible : 4 séries x 4 paliers.",
+  "« 1 min 30 max » et « 2m30 » sont recopiés tels quels ; attendu lit 90 s et 150 s. « Vidéo WhatsApp » (renvoi à une vidéo absente) gardé en note. Le nom du programme a été débarrassé du prénom du bénéficiaire.",
+  "Dropset « Élévation latérale » : le repos écrit une seule fois (120 s) vaut pour la FIN de la série dégressive ; les paliers s'enchaînent (repos 0 sur chaque palier avant le dernier), comme l'outil de dropset de la séance."
+ ],
+ "aiOutput": {
+  "name": "Programme Sportif 4 fév",
+  "weeks": 0,
+  "startDate": "",
+  "days": [
+   {
+    "label": "Circuit abdominaux",
+    "exercises": [
+     {
+      "name": "Oblique au sol couché + relevé de jambe",
+      "sets": 4,
+      "reps": 20,
+      "repsPerSet": [],
+      "specialSets": [],
+      "kg": 0,
+      "kgPerSet": [],
+      "supersetGroup": "A",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "1 min",
+      "restPerSet": [
+       "1 min",
+       "1 min",
+       "1 min",
+       "1 min"
+      ],
+      "note": "Circuit : 1 série de chaque exercice, repos 1 min, 4 tours | 20 par côté | Vidéo WhatsApp"
+     },
+     {
+      "name": "Relevé de jambes + crunch bras tendu disque",
+      "sets": 4,
+      "reps": 30,
+      "repsPerSet": [],
+      "specialSets": [],
+      "kg": 0,
+      "kgPerSet": [],
+      "supersetGroup": "A",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "1 min",
+      "restPerSet": [
+       "1 min",
+       "1 min",
+       "1 min",
+       "1 min"
+      ],
+      "note": "Vidéo WhatsApp"
+     },
+     {
+      "name": "Gainage côté",
+      "sets": 4,
+      "reps": 45,
+      "repsPerSet": [],
+      "specialSets": [],
+      "kg": 0,
+      "kgPerSet": [],
+      "supersetGroup": "A",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "1 min",
+      "restPerSet": [
+       "1 min",
+       "1 min",
+       "1 min",
+       "1 min"
+      ],
+      "note": "Durée : 45 sec de chaque côté | Vidéo WhatsApp"
+     },
+     {
+      "name": "Crunch avec les jambes tendues et levées",
+      "sets": 4,
+      "reps": 20,
+      "repsPerSet": [],
+      "specialSets": [],
+      "kg": 0,
+      "kgPerSet": [],
+      "supersetGroup": "A",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "1 min",
+      "restPerSet": [
+       "1 min",
+       "1 min",
+       "1 min",
+       "1 min"
+      ],
+      "note": "Vidéo WhatsApp"
+     }
+    ]
+   },
+   {
+    "label": "Séance 1",
+    "exercises": [
+     {
+      "name": "Legs extension machine",
+      "sets": 5,
+      "reps": 10,
+      "repsPerSet": [],
+      "specialSets": [],
+      "kg": 0,
+      "kgPerSet": [],
+      "supersetGroup": "",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "1 min 30",
+      "restPerSet": [
+       "1 min 30",
+       "1 min 30",
+       "1 min 30",
+       "1 min 30",
+       "1 min 30"
+      ],
+      "note": "Montée 3 sec | Bloque 3 sec | Descente 3 sec | 10 pieds vers l'extérieur"
+     },
+     {
+      "name": "Front Squat",
+      "sets": 4,
+      "reps": 8,
+      "repsPerSet": [],
+      "specialSets": [],
+      "kg": 0,
+      "kgPerSet": [],
+      "supersetGroup": "",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "2 min 30",
+      "restPerSet": [
+       "2 min 30",
+       "2 min 30",
+       "2 min 30",
+       "2 min 30"
+      ],
+      "note": "Lourd | Smith machine | Pointe des pieds alignée avec les genoux"
+     },
+     {
+      "name": "Press",
+      "sets": 4,
+      "reps": 8,
+      "repsPerSet": [],
+      "specialSets": [],
+      "kg": 0,
+      "kgPerSet": [],
+      "supersetGroup": "",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "2 min 30",
+      "restPerSet": [
+       "2 min 30",
+       "2 min 30",
+       "2 min 30",
+       "2 min 30"
+      ],
+      "note": "Lourd | 3 sec montée 3 sec descente | Pieds largeur bassin"
+     },
+     {
+      "name": "Hack squat",
+      "sets": 4,
+      "reps": 8,
+      "repsPerSet": [],
+      "specialSets": [],
+      "kg": 0,
+      "kgPerSet": [],
+      "supersetGroup": "A",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "3 min",
+      "restPerSet": [
+       "3 min",
+       "3 min",
+       "3 min",
+       "3 min"
+      ],
+      "note": "8 rep lourd press | Enchaîné avec fente marché"
+     },
+     {
+      "name": "Fente marché",
+      "sets": 4,
+      "reps": 20,
+      "repsPerSet": [],
+      "specialSets": [],
+      "kg": 0,
+      "kgPerSet": [],
+      "supersetGroup": "A",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "3 min",
+      "restPerSet": [
+       "3 min",
+       "3 min",
+       "3 min",
+       "3 min"
+      ],
+      "note": "20 fentes par jambe"
+     }
+    ]
+   },
+   {
+    "label": "Séance 2",
+    "exercises": [
+     {
+      "name": "DC haltères",
+      "sets": 4,
+      "reps": 6,
+      "repsPerSet": [],
+      "specialSets": [],
+      "kg": 0,
+      "kgPerSet": [],
+      "supersetGroup": "",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "2 min 30",
+      "restPerSet": [
+       "2 min 30",
+       "2 min 30",
+       "2 min 30",
+       "2 min 30"
+      ],
+      "note": "Lourd | 3 sec descente 2 sec contraction | Reps 6-8"
+     },
+     {
+      "name": "Dv Incliné Haltères",
+      "sets": 4,
+      "reps": 6,
+      "repsPerSet": [],
+      "specialSets": [],
+      "kg": 0,
+      "kgPerSet": [],
+      "supersetGroup": "",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "2 min 30",
+      "restPerSet": [
+       "2 min 30",
+       "2 min 30",
+       "2 min 30",
+       "2 min 30"
+      ],
+      "note": "Lourd | 3 sec descente 2 sec contraction | Reps 6-8"
+     },
+     {
+      "name": "Dv. Décliné haltère",
+      "sets": 4,
+      "reps": 6,
+      "repsPerSet": [],
+      "specialSets": [],
+      "kg": 0,
+      "kgPerSet": [],
+      "supersetGroup": "",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "2 min 30",
+      "restPerSet": [
+       "2 min 30",
+       "2 min 30",
+       "2 min 30",
+       "2 min 30"
+      ],
+      "note": "Lourd | 3 sec descente 2 sec contraction | Reps 6-8"
+     },
+     {
+      "name": "Écarté haltère incliné",
+      "sets": 4,
+      "reps": 10,
+      "repsPerSet": [],
+      "specialSets": [],
+      "kg": 0,
+      "kgPerSet": [],
+      "supersetGroup": "",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "2 min 30",
+      "restPerSet": [
+       "2 min 30",
+       "2 min 30",
+       "2 min 30",
+       "2 min 30"
+      ],
+      "note": "Lourd | 3 sec descente 3 sec bloqué 3 sec monté"
+     },
+     {
+      "name": "Écarté poulies hauteur poignet",
+      "sets": 4,
+      "reps": 15,
+      "repsPerSet": [],
+      "specialSets": [],
+      "kg": 0,
+      "kgPerSet": [],
+      "supersetGroup": "",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "1 min 30",
+      "restPerSet": [
+       "1 min 30",
+       "1 min 30",
+       "1 min 30",
+       "1 min 30"
+      ],
+      "note": "Descente contrôlée | sec bloqué (durée illisible dans le document)"
+     }
+    ]
+   },
+   {
+    "label": "Séance 3",
+    "exercises": [
+     {
+      "name": "Squat sumo",
+      "sets": 5,
+      "reps": 10,
+      "repsPerSet": [],
+      "specialSets": [],
+      "kg": 0,
+      "kgPerSet": [],
+      "supersetGroup": "",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "1 min 30",
+      "restPerSet": [
+       "1 min 30",
+       "1 min 30",
+       "1 min 30",
+       "1 min 30",
+       "1 min 30"
+      ],
+      "note": "Lourd | Pousse avec les talons"
+     },
+     {
+      "name": "Leg curl unilatéral",
+      "sets": 5,
+      "reps": 10,
+      "repsPerSet": [],
+      "specialSets": [],
+      "kg": 0,
+      "kgPerSet": [],
+      "supersetGroup": "",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "2 min",
+      "restPerSet": [
+       "2 min",
+       "2 min",
+       "2 min",
+       "2 min",
+       "2 min"
+      ],
+      "note": "3 sec contraction"
+     },
+     {
+      "name": "Leg curls couché",
+      "sets": 4,
+      "reps": 10,
+      "repsPerSet": [],
+      "specialSets": [],
+      "kg": 0,
+      "kgPerSet": [],
+      "supersetGroup": "",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "2 min",
+      "restPerSet": [
+       "2 min",
+       "2 min",
+       "2 min",
+       "2 min"
+      ],
+      "note": "Lourd | Monté lente descente rapide | Bassin ancrer dans le siège pas de bascule"
+     },
+     {
+      "name": "SDT jambes tendues haltères",
+      "sets": 4,
+      "reps": 10,
+      "repsPerSet": [],
+      "specialSets": [],
+      "kg": 0,
+      "kgPerSet": [],
+      "supersetGroup": "",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "2m30",
+      "restPerSet": [
+       "2m30",
+       "2m30",
+       "2m30",
+       "2m30"
+      ],
+      "note": "Lourd | 2 sec bloqué"
+     },
+     {
+      "name": "Hip trust Machine",
+      "sets": 4,
+      "reps": 12,
+      "repsPerSet": [],
+      "specialSets": [],
+      "kg": 0,
+      "kgPerSet": [],
+      "supersetGroup": "",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "1.15/30 min max",
+      "restPerSet": [
+       "1.15/30 min max",
+       "1.15/30 min max",
+       "1.15/30 min max",
+       "1.15/30 min max"
+      ],
+      "note": "3 sec bloqué"
+     }
+    ]
+   },
+   {
+    "label": "Séance 4",
+    "exercises": [
+     {
+      "name": "Tirage vertical large",
+      "sets": 4,
+      "reps": 8,
+      "repsPerSet": [],
+      "specialSets": [],
+      "kg": 0,
+      "kgPerSet": [],
+      "supersetGroup": "",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "2 min",
+      "restPerSet": [
+       "2 min",
+       "2 min",
+       "2 min",
+       "2 min"
+      ],
+      "note": "Lourd | 3 sec bloqué sur les 3 dernières rep de chaque"
+     },
+     {
+      "name": "Tirage vertical prise serré",
+      "sets": 4,
+      "reps": 8,
+      "repsPerSet": [],
+      "specialSets": [],
+      "kg": 0,
+      "kgPerSet": [],
+      "supersetGroup": "",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "2 min",
+      "restPerSet": [
+       "2 min",
+       "2 min",
+       "2 min",
+       "2 min"
+      ],
+      "note": "Lourd | 3 sec bloqué"
+     },
+     {
+      "name": "Élévation frontale",
+      "sets": 4,
+      "reps": 10,
+      "repsPerSet": [],
+      "specialSets": [],
+      "kg": 0,
+      "kgPerSet": [],
+      "supersetGroup": "",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "1 min 30 max",
+      "restPerSet": [
+       "1 min 30 max",
+       "1 min 30 max",
+       "1 min 30 max",
+       "1 min 30 max"
+      ],
+      "note": ""
+     },
+     {
+      "name": "Élévation latérale",
+      "sets": 4,
+      "reps": 10,
+      "repsPerSet": [],
+      "specialSets": [],
+      "kg": 0,
+      "kgPerSet": [],
+      "supersetGroup": "",
+      "setType": "D",
+      "setTypePerSet": [],
+      "rest": "2 min",
+      "restPerSet": [
+       "2 min",
+       "2 min",
+       "2 min",
+       "2 min"
+      ],
+      "note": "Par côté | Dégressif 4 charges | 10 10 10 10"
+     }
+    ]
+   },
+   {
+    "label": "Séance 5",
+    "exercises": [
+     {
+      "name": "Curl biceps barre EZ",
+      "sets": 4,
+      "reps": 10,
+      "repsPerSet": [],
+      "specialSets": [],
+      "kg": 0,
+      "kgPerSet": [],
+      "supersetGroup": "",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "2 min",
+      "restPerSet": [
+       "2 min",
+       "2 min",
+       "2 min",
+       "2 min"
+      ],
+      "note": "LOURDS | Bloque 2 sec | Reps 10/12"
+     },
+     {
+      "name": "Biceps prise marto haltères",
+      "sets": 4,
+      "reps": 8,
+      "repsPerSet": [],
+      "specialSets": [],
+      "kg": 0,
+      "kgPerSet": [],
+      "supersetGroup": "",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "1 min 30 max",
+      "restPerSet": [
+       "1 min 30 max",
+       "1 min 30 max",
+       "1 min 30 max",
+       "1 min 30 max"
+      ],
+      "note": "Bien tenir droit | Ne pas engagé les épaules"
+     },
+     {
+      "name": "Biceps poulie basse corde",
+      "sets": 5,
+      "reps": 15,
+      "repsPerSet": [],
+      "specialSets": [],
+      "kg": 0,
+      "kgPerSet": [],
+      "supersetGroup": "",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "1.30 min",
+      "restPerSet": [
+       "1.30 min",
+       "1.30 min",
+       "1.30 min",
+       "1.30 min",
+       "1.30 min"
+      ],
+      "note": ""
+     },
+     {
+      "name": "Triceps poulie basse",
+      "sets": 5,
+      "reps": 10,
+      "repsPerSet": [],
+      "specialSets": [],
+      "kg": 0,
+      "kgPerSet": [],
+      "supersetGroup": "",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "2 min",
+      "restPerSet": [
+       "2 min",
+       "2 min",
+       "2 min",
+       "2 min",
+       "2 min"
+      ],
+      "note": "LOURDS"
+     },
+     {
+      "name": "Triceps Poulie Corde",
+      "sets": 5,
+      "reps": 10,
+      "repsPerSet": [],
+      "specialSets": [],
+      "kg": 0,
+      "kgPerSet": [],
+      "supersetGroup": "",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "2 min",
+      "restPerSet": [
+       "2 min",
+       "2 min",
+       "2 min",
+       "2 min",
+       "2 min"
+      ],
+      "note": "Contraction pendant 3 sec | Reps 10/12"
+     }
+    ]
+   },
+   {
+    "label": "Séance 6",
+    "exercises": [
+     {
+      "name": "Dev. Incliné barre",
+      "sets": 4,
+      "reps": 10,
+      "repsPerSet": [],
+      "specialSets": [],
+      "kg": 0,
+      "kgPerSet": [],
+      "supersetGroup": "",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "2 min",
+      "restPerSet": [
+       "2 min",
+       "2 min",
+       "2 min",
+       "2 min"
+      ],
+      "note": "2 sec bloqué"
+     },
+     {
+      "name": "Butterfly Machine",
+      "sets": 5,
+      "reps": 10,
+      "repsPerSet": [],
+      "specialSets": [],
+      "kg": 0,
+      "kgPerSet": [],
+      "supersetGroup": "",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "1.30 min",
+      "restPerSet": [
+       "1.30 min",
+       "1.30 min",
+       "1.30 min",
+       "1.30 min",
+       "1.30 min"
+      ],
+      "note": "4 sec de contraction 3 sec descente | Reps 10/12"
+     },
+     {
+      "name": "Tirage vertical arrières épaules",
+      "sets": 4,
+      "reps": 10,
+      "repsPerSet": [],
+      "specialSets": [],
+      "kg": 0,
+      "kgPerSet": [],
+      "supersetGroup": "",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "1.30 min",
+      "restPerSet": [
+       "1.30 min",
+       "1.30 min",
+       "1.30 min",
+       "1.30 min"
+      ],
+      "note": "3 sec bloqué | Vidéo WhatsApp | Reps 10/12"
+     },
+     {
+      "name": "Rowing haltère arrières épaules",
+      "sets": 6,
+      "reps": 8,
+      "repsPerSet": [
+       12,
+       12,
+       12,
+       8,
+       8,
+       8
+      ],
+      "specialSets": [],
+      "kg": 0,
+      "kgPerSet": [],
+      "supersetGroup": "",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "1 à 1.15 min",
+      "restPerSet": [
+       "1 à 1.15 min",
+       "1 à 1.15 min",
+       "1 à 1.15 min",
+       "1 à 1.15 min",
+       "1 à 1.15 min",
+       "1 à 1.15 min"
+      ],
+      "note": "2 sec bloqué | 3 x 12 puis 3 x 8/10 | Vidéo WhatsApp | Reps 8/10"
+     },
+     {
+      "name": "Tirage corde poulie hauteur front",
+      "sets": 4,
+      "reps": 10,
+      "repsPerSet": [],
+      "specialSets": [],
+      "kg": 0,
+      "kgPerSet": [],
+      "supersetGroup": "",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "1.30 min",
+      "restPerSet": [
+       "1.30 min",
+       "1.30 min",
+       "1.30 min",
+       "1.30 min"
+      ],
+      "note": "2 sec de blocage | Reps 10/12"
+     }
+    ]
+   }
+  ]
+ },
+ "aiOutputLegacy": null,
+ "attendu": {
+  "totaux": {
+   "jours": 7,
+   "exercices": 33,
+   "series": 141,
+   "seriesEch": 0
+  },
+  "jours": [
+   {
+    "label": "Circuit abdominaux",
+    "cardioAvant": null,
+    "exercices": [
+     {
+      "nom": "Oblique au sol couché + relevé de jambe",
+      "catalogueAttendu": null,
+      "series": [
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 20,
+        "repos": 60,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 20,
+        "repos": 60,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 20,
+        "repos": 60,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 20,
+        "repos": 60,
+        "reposTxt": ""
+       }
+      ],
+      "noteContient": [
+       "Circuit : 1 série de chaque exercice",
+       "20 par côté"
+      ],
+      "superset": "A"
+     },
+     {
+      "nom": "Relevé de jambes + crunch bras tendu disque",
+      "catalogueAttendu": null,
+      "series": [
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 30,
+        "repos": 60,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 30,
+        "repos": 60,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 30,
+        "repos": 60,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 30,
+        "repos": 60,
+        "reposTxt": ""
+       }
+      ],
+      "noteContient": [
+       "Vidéo WhatsApp"
+      ],
+      "superset": "A"
+     },
+     {
+      "nom": "Gainage côté",
+      "catalogueAttendu": "Planche Latérale (Side Plank)",
+      "series": [
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 45,
+        "repos": 60,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 45,
+        "repos": 60,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 45,
+        "repos": 60,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 45,
+        "repos": 60,
+        "reposTxt": ""
+       }
+      ],
+      "noteContient": [
+       "45 sec de chaque côté"
+      ],
+      "superset": "A"
+     },
+     {
+      "nom": "Crunch avec les jambes tendues et levées",
+      "catalogueAttendu": null,
+      "series": [
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 20,
+        "repos": 60,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 20,
+        "repos": 60,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 20,
+        "repos": 60,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 20,
+        "repos": 60,
+        "reposTxt": ""
+       }
+      ],
+      "noteContient": [
+       "Vidéo WhatsApp"
+      ],
+      "superset": "A"
+     }
+    ]
+   },
+   {
+    "label": "Séance 1",
+    "cardioAvant": null,
+    "exercices": [
+     {
+      "nom": "Legs extension machine",
+      "catalogueAttendu": "Extension Quadriceps (Leg Extension)",
+      "series": [
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 90,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 90,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 90,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 90,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 90,
+        "reposTxt": ""
+       }
+      ],
+      "noteContient": [
+       "Montée 3 sec",
+       "Bloque 3 sec",
+       "Descente 3 sec"
+      ],
+      "superset": ""
+     },
+     {
+      "nom": "Front Squat",
+      "catalogueAttendu": null,
+      "series": [
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 8,
+        "repos": 150,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 8,
+        "repos": 150,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 8,
+        "repos": 150,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 8,
+        "repos": 150,
+        "reposTxt": ""
+       }
+      ],
+      "noteContient": [
+       "Lourd",
+       "Smith machine"
+      ],
+      "superset": ""
+     },
+     {
+      "nom": "Press",
+      "catalogueAttendu": null,
+      "series": [
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 8,
+        "repos": 150,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 8,
+        "repos": 150,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 8,
+        "repos": 150,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 8,
+        "repos": 150,
+        "reposTxt": ""
+       }
+      ],
+      "noteContient": [
+       "Lourd",
+       "3 sec montée 3 sec descente"
+      ],
+      "superset": ""
+     },
+     {
+      "nom": "Hack squat",
+      "catalogueAttendu": "Squat Hack (Hack Squat)",
+      "series": [
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 8,
+        "repos": 180,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 8,
+        "repos": 180,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 8,
+        "repos": 180,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 8,
+        "repos": 180,
+        "reposTxt": ""
+       }
+      ],
+      "noteContient": [
+       "8 rep lourd press"
+      ],
+      "superset": "A"
+     },
+     {
+      "nom": "Fente marché",
+      "catalogueAttendu": "Fentes Marchées",
+      "series": [
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 20,
+        "repos": 180,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 20,
+        "repos": 180,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 20,
+        "repos": 180,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 20,
+        "repos": 180,
+        "reposTxt": ""
+       }
+      ],
+      "noteContient": [
+       "20 fentes par jambe"
+      ],
+      "superset": "A"
+     }
+    ]
+   },
+   {
+    "label": "Séance 2",
+    "cardioAvant": null,
+    "exercices": [
+     {
+      "nom": "DC haltères",
+      "catalogueAttendu": "Développé Couché Haltères",
+      "series": [
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 6,
+        "repos": 150,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 6,
+        "repos": 150,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 6,
+        "repos": 150,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 6,
+        "repos": 150,
+        "reposTxt": ""
+       }
+      ],
+      "noteContient": [
+       "Lourd",
+       "Reps 6-8"
+      ],
+      "superset": ""
+     },
+     {
+      "nom": "Dv Incliné Haltères",
+      "catalogueAttendu": "Développé Incliné Haltères",
+      "series": [
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 6,
+        "repos": 150,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 6,
+        "repos": 150,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 6,
+        "repos": 150,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 6,
+        "repos": 150,
+        "reposTxt": ""
+       }
+      ],
+      "noteContient": [
+       "Lourd",
+       "Reps 6-8"
+      ],
+      "superset": ""
+     },
+     {
+      "nom": "Dv. Décliné haltère",
+      "catalogueAttendu": "Développé Décliné Haltères",
+      "series": [
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 6,
+        "repos": 150,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 6,
+        "repos": 150,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 6,
+        "repos": 150,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 6,
+        "repos": 150,
+        "reposTxt": ""
+       }
+      ],
+      "noteContient": [
+       "Lourd",
+       "Reps 6-8"
+      ],
+      "superset": ""
+     },
+     {
+      "nom": "Écarté haltère incliné",
+      "catalogueAttendu": "Écarté Incliné Haltères",
+      "series": [
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 150,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 150,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 150,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 150,
+        "reposTxt": ""
+       }
+      ],
+      "noteContient": [
+       "Lourd",
+       "3 sec descente 3 sec bloqué 3 sec monté"
+      ],
+      "superset": ""
+     },
+     {
+      "nom": "Écarté poulies hauteur poignet",
+      "catalogueAttendu": "Écarté Poulie",
+      "series": [
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 15,
+        "repos": 90,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 15,
+        "repos": 90,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 15,
+        "repos": 90,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 15,
+        "repos": 90,
+        "reposTxt": ""
+       }
+      ],
+      "noteContient": [
+       "Descente contrôlée"
+      ],
+      "superset": ""
+     }
+    ]
+   },
+   {
+    "label": "Séance 3",
+    "cardioAvant": null,
+    "exercices": [
+     {
+      "nom": "Squat sumo",
+      "catalogueAttendu": null,
+      "series": [
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 90,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 90,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 90,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 90,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 90,
+        "reposTxt": ""
+       }
+      ],
+      "noteContient": [
+       "Lourd",
+       "Pousse avec les talons"
+      ],
+      "superset": ""
+     },
+     {
+      "nom": "Leg curl unilatéral",
+      "catalogueAttendu": null,
+      "series": [
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 120,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 120,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 120,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 120,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 120,
+        "reposTxt": ""
+       }
+      ],
+      "noteContient": [
+       "3 sec contraction"
+      ],
+      "superset": ""
+     },
+     {
+      "nom": "Leg curls couché",
+      "catalogueAttendu": "Leg Curl Couché Machine",
+      "series": [
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 120,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 120,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 120,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 120,
+        "reposTxt": ""
+       }
+      ],
+      "noteContient": [
+       "Monté lente descente rapide",
+       "Bassin ancrer dans le siège pas de bascule"
+      ],
+      "superset": ""
+     },
+     {
+      "nom": "SDT jambes tendues haltères",
+      "catalogueAttendu": null,
+      "series": [
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 150,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 150,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 150,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 150,
+        "reposTxt": ""
+       }
+      ],
+      "noteContient": [
+       "Lourd",
+       "2 sec bloqué"
+      ],
+      "superset": ""
+     },
+     {
+      "nom": "Hip trust Machine",
+      "catalogueAttendu": "Hip Thrust Machine (Poussée de Hanche)",
+      "series": [
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 12,
+        "repos": 0,
+        "reposTxt": "1.15/30 min max"
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 12,
+        "repos": 0,
+        "reposTxt": "1.15/30 min max"
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 12,
+        "repos": 0,
+        "reposTxt": "1.15/30 min max"
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 12,
+        "repos": 0,
+        "reposTxt": "1.15/30 min max"
+       }
+      ],
+      "noteContient": [
+       "3 sec bloqué"
+      ],
+      "superset": ""
+     }
+    ]
+   },
+   {
+    "label": "Séance 4",
+    "cardioAvant": null,
+    "exercices": [
+     {
+      "nom": "Tirage vertical large",
+      "catalogueAttendu": "Tirage Poulie Haute (Lat Pulldown)",
+      "series": [
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 8,
+        "repos": 120,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 8,
+        "repos": 120,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 8,
+        "repos": 120,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 8,
+        "repos": 120,
+        "reposTxt": ""
+       }
+      ],
+      "noteContient": [
+       "Lourd",
+       "3 sec bloqué sur les 3 dernières rep de chaque"
+      ],
+      "superset": ""
+     },
+     {
+      "nom": "Tirage vertical prise serré",
+      "catalogueAttendu": "Tirage Poulie Haute Prise Serrée",
+      "series": [
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 8,
+        "repos": 120,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 8,
+        "repos": 120,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 8,
+        "repos": 120,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 8,
+        "repos": 120,
+        "reposTxt": ""
+       }
+      ],
+      "noteContient": [
+       "Lourd",
+       "3 sec bloqué"
+      ],
+      "superset": ""
+     },
+     {
+      "nom": "Élévation frontale",
+      "catalogueAttendu": "Élévations Frontales",
+      "series": [
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 90,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 90,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 90,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 90,
+        "reposTxt": ""
+       }
+      ],
+      "noteContient": [],
+      "superset": ""
+     },
+     {
+      "nom": "Élévation latérale",
+      "catalogueAttendu": "Élévations Latérales (Lateral Raise)",
+      "series": [
+       {
+        "type": "D",
+        "kg": 0,
+        "reps": 10,
+        "repos": 0,
+        "reposTxt": ""
+       },
+       {
+        "type": "D",
+        "kg": 0,
+        "reps": 10,
+        "repos": 0,
+        "reposTxt": ""
+       },
+       {
+        "type": "D",
+        "kg": 0,
+        "reps": 10,
+        "repos": 0,
+        "reposTxt": ""
+       },
+       {
+        "type": "D",
+        "kg": 0,
+        "reps": 10,
+        "repos": 120,
+        "reposTxt": ""
+       }
+      ],
+      "noteContient": [
+       "Dégressif 4 charges",
+       "10 10 10 10"
+      ],
+      "superset": ""
+     }
+    ]
+   },
+   {
+    "label": "Séance 5",
+    "cardioAvant": null,
+    "exercices": [
+     {
+      "nom": "Curl biceps barre EZ",
+      "catalogueAttendu": "Curl EZ",
+      "series": [
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 120,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 120,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 120,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 120,
+        "reposTxt": ""
+       }
+      ],
+      "noteContient": [
+       "LOURDS",
+       "Bloque 2 sec",
+       "Reps 10/12"
+      ],
+      "superset": ""
+     },
+     {
+      "nom": "Biceps prise marto haltères",
+      "catalogueAttendu": "Marteau",
+      "series": [
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 8,
+        "repos": 90,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 8,
+        "repos": 90,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 8,
+        "repos": 90,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 8,
+        "repos": 90,
+        "reposTxt": ""
+       }
+      ],
+      "noteContient": [
+       "Bien tenir droit"
+      ],
+      "superset": ""
+     },
+     {
+      "nom": "Biceps poulie basse corde",
+      "catalogueAttendu": "Curl Poulie",
+      "series": [
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 15,
+        "repos": 90,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 15,
+        "repos": 90,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 15,
+        "repos": 90,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 15,
+        "repos": 90,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 15,
+        "repos": 90,
+        "reposTxt": ""
+       }
+      ],
+      "noteContient": [],
+      "superset": ""
+     },
+     {
+      "nom": "Triceps poulie basse",
+      "catalogueAttendu": "Triceps Poulie Basse",
+      "series": [
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 120,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 120,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 120,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 120,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 120,
+        "reposTxt": ""
+       }
+      ],
+      "noteContient": [
+       "LOURDS"
+      ],
+      "superset": ""
+     },
+     {
+      "nom": "Triceps Poulie Corde",
+      "catalogueAttendu": "Triceps Corde Poulie",
+      "series": [
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 120,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 120,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 120,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 120,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 120,
+        "reposTxt": ""
+       }
+      ],
+      "noteContient": [
+       "Contraction pendant 3 sec",
+       "Reps 10/12"
+      ],
+      "superset": ""
+     }
+    ]
+   },
+   {
+    "label": "Séance 6",
+    "cardioAvant": null,
+    "exercices": [
+     {
+      "nom": "Dev. Incliné barre",
+      "catalogueAttendu": "Développé Incliné",
+      "series": [
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 120,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 120,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 120,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 120,
+        "reposTxt": ""
+       }
+      ],
+      "noteContient": [
+       "2 sec bloqué"
+      ],
+      "superset": ""
+     },
+     {
+      "nom": "Butterfly Machine",
+      "catalogueAttendu": "Pec Deck",
+      "series": [
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 90,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 90,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 90,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 90,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 90,
+        "reposTxt": ""
+       }
+      ],
+      "noteContient": [
+       "4 sec de contraction 3 sec descente",
+       "Reps 10/12"
+      ],
+      "superset": ""
+     },
+     {
+      "nom": "Tirage vertical arrières épaules",
+      "catalogueAttendu": null,
+      "series": [
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 90,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 90,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 90,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 90,
+        "reposTxt": ""
+       }
+      ],
+      "noteContient": [
+       "3 sec bloqué",
+       "Reps 10/12"
+      ],
+      "superset": ""
+     },
+     {
+      "nom": "Rowing haltère arrières épaules",
+      "catalogueAttendu": null,
+      "series": [
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 12,
+        "repos": 0,
+        "reposTxt": "1 à 1.15 min"
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 12,
+        "repos": 0,
+        "reposTxt": "1 à 1.15 min"
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 12,
+        "repos": 0,
+        "reposTxt": "1 à 1.15 min"
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 8,
+        "repos": 0,
+        "reposTxt": "1 à 1.15 min"
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 8,
+        "repos": 0,
+        "reposTxt": "1 à 1.15 min"
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 8,
+        "repos": 0,
+        "reposTxt": "1 à 1.15 min"
+       }
+      ],
+      "noteContient": [
+       "2 sec bloqué",
+       "3 x 12 puis 3 x 8/10",
+       "Reps 8/10"
+      ],
+      "superset": ""
+     },
+     {
+      "nom": "Tirage corde poulie hauteur front",
+      "catalogueAttendu": null,
+      "series": [
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 90,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 90,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 90,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 90,
+        "reposTxt": ""
+       }
+      ],
+      "noteContient": [
+       "2 sec de blocage",
+       "Reps 10/12"
+      ],
+      "superset": ""
+     }
+    ]
+   }
+  ],
+  "propositions": [],
+  "methodes": [
+   {
+    "element": "Circuit d'abdos : 1 série de chaque exercice, repos 1 min, 4 tours (groupe de 4 exercices de 4 séries)",
+    "statut": "PARTIELLEMENT_REPRÉSENTABLE"
+   },
+   {
+    "element": "Mouvements combinés (A + B enchaînés en une répétition) gardés en un seul exercice",
+    "statut": "COMPRIS_MAIS_NOTE"
+   },
+   {
+    "element": "Enchaînement hack squat + fentes marchées (8 reps puis 20 fentes par jambe)",
+    "statut": "COMPRIS_STRUCTURÉ"
+   },
+   {
+    "element": "Tempo (montée / blocage / descente en secondes)",
+    "statut": "COMPRIS_MAIS_NOTE"
+   },
+   {
+    "element": "« Lourd » / « LOURDS » (colonne Exécution)",
+    "statut": "COMPRIS_MAIS_NOTE"
+   },
+   {
+    "element": "Plages de reps (6-8, 10/12, 8/10)",
+    "statut": "PARTIELLEMENT_REPRÉSENTABLE"
+   },
+   {
+    "element": "Séries dégressives à 4 charges (élévation latérale, par côté)",
+    "statut": "PARTIELLEMENT_REPRÉSENTABLE"
+   },
+   {
+    "element": "Gainage chronométré (45 sec de chaque côté) : secondes stockées dans reps",
+    "statut": "PARTIELLEMENT_REPRÉSENTABLE"
+   },
+   {
+    "element": "Matériel dans la consigne (Smith machine sur un front squat)",
+    "statut": "COMPRIS_MAIS_NOTE"
+   },
+   {
+    "element": "Repos fermes (1 min, 1 min 30, 2 min 30, 3 min, 2m30, 1.30 min)",
+    "statut": "COMPRIS_STRUCTURÉ"
+   },
+   {
+    "element": "Repos avec plafond (« 1 min 30 max »)",
+    "statut": "PARTIELLEMENT_REPRÉSENTABLE"
+   },
+   {
+    "element": "Repos en plage (« 1.15/30 min max », « 1 à 1.15 min »)",
+    "statut": "COMPRIS_MAIS_NOTE"
+   },
+   {
+    "element": "Renvoi à une vidéo WhatsApp (« Vidéo WhatsApp »)",
+    "statut": "NON_REPRÉSENTABLE"
+   },
+   {
+    "element": "Conseils généraux du préambule (zones de charge, hydratation, respiration)",
+    "statut": "NON_REPRÉSENTABLE"
+   }
+  ],
+  "nonRepresentable": [
+   "Renvoi à une vidéo WhatsApp (contenu absent du document)",
+   "Conseils généraux du préambule (zones de charge, hydratation, respiration)"
+  ]
+ }
+}
