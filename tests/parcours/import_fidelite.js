@@ -71,6 +71,8 @@ module.exports.ecran = async function (t, b, PORT) {
     const D=${JSON.stringify(BASE_LS)}; Object.keys(D).forEach(k=>localStorage.setItem(k,D[k]));}catch(e){}})();`);
   await pg.goto('http://localhost:' + PORT + '/index.html'); await pg.waitForTimeout(2500);
 
+  /** Une section qui plante (fonction absente sur le code d'AVANT, par exemple) devient un ROUGE nommé — jamais un arrêt du banc. */
+  const section = async (nom, fn) => { try { await fn(); } catch (e) { t('IIF-' + nom + ' ⛔ la section n\'a pas pu aller au bout', false, String(e && e.message || e).slice(0, 240)); } };
   /** Importe `prog` (réponse simulée de l'IA) : renvoie l'aperçu, puis le programme ENREGISTRÉ (`finalImportProg`). */
   const importer = async (prog) => {
     PROG = prog;
@@ -173,9 +175,9 @@ module.exports.ecran = async function (t, b, PORT) {
     const r = () => { const e = document.getElementById('nb-log'); const q = e && e.getBoundingClientRect(); return q ? [Math.round(q.left), Math.round(q.top), Math.round(q.width), Math.round(q.height)] : null; };
     S.wkt = null; _loadProgDayVraiment(S.programmes.length - 1, 0); stopRest();
     const sans = r(); toggleSet(0, 2);          // repos ferme : aucune consigne
-    const ferme = r(); const c1 = document.getElementById('rest-consigne').style.display;
+    const ferme = r(); const c1 = (document.getElementById('rest-consigne') || { style: {} }).style.display;
     stopRest(); toggleSet(0, 4);                // plage : consigne affichée
-    const plage = r(); const c2 = document.getElementById('rest-consigne').style.display;
+    const plage = r(); const c2 = (document.getElementById('rest-consigne') || { style: {} }).style.display;
     stopRest(); return { sans, ferme, plage, c1, c2 };
   });
   t('IIF-B12 ⛔ RÈGLE D\'OR n°9 — le bouton central « + » Séance ne bouge pas d\'un pixel (sans repos / repos ferme / consigne affichée)',
@@ -229,13 +231,15 @@ module.exports.ecran = async function (t, b, PORT) {
   t('IIF-C03 ⭐⭐ ÉCRITURE DU COACH — « 1.30 mins » = 90 s, « 40 sec » = 40 s, appliqués à chaque série ; la dernière série d\'un exercice utilise SON repos (pas celui de l\'exercice suivant)',
     trans.leg1.join() === '90' && trans.leg2.join() === '90' && trans.mol1.join() === '40', js({ l1: trans.leg1, l2: trans.leg2, m1: trans.mol1 }));
 
-  // ── D. LE REGROUPEMENT ÉCHAUFFEMENT / TRAVAIL : UNE SEULE RÈGLE, SES CAS ET SES CONTRE-EXEMPLES ──
+  // ── outils des sections D à H ──
   const jour = (exs) => ({ name: 'Cas', weeks: 0, startDate: '', days: [{ label: 'J1', exercises: exs }] });
   const ECH = (name, reps, kg, note, extra) => L(name, 1, reps, kg, note === undefined ? 'ECH' : note, extra);
   const vue = async (exs) => {                                     // aperçu + programme enregistré d'un jour
     const r = await importer(jour(exs)); const prog = await enregistrer();
     return { ap: r.apercu[0].exercises, ex: prog.days[0].exs };
   };
+  // ── D. LE REGROUPEMENT ÉCHAUFFEMENT / TRAVAIL : UNE SEULE RÈGLE, SES CAS ET SES CONTRE-EXEMPLES ──
+  await section('D', async () => {
   const D1 = await vue([ECH('Développé couché', 5, 50, 'ECH', { rest: '60-90 s' }), ECH('Développé couché', 3, 65, 'ECH', { rest: '60-90 s' }),
     ECH('Développé couché', 2, 80, 'ECH', { rest: '90 s' }), ECH('Développé couché', 1, 85, 'ECH', { rest: '2 min' }), L('Développé couché', 3, 3, 90, 'RIR 2-3', { rest: '3-4 min' })]);
   t('IIF-D01 ⭐ 4 lignes d\'échauffement (preuve en note) + 3 séries de travail, même nom = UN exercice de 7 séries ÉÉÉÉNNN, charges / reps / repos par série conservés',
@@ -266,13 +270,14 @@ module.exports.ecran = async function (t, b, PORT) {
   t('IIF-D11 ⭐ un matériel écrit d\'un côté et pas de l\'autre (« Développé militaire » / « … haltères ») : PROPOSITION, aucune fusion automatique',
     D12.ex.length === 2 && D12.ap.length === 2 && D12.ap[0]._propGrp && D12.ap[0]._propGrp === D12.ap[1]._propGrp && D12.ap[0]._propRole === 'ech' && D12.ap[1]._propRole === 'travail', js(D12.ap.map(e => e.name + ':' + e._propRole)));
 
+  });
   // ── E. LE CAS RÉEL J3B (Powerbuilding, épaules) : deux formes d'IA, une proposition, la personne tranche ──
   const J3B_NEW = [L('Dev. épaules guidé', 2, 5, 0, 'Charge : léger | Charge : progressif', { repsPerSet: [10, 5], kgPerSet: [0, 0], setTypePerSet: ['W', 'W'], rest: '', restPerSet: ['60 s', '60-90 s'] }),
     L('Dev. épaules guidé / haltères', 3, 8, 55, 'Reps 8-10 | Charge 55-60 kg | RIR 1-2', { setTypePerSet: ['', '', ''], rest: '2 min' }),
     L('Pec Deck', 3, 10, 60, 'RIR 1-2', { rest: '90-120 s' })];
   const J3B_OLD = [ECH('Dev. épaules guidé', 10, 0, 'ECH | Charge : léger', { rest: '60 s' }), ECH('Dev. épaules guidé', 5, 0, 'ECH | Charge : progressif', { rest: '60-90 s' }),
     L('Dev. épaules guidé / haltères', 3, 8, 55, 'Reps 8-10 | Charge 55-60 kg | RIR 1-2', { rest: '2 min' }), L('Pec Deck', 3, 10, 60, 'RIR 1-2', { rest: '90-120 s' })];
-  for (const [forme, exs] of [['NOUVEAU contrat (l\'IA a fusionné les deux lignes de même nom)', J3B_NEW], ['ANCIEN Worker (une ligne = un exercice, ECH en note)', J3B_OLD]]) {
+  for (const [forme, exs] of [['NOUVEAU contrat (l\'IA a fusionné les deux lignes de même nom)', J3B_NEW], ['ANCIEN Worker (une ligne = un exercice, ECH en note)', J3B_OLD]]) await section('E', async () => {
     const r = await importer(jour(JSON.parse(JSON.stringify(exs))));
     const ap = r.apercu[0].exercises;
     t('IIF-E01 ⭐⭐ J3B — ' + forme + ' : AVANT toute décision, rien n\'est fusionné (2 exercices + Pec Deck), une PROPOSITION relie l\'échauffement au travail',
@@ -295,12 +300,13 @@ module.exports.ecran = async function (t, b, PORT) {
     // la personne REFUSE
     await importer(jour(JSON.parse(JSON.stringify(exs))));
     const ref = await pg.evaluate(() => { impGarderSepares(0, _impExtracted.days[0].exercises.findIndex(e => e._propRole === 'travail')); return JSON.parse(JSON.stringify(_impExtracted.days[0].exercises)); });
-    t('IIF-E05 J3B — ' + forme + ' : « Garder séparés » = rien n\'est fusionné, la proposition disparaît, toutes les séries sont conservées (2 + 3)',
-      ref.length === 3 && !ref.some(e => e._propGrp) && ref[0].repsPerSet.length === 2 && ref[1].sets + 0 === 3 || (ref.length === 3 && !ref.some(e => e._propGrp)), js(ref.map(e => e.name + ':' + e._propGrp)));
+    t('IIF-E05 J3B — ' + forme + ' : « Garder séparés » = rien n\'est fusionné, la proposition disparaît, toutes les séries sont conservées (2 échauffements + 3 travail + Pec Deck)',
+      ref.length === 3 && !ref.some(e => e._propGrp || e._propRole) && ref[0].name === 'Dev. épaules guidé' && ref[0].repsPerSet.length === 2 && ref[1].name === 'Dev. épaules guidé / haltères' && (ref[1].repsPerSet.length || ref[1].sets) === 3, js(ref.map(e => e.name + ':' + (e.repsPerSet || []).length + ':' + e._propGrp)));
     const prS = await enregistrer();
     t('IIF-E06 J3B — ' + forme + ' : séparés, l\'échauffement garde ses 2 séries typées É et le travail ses 3 séries N',
       prS.days[0].exs.length === 3 && TYPES(prS.days[0].exs[0]) === 'ÉÉ' && TYPES(prS.days[0].exs[1]) === 'NNN', js(prS.days[0].exs.map(e => e.name + ':' + TYPES(e))));
-  }
+  });
+  await section('E2', async () => {
   // les deux variantes d'un même jour (semaine A / semaine B) ne se mélangent JAMAIS
   await importer({ name: 'AB', weeks: 4, startDate: '', days: [
     { label: 'Jour 3 - Semaine A - Larsen', exercises: [L('Larsen press', 3, 5, 80, '')] },
@@ -311,6 +317,135 @@ module.exports.ecran = async function (t, b, PORT) {
     { label: 'Séance 1 - Dorsaux', exercises: [L('Tractions', 3, 8, 0, '')] }, { label: 'Séance 1 - Biceps', exercises: [L('Curl barre', 3, 10, 30, '')] }] });
   const sc = await pg.evaluate(() => _impExtracted.days.length);
   t('IIF-E08 non-régression — « Séance 1 — Dorsaux » + « Séance 1 — Biceps » restent UNE séance (sections d\'une même séance)', sc === 1, 'jours=' + sc);
+
+  });
+  await section('F', async () => {
+  // ── F. L'APERÇU : statut, vraie illustration, séries, corrections (ce que la personne VOIT avant d'enregistrer) ──
+  const PV = [L('Développé couché', 5, 5, 0, 'RIR 2', { repsPerSet: [5, 3, 5, 5, 5], kgPerSet: [50, 65, 90, 90, 90], setTypePerSet: ['W', 'W', '', '', ''], restPerSet: ['60 s', '60-90 s', '3-4 min', '3-4 min', '3-4 min'] }),
+    L('Presse Zeta Prototype', 3, 10, 120, 'Consigne du coach', { rest: '2 min' }),
+    L('Squat machine', 3, 8, 100, '', { rest: '2 min' }),
+    L('Élévations latérales poulie', 3, 12, 10, '', { rest: '90 s' }),
+    L('Développé couché Smith', 3, 8, 60, '', { rest: '2 min' })];
+  await importer(jour(PV));
+  const aperc = await pg.evaluate(() => {
+    document.querySelectorAll('.overlay.open').forEach(o => o.classList.remove('open'));
+    document.getElementById('ov-import-prog').classList.add('open'); _renderImpConfirm();
+    const cartes = [...document.querySelectorAll('#imp-preview .imp-card')].map(c => ({
+      nom: c.querySelector('.imp-nom').textContent, statut: c.getAttribute('data-statut'), lib: (c.querySelector('.imp-st') || {}).textContent,
+      img: !!c.querySelector('img.imp-ill'), sans: !!c.querySelector('.imp-ill-none'), silhouette: !!c.querySelector('img[src*="muscles/"]'), ech: +c.getAttribute('data-ech'), trav: +c.getAttribute('data-trav'),
+      texte: c.querySelector('.imp-sum').innerText }));
+    return { cartes, creesAvant: (S.customExercises || []).length, vm: _impExtracted.days[0].exercises.map(e => ({ n: e.name, from: e._vmFrom || '', sugg: e._vmSuggest || '' })) };
+  });
+  const cDC = aperc.cartes[0], cZ = aperc.cartes[1];
+  t('IIF-F01 ⭐ l\'aperçu montre les séries d\'ÉCHAUFFEMENT et de TRAVAIL avec leurs charges, reps et repos (et pas seulement « 5×5 »)',
+    cDC.ech === 2 && cDC.trav === 3 && /Échauffement/.test(cDC.texte) && /50 kg × 5/.test(cDC.texte) && /65 kg × 3/.test(cDC.texte) && /Travail/.test(cDC.texte) && /90 kg/.test(cDC.texte) && /3-4 min/.test(cDC.texte) && /1 min/.test(cDC.texte), js(cDC));
+  t('IIF-F02 ⭐ un exercice RECONNU affiche son statut et sa VRAIE illustration (image du catalogue)', cDC.statut === 'ok' && /Reconnu/.test(cDC.lib) && cDC.img && !cDC.sans, js(cDC));
+  t('IIF-F03 ⭐⭐ un exercice INCONNU est annoncé « sera créé », avec l\'aveu « aucune illustration » — JAMAIS une silhouette de muscle qui ferait croire à une reconnaissance',
+    cZ.statut === 'new' && /Sera créé/.test(cZ.lib) && cZ.sans && !cZ.img && !cZ.silhouette, js(cZ));
+  t('IIF-F04 ⛔ AUCUN exercice perso n\'est créé par l\'aperçu : la création n\'a lieu qu\'à « Importer » (0 créé avant)', aperc.creesAvant === 0, 'créés=' + aperc.creesAvant);
+  const vmDe = motif => aperc.vm.find(v => motif.test(v.from) || motif.test(v.n)) || {};
+  const sqM = vmDe(/squat machine/i), elP = vmDe(/lat[ée]rales.*(poulie|c[âa]ble)/i), smi = vmDe(/couch[ée].*smith|smith.*couch[ée]/i);
+  t('IIF-F05 ⛔⛔ AUCUN rattachement automatique à un AUTRE MATÉRIEL (squat machine ↛ squat barre ; poulie ↛ haltères ; Smith ↛ libre) — garde-fous IMPORT-MAP conservés',
+    !/barre/i.test(sqM.n || '') && /machine/i.test(sqM.n || '') && /c[âa]ble|poulie/i.test(elP.n || '') && !/halt[èe]re/i.test(elP.n || '') && /smith/i.test(smi.n || ''), js({ sqM, elP, smi }));
+  // corrections : le type et le repos d'une série se corrigent DANS l'aperçu, et c'est ce qui est enregistré
+  const corr = await pg.evaluate(() => {
+    impToggleDet(0, 0);
+    impBasculerType(0, 0, 1);                    // la 2ᵉ série d'échauffement (65×3) passe en travail
+    impFixerRepos(0, 0, 3, 240);                 // « 3-4 min » → 4 min pour la 4ᵉ série
+    impEditRepos(0, 0, 2);
+    const ouvert = !!document.querySelector('#imp-preview .imp-rpe');
+    impReposAutre(0, 0, 2);                      // champ vide : refusé, rien ne bouge
+    const ex = _impExtracted.days[0].exercises[0];
+    const v = _impVueSeries(ex);
+    return { ouvert, types: v.map(x => x.type).join(''), repos: v.map(x => x.repos.sec + '|' + x.repos.txt), note: ex.note };
+  });
+  t('IIF-F06 ⭐ « Voir / corriger » : on bascule échauffement ↔ travail et on fixe un repos depuis l\'aperçu ; la consigne écrite d\'origine reste dans la note (rien de perdu)',
+    corr.ouvert && corr.types === 'ÉNNNN' && corr.repos[3] === '240|' && /Repos écrit : 3-4 min/.test(corr.note), js(corr));
+  const prF = await enregistrer();
+  const dcF = prF.days[0].exs.find(e => /couch/i.test(e.name) && !/smith/i.test(e.name));
+  t('IIF-F07 ⭐ ce qui est enregistré = ce que l\'aperçu montrait après corrections (types ÉNNNN, 4ᵉ série à 240 s, 3ᵉ à plage conservée)',
+    dcF && TYPES(dcF) === 'ÉNNNN' && dcF.sets[3].rest === 240 && dcF.sets[2].restTxt === '3-4 min' && dcF.sets[2].rest === 0, js(dcF && SERIES(dcF)));
+  const autre = await pg.evaluate(() => {
+    _impPhotos = [{ type: 'text/plain', data: 'x', name: 'p.txt', isText: true }];
+    return null;
+  });
+  await importer(jour([L('Presse Zeta Prototype', 3, 10, 120, '', { rest: '2 min' })]));
+  const aut = await pg.evaluate(() => { _impOuverts.clear(); impToggleDet(0, 0); impEditRepos(0, 0, 0); const i = document.getElementById('imp-rp-autre'); i.value = '100'; impReposAutre(0, 0, 0);
+    const v1 = _impVueSeries(_impExtracted.days[0].exercises[0])[0].repos.sec; impEditRepos(0, 0, 1); document.getElementById('imp-rp-autre').value = '2 min'; impReposAutre(0, 0, 1);
+    return { v1, v2: _impVueSeries(_impExtracted.days[0].exercises[0])[1].repos.sec }; });
+  t('IIF-F08 le champ « autre » : des chiffres seuls = des secondes (100 → 100 s), « 2 min » = 120 s', aut.v1 === 100 && aut.v2 === 120, js(aut));
+
+  });
+  await section('G', async () => {
+  // ── G. LE CALENDRIER : sans date de début, on ne fabrique pas « Semaine 1 / N » ──
+  const cal = async (startDate, weeks) => {
+    await pg.evaluate(([sd, w]) => { S.programmes = [{ id: 'p1', name: 'Cycle', weeks: w, startDate: sd, days: [{ label: 'J1', exs: [{ name: 'Squat à la Barre', sets: [{ kg: 100, reps: 5, type: 'N', rest: 0 }] }] }] }]; persist(); openProgModal(); }, [startDate, weeks]);
+    return pg.evaluate(() => { const c = document.querySelector('#prog-list .prog-card, .prog-card'); return { texte: c ? c.innerText : '', pm: c ? [...c.querySelectorAll('button')].map(b => b.textContent.trim()).join('|') : '' }; });
+  };
+  const c0 = await cal('', 4);
+  t('IIF-G01 ⭐⭐ programme de 4 semaines SANS date de début : « Date de début à définir » — pas de « Semaine 1 / 4 » fabriqué, pas de barre, pas de boutons ±', /Date de début à définir/.test(c0.texte) && !/Semaine\s*1\s*\/\s*4/.test(c0.texte) && !/^−$|\|−\||\|\+\|/.test(c0.pm) && /Définir/.test(c0.pm), js(c0));
+  const il8 = new Date(Date.now() - 8 * 86400000).toISOString().split('T')[0];
+  const c1 = await cal(il8, 4);
+  t('IIF-G02 ⭐ avec une vraie date de début, le calcul existant est INCHANGÉ (début il y a 8 jours → « Semaine 2 / 4 », dates affichées, boutons ±)', /Semaine\s*2\s*\/\s*4/.test(c1.texte) && !/Date de début à définir/.test(c1.texte), js(c1));
+  const shift = await pg.evaluate(() => { S.programmes[0].startDate = ''; shiftProgStart(0, 1); return S.programmes[0].startDate; });
+  t('IIF-G03 ⛔ « décaler d\'une semaine » sans date ne pose JAMAIS la date du jour (reste vide)', shift === '', 'startDate=' + shift);
+  const ed = await pg.evaluate(() => {
+    S.programmes = [{ id: 'p1', name: 'Cycle', weeks: 4, startDate: '', days: [{ label: 'J1', exs: [{ name: 'Squat à la Barre', sets: [{ kg: 100, reps: 5, type: 'N', rest: 0 }] }] }] }]; persist();
+    editProg(0);
+    const btn = document.getElementById('prog-edit-today'), hint = document.getElementById('prog-edit-start-hint'), inp = document.getElementById('prog-edit-start');
+    const avant = { btn: !!btn, hint: hint ? hint.textContent : '', val: inp ? inp.value : null };
+    return avant;
+  });
+  t('IIF-G04 ⭐ éditeur d\'un programme sans date : bouton explicite « Aujourd\'hui » + l\'aveu « sans date, la semaine n\'avance pas » ; le champ reste VIDE tant que la personne ne touche à rien',
+    ed.btn && /n'avance pas/.test(ed.hint) && ed.val === '', js(ed));
+  const ed2 = await pg.evaluate(() => { document.getElementById('prog-edit-today').click(); const inp = document.getElementById('prog-edit-start'); const r = { val: inp.value, hint: document.getElementById('prog-edit-start-hint').textContent, today: today() };
+    saveProgEdit(); r.sauve = S.programmes[0].startDate; return r; });
+  t('IIF-G05 ⭐ « Aujourd\'hui » (geste explicite) pose la date du jour, l\'aveu disparaît, et l\'enregistrement la garde', ed2.val === ed2.today && ed2.hint === '' && ed2.sauve === ed2.today, js(ed2));
+  const ed3 = await pg.evaluate(() => { S.programmes[0].startDate = ''; persist(); editProg(0); saveProgEdit(); return S.programmes[0].startDate; });
+  t('IIF-G06 ⛔⛔ ouvrir puis enregistrer l\'éditeur SANS toucher à la date ne l\'invente pas (reste vide : l\'affichage d\'un champ date vide par iOS ne devient jamais une date)', ed3 === '', 'startDate=' + ed3);
+
+  });
+  await section('H', async () => {
+  // ── H. DEUX PROGRAMMES DE MÊME NOM : distingués, et le remplacement vise une CIBLE confirmée ──
+  const homs = await pg.evaluate(() => {
+    S.customExercises = [];
+    S.programmes = [
+      { id: 'p1700000000001', name: 'Powerbuilding', weeks: 4, startDate: '2026-10-05', days: [{ label: 'J1', exs: [{ name: 'Squat à la Barre', sets: [{ kg: 100, reps: 5, type: 'N', rest: 0 }] }] }, { label: 'J2', exs: [{ name: 'Développé Couché', sets: [{ kg: 80, reps: 5, type: 'N', rest: 0 }] }] }] },
+      { id: 'p1700000000002', name: 'Powerbuilding', weeks: 0, startDate: '', days: [{ label: 'J1', exs: [{ name: 'Squat à la Barre', sets: [{ kg: 60, reps: 8, type: 'N', rest: 0 }] }] }] }];
+    persist(); openProgModal();
+    const liste = document.querySelector('.prog-card') ? [...document.querySelectorAll('.prog-card .prog-card-name')].map(n => n.textContent.trim()) : [];
+    return { liste };
+  });
+  t('IIF-H01 ⭐ deux programmes du MÊME NOM se distinguent dans la liste (un numéro apparaît sur chacun)', homs.liste.length === 2 && homs.liste.every(n => /n°/.test(n)) && homs.liste[0] !== homs.liste[1], js(homs.liste));
+  await importer(jour([L('Presse Zeta Prototype', 3, 10, 120, '', { rest: '2 min' }), L('Tractions', 3, 8, 0, '')]));
+  const rep = await pg.evaluate(() => {
+    S.programmes = [
+      { id: 'p1700000000001', name: 'Powerbuilding', weeks: 4, startDate: '2026-10-05', days: [{ label: 'J1', exs: [{ name: 'Squat à la Barre', sets: [{ kg: 100, reps: 5, type: 'N', rest: 0 }] }] }, { label: 'J2', exs: [{ name: 'Développé Couché', sets: [{ kg: 80, reps: 5, type: 'N', rest: 0 }] }] }] },
+      { id: 'p1700000000002', name: 'Powerbuilding', weeks: 0, startDate: '', days: [{ label: 'J1', exs: [{ name: 'Squat à la Barre', sets: [{ kg: 60, reps: 8, type: 'N', rest: 0 }] }] }] }];
+    S.customExercises = []; persist();
+    _impExtracted.name = 'Powerbuilding';
+    _setImpMode('replace');
+    const sel = document.getElementById('imp-replace-sel'); const opts = [...sel.options].map(o => o.textContent);
+    sel.value = '1';
+    finalImportProg();                                                // AVANT la confirmation : rien ne doit bouger
+    const dlg = document.getElementById('ov-confirm'), msg = document.getElementById('confirm-msg').textContent;
+    const avant = { ouvert: dlg.classList.contains('open'), msg, ids: S.programmes.map(p => p.id), crees: (S.customExercises || []).length };
+    closeConfirm();                                                   // la personne ANNULE
+    const annule = { ids: S.programmes.map(p => p.id), noms: S.programmes.map(p => p.days[0].exs[0].name), crees: (S.customExercises || []).length };
+    return { opts, avant, annule };
+  });
+  t('IIF-H02 ⭐ la liste de remplacement montre pour chaque programme : nom, durée, début, nombre de séances et numéro technique', rep.opts.length === 2 && /4 sem\./.test(rep.opts[0]) && /début/.test(rep.opts[0]) && /2 séances/.test(rep.opts[0]) && /n°/.test(rep.opts[0]) && /sans date de début/.test(rep.opts[1]) && /durée non précisée/.test(rep.opts[1]) && rep.opts[0] !== rep.opts[1], js(rep.opts));
+  t('IIF-H03 ⭐⭐ « Remplacer » NOMME sa cible dans une confirmation (numéro, durée…) AVANT tout effet : rien n\'est remplacé ni créé tant que la personne n\'a pas dit oui',
+    rep.avant.ouvert && /n°/.test(rep.avant.msg) && /sans date de début/.test(rep.avant.msg) && rep.avant.ids.join() === 'p1700000000001,p1700000000002' && rep.avant.crees === 0, js(rep.avant));
+  t('IIF-H04 ⛔ ANNULER ne remplace rien et ne crée AUCUN exercice perso (les deux programmes, leurs contenus et le catalogue intacts)', rep.annule.ids.join() === 'p1700000000001,p1700000000002' && rep.annule.noms.join() === 'Squat à la Barre,Squat à la Barre' && rep.annule.crees === 0, js(rep.annule));
+  const ok2 = await pg.evaluate(() => {
+    _impMode = 'replace'; _setImpMode('replace'); const sel = document.getElementById('imp-replace-sel'); sel.value = '1';
+    finalImportProg(); confirmOk();                                    // la personne CONFIRME
+    return { ids: S.programmes.map(p => p.id), noms: S.programmes.map(p => p.name), ex0: S.programmes[0].days[0].exs[0].name, ex1: S.programmes[1].days[0].exs.map(e => e.name) };
+  });
+  t('IIF-H05 ⭐ confirmé : SEULE la cible (n°…02) est remplacée ; son homonyme (n°…01) reste intact, à la même place',
+    ok2.ids.length === 2 && ok2.ex0 === 'Squat à la Barre' && ok2.ex1.some(n => /zeta/i.test(n)) && ok2.noms.join() === 'Powerbuilding,Powerbuilding', js(ok2));
+  });
   t('IIF-C04 aucune erreur de page, aucun appel réel', errs.length === 0 && reels === 0, js({ errs, reels }));
   await cx.close();
   function S_IDX() { return 0; }

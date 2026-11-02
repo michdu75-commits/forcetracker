@@ -7539,6 +7539,7 @@ async function analyzeImportPhotos(){
                                  // L'ordre compte : il rend au nom sa forme nue (« Développé couché »), et c'est CE nom-là que le catalogue sait
                                  // reconnaître. Après, on rattacherait « Développé couché (échauffement) » — c'est-à-dire rien.
     _vmMatchExtracted();   // VM : rattache aux références EXLIB (évite les doublons) AVANT l'aperçu
+    _impOuverts.clear(); _impRepos=null;   // un NOUVEAU scan repart d'un aperçu fermé (l'état d'écran d'avant ne le concerne plus)
     _renderImpConfirm();
     impGoStep(4);
   }catch(e){
@@ -7953,20 +7954,6 @@ function impRejectMatch(di,ei){
 // proposé (gif/photo si dispo, sinon muscle deviné) + ✓ Oui / ✕ Non explicites. Pensé
 // pour un sportif fatigué : décider d'un coup d'œil, aucun formulaire. Partagé programme+journal.
 // acceptCall / rejectCall = chaînes d'appel déjà construites (évite l'imbrication de gabarits).
-// Vignette d'aperçu d'import : vraie image > muscle deviné SEULEMENT si fiable > icône haltère neutre
-// (ne tombe JAMAIS sur le défaut « chest.svg » de _exMuscleImg → plus de torse rouge pour un exo inconnu)
-function _impThumb(name){
-  const box='width:36px;height:36px;border-radius:8px;flex-shrink:0;background:var(--bg3);box-sizing:border-box;';
-  let gif=''; try{ gif=_exImg(name)||''; }catch(e){}
-  if(gif) return `<img src="${gif}" onerror="this.style.visibility='hidden'" style="${box}object-fit:cover;">`;
-  let musc=''; try{ const {sc}=_mscScoresVus([{name,sets:[{done:true}]}]); const top=Object.entries(sc||{}).sort((a,b)=>b[1]-a[1])[0]; if(top&&_MG_IMG[top[0]]) musc=_MG_IMG[top[0]]; }catch(e){}
-  if(musc) return `<img src="${musc}" onerror="this.style.visibility='hidden'" style="${box}object-fit:contain;padding:3px;">`;
-  // exo RÉEL de la biblio (sans gif ni muscle deviné) → silhouette de son GROUPE (figurine pertinente, jamais le défaut chest global)
-  let grp=''; try{ const cn=exNomCatalogue(name); const ex=EXLIB.find(e=>e.n===cn); if(ex&&_MUSCLE_FILE[ex.g]) grp=_MUSCLE_FILE[ex.g]; }catch(e){}
-  if(grp) return `<img src="${grp}" onerror="this.style.visibility='hidden'" style="${box}object-fit:contain;padding:4px;">`;
-  // vraiment inconnu (hors biblio) → icône haltère neutre
-  return `<div style="${box}display:flex;align-items:center;justify-content:center;">${_ICO_HALTERE}</div>`;
-}
 /* ⭐ LA LIGNE ORANGE — jumelle de `_vmConfirmRow` juste dessous, même forme, même endroit (R13).
    Elle dit ce que l'app va faire AVANT de le faire, et laisse la main : « 🔗 Rattacher ».
    ⛔ Elle N'INTERDIT RIEN (R24, informer sans bloquer) : un exercice réellement absent du
@@ -8061,13 +8048,132 @@ function _vmConfirmRow(suggest, acceptCall, rejectCall, noThumb){
     +`<button onclick="${rejectCall}" style="background:var(--bg3);border:1px solid var(--sep);color:var(--t2);border-radius:6px;padding:3px 12px;font-size:12px;font-weight:700;cursor:pointer;">✕ Non</button>`
     +`</div>`;
 }
+/* ═══ L'APERÇU D'IMPORT DIT CE QUI SERA ENREGISTRÉ — IMPORT-IA-FIDELITE-01 (02/11/2026) ═══════════════════════════════
+   Avant : « 5×3 · 90 kg » — les 4 séries d'échauffement du développé couché, leurs charges et TOUS les repos disparaissaient
+   de l'écran avant d'être enregistrés. Michel : *« l'aperçu doit rendre compréhensible le résultat de l'IA avant toute
+   sauvegarde ».* Il montre maintenant, par exercice : le NOM, son STATUT de reconnaissance, sa VRAIE illustration (ou
+   l'absence d'illustration, jamais une silhouette de muscle qui ferait croire à une reconnaissance), les séries d'échauffement
+   et de travail avec leurs charges / reps / repos, la consigne, les ambiguïtés — et il laisse corriger (type, repos).
+   ⭐ R2 : le type et le repos d'une série sont LUS PAR LES MÊMES FONCTIONS que `_buildProgDay` (celles ci-dessous) — l'aperçu
+   ne peut pas annoncer autre chose que ce qui sera enregistré. */
+function _typeSerieImport(ex,si){
+  const v=(ex.setTypePerSet&&ex.setTypePerSet[si]!=null)?String(ex.setTypePerSet[si]).toUpperCase():'';
+  return v==='W' ? 'É' : (ex.setType||'N');          // 'W' est le mot du backend, 'É' celui de l'app (R33 : traduit ICI, une fois)
+}
+/* 📉 Un dropset : le repos de l'EXERCICE vaut pour la FIN de la série dégressive, pas pour chaque palier (sinon 2 min entre deux
+   paliers qui s'enchaînent). Un repos écrit pour un palier précis (`restPerSet`) reste à ce palier. */
+function _restBrutSerieImport(ex,si){
+  const n=_seriesImport(ex).n;
+  const proprio=!!(ex.restPerSet&&ex.restPerSet[si]!=null&&String(ex.restPerSet[si]).trim()!=='');
+  if((ex.setType||'N')==='D'&&!proprio&&si<n-1)return null;
+  return _restBrut(ex,si);
+}
+function _reposSerieImport(ex,si){ return _reposLire(_restBrutSerieImport(ex,si)); }
+function _impVueSeries(ex){
+  const x=_seriesImport(ex);
+  return Array.from({length:x.n},(_,si)=>({type:_typeSerieImport(ex,si),kg:+x.kgs[si]||0,reps:x.reps[si],repos:_reposSerieImport(ex,si)}));
+}
+// « 90 s », « 1 min 30 », « 2 min » — la durée telle qu'on la dit
+function _fmtReposDit(sec){
+  sec=Math.round(sec); if(sec<60)return sec+' s';
+  const m=Math.floor(sec/60), r=sec%60; return r?(m+' min '+r):(m+' min');
+}
+function _impReposLib(r){
+  if(r.sec)return _fmtReposDit(r.sec);
+  if(r.txt)return r.txt;                  // une plage / un texte : tel qu'écrit dans le document
+  return '—';
+}
+/* Le détail par série devient ÉDITABLE : avant toute correction, on écrit explicitement dans l'exercice ce que l'aperçu montre
+   (type et repos de CHAQUE série), à la longueur des séries. Rien ne change à l'enregistrement : `_typeSerieImport` /
+   `_restBrutSerieImport` relisent exactement les mêmes valeurs. ⛔ Le repos d'un palier de dropset non écrit reste « rien ». */
+function _impMaterialiser(ex){
+  const n=_seriesImport(ex).n;
+  const types=Array.from({length:n},(_,si)=>_typeSerieImport(ex,si)==='É'?'W':'');
+  const rests=Array.from({length:n},(_,si)=>{ const v=_restBrutSerieImport(ex,si); return v==null?'':String(v); });
+  const x=_seriesImport(ex);
+  ex.repsPerSet=x.reps.slice(); ex.kgPerSet=x.kgs.slice(); ex.sets=n;
+  ex.setTypePerSet=types; ex.restPerSet=rests; ex.rest='';
+}
+function _impEx(di,ei){ return _impExtracted&&_impExtracted.days&&_impExtracted.days[di]&&(_impExtracted.days[di].exercises||[])[ei]; }
+let _impOuverts=new Set();               // cartes dont le détail est déplié — la mémoire de l'écran seulement, jamais stockée
+function impToggleDet(di,ei){ const k=di+'-'+ei; if(_impOuverts.has(k))_impOuverts.delete(k); else _impOuverts.add(k); _renderImpConfirm(); }
+function impBasculerType(di,ei,si){
+  const ex=_impEx(di,ei); if(!ex||(ex.setType||'')==='D')return;           // un palier de dropset n'est ni échauffement ni travail
+  _impMaterialiser(ex);
+  ex.setTypePerSet[si]=ex.setTypePerSet[si]==='W'?'':'W';
+  delete ex._echFusion; delete ex._echLignes;                              // l'ancien décompte de lignes regroupées n'est plus vrai
+  _renderImpConfirm();
+}
+let _impRepos=null;                       // { di, ei, si } — la série dont le repos est en cours de correction
+function impEditRepos(di,ei,si){ _impRepos=(_impRepos&&_impRepos.di===di&&_impRepos.ei===ei&&_impRepos.si===si)?null:{di,ei,si}; _renderImpConfirm(); }
+function impFixerRepos(di,ei,si,sec){
+  const ex=_impEx(di,ei); if(!ex)return;
+  _impMaterialiser(ex);
+  // un repos CHOISI est un nombre ; la consigne écrite d'origine (une plage) reste dans la note de l'exercice : rien n'est perdu
+  const ancien=_reposLire(ex.restPerSet[si]);
+  if(ancien.txt&&sec&&String(ex.note||'').indexOf(ancien.txt)<0)ex.note=((ex.note?ex.note+' | ':'')+'Repos écrit : '+ancien.txt);
+  ex.restPerSet[si]=sec?String(Math.round(sec)):'';
+  _impRepos=null; _renderImpConfirm();
+}
+function impReposAutre(di,ei,si){
+  const el=document.getElementById('imp-rp-autre'); const brut=el?String(el.value).trim():'';
+  const v=_reposLire(/^\d+$/.test(brut)?brut+' s':brut);                    // des chiffres seuls, ici, sont des SECONDES
+  if(v.sec)impFixerRepos(di,ei,si,v.sec); else toast('Durée illisible — ex. 90 s, 2 min','info');
+}
+// L'illustration : la VRAIE (photo perso, photo rangée, image du catalogue) ou l'aveu qu'il n'y en a pas.
+// ⛔ Jamais une silhouette de muscle deviné : elle ressemble à une reconnaissance et n'en prouve aucune.
+function _impIllu(name){
+  let src=''; try{ src=_exImg(name)||''; }catch(e){}
+  if(src)return `<img class="imp-ill" src="${src}" alt="" onerror="this.style.visibility='hidden'">`;
+  return `<span class="ex-sans-illu imp-ill imp-ill-none" role="img" aria-label="${_SANS_ILLU}" title="${_SANS_ILLU}">${_ICO_HALTERE}</span>`;
+}
+function _impStatut(ex,connus){
+  if(ex._vmSuggest)return {k:'conf',lib:'À confirmer'};
+  if(_exerciceInconnu(ex.name,connus))return {k:'new',lib:'Sera créé · exercice perso'};
+  if(ex._vmFrom)return {k:'ok',lib:'Reconnu'};
+  const enPerso=(S.customExercises||[]).some(e=>e&&e.n&&_cleNom(e.n)===_cleNom(ex.name));
+  const enCatalogue=typeof EXLIB!=='undefined'&&EXLIB.some(e=>e&&e.n&&_cleNom(e.n)===_cleNom(ex.name));
+  return {k:'ok',lib:(enPerso&&!enCatalogue)?'Ton exercice perso':'Reconnu'};
+}
+function _impGroupesSeries(v){
+  const g=[]; v.forEach(s=>{ const l=g[g.length-1]; if(l&&l.t===s.type)l.s.push(s); else g.push({t:s.type,s:[s]}); }); return g;
+}
+function _impLigneGroupe(g,avecLib){
+  const s=g.s, n=s.length;
+  const memes=s.every(x=>x.kg===s[0].kg&&String(x.reps)===String(s[0].reps));
+  const lib={'É':'Échauffement','N':'Travail','D':'Dropset'}[g.t]||'Travail';
+  const corps=memes?(n+' × '+s[0].reps+' reps'+(s[0].kg?' @ '+s[0].kg+' kg':''))
+    :s.slice(0,7).map(x=>(x.kg?x.kg+' kg × ':'')+x.reps).join(' · ')+(n>7?' …':'');
+  const rp=[]; s.forEach(x=>{ const l=_impReposLib(x.repos); if(!rp.includes(l))rp.push(l); });
+  const repos=(rp.length===1&&rp[0]==='—')?'repos non précisé':'repos '+rp.filter(l=>l!=='—').join(' · ')+(rp.includes('—')?' · —':'');
+  return `<div>${avecLib?`<b>${lib}</b> · `:''}${n>1&&!memes?n+' séries : ':''}${_escNote(corps)} <span style="color:var(--t3);">— ${_escNote(repos)}</span></div>`;
+}
+function _impDetailSeries(di,ei,v){
+  return `<div class="imp-sets">${v.map((x,si)=>{
+    const ouvert=_impRepos&&_impRepos.di===di&&_impRepos.ei===ei&&_impRepos.si===si;
+    const ty=x.type==='É'?'É':(x.type==='D'?'D':'T'), cls=x.type==='É'?'ech':(x.type==='D'?'drop':'trav');
+    const titre=x.type==='É'?'Échauffement — touche pour passer en travail':(x.type==='D'?'Palier de dropset':'Travail — touche pour passer en échauffement');
+    const flag=!x.repos.sec&&x.repos.txt;
+    let h=`<div class="imp-set"><button class="imp-ty imp-ty-${cls}" ${x.type==='D'?'disabled':`onclick="impBasculerType(${di},${ei},${si})"`} title="${titre}">${ty}</button>`
+      +`<span class="imp-kr">${x.kg?x.kg+' kg':'—'} × ${_escNote(String(x.reps))}</span>`
+      +`<button class="imp-rp${flag?' imp-rp-flag':''}" onclick="impEditRepos(${di},${ei},${si})" title="Corriger le repos">${flag?'⚑ ':''}${_escNote(_impReposLib(x.repos))}</button></div>`;
+    if(ouvert){
+      h+=`<div class="imp-rpe"><div class="imp-rpe-t">Repos de la série ${si+1}${x.repos.txt?` · écrit : « ${_escNote(x.repos.txt)} »`:''}</div><div class="imp-rpe-c">`
+        +(x.repos.min?`<button class="imp-rpe-b" onclick="impFixerRepos(${di},${ei},${si},${x.repos.min})">${_fmtReposDit(x.repos.min)}</button><button class="imp-rpe-b" onclick="impFixerRepos(${di},${ei},${si},${x.repos.max})">${_fmtReposDit(x.repos.max)}</button>`:'')
+        +[30,45,60,90,120,180,240,300].map(sec=>`<button onclick="impFixerRepos(${di},${ei},${si},${sec})">${_fmtReposDit(sec)}</button>`).join('')
+        +`<button onclick="impFixerRepos(${di},${ei},${si},0)">Aucun</button></div>`
+        +`<div class="imp-rpe-a"><input id="imp-rp-autre" inputmode="numeric" placeholder="autre : 100 s, 2 min…" enterkeyhint="done"><button onclick="impReposAutre(${di},${ei},${si})">OK</button></div></div>`;
+    }
+    return h;
+  }).join('')}</div>`;
+}
 function _renderImpConfirm(){
   const d=_impExtracted;if(!d)return;
   const nameEl=document.getElementById('imp-prog-name');
   if(nameEl)nameEl.textContent=d.name||'Programme importé';
   const el=document.getElementById('imp-preview');if(!el)return;
   /* ⭐ Un SEUL passage de comptage, réutilisé par le bandeau ET par chaque ligne : le compte
-     annoncé en haut ne peut pas contredire les pastilles orange du dessous. */
+     annoncé en haut ne peut pas contredire les pastilles du dessous. */
   const _connus=_catalogueConnu();
   const _neuf=ex=>!!ex&&!ex._vmSuggest&&_exerciceInconnu(ex.name,_connus);
   /* ⚠️ ON COMPTE LES NOMS DISTINCTS, pas les lignes : `toCreate` DÉDOUBLONNE avant de créer.
@@ -8076,24 +8182,45 @@ function _renderImpConfirm(){
   const _vus=new Set();
   (d.days||[]).forEach(day=>(day.exercises||[]).forEach(ex=>{ if(_neuf(ex))_vus.add(_cleNom(ex.name)); }));
   const _nbNeuf=_vus.size;
-  el.innerHTML=_vmNouveauBandeau(_nbNeuf)+(d.days||[]).map((day,di)=>`
-    <div style="background:var(--bg3);border-radius:10px;padding:10px 12px;">
-      <input value="${_escNote(day.label||'Jour '+(di+1)).replace(/"/g,'&quot;')}" onchange="_impSetDayLabel(${di},this.value)" title="Renomme la séance si besoin" style="width:100%;font-weight:700;font-size:13px;color:var(--red);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em;background:transparent;border:none;border-bottom:1px dashed var(--sep);padding:2px 0;font-family:inherit;">
-      <div id="imp-day-${di}">
-        ${(day.exercises||[]).map((ex,ei)=>`
-          <div id="imp-ex-${di}-${ei}" style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:var(--bg2);border-radius:8px;margin-bottom:5px;">
-            ${_impThumb(ex._vmSuggest||ex.name)}
-            <div style="flex:1;min-width:0;">
-              <div style="font-size:13px;font-weight:600;">${_escNote(ex.name)}</div>
-              <div style="font-size:12px;color:var(--t2);">${ex.sets}×${ex.reps} reps${ex.kg?' · '+ex.kg+' kg':''}</div>
-              ${ex._echFusion?`<div style="font-size:11px;color:var(--gold);margin-top:3px;">🔥 dont ${ex._echFusion} série${ex._echFusion>1?'s':''} d'échauffement — ${ex._echLignes} ligne${ex._echLignes>1?'s':''} du document regroupée${ex._echLignes>1?'s':''} ici</div>`:''}
-              ${ex._vmFrom?`<div style="font-size:11px;color:var(--green);margin-top:3px;">↔ reconnu depuis « ${_escNote(ex._vmFrom)} » · <span onclick="impUndoMatch(${di},${ei})" style="color:var(--t3);cursor:pointer;text-decoration:underline;">annuler</span></div>`:''}
-              ${ex._vmSuggest?_vmConfirmRow(ex._vmSuggest,'impAcceptMatch('+di+','+ei+')','impRejectMatch('+di+','+ei+')',true):''}
-              ${_neuf(ex)?_vmNouveauRow('impRattacher('+di+','+ei+')'):''}
-              ${ex.note?`<div style="font-size:11px;color:var(--gold);margin-top:2px;font-style:italic;">📋 ${_escNote(ex.note)}</div>`:''}
+  let nEx=0,nSer=0,nEch=0,nPlage=0;
+  (d.days||[]).forEach(day=>(day.exercises||[]).forEach(ex=>{ nEx++; _impVueSeries(ex).forEach(x=>{ nSer++; if(x.type==='É')nEch++; if(!x.repos.sec&&x.repos.txt)nPlage++; }); }));
+  const nj=(d.days||[]).length;
+  const total=`<div style="font-size:12px;color:var(--t2);line-height:1.5;margin-bottom:8px;"><b style="color:var(--t1);">${nj} séance${nj>1?'s':''} · ${nEx} exercice${nEx>1?'s':''} · ${nSer} série${nSer>1?'s':''}</b> (dont ${nEch} d'échauffement)`
+    +(nPlage?`<br>⚑ ${nPlage} repos écrit${nPlage>1?'s':''} en plage ou en texte : conservé${nPlage>1?'s':''} tel${nPlage>1?'s':''} qu'écrit${nPlage>1?'s':''}, jamais converti${nPlage>1?'s':''} en durée. Touche un repos pour en choisir un.`:'')+`</div>`;
+  const carte=(di,ei)=>{
+    const ex=d.days[di].exercises[ei], o=_impOuverts.has(di+'-'+ei);
+    const v=_impVueSeries(ex), st=_impStatut(ex,_connus), g=_impGroupesSeries(v);
+    const prec=ei>0?d.days[di].exercises[ei-1]:null;
+    const prop=(ex._propRole==='travail'&&prec&&prec._propGrp===ex._propGrp)?prec:null;
+    const nProp=prop?_impVueSeries(prop).length:0;
+    return `
+          <div class="imp-card" id="imp-ex-${di}-${ei}" data-statut="${st.k}" data-ech="${v.filter(x=>x.type==='É').length}" data-trav="${v.filter(x=>x.type!=='É').length}">
+            <div class="imp-head">
+              ${_impIllu(ex._vmSuggest||ex.name)}
+              <div style="flex:1;min-width:0;">
+                <div class="imp-nom">${_escNote(ex.name)}</div>
+                <span class="imp-st imp-st-${st.k}">${st.lib}</span>
+              </div>
+              <button onclick="removeImpEx(${di},${ei})" class="imp-x" title="Retirer cet exercice" aria-label="Retirer cet exercice">✕</button>
             </div>
-            <button onclick="removeImpEx(${di},${ei})" style="background:none;border:none;color:var(--t3);font-size:16px;cursor:pointer;padding:4px;flex-shrink:0;line-height:1;">✕</button>
-          </div>`).join('')}
+            <div class="imp-sum">${g.map(x=>_impLigneGroupe(x,g.length>1)).join('')}</div>
+            ${ex._echFusion?`<div class="imp-info">🔥 dont ${ex._echFusion} série${ex._echFusion>1?'s':''} d'échauffement — ${ex._echLignes} ligne${ex._echLignes>1?'s':''} du document regroupée${ex._echLignes>1?'s':''} ici</div>`:''}
+            ${prop?`<div class="imp-prop"><div>🔗 Les <b>${nProp} série${nProp>1?'s':''} d'échauffement</b> juste au-dessus (« ${_escNote(prop.name)} ») semblent faire partie de cet exercice. Le nom ou le matériel n'est pas identique dans le document : <b>à toi de dire</b>.</div>`
+              +`<div class="imp-prop-b"><button class="imp-b-ok" onclick="impGrouperEch(${di},${ei})">Regrouper en un exercice</button><button onclick="impGarderSepares(${di},${ei})">Garder séparés</button></div></div>`:''}
+            ${ex._vmFrom?`<div class="imp-info" style="color:var(--green);">↔ reconnu depuis « ${_escNote(ex._vmFrom)} » · <span onclick="impUndoMatch(${di},${ei})" style="color:var(--t3);cursor:pointer;text-decoration:underline;">annuler</span></div>`:''}
+            ${ex._vmSuggest?_vmConfirmRow(ex._vmSuggest,'impAcceptMatch('+di+','+ei+')','impRejectMatch('+di+','+ei+')',true):''}
+            ${_neuf(ex)?_vmNouveauRow('impRattacher('+di+','+ei+')'):''}
+            ${ex.note?`<div class="imp-note">📋 ${_escNote(ex.note)}</div>`:''}
+            <button class="imp-det" onclick="impToggleDet(${di},${ei})">${o?'Masquer':'Voir / corriger'} les ${v.length} série${v.length>1?'s':''} ${o?'▴':'▾'}</button>
+            ${o?_impDetailSeries(di,ei,v):''}
+          </div>`;
+  };
+  const guillemet=String.fromCharCode(34);
+  el.innerHTML=total+_vmNouveauBandeau(_nbNeuf)+(d.days||[]).map((day,di)=>`
+    <div style="background:var(--bg3);border-radius:10px;padding:10px 12px;">
+      <input value="${_escNote(day.label||'Jour '+(di+1)).split(guillemet).join('&quot;')}" onchange="_impSetDayLabel(${di},this.value)" title="Renomme la séance si besoin" style="width:100%;font-weight:700;font-size:13px;color:var(--red);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em;background:none;border:none;outline:none;font-family:var(--font);">
+      <div id="imp-day-${di}">
+        ${(day.exercises||[]).map((ex,ei)=>carte(di,ei)).join('')}
       </div>
     </div>`).join('');
 }
@@ -8106,6 +8233,17 @@ function removeImpEx(di,ei){
   _renderImpConfirm();
 }
 
+/* 🪪 DEUX PROGRAMMES PEUVENT PORTER LE MÊME NOM (rien ne l'interdit : réimporter le même document en crée un second). Ils doivent
+   alors se DISTINGUER au moment de remplacer — nom, numéro technique, début, durée, nombre de séances — et on ne remplace jamais
+   sur le seul nom (IMPORT-IA-FIDELITE-01). `n°` = les 6 derniers caractères de l'identifiant interne, assez pour les départager. */
+function _descProg(p,i){
+  if(!p)return '';
+  const nj=(p.days&&p.days.length)||1;
+  const duree=p.weeks>0?(p.weeks+' sem.'):'durée non précisée';
+  const debut=p.startDate?('début '+new Date(p.startDate).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'})):'sans date de début';
+  const n=String(p.id||('#'+(i+1))).slice(-6);
+  return (p.name||'Programme')+' · '+duree+' · '+debut+' · '+nj+' séance'+(nj>1?'s':'')+' · n°'+n;
+}
 function _setImpMode(mode){
   _impMode=mode;
   const btnN=document.getElementById('imp-mode-new');
@@ -8114,7 +8252,7 @@ function _setImpMode(mode){
   if(mode==='replace'){
     const progs=S.programmes||[];
     if(!progs.length){toast('Aucun programme existant à remplacer','info');_setImpMode('new');return;}
-    sel.innerHTML=progs.map((p,i)=>`<option value="${i}">${_escNote(p.name)}</option>`).join('');
+    sel.innerHTML=progs.map((p,i)=>`<option value="${i}">${_escNote(_descProg(p,i))}</option>`).join('');
     sel.style.display='block';
     if(btnN)btnN.className='btn btn-bg2';
     if(btnR)btnR.className='btn btn-red';
@@ -8197,9 +8335,24 @@ function _cardioVersWkt(day){
     if(r.apres&&!S.wkt.cardio)     S.wkt.cardio     =r.apres;
   }catch(e){}
 }
+let _remplaceCible=null;   // { idx, id } — la cible confirmée d'un remplacement
 function finalImportProg(){
   if(!_impExtracted||!(_impExtracted.days||[]).length){toast('Aucun programme à importer','error');return;}
   if(!S.programmes)S.programmes=[];
+  /* 🪪 REMPLACER = UNE CIBLE NOMMÉE ET CONFIRMÉE (IMPORT-IA-FIDELITE-01). Avant : le nom seul, dans une liste, et le remplacement partait au tap.
+     ⛔ Placé AVANT tout effet de bord : la création des exercices perso plus bas ne doit pas avoir lieu si la personne annule. ⛔ Et la cible est
+     revérifiée par son identifiant au moment d'agir : la liste a pu changer pendant que la fenêtre était ouverte. */
+  if(_impMode==='replace'){
+    const idx=parseInt((document.getElementById('imp-replace-sel')||{}).value);
+    const cible=!isNaN(idx)?S.programmes[idx]:null;
+    if(cible&&!(_remplaceCible&&_remplaceCible.idx===idx&&_remplaceCible.id===cible.id)){
+      const nEx=(_impExtracted.days||[]).reduce((k,dj)=>k+(dj.exercises||[]).length,0);
+      showConfirm('Remplacer ce programme ?',
+        'Cible : '+_descProg(cible,idx)+'. Il sera remplacé par « '+(_impExtracted.name||'ce programme')+' » ('+(_impExtracted.days||[]).length+' séance'+((_impExtracted.days||[]).length>1?'s':'')+', '+nEx+' exercice'+(nEx>1?'s':'')+'). Tes séances déjà faites, tes records et tes autres programmes ne changent pas.',
+        ()=>{ _remplaceCible={idx,id:cible.id}; try{ finalImportProg(); } finally { _remplaceCible=null; } }, 'Remplacer');
+      return;
+    }
+  }
   const name=(_impExtracted.name||'Programme '+new Date().toLocaleDateString('fr-FR')).trim();
   /* ⛔ R2 — la MÊME fonction que l'aperçu (`_exerciceInconnu`, ft-v1166). Avant, ce test était
      écrit ici en `allEx.includes(low)` et une 2ᵉ fois dans l'import d'historique avec un `Set` :
@@ -8257,23 +8410,14 @@ function finalImportProg(){
            format interne). Ailleurs dans l'app, seul 'É' existe.
            ⛔ Et l'absence de champ ne change RIEN : on retombe sur `baseType`, donc un import
            sans colonne de type se comporte exactement comme avant. */
-        const _typeAt=si=>{
-          const v=(ex.setTypePerSet&&ex.setTypePerSet[si]!=null)?String(ex.setTypePerSet[si]).toUpperCase():'';
-          return v==='W' ? 'É' : baseType;
-        };
+        const _typeAt=si=>_typeSerieImport(ex,si);   // IMPORT-IA-FIDELITE-01 : la MÊME fonction que l'aperçu (R2)
         // Séries avec reps+kg par palier (dropsets) ou repsPerSet
         let sets;
         /* ⏱️ LE REPOS DE LA SÉRIE, LU UNE SEULE FOIS (IMPORT-IA-FIDELITE-01). `_restBrut` choisit le texte du document pour CETTE série
            (la sienne, sinon celle de l'exercice) ; `_reposLire` le lit : une valeur ferme devient `rest` (secondes) ; une PLAGE ou un
            texte (« 3-4 min », « selon ressenti ») n'est JAMAIS converti en nombre — `rest` reste 0 et le texte est CONSERVÉ dans `restTxt`
            (la séance le montrera, la personne choisira). Rien n'est supprimé ni inventé. */
-        /* 📉 Un dropset : le repos de l'EXERCICE vaut pour la FIN de la série dégressive, pas pour chaque palier (sinon 2 min
-           entre deux paliers qui s'enchaînent). Un repos écrit pour un palier précis (`restPerSet`) reste à ce palier. */
-        const _nbSeries=(ex.repsPerSet&&ex.repsPerSet.length)||Math.max(1,ex.sets||3);
-        const _restAt=si=>{
-          const proprio=ex.restPerSet&&ex.restPerSet[si]!=null&&String(ex.restPerSet[si]).trim()!=='';
-          return (baseType==='D'&&!proprio&&si<_nbSeries-1)?_reposLire(null):_reposLire(_restBrut(ex,si));
-        };
+        const _restAt=si=>_reposSerieImport(ex,si);  // IMPORT-IA-FIDELITE-01 : la MÊME fonction que l'aperçu (R2) — voir `_restBrutSerieImport`
         const _setDe=(si,kg,reps)=>{ const r=_restAt(si); const o={kg,reps,type:_typeAt(si) /* échec auto à l'import désactivé (ft-v292) — ex.specialSets plus converti en 'E' */,rest:r.sec}; if(r.txt)o.restTxt=r.txt; return o; };
         if(ex.repsPerSet&&ex.repsPerSet.length>0){
           sets=ex.repsPerSet.map((r,si)=>_setDe(si,(ex.kgPerSet&&ex.kgPerSet[si]!=null?ex.kgPerSet[si]:(ex.kg||0)),parseInt(r)||10));
@@ -8304,6 +8448,7 @@ function finalImportProg(){
   if(_impMode==='replace'){
     const idx=parseInt((document.getElementById('imp-replace-sel')||{}).value);
     if(!isNaN(idx)&&S.programmes[idx]){
+      if(!(_remplaceCible&&_remplaceCible.idx===idx&&_remplaceCible.id===S.programmes[idx].id)){toast('La liste des programmes a changé — recommence le remplacement.','error');return;}
       const oldName=S.programmes[idx].name;
       prog.name=prog.name||oldName;
       S.programmes[idx]=prog;
@@ -10102,7 +10247,16 @@ function renderProgModal(){
       // La période vient de `progPeriode` — la même fonction que la feuille imprimée (R2).
       const _per=progPeriode(p);
       const endDate=_per?new Date(_per.end):null;
-      const cycleHtml=hasCycle?`<div style="margin-top:8px;">
+      const _sansDate=hasCycle&&!p.startDate;
+      /* 📅 IMPORT-IA-FIDELITE-01 — SANS DATE DE DÉBUT, ON NE SAIT PAS À QUELLE SEMAINE ON EST, ET ON NE LE DIT PAS COMME SI. `getProgCurrentWeek`
+         rend 1 par repli ; l'afficher en « Semaine 1 / 4 » avec sa barre à 25 % ressemblait à un calcul, et un programme utilisé depuis un
+         mois y restait figé (Michel, 02/11). Ses jumeaux (`_varianteDeLaSemaine`, la feuille imprimée) ne s'en servaient déjà pas — la
+         carte était le seul consommateur à fabriquer ce faux repère. ⛔ Aucune date n'est posée à la place de la personne : « Définir »
+         ouvre l'éditeur (bouton « Aujourd'hui » explicite). */
+      const cycleHtml=_sansDate?`<div style="margin-top:8px;display:flex;justify-content:space-between;align-items:center;gap:8px;">
+        <span style="font-size:12px;font-weight:700;color:var(--t2);">${p.weeks} semaine${p.weeks>1?'s':''} · <span class="prog-sans-date" style="color:var(--gold);">Date de début à définir</span></span>
+        <button class="btn-xs" style="min-height:34px;padding:0 12px;" onclick="event.stopPropagation();editProg(${i})">📅 Définir</button>
+      </div>`:hasCycle?`<div style="margin-top:8px;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
           <span style="font-size:12px;font-weight:700;color:var(--t1);">Semaine ${curW} / ${p.weeks}</span>
           <div style="display:flex;align-items:center;gap:5px;">
@@ -10114,7 +10268,7 @@ function renderProgModal(){
         <div style="height:5px;background:var(--sep);border-radius:3px;overflow:hidden;"><div style="width:${pct}%;height:100%;background:var(--red);border-radius:3px;"></div></div>
       </div>`:'';
       return `<div class="prog-card" style="flex-direction:column;align-items:stretch;">
-        <div class="prog-card-name">${isMulti?'📅 ':'📋 '}${_escNote(p.name)}</div>
+        <div class="prog-card-name">${isMulti?'📅 ':'📋 '}${_escNote(p.name)}${(S.programmes||[]).filter(q=>q&&q.name===p.name).length>1?` <span class="prog-homonyme" style="font-size:11px;font-weight:600;color:var(--t3);">n°${_escNote(String(p.id||('#'+(i+1))).slice(-6))}</span>`:''}</div>
         <div class="prog-card-detail">${_escNote(detail)}</div>
         <div style="display:flex;gap:6px;margin-top:10px;align-items:center;">
           <button class="btn-xs" style="flex:1;background:rgba(255,45,85,.12);border-color:rgba(255,45,85,.4);color:var(--red);" onclick="loadProg(${i})">▶ Charger</button>
@@ -10580,7 +10734,11 @@ function _renderProgEdit(){
       </div>
       <div style="flex:2;">
         <div style="font-size:12px;color:var(--t3);margin-bottom:4px;">Date de début</div>
-        <input id="prog-edit-start" type="date" value="${d.startDate||''}" style="width:100%;background:var(--bg2);border:1px solid var(--sep);border-radius:8px;padding:9px 8px;color:var(--t1);font-size:14px;font-family:var(--font);outline:none;box-sizing:border-box;-webkit-appearance:none;">
+        <div style="display:flex;gap:6px;align-items:center;">
+          <input id="prog-edit-start" type="date" value="${d.startDate||''}" oninput="_progStartHint()" style="flex:1;min-width:0;background:var(--bg2);border:1px solid var(--sep);border-radius:8px;padding:9px 8px;color:var(--t1);font-size:14px;font-family:var(--font);outline:none;box-sizing:border-box;-webkit-appearance:none;">
+          <button type="button" id="prog-edit-today" class="btn-xs" style="min-height:40px;padding:0 10px;white-space:nowrap;" onclick="_progStartAujourdhui()">Aujourd'hui</button>
+        </div>
+        <div id="prog-edit-start-hint" style="font-size:11px;color:var(--gold);margin-top:4px;line-height:1.35;">${d.startDate?'':'Sans date de début, la semaine n\'avance pas. Choisis une date, ou touche « Aujourd\'hui ».'}</div>
       </div>
     </div>
   </div>`;
@@ -10613,7 +10771,7 @@ function _renderProgEdit(){
         : `<input type="number" min="1" inputmode="numeric" value="${s.reps||''}" onchange="_setProgSetReps(${di},${ei},${si},this.value)" style="width:58px;${_INP}">`}
       ${_nbMaxi?`<button onclick="_toggleProgSetMaxi(${di},${ei},${si})" title="Nombre max de répétitions" style="width:36px;flex-shrink:0;background:${s.maxi?'rgba(255,109,0,.14)':'transparent'};border:1px ${s.maxi?'solid var(--orange)':'dashed var(--sep)'};border-radius:8px;color:${s.maxi?'var(--orange)':'var(--t3)'};font-size:10px;font-weight:800;cursor:pointer;padding:5px 0;">max</button>`:''}
       <span style="flex:1;display:flex;align-items:center;justify-content:flex-end;gap:5px;">
-        <input type="number" min="0" step="5" inputmode="numeric" value="${s.rest||''}" placeholder="${_defRestForType(s.type)}" onchange="_setProgSetRest(${di},${ei},${si},this.value)" style="width:56px;${_INP}">
+        <input type="number" min="0" step="5" inputmode="numeric" value="${s.rest||''}" placeholder="${s.restTxt&&!s.rest?_escNote(s.restTxt).replace(/&quot;/g,''):_defRestForType(s.type)}" title="${s.restTxt?'Consigne écrite : '+_escNote(s.restTxt).replace(/&quot;/g,''):''}" onchange="_setProgSetRest(${di},${ei},${si},this.value)" style="width:56px;${_INP}">
         <span style="font-size:11px;color:var(--t3);white-space:nowrap;min-width:44px;">s${s.rest>0?' '+_fmtRest(s.rest):''}</span>
       </span>
       <button onclick="_removeProgSet(${di},${ei},${si})" title="Retirer la série" style="width:22px;background:none;border:none;color:var(--t3);font-size:16px;line-height:1;cursor:pointer;padding:0;">×</button>
@@ -10892,9 +11050,19 @@ function progPeriode(prog){
   const iso=d=>d.toISOString().split('T')[0];
   return {weeks:w, start:iso(d0), end:iso(d1), semaine:getProgCurrentWeek(prog)};
 }
+// 📅 IMPORT-IA-FIDELITE-01 — la date du jour, posée par un GESTE de la personne (jamais d'office). Les navigateurs d'iPhone affichent parfois
+// la date du jour dans un champ date VIDE : on le dit (le repère « sans date ») et on ne laisse pas croire qu'une date est enregistrée.
+function _progStartAujourdhui(){
+  const el=document.getElementById('prog-edit-start'); if(!el)return;
+  el.value=today(); _progStartHint();
+}
+function _progStartHint(){
+  const el=document.getElementById('prog-edit-start'), h=document.getElementById('prog-edit-start-hint'); if(!el||!h)return;
+  h.textContent=el.value?'':'Sans date de début, la semaine n\'avance pas. Choisis une date, ou touche « Aujourd\'hui ».';
+}
 function shiftProgStart(idx,delta){
   const prog=(S.programmes||[])[idx];if(!prog)return;
-  if(!prog.startDate)prog.startDate=today();
+  if(!prog.startDate)return;   // IMPORT-IA-FIDELITE-01 : sans date, rien ne se décale — la date du jour n'est JAMAIS posée à la place de la personne (« Définir » / « Aujourd'hui »)
   const d=new Date(prog.startDate);
   d.setDate(d.getDate()+delta*7);
   prog.startDate=d.toISOString().split('T')[0];
