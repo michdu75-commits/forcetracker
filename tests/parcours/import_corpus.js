@@ -207,6 +207,8 @@ module.exports.ecran = async function (t, b, PORT) {
     cr.forEach(c => {
       const lib = 'J' + (c.d + 1) + 'E' + (c.i + 1) + 'S' + (c.k + 1) + ' ' + c.nom;
       const ex = prog.days[c.d].exs[c.i]; const dernierDropset = c.type === 'D' ? !ex.sets.slice(c.k + 1).some(s => s.type === 'D') : true;
+      const progTxt = (ex.sets[c.k].restTxt || '');                         // le texte écrit dans le PROGRAMME doit arriver tel quel à la SÉANCE (la consigne affichée sous le chrono)
+      if (progTxt !== c.texte) C.push(lib + ' : le texte de repos du programme « ' + progTxt + ' » n\'arrive pas à la séance (« ' + c.texte + ' »)');
       if (c.groupe) { sautes++; return; }                                    // superset : le détail est couvert par IIF-C01 (aucun repos avant la fin du tour)
       if (c.type === 'D' && !dernierDropset) { sautes++; if (c.appels.length) C.push(lib + ' : un repos entre deux paliers de dropset ' + js(c.appels)); return; }
       if (c.stocke > 0) { fermes++; if (c.appels.length !== 1 || c.appels[0] !== c.stocke || c.tot !== c.stocke) C.push(lib + ' : repos écrit ' + c.stocke + ' s, chrono ' + js(c.appels) + ' / restTot ' + c.tot); }
