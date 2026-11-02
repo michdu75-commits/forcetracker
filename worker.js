@@ -875,8 +875,361 @@ function docContent(images) {
     return { type: 'image', source: { type: 'base64', media_type: img.type || 'image/jpeg', data: img.data } };
   });
 }
-const PROG_PROMPT = 'Analyse ces images/documents et extrait le programme d\'entraînement complet.\n\nRetourne UNIQUEMENT un objet JSON valide, sans aucun texte avant ou après, sans balises markdown, avec cette structure exacte :\n{"name":"nom du programme","weeks":7,"startDate":"2026-03-23","days":[{"label":"Séance 1 - Dorsaux Triceps","exercises":[{"name":"nom complet de l\'exercice","sets":5,"reps":8,"repsPerSet":[20,15,12,8,8],"specialSets":[3,4],"kg":0,"kgPerSet":[],"supersetGroup":"","setType":"","note":"méthode et instructions"}]}]}\n\nRègles STRICTES :\n\n0. DÉCOUPAGE EN SÉANCES — RÈGLE ABSOLUE :\n- Une NOUVELLE séance commence UNIQUEMENT quand le document contient un titre explicite : "SÉANCE N", "SEANCE N", "Jour N", "Day N", "Workout N".\n- Les titres de GROUPES MUSCULAIRES (DORSAUX, PECTORAUX, BICEPS…) = sous-sections à l\'intérieur d\'une séance. Ils ne créent JAMAIS une nouvelle séance.\n- Ignore les pages SOMMAIRE (liste des séances sans tableau d\'exercices) et toute séance vide.\n\n1. REPS PAR SÉRIE (repsPerSet) :\n- Reps différentes par série (ex: 20/15/12/8/8) → repsPerSet:[20,15,12,8,8] et sets:5. Mêmes reps partout → repsPerSet:[] et sets=nombre de séries.\n- "4x8" → sets:4, reps:8, repsPerSet:[]. Unilatéral (bras/bras, jambe/jambe, alterné) → chaque ligne NxN = 2 séries.\n- "vide"/"barre à vide" → kg:0. Ramping reps ("3+4+5+6+7 par cycle") → repsPerSet:[3,4,5,6,7], jamais 3x7.\n\n2. SÉRIES SPÉCIALES (specialSets) : indices 0-based des séries dont les reps sont en rouge/couleur. Aucune → [].\n\n3. NOTE (OBLIGATOIRE, ne rien omettre) : capture TOUT le texte en couleur = méthodes (Isométrie, Excentrique, Myo-Reps, Rest-pause, Ramping…) + instructions d\'exécution. Sépare par " | ".\n\n4. STRUCTURE et setType : setType = "" (Normal) ou "D" (Dropset) UNIQUEMENT. JAMAIS "E" ni "W". "à l\'échec"/"Maxi"/"échauffement" → NOTE, jamais setType. kg:0 si non indiqué.\n\n5. SUPERSETS / BI-SETS / TRI-SETS : deux exercices (ou plus) enchaînés SANS repos entre eux = même supersetGroup (une lettre commune). Reconnais TOUS ces formats : (a) préfixe lettre+chiffre A1/A2, B1/B2, C1/C2… → supersetGroup = la lettre ("A","B","C"…) ; (b) un mot "Superset", "Supersérie", "SS", "Bi-set", "Bi-série", "Tri-set", "Circuit", "en superset avec", "combiné avec", "enchaîné avec" au-dessus ou à côté d\'un groupe d\'exercices → donne-leur la MÊME lettre de groupe ; (c) exercices reliés par une accolade/crochet/trait, ou par "+" ENTRE deux noms d\'exercices complets. NE PAS confondre avec un "+" dans les reps (15x2+15). Un exercice seul (non enchaîné) → supersetGroup:"".\n\n6. DROPSETS : charges/reps dégressives → setType:"D", repsPerSet + kgPerSet par palier. "max"/"à l\'échec" → 99 dans repsPerSet.\n\n7. CHARGES (%1RM) : si 1RM + pourcentages donnés → kg = arrondi(1RM × %, 0.5). RPE → note.\n\nRéponds UNIQUEMENT avec le JSON, aucun autre texte.';
+/* ═══ 📥 IMPORT-IA-FIDELITE-01 · LOT A (02/11/2026) — LE PROGRAMME IMPORTÉ DOIT RESSEMBLER AU DOCUMENT ═══════════════════
+   ⛔ LE DÉFAUT, MESURÉ AVANT D'ÉCRIRE UNE LIGNE. Le Worker est la route VIVANTE de `importProgram` (`AI_PROXY_ACTIONS`,
+   constants.js) : c'est lui qui lit le document, pas Apps Script. Or ce prompt n'était qu'une copie ANCIENNE de celui de
+   `Code.js` : 2 822 caractères contre 9 832. Il n'avait ni `setTypePerSet` (sans la règle de la colonne ECH/TRAV, chaque
+   ligne d'échauffement devient un exercice : ft-v1156, Code.js), ni repos, ni anti-invention de date — son EXEMPLE DE
+   STRUCTURE portait `"weeks":7,"startDate":"2026-03-23"`, qu'un modèle recopie quand le document ne dit rien (ft-v1157,
+   corrigé dans Code.js mais jamais ici) — et il ne lisait pas `body.catalogue`, que le client envoie depuis ft-v1164.
+   Pire : AUCUNE validation de la réponse. Ce que le modèle écrivait partait tel quel dans l'application.
+
+   ⭐ CE QUI CHANGE, ET RIEN D'AUTRE :
+   ① ce prompt rattrape celui de Code.js — un témoin de PARITÉ le vérifie phrase par phrase (tests/parcours/import_worker_contrat.js) ;
+   ② il ajoute ce que Code.js n'a pas : la FIDÉLITÉ d'abord (rien ne se perd, rien ne s'invente), les PLAGES gardées telles
+      qu'écrites, les repos recopiés TEL QU'ÉCRIT — plages comprises : la règle de Code.js les JETAIT (rest:""), donc le texte du
+      coach disparaissait —, semaine A / semaine B, les colonnes sans champ (RIR, tempo…) vers la note ;
+   ③ le catalogue est lu (`_blocCatalogueProg`) ; ④ la réponse est VALIDÉE ici (`_normaliserProgramme`) ;
+   ⑤ une réponse coupée par `max_tokens` est une ERREUR dite, jamais un programme partiel.
+
+   ⛔ Les valeurs de l'EXEMPLE de structure sont des zéros et des chaînes vides, volontairement : « un exemple qui RESSEMBLE à
+   une vraie donnée se fait recopier » (Code.js, ft-v1157). ⛔ `HIST_PROMPT` (importHistory) et la garde d'identité S1 ne sont
+   PAS touchés par ce lot. ⚠️ Une phrase de ce prompt qui change doit rester alignée sur les témoins de parité. */
+const PROG_PROMPT = [
+  'Analyse ces images/documents et extrait le programme d\'entraînement complet.',
+  '',
+  'Retourne UNIQUEMENT un objet JSON valide, sans aucun texte avant ou après, sans balises markdown, avec cette structure exacte :',
+  '{"name":"nom du programme","weeks":0,"startDate":"","days":[{"label":"titre de la séance","exercises":[{"name":"nom de l\'exercice","sets":0,"reps":0,"repsPerSet":[],"specialSets":[],"kg":0,"kgPerSet":[],"supersetGroup":"","setType":"","setTypePerSet":[],"rest":"","restPerSet":[],"note":""}]}]}',
+  '',
+  'Règles STRICTES :',
+  '',
+  '⛔⛔ FIDÉLITÉ — ELLE PASSE AVANT TOUTES LES AUTRES : tout ce que le document contient doit survivre dans le JSON.',
+  '- Une information qui n\'a pas de champ va dans "note" (forme courte, séparateur " | "). N\'omets JAMAIS une ligne, une série ni un exercice.',
+  '- N\'invente JAMAIS une date, une charge, une série, une répétition ni un repos : ce qui n\'est pas écrit reste vide ("", 0 ou []).',
+  '- NE RECOPIE JAMAIS LES VALEURS DE L\'EXEMPLE DE STRUCTURE ci-dessus : elles montrent la FORME, pas le contenu.',
+  '',
+  '0. DÉCOUPAGE EN SÉANCES — RÈGLE ABSOLUE :',
+  '- Une NOUVELLE séance commence UNIQUEMENT quand le document contient un titre explicite : "SÉANCE N", "SEANCE N", "Jour N", "Day N", "Workout N" (N = chiffre ou lettre, ex. "SÉANCE 1", "Jour A").',
+  '- Les titres de GROUPES MUSCULAIRES en majuscules ou normaux (DORSAUX, PECTORAUX, BICEPS, TRICEPS, ÉPAULES, TRAPÈZES, QUADRICEPS, FESSIERS, ISCHIOS, MOLLETS, LOMBAIRES, ABDOS…) = sous-sections à l\'intérieur d\'une séance existante. Ils ne créent JAMAIS une nouvelle séance.',
+  '- Ignore les pages SOMMAIRE : une page qui liste les séances (ex. "SÉANCE 1 - Dorsaux..., SÉANCE 2 - Pectoraux...") sans tableau d\'exercices (sans colonnes Mouvement / Séries / Reps / Repos) = résumé → ne pas créer de séances depuis cette page.',
+  '- Ignore toute séance vide (sans exercices).',
+  '- SEMAINE A / SEMAINE B : une séance qui alterne deux variantes une semaine sur deux = DEUX jours distincts, dont le libellé COMMENCE par le code du jour puis la lettre : "J3A - <titre> - Semaine A", puis "J3B - <titre> - Semaine B". Une séance facultative/optionnelle garde son libellé, avec "(facultative)" dans le label.',
+  '',
+  '1. REPS PAR SÉRIE (repsPerSet) :',
+  '- Si chaque série a des reps différentes (ex: 20/15/12/8/8 sur 5 séries) → repsPerSet:[20,15,12,8,8] et sets:5',
+  '- Si toutes les séries ont les mêmes reps → repsPerSet:[] et sets=nombre de séries',
+  '- "reps" = valeur numérique principale de la dernière/plus basse série',
+  '- "4x8" ou "4×8" → sets:4, reps:8, repsPerSet:[]',
+  '- ⛔ PLAGE de reps ("8-10", "12-15") ou de charge ("87,5-90 kg", "55-60 kg") : écris la valeur TELLE QUE DANS LE DOCUMENT, sous forme de chaîne ("8-10", "55-60") ; ne choisis pas une borne, ne calcule rien (le serveur garde la borne basse et note la plage lui-même : ne la répète pas dans la note).',
+  '- Charge non chiffrée ("à calibrer", "léger", "progressif") → kg:0 et "Charge : à calibrer" dans la note.',
+  '- EXERCICES UNILATÉRAUX (mots-clés dans le nom : "bras/bras", "jambe/jambe", "alterné", "unilatéral") :',
+  '  Chaque ligne "NxN" = 2 séries (une par côté). Exemple : lignes "15x2, 12x2, 8x2, 8x2" sur un exo bras/bras → repsPerSet:[15,15,12,12,8,8,8,8], sets:8. Le poids noté = par haltère/côté. Un exo peut être unilatéral ET en superset simultanément.',
+  '  "NxN+M" sur un exo unilatéral en superset : le "+M" indique les reps du PARTENAIRE superset (exercice suivant relié par +), PAS des reps supplémentaires de cet exo. Cet exo → 2 séries de N. Partenaire → M reps.',
+  '- "vide" ou "barre à vide" dans le poids → kg:0 et "Charge : barre à vide" dans la note (ex. "15 rep vide" → reps:15, kg:0)',
+  '- Reps complexes : "5\'\'+8" → reps:8 noter méthode dans note | "8+10" → reps:10 | "15+(3-5 reps)x5" → reps:15',
+  '- Méthode "Ramping reps" (mots-clés : "Ramping", "ramping reps", ou séquence progressive type "3+4+5+6+7 par cycle") : produire repsPerSet=[3,4,5,6,7], sets=5, reps=7. NE PAS appliquer la formule "NxM = N séries de M reps" quand le contexte est Ramping. "3 cycles × 7 paliers" ≠ "3x7". Mettre "Méthode Ramping reps : [séquence complète] par cycle" dans la NOTE.',
+  '',
+  '2. SÉRIES SPÉCIALES (specialSets) :',
+  '- Liste les indices 0-based des séries dont les REPS apparaissent en rouge, en gras coloré, ou en couleur dans le PDF',
+  '- Si TOUTES les séries d\'un exercice sont en rouge → specialSets:[0,1,2,...] (tous les indices)',
+  '- Si AUCUNE série n\'est en rouge → specialSets:[]',
+  '- Exemple : sur 5 séries avec les 2 dernières en rouge → specialSets:[3,4]',
+  '- Ces sets seront affichés en orange dans l\'app pour alerter l\'athlète',
+  '',
+  '3. NOTE (OBLIGATOIRE — ne rien omettre) :',
+  '- Capture TOUT le texte en rouge/couleur = méthodes spéciales (Isométrie, Excentrique, Myo-Reps, Lourd/Léger, complète/partielle, Série unique, Ramping reps, Rest-pause, etc.) avec leur explication complète',
+  '- Ajoute les instructions d\'exécution normales (texte sous le nom de l\'exercice)',
+  '- Colonnes sans champ propre (RIR, RPE, tempo, côté, consigne) → dans la note, en forme courte : "RIR 2-3", "Tempo 3-1-1", "RPE 8". Même sur une ligne d\'échauffement : si elle porte une consigne utile, cette note reste avec l\'exercice.',
+  '- Sépare les éléments par " | "',
+  '- Ces méthodes sont cruciales pour l\'athlète, ne les perds JAMAIS',
+  '',
+  '4. STRUCTURE ET setType :',
+  '- label du jour = nom complet de la séance (ex: "Séance 1 - Dorsaux Triceps Abdos")',
+  '- "name" = le nom de l\'exercice TEL QUE DANS LE DOCUMENT. Quand une LISTE DES EXERCICES est fournie plus haut, applique sa règle de nommage ; sans liste, garde le nom du document.',
+  '- kg:0 si charge non indiquée',
+  '- "weeks" : durée totale du programme en semaines SI ELLE EST ÉCRITE ("4 semaines" → 4), sinon 0',
+  '- "startDate" : date de début au format "YYYY-MM-DD", UNIQUEMENT si le document écrit une date de début (jour, mois et année lisibles), sinon "" (chaîne vide)',
+  '- ⛔⛔ n\'invente AUCUNE date de début : une date inventée fait afficher un programme comme TERMINÉ avant même d\'être commencé. Ne la déduis ni de la date du jour, ni d\'un exemple.',
+  '- Inclus ABSOLUMENT TOUS les exercices de toutes les pages',
+  '- setType : DEUX valeurs possibles UNIQUEMENT à l\'import : "" (Normal, défaut pour toute série) ou "D" (Dropset structuré — cf. règle 6 uniquement). NE JAMAIS utiliser "E" (Échec) ni "W" (Échauffement). Même si le document mentionne "à l\'échec", "Maxi", "MAX reps", "échauffement", "à la faute", "failure" : ces mots décrivent une méthode d\'exécution → vont TOUJOURS en NOTE, ne changent JAMAIS setType.',
+  '- ⚠️ CETTE INTERDICTION PORTE SUR LE CHAMP "setType" (un seul par EXERCICE). Le champ "setTypePerSet" (un élément par SÉRIE) est un AUTRE champ, il obéit à la règle 8, et lui SEUL peut contenir "W" — uniquement quand le document a une colonne qui classe chaque ligne. Les deux règles ne se contredisent pas : "setType" reste "" ou "D", quoi qu\'il arrive.',
+  '',
+  '5. SUPERSETS / TRI-SETS :',
+  '- Exercices groupés par préfixe lettre+chiffre (C1/C2, D1/D2, A1/A2) → supersetGroup = la lettre commune (C, D, A…)',
+  '- Tri-set C1/C2/C3 → tous les trois ont supersetGroup:"C"',
+  '- Libellé de groupe "SUPERSET X+Y" ou "TRI-SET" → même supersetGroup',
+  '- Deux exercices reliés par un "+" ENTRE LEURS NOMS D\'EXERCICE COMPLETS (ex: "Curl Biceps + Extension Triceps", ou un "+" seul sur sa propre ligne entre deux blocs d\'exercice) → superset, assigne-leur une lettre de groupe libre (A, B, C…). Vaut pour TOUS les groupes musculaires.',
+  '- ATTENTION — ne PAS confondre avec les "+" dans les colonnes Reps ou les méthodes : "15x2+15", "8+2+2", "7+7+7", "10+6+4", "3+1+1" = notations de répétitions ou méthodes. PAS des supersets.',
+  '- Exercice solo → supersetGroup:""',
+  '- La lettre du groupe = lettre AVANT le chiffre (C1 → "C", D2 → "D")',
+  '',
+  '6. DROPSETS :',
+  '- DROPSET avec charges/reps dégressives → "setType":"D", repsPerSet avec les reps de chaque palier, kgPerSet avec le kg de chaque palier',
+  '- Ex: "DROPSET: 15 @ 35kg >> 12 @ 25kg >> max @ 15kg" → setType:"D", repsPerSet:[15,12,99], kgPerSet:[35,25,15]',
+  '- "max reps" / "à l\'échec" / "MAX" → 99 dans repsPerSet pour ce palier',
+  '- Si dropset sans détail de charges → setType:"D", repsPerSet:[], kgPerSet:[]',
+  '',
+  '7. CHARGES (%1RM) :',
+  '- Si le document indique les 1RM et des pourcentages → calcule kg = arrondi(1RM × %, 0.5 kg) pour chaque exercice',
+  '- Ex: "Squat 152kg, S1 80%" → Squat kg = 121.5 (152×0.80 arrondi à 0.5). Note: "80% 1RM"',
+  '- Si plusieurs semaines avec % différents → utilise le % de la semaine 1 pour kg, note les autres %',
+  '- RPE → ajoute "RPE X" dans note',
+  '',
+  '8. COLONNE « TYPE DE SÉRIE » (ex. Type : ECH / TRAV, Échauffement / Travail, Warm-up / Work) — N\'EXISTE QUE SI LE DOCUMENT A UNE TELLE COLONNE :',
+  '- ⛔ RÈGLE PRIORITAIRE, valable SEULEMENT avec une telle colonne : plusieurs LIGNES CONSÉCUTIVES portant LE MÊME NOM D\'EXERCICE = UN SEUL exercice avec PLUSIEURS SÉRIES. Ne crée JAMAIS un exercice par ligne, et ne mets JAMAIS « ECH », « (ECH) », « échauffement » ou « TRAV » dans le champ "name" — le nom reste le nom de l\'exercice, tel qu\'il s\'appelle.',
+  '- Exemple RÉEL à reproduire exactement : les lignes « ECH | Développé couché | 1 x 5 | 50 kg », « ECH | Développé couché | 1 x 3 | 65 kg », « ECH | Développé couché | 1 x 2 | 80 kg », « ECH | Développé couché | 1 x 1 | 85 kg », « TRAV | Développé couché | 3 x 3 | 90 kg » donnent UN exercice : {"name":"Développé couché", "sets":7, "repsPerSet":[5,3,2,1,3,3,3], "kgPerSet":[50,65,80,85,90,90,90], "setTypePerSet":["W","W","W","W","","",""]}.',
+  '- setTypePerSet : un élément PAR SÉRIE, dans le même ordre que repsPerSet. "W" = série d\'échauffement, "" = série de travail. Même longueur que repsPerSet.',
+  '- ⛔ N\'emploie setTypePerSet QUE d\'après cette colonne. Un mot « échauffement » ou « montée en charge » lu dans une note, une méthode ou un titre ne suffit JAMAIS (« Montée en charge 1x5 3x3 3x2 » décrit souvent le schéma entier) : laisse setTypePerSet:[] (la règle 4 s\'applique) et mets le mot dans la note.',
+  '- Si le document n\'a PAS de colonne de type : setTypePerSet:[] pour tous les exercices, et UNE LIGNE = UN EXERCICE, même quand deux lignes portent le même nom : ne les fusionne pas toi-même. Si les noms diffèrent légèrement (« Dev. épaules guidé » puis « Dev. épaules guidé / haltères »), garde chaque nom exact du document : l\'app proposera elle-même le regroupement.',
+  '- ⚠️ Une ligne de CARDIO (« Elliptique », « Cardio léger », « Tapis », « Rameur », « Vélo »… avec une durée en minutes et aucune charge) reste un exercice à part entière, avec sa durée dans la NOTE. Ne la fusionne avec rien.',
+  '',
+  '9. TEMPS DE REPOS (rest / restPerSet) — SEULEMENT SI LE DOCUMENT LE DONNE :',
+  '- Beaucoup de programmes ont une colonne « Repos », « Récup », « Rest » ou une consigne du type « 2 min entre les séries ». Reporte-la.',
+  '- Recopie le texte TEL QU\'ÉCRIT dans le document, y compris les PLAGES ("60-90 s", "3-4 min", "2 à 3 mins", "90-120 s") et les écritures de coach ("3 mins", "1.30 mins", "2.30 mins", "repos 40 sec"). NE RIEN CALCULER, NE PAS CHOISIR dans une plage, ne rien convertir : c\'est l\'application qui lit le texte.',
+  '- Valeur identique pour tout l\'exercice → "rest":"3 mins". Valeur DIFFÉRENTE selon la série → restPerSet:["2 min","2 min","3 min"], un élément PAR SÉRIE, même longueur que les séries, "" pour une ligne qui n\'en donne pas, et rest:"".',
+  '- Un repos écrit dans le TITRE de la séance ou dans une consigne générale (« repos 2 min sur tous les exercices ») s\'applique à TOUS les exercices de cette séance : recopie-le pour chacun.',
+  '- ⛔⛔ N\'INVENTE JAMAIS UN REPOS. Si le document ne dit rien → rest:"" et restPerSet:[].',
+  '- Ne mets PAS le repos dans la note s\'il est déjà dans rest/restPerSet — il serait dit deux fois.',
+  '',
+  '- Réponds UNIQUEMENT avec le JSON, aucun autre texte',
+].join('\n');
 const HIST_PROMPT = 'Analyse ce document et extrait TOUTES les séances d\'entraînement réalisées.\n\nRetourne UNIQUEMENT un objet JSON valide, sans texte avant ni après, sans balises markdown :\n{"sessions":[{"date":"YYYY-MM-DD","estimatedDate":false,"label":"Séance 1 (15) 23/04","exercises":[{"name":"Squat à la barre","sets":[{"kg":80,"reps":8,"type":"","note":""}],"note":""}]}]}\n\nRÈGLES STRICTES :\n\n0. EXTRACTION : Extrais TOUTES les séances dans l\'ordre chronologique, sans rater aucun exercice ni série. Chaque bloc "Séance N" ou titre de séance daté = une séance.\n\n1. DATES : "23/04/26"→"2026-04-23" ; "14/05"→"2026-05-14" (année 2026 si manquante). Séance sans date claire → estimatedDate:true. label = titre exact du bloc.\n\n2. SÉRIES ("N rep Xkg" = une série) : kg=X, reps=N, type="". "vide"/"PDC"/"poids du corps"→kg:0. "par bras"/"par jambe"/"unilatéral"→2 séries. "N rep Xkg N rep Ykg" sur une ligne = DROP SET [{kg:X,reps:N,type:"D"},{kg:Y,reps:M,type:"D"}]. Notes libres → champ note.\n\n3. TYPE : UNIQUEMENT "" (Normal) ou "D" (Drop set). JAMAIS "E" ni "W".\n\n4. NOMS : le nom tel qu\'écrit, corrige les fautes évidentes.\n\nRéponds UNIQUEMENT avec le JSON, aucun autre texte.';
+/* ═══ 📚 LE CATALOGUE PART AVEC LE DOCUMENT — IMPORT-IA-FIDELITE-01 (programme seulement) ═══════════════════════
+   Le client envoie `body.catalogue` (les noms que l'application connaît) depuis ft-v1164 ; ce Worker ne le lisait
+   JAMAIS (0 occurrence du mot dans ce fichier). Sans la liste, le modèle écrit « Presse 45 degrés » parce que c'est
+   ce que dit la feuille, et l'exercice créé n'a ni photo, ni figurine, ni historique (R8 : une source nommée qui
+   n'est pas dans le contexte). On reprend donc le patron de `_blocCatalogue_` (Code.js, R13).
+   ⛔ LA CONSIGNE N'EST PAS « UNIQUEMENT CES NOMS » : un programme peut contenir un exercice inconnu, et le forcer
+   dans un nom voisin remplacerait un exercice par un autre — pire que d'en créer un (R29, le coût de l'erreur
+   décide). Ici la règle est plus stricte que celle de Code.js : même MOUVEMENT **et même MATÉRIEL** (machine ≠ barre
+   ≠ haltères ≠ poulie ≠ Smith) — « Développé couché haltères » n'est pas « Développé couché barre ».
+   ⚠️ Le modèle propose, le code borne : noms dédoublonnés, blancs normalisés, 80 caractères au plus par nom, et
+   ~12 000 caractères de liste (Code.js : 600 noms × 80 = jusqu'à ~50 000). Un catalogue absent, vide ou illisible
+   rend '' → le prompt est exactement celui d'avant : JAMAIS bloquant (règle d'or #3). */
+const PROG_CATALOGUE_MAX = 12000;
+function _blocCatalogueProg(body) {
+  try {
+    const l = body && body.catalogue;
+    if (!Array.isArray(l) || !l.length) return '';
+    const vus = new Set(), noms = [];
+    let taille = 0;
+    for (let i = 0; i < l.length && i < 5000; i++) {
+      if (typeof l[i] !== 'string') continue;
+      const n = l[i].replace(/\s+/g, ' ').trim().slice(0, 80).trim();
+      if (!n || vus.has(n)) continue;
+      const ajout = n.length + (noms.length ? 3 : 0);      // 3 = le séparateur « · » et ses deux espaces
+      if (taille + ajout > PROG_CATALOGUE_MAX) break;       // la liste est un PRÉFIXE : on ne saute pas, on s'arrête
+      vus.add(n); noms.push(n); taille += ajout;
+    }
+    if (!noms.length) return '';
+    return [
+      'LISTE DES EXERCICES QUE L\'APPLICATION CONNAÎT (' + noms.length + ') :',
+      noms.join(' · '),
+      '',
+      '⛔ RÈGLE DE NOMMAGE — elle s\'applique à CHAQUE champ "name" que tu produiras :',
+      '- Emploie le nom EXACT de la liste, caractère pour caractère, UNIQUEMENT quand l\'exercice du document est MANIFESTEMENT le même mouvement ET le même matériel (machine ≠ barre ≠ haltères ≠ poulie ≠ Smith). Ex. : « Presse 45 degrés » → « Press Jambes 45° » ; mais « Curl haltères » ne devient PAS « Curl barre ».',
+      '- ⛔ SINON, GARDE LE NOM DU DOCUMENT tel quel. Cette liste n\'est PAS une liste fermée : un programme peut contenir un exercice que l\'application ne connaît pas encore, et le forcer dans une case voisine remplacerait un exercice par un autre — c\'est pire que d\'en créer un nouveau.',
+      '- ⛔ Dans le doute, garde le nom du document. On préfère un exercice en trop à un exercice FAUX.',
+      '',
+    ].join('\n');
+  } catch (e) { return ''; }   // jamais bloquant : au pire, le prompt d'avant
+}
+
+/* ═══ ✅ LA RÉPONSE EST VALIDÉE ICI — DÉTERMINISTE, ET SANS JAMAIS INVENTER (IMPORT-IA-FIDELITE-01) ═════════════
+   Le modèle PROPOSE, le code VALIDE. Avant ce lot, ce que le modèle écrivait partait tel quel dans l'application.
+   Chaque règle ci-dessous répond à un défaut de `handleImportProgram_` (Code.js) que ce Worker ne recopie PAS :
+   · `parseInt(String(r).replace(/[^0-9]/g,''))` faisait de « 8-10 » le nombre 810 → ici une PLAGE garde sa borne
+     BASSE et son texte part dans la NOTE : rien n'est perdu, rien n'est choisi en silence (« 87,5-90 » ne devient
+     pas 87 non plus : la virgule est lue) ;
+   · `|| 10` et `|| 3` INVENTAIENT des répétitions et des séries quand le document n'en disait rien → ici 0 et 1,
+     et chaque fois c'est COMPTÉ ;
+   · `setType` y acceptait « W » et « E » que son propre prompt interdit → ici « » ou « D », rien d'autre ; et le
+     type par série ne vaut « W » que si le modèle a écrit « W » (jamais « ECH » deviné) ;
+   · sa règle des repos JETAIT les plages (« 60-90 s » → rest:"") : le texte du coach disparaissait → ici un repos
+     est recopié TEL QUEL (≤ 40 caractères, espaces normalisés), jamais converti ni interprété : c'est le client qui
+     le lit (`_secRepos`, constants.js).
+   ⭐ Ce qui n'a pas de champ va dans la NOTE, avec « | » : « Reps 8-10 », « Charge 55-60 kg », « Charge : à calibrer ».
+   ⛔ `normalisation` ne porte que des COMPTEURS ENTIERS — jamais un mot du document (Constitution P3) : le client
+   peut dire « 2 plages gardées » sans que le diagnostic transporte quoi que ce soit de la personne.
+   Les bornes sont celles du contrat (reps 0..999, charge 0..1000 au 0,5 kg, séries 1..99, durée 0..104 semaines). */
+const _UNITE_REPS = 'reps?|r[ée]p[ée]titions?|fois|x', _UNITE_KG = 'kgs?', _UNITE_SERIES = 's[ée]ries?|sets?';
+const _CFG_REPS   = { unite: _UNITE_REPS,   min: 0, max: 999,  arrondi: Math.round, cpt: 'repsNonChiffrees',   cptPlage: 'plagesReps' };
+const _CFG_CHARGE = { unite: _UNITE_KG,     min: 0, max: 1000, arrondi: (x) => Math.round(x * 2) / 2, cpt: 'chargesNonChiffrees', cptPlage: 'plagesCharge' };
+const _CFG_SERIES = { unite: _UNITE_SERIES, min: 1, max: 99,   arrondi: Math.round, cpt: '',                   cptPlage: 'plagesSeries' };
+const _NOTE_MAX = 1500;
+
+function _texteCourt(v, max) {
+  if (typeof v === 'number' && isFinite(v)) v = String(v);
+  if (typeof v !== 'string') return '';
+  return v.replace(/\s+/g, ' ').trim().slice(0, max).trim();
+}
+
+/** Lit UNE valeur chiffrée du document : { t:'vide'|'n'|'plage'|'texte', n, txt }.
+ *  Jamais de `parseInt` à l'aveugle : « 8-10 » est une PLAGE, « 87,5 » est 87.5, « à calibrer » est du TEXTE. */
+function _lireNombre(v, unite) {
+  if (typeof v === 'number') return isFinite(v) ? { t: 'n', n: v, txt: String(v) } : { t: 'vide' };
+  if (typeof v !== 'string') return { t: 'vide' };
+  const s = v.replace(/\s+/g, ' ').trim();
+  if (!s) return { t: 'vide' };
+  const NB = '(\\d+(?:[.,]\\d+)?)', U = '(?:\\s*(?:' + unite + '))?';
+  let m = new RegExp('^\\+?' + NB + U + '$', 'i').exec(s);
+  if (m) return { t: 'n', n: parseFloat(m[1].replace(',', '.')), txt: s };
+  m = new RegExp('^' + NB + U + '\\s*(?:[-‐‑–—−]|\\s(?:à|a))\\s*' + NB + U + '$', 'i').exec(s);
+  if (m) return { t: 'plage', n: Math.min(parseFloat(m[1].replace(',', '.')), parseFloat(m[2].replace(',', '.'))), txt: m[1] + '-' + m[2] };
+  return { t: 'texte', txt: s };
+}
+
+/** Une valeur du document → { n: le nombre retenu (0 = inconnu), e: ce qu'il faut garder pour la note }.
+ *  Hors bornes ou illisible : 0, et le texte écrit part dans la note (jamais une valeur voisine inventée). */
+function _valeur(v, cfg, c) {
+  const l = _lireNombre(v, cfg.unite);
+  if (l.t === 'vide' || (l.t === 'n' && l.n === 0 && cfg.min > 0)) return { n: 0, e: { k: 'vide', aff: '' } };   // « 0 série » = inconnu
+  let n = l.t === 'texte' ? NaN : cfg.arrondi(l.n) + 0;
+  if (!(n >= cfg.min && n <= cfg.max)) { if (cfg.cpt) c[cfg.cpt]++; return { n: 0, e: { k: 'texte', aff: l.txt } }; }
+  if (l.t === 'plage') { c[cfg.cptPlage]++; return { n, e: { k: 'plage', aff: l.txt } }; }
+  return { n, e: { k: 'n', aff: String(l.n) } };
+}
+function _valeurs(tab, cfg, c) {
+  const r = { nums: [], elems: [] };
+  (Array.isArray(tab) ? tab : []).forEach((x) => { const v = _valeur(x, cfg, c); r.nums.push(v.n); r.elems.push(v.e); });
+  return r;
+}
+
+/** La mention à ajouter à la note quand une valeur n'a pas pu rester un simple nombre.
+ *  Plage : « Reps 8-10 » · « Charge 55-60 kg » (par série : « Reps 12-15 / 10-12 / 8-10 »).
+ *  Texte : « Charge : à calibrer ». Que des nombres propres : rien. */
+function _mention(etiq, elems, suffixe) {
+  const plage = elems.some((e) => e.k === 'plage'), texte = elems.some((e) => e.k === 'texte');
+  if (!plage && !texte) return '';
+  const parts = elems.filter((e) => e.k !== 'vide').map((e) => e.aff);
+  const lot = parts.every((x) => x === parts[0]) ? [parts[0]] : parts;
+  return plage ? etiq + ' ' + lot.join(' / ') + (suffixe || '') : etiq + ' : ' + lot.join(' / ');
+}
+
+/** La note du modèle d'abord, puis les mentions absentes d'elle, séparées par « | » ; ≤ 1 500 caractères,
+ *  et c'est la note du modèle qu'on rogne si besoin (la mention porte une information qu'aucun champ ne garde). */
+function _noteComplete(note, mentions, c) {
+  const vues = [];
+  mentions.forEach((m) => { if (m && vues.indexOf(m) < 0) vues.push(m); });
+  const bas = note.toLowerCase().replace(/\s+/g, ' ');
+  const ajout = vues.filter((m) => bas.indexOf(m.toLowerCase().replace(/\s+/g, ' ')) < 0).join(' | ');
+  const base = note.slice(0, Math.max(0, _NOTE_MAX - (ajout ? ajout.length + 3 : 0))).trim();
+  if (base.length < note.length) c.notesTronquees++;
+  return (base && ajout ? base + ' | ' + ajout : base || ajout).slice(0, _NOTE_MAX);
+}
+
+function _noteTexte(v) {
+  if (typeof v === 'number' && isFinite(v)) return String(v);
+  return typeof v === 'string' ? v.trim() : '';
+}
+function _repos(v) {
+  if (typeof v === 'number') return (isFinite(v) && v >= 0) ? String(v) : '';
+  return _texteCourt(v, 40);
+}
+/** Un tableau PAR SÉRIE : vide, ou de la longueur des séries (complété par `vide`, ou rogné — et c'est compté). */
+function _aligner(tab, sets, vide, c) {
+  if (!tab.length || tab.length === sets) return tab;
+  c.tableauxRealignes++;
+  return tab.length > sets ? tab.slice(0, sets) : tab.concat(Array(sets - tab.length).fill(vide));
+}
+
+function _exercice(brut, c) {
+  if (typeof brut === 'string') brut = { name: brut };
+  if (!brut || typeof brut !== 'object' || Array.isArray(brut)) { c.exercicesIllisibles++; return null; }
+  let name = _texteCourt(brut.name, 160);
+  if (!name) { name = '(exercice sans nom)'; c.exercicesSansNom++; }   // un exercice sans nom n'est JAMAIS jeté
+
+  const rp = _valeurs(brut.repsPerSet, _CFG_REPS, c), r1 = _valeur(brut.reps, _CFG_REPS, c);
+  const kp = _valeurs(brut.kgPerSet, _CFG_CHARGE, c), k1 = _valeur(brut.kg, _CFG_CHARGE, c);
+  // le nombre de séries : la longueur de repsPerSet si elle existe, sinon le nombre ÉCRIT, sinon 1 (compté) — jamais 3
+  let sets, sEl = null;
+  if (rp.nums.length) sets = rp.nums.length;
+  else { const s = _valeur(brut.sets, _CFG_SERIES, c); sets = s.n; sEl = s.e; if (!(sets >= 1)) { sets = 1; c.setsInconnus++; } }
+
+  const st = _texteCourt(brut.setType, 10).toUpperCase();
+  if (st !== '' && st !== 'D') c.typesInvalides++;
+  let tps = Array.isArray(brut.setTypePerSet) ? brut.setTypePerSet.map((x) => {
+    const s = _texteCourt(x, 10).toUpperCase();
+    if (s !== '' && s !== 'W') c.typesInvalides++;
+    return s === 'W' ? 'W' : '';
+  }) : [];
+  if (!tps.some((x) => x === 'W')) tps = [];                          // aucun « W » : le tableau ne dit rien
+  else if (tps.length !== sets) { tps = []; c.tableauxRealignes++; }   // mal dimensionné : jamais deviné
+
+  let rps = Array.isArray(brut.restPerSet) ? brut.restPerSet.map(_repos) : [];
+  if (rps.every((x) => x === '')) rps = [];
+
+  const ss = [];
+  (Array.isArray(brut.specialSets) ? brut.specialSets : []).forEach((x) => {
+    const n = (typeof x === 'string' && /^\d+$/.test(x.trim())) ? parseInt(x, 10) : x;
+    if (Number.isInteger(n) && n >= 0 && n < sets && ss.indexOf(n) < 0) ss.push(n);
+  });
+
+  const note = _noteComplete(_noteTexte(brut.note), [
+    sEl ? _mention('Séries', [sEl], '') : '',
+    _mention('Reps', [r1.e], ''), _mention('Reps', rp.elems, ''),
+    _mention('Charge', [k1.e], ' kg'), _mention('Charge', kp.elems, ' kg'),
+  ], c);
+
+  return {
+    name, sets,
+    reps: rp.nums.length ? rp.nums[rp.nums.length - 1] : r1.n,
+    repsPerSet: rp.nums, specialSets: ss,
+    kg: k1.n, kgPerSet: _aligner(kp.nums, sets, k1.n, c),
+    supersetGroup: typeof brut.supersetGroup === 'string' ? brut.supersetGroup.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 2) : '',
+    setType: st === 'D' ? 'D' : '', setTypePerSet: tps,
+    rest: _repos(brut.rest), restPerSet: _aligner(rps, sets, '', c),
+    note,
+  };
+}
+
+/** Une date de début n'est gardée que si elle est ÉCRITE, réelle, et que son cycle n'est pas déjà fini.
+ *  Le critère est du SENS (ft-v1157, Code.js) : un bloc commencé il y a deux semaines garde sa date ; « aujourd'hui »
+ *  est le jour de PARIS (comme le plafond d'IA, `_jourParis`). Sans durée (0), on ne peut pas juger : on garde. */
+function _dateDebutValide(v, weeks, aujourdhui) {
+  const s = typeof v === 'string' ? v.trim() : '';
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
+  if (!m) return '';
+  const y = +m[1], mo = +m[2], d = +m[3];
+  if (y < 2000 || y > 2100) return '';
+  const t0 = Date.UTC(y, mo - 1, d);
+  if (new Date(t0).toISOString().slice(0, 10) !== s) return '';   // 30 février, mois 13… : le calendrier ne la reconnaît pas
+  if (weeks > 0 && new Date(t0 + (weeks * 7 - 1) * 86400000).toISOString().slice(0, 10) < aujourdhui) return '';
+  return s;
+}
+
+function _normaliserProgramme(data) {
+  const VIDE = { ok: false, error: 'Aucun exercice trouvé dans le document.' };
+  if (!data || typeof data !== 'object' || Array.isArray(data) || !Array.isArray(data.days) || !data.days.length) return VIDE;
+  const c = { joursEcartes: 0, exercicesIllisibles: 0, exercicesSansNom: 0, plagesReps: 0, plagesCharge: 0, plagesSeries: 0,
+    repsNonChiffrees: 0, chargesNonChiffrees: 0, setsInconnus: 0, tableauxRealignes: 0, typesInvalides: 0, notesTronquees: 0,
+    startDateRefusee: 0 };
+  const w = (typeof data.weeks === 'string' && /^\d+$/.test(data.weeks.trim())) ? parseInt(data.weeks, 10) : data.weeks;
+  const weeks = (Number.isInteger(w) && w >= 0 && w <= 104) ? w : 0;
+  const startDate = _dateDebutValide(data.startDate, weeks, _jourParis());
+  const ecrite = typeof data.startDate === 'string' ? data.startDate.trim() !== '' : data.startDate != null;
+  if (ecrite && !startDate) c.startDateRefusee++;
+  const days = [];
+  data.days.forEach((j) => {
+    const exos = (j && typeof j === 'object' && Array.isArray(j.exercises)) ? j.exercises.map((e) => _exercice(e, c)).filter(Boolean) : [];
+    if (!exos.length) { c.joursEcartes++; return; }                   // un jour sans exercice n'est pas une séance
+    days.push({ label: _texteCourt(j.label, 300), exercises: exos });
+  });
+  if (!days.length) return VIDE;
+  return { ok: true, data: { name: _texteCourt(data.name, 120), weeks, startDate, days, normalisation: c } };
+}
+
+/** Le nettoyage historique du JSON (importDoc) change les guillemets typographiques “ ” en `"` — ce qui CASSE le JSON dès
+ *  qu'une NOTE en contient (un traitement de texte les fabrique à la frappe) : tout l'import échouait. Pour un programme on garde
+ *  d'abord le nettoyage d'avant, À L'IDENTIQUE ; seulement s'il ne se lit pas, on réessaie en protégeant “ ” comme texte. */
+function _jsonProgrammeLisible(brut, legacy) {
+  try { JSON.parse(legacy); return legacy; } catch (e) {}
+  const autre = brut.replace(/‘|’/g, "'").replace(/“/g, '\\u201c').replace(/”/g, '\\u201d')
+    .replace(/\r\n|\r/g, '\\n').replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, '');
+  try { JSON.parse(autre); return autre; } catch (e) {}
+  return legacy;
+}
+
 async function importDoc(body, apiKey, kind, meta) {
   if (!apiKey) return { status: 'error', error: 'Clé API absente dans Cloudflare (ANTHROPIC_API_KEY).' };
   const images = body.images || [];
@@ -884,13 +1237,29 @@ async function importDoc(body, apiKey, kind, meta) {
   const hasText = images.some(img => img.isText || img.type === 'text/plain');
   const hasPdf = images.some(img => img.type === 'application/pdf');
   const userContent = docContent(images);
+  // 📚 IMPORT-IA-FIDELITE-01 : pour un PROGRAMME, le catalogue de l'application part AVEC le document, avant l'instruction.
+  if (kind === 'program') { const cat = _blocCatalogueProg(body); if (cat) userContent.push({ type: 'text', text: cat }); }
   userContent.push({ type: 'text', text: kind === 'history' ? HIST_PROMPT : PROG_PROMPT });
   const model = (kind === 'history' || images.length > 1 || hasText || hasPdf) ? 'claude-sonnet-4-6' : 'claude-haiku-4-5-20251001';
-  const text = await callClaude(apiKey, { model, max_tokens: 8192, messages: [{ role: 'user', content: userContent }] }, meta);
+  let text;
+  if (kind === 'program') {
+    /* ✂️ UNE RÉPONSE COUPÉE N'EST JAMAIS UN PROGRAMME. `callClaude` ne garde que le texte : une réponse arrêtée par la limite
+       de longueur ressortait comme une réponse finie (MILO-PDF1, 25/09 : la même cause pour la conversation). `callClaudeDiag`
+       transporte `stop_reason` tel que l'API le rend — jamais deviné d'après le texte. 16 000 est un PLAFOND, pas une cible
+       (ESTIMATION, non mesurée sur un appel réel : treize champs et une note par exercice, c'est plusieurs centaines de
+       caractères de JSON ; un programme de 6 séances × 10 exercices frôle 8 192 jetons, et la coupure tomberait en plein
+       exercice). Le modèle et son choix (Sonnet / Haiku) ne changent pas : décision de coût de Michel. */
+    const d = await callClaudeDiag(apiKey, { model, max_tokens: 16000, messages: [{ role: 'user', content: userContent }] }, meta);
+    if (d.stopReason === 'max_tokens') return { status: 'error', error: 'Programme trop long pour une seule lecture — importe-le en deux fois.' };
+    text = d.text;
+  } else {
+    text = await callClaude(apiKey, { model, max_tokens: 8192, messages: [{ role: 'user', content: userContent }] }, meta);
+  }
   const stripped = String(text || '').replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
   const m = stripped.match(/\{[\s\S]*\}/);
   if (!m) return { status: 'error', error: 'Extraction échouée. Réponse IA : ' + String(text).slice(0, 200) };
-  const cleaned = m[0].replace(/‘|’/g, "'").replace(/“|”/g, '"').replace(/\r\n|\r/g, '\\n').replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, '');
+  let cleaned = m[0].replace(/‘|’/g, "'").replace(/“|”/g, '"').replace(/\r\n|\r/g, '\\n').replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, '');
+  if (kind === 'program') cleaned = _jsonProgrammeLisible(m[0], cleaned);
   let data;
   try { data = JSON.parse(cleaned); } catch (e) { return { status: 'error', error: 'JSON invalide : ' + e.message }; }
   if (kind === 'history') {
@@ -925,6 +1294,13 @@ async function importDoc(body, apiKey, kind, meta) {
     data.sessions = data.sessions.filter(s => s.exercises && s.exercises.length > 0);
     if (!data.sessions.length) return { status: 'error', error: 'Aucune séance trouvée dans le document.' };
     data.typesNormalises = typesNormalises;   // information AGREGEE, un nombre et rien d'autre
+  }
+  if (kind === 'program') {
+    const r = _normaliserProgramme(data);
+    if (!r.ok) return { status: 'error', error: r.error };
+    // `normalisation` : des COMPTEURS ENTIERS, jamais un mot du document. Rendue dans `data` (comme `typesNormalises` de
+    // l'historique) — UNE seule place (R2) : c'est là que le client la lit (`_impPertes`, log.js).
+    return { status: 'ok', data: r.data };
   }
   return { status: 'ok', data };
 }
