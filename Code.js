@@ -1705,21 +1705,53 @@ function _nutVerrouRendre_(h, origine) {
   if (h.ms >= NUT_VERROU_ALERTE_MS_) Logger.log('[FT VERROU] ' + origine + ' : verrou tenu ' + h.ms + ' ms (seuil ' + NUT_VERROU_ALERTE_MS_ + ' ms)');
   return h.ms;
 }
-/* 🚪🚪 NUT-SYNC-02 PHASE A — LA PORTE DE VERSION DU VOLET NUTRITION (02/11/2026, réserve du Principal sur les anciens clients).
-   Le volet Nutrition (`foodLog`, `savedFoods`, `foodSupprimes`) suppose un appareil qui sait LIRE un accusé : `foodLogV >= NUT_PROTOCOLE_MIN_` ET un `requestId` valide. Un envoi qui contient du Nutrition sans cela vient d'un ancien client
-   (ft-v1263 et avant : réponse jamais lue, aucune identité de suppression, journal du compte REMPLACÉ par l'instantané de l'appareil). Le laisser écrire pourrait RESSUSCITER un repas supprimé (ses copies ne portent pas l'identité du registre),
-   ÉCRASER un historique (son journal, plus court, remplace celui du compte) ou être pris pour acquis alors qu'il ne l'est pas. Il est donc REFUSÉ EXPLICITEMENT, EN ENTIER : `{status:'nut_refuse', ok:false, code:'NUT_CLIENT_INCOMPATIBLE',
-   retryable:false}` — jamais `ok:true`. RIEN de Nutrition n'est lu ni écrit (les cinq champs restent octet pour octet) ; le reste du profil — séances, records, pesées — est ENREGISTRÉ comme toujours (règle d'or n°3). Ce que l'appareil a saisi n'est
-   pas perdu : cela reste sur son téléphone et partira dès sa mise à jour. Limite écrite : un client qui ignore la réponse (`no-cors`) ne peut tout simplement pas être prévenu.
-   `NUT_COMPAT_STRICT_ = false` rétablit EXACTEMENT le comportement d'avant pour ces clients (remplacement avec copie de sécurité, P1) : c'est le levier de retour arrière, une décision à prendre sciemment — le défaut est la sécurité. */
+/* 🚪🚪 NUT-SYNC-02 PHASE A — LA PORTE DE VERSION DU VOLET NUTRITION, **PAR COMPTE** (refaite le 02/11/2026, GO du Principal après son contrôle statique).
+   Le volet Nutrition (`foodLog`, `savedFoods`, `foodSupprimes`) ne se synchronise sûrement qu'avec un appareil qui sait LIRE un accusé : `foodLogV >= NUT_PROTOCOLE_MIN_` ET un `requestId` valide (« v3 »). Un envoi sans cela vient d'un ancien client
+   (ft-v1263 et avant : `no-cors`, réponse jamais lue, aucune identité de suppression, journal du compte REMPLACÉ par l'instantané de l'appareil).
+   ⛔ LA 1ʳᵉ VERSION LES REFUSAIT TOUS, PARTOUT, derrière une constante globale `NUT_COMPAT_STRICT_` — et présentait son contraire (`= false`) comme « le levier de retour arrière ». Deux fautes, retirées : ① refuser un compte qui n'a AUCUN appareil à jour coupait la
+   sauvegarde serveur d'un téléphone sans qu'il puisse le savoir (il ne lit aucune réponse) ; ② `= false` n'était PAS sûr : il rouvrait la résurrection (une ancienne ligne SANS identité ne retrouve pas son entrée du registre — mesuré) et l'écrasement. Cette constante n'existe plus.
+   LA RÈGLE, lue sous le verrou, selon l'ÉTAT DURABLE DU COMPTE (`_nutProtoDe_`) :
+     · compte SANS état v3 : un envoi ancien est TOLÉRÉ — il n'y a ni registre, ni révision, ni mémoire d'opérations à violer, et le chemin est celui de la production d'avant (remplacement avec copie de sécurité, P1). Chaque envoi toléré est journalisé (des nombres) ;
+     · compte AVEC état v3 : un envoi ancien est REFUSÉ en entier et explicitement (`NUT_CLIENT_INCOMPATIBLE`, non réessayable) AVANT toute lecture ou écriture Nutrition ; le reste du profil — séances, records, pesées — est ENREGISTRÉ (règle d'or n°3). Rien n'est copié côté
+       serveur : ce que l'appareil a saisi reste sur son téléphone et partira à sa mise à jour ;
+     · un envoi qui se dit v3 (`foodLogV >= 3`) SANS `requestId` valide est refusé PARTOUT : il ne peut pas lire d'accusé.
+   ⚠️ UN ANCIEN CLIENT NE LIT PAS CE REFUS (`no-cors`) : il n'affiche rien — et le seul message serveur qu'il lit au démarrage, le refus d'authentification, suspendrait TOUTE sa sauvegarde : on ne s'en sert surtout pas. Son seul signal est la mise à jour automatique de l'application.
+   ⛔ Ne jamais écrire qu'il « voit » ce refus.
+   L'ÉTAT v3 D'UN COMPTE EST PROUVÉ, JAMAIS DÉCLARÉ : le marqueur `nutProto`, posé dans le MÊME enregistrement que les données par une synchro v3 APPLIQUÉE (donc durable AVANT que l'accusé ne parte) — y compris quand cette synchro ne change rien : un compte v3 qui n'a fait ni suppression ni
+   modification n'a ni registre ni opération, la mémoire des opérations seule ne le verrait pas (mesuré) — ou, à défaut, un registre non vide, une mémoire d'opérations non vide, une ligne déjà révisée. `nutRev` n'en est PAS une preuve : une écriture ancienne le fait monter. */
 var NUT_PROTOCOLE_MIN_ = 3;
-var NUT_COMPAT_STRICT_ = true;
 function _nutCompatibilite_(body, requestId) {
   var v = Number(body && body.foodLogV);
   var version = isFinite(v) ? v : 0;
-  var nutrition = !!body && (body.foodLog !== undefined || body.savedFoods !== undefined || body.foodSupprimes !== undefined);
-  if (!nutrition) return { ok: true, version: version };                       // rien de Nutrition dans cet envoi : rien à refuser
-  return { ok: !!requestId && version >= NUT_PROTOCOLE_MIN_, version: version };
+  var volet = !!body && (body.foodLog !== undefined || body.savedFoods !== undefined || body.foodSupprimes !== undefined);
+  if (!volet) return { ok: true, version: version, volet: false };                 // rien de Nutrition dans cet envoi : rien à refuser
+  return { ok: !!requestId && version >= NUT_PROTOCOLE_MIN_, version: version, volet: true };
+}
+/* Le protocole que le compte a DÉJÀ été confirmé parler : le marqueur durable, ou à défaut une preuve dans ses données. 0 = aucun état v3. Lu sous le verrou, jamais déduit d'une déclaration du client. */
+function _nutProtoDe_(c) {
+  var m = Number(c && c.nutProto);
+  if (isFinite(m) && m >= NUT_PROTOCOLE_MIN_) return Math.floor(m);
+  var p = (c && c.profile) || {};
+  if ((Array.isArray(p.foodSupprimes) && p.foodSupprimes.length) || (Array.isArray(p.nutOps) && p.nutOps.length)) return NUT_PROTOCOLE_MIN_;
+  var l = Array.isArray(p.foodLog) ? p.foodLog : [];
+  for (var i = 0; i < l.length; i++) { if (_nutRevisionDe_(l[i]) > 0) return NUT_PROTOCOLE_MIN_; }
+  return 0;
+}
+/* Un envoi SANS accusé lisible doit-il être refusé POUR CE COMPTE ? Oui s'il se dit v3 sans pouvoir le prouver (client bogué), ou si le compte a déjà un état v3. Les bancs la remplacent par `() => false` pour éprouver l'ancien chemin : JAMAIS la production. */
+function _nutAncienRefuse_(existing, compat) {
+  if (compat.version >= NUT_PROTOCOLE_MIN_) return true;
+  return _nutProtoDe_(existing) >= NUT_PROTOCOLE_MIN_;
+}
+/* ⏸️⏸️ LA SUSPENSION DU VOLET NUTRITION — LE RETOUR ARRIÈRE SÛR : SUSPENDRE, JAMAIS RÉGRESSER (02/11/2026).
+   Propriété de script `NUT_SUSPENDU` (Paramètres du projet → Propriétés du script : instantané, sans redéploiement). Absente, vide, `0`, `false`, `non`, `off` = actif ; toute autre valeur = SUSPENDU. Si la lecture échoue : SUSPENDU (le sens sûr).
+   Suspendu, tout envoi qui porte du Nutrition — v3 OU ancien, aucun ne contourne — est refusé AVANT la moindre lecture ou écriture Nutrition : `{status:'nut_refuse', ok:false, code:'NUT_SUSPENDU', retryable:true, profilEnregistre:true}`. Rien n'est écrit, donc rien à ressusciter ni à écraser, et
+   AUCUN accusé n'est donné pour un envoi qui n'a pas été appliqué. Le reste du profil (séances, records, pesées, réglages) est enregistré comme toujours. L'appareil garde ses opérations en attente et réessaie (temporisation croissante). La restauration admin reste possible : c'est un acte d'admin conscient. */
+var NUT_SUSPENSION_PROP_ = 'NUT_SUSPENDU';
+function _nutSuspendu_() {
+  try {
+    var v = String(PropertiesService.getScriptProperties().getProperty(NUT_SUSPENSION_PROP_) || '').trim().toLowerCase();
+    return v !== '' && ['0', 'false', 'non', 'off', 'no'].indexOf(v) < 0;
+  } catch (e) { return true; }                                                     // en cas de doute : SUSPENDU
 }
 function _nutRevisionDe_(l) { return (l && Number.isSafeInteger(l.rev) && l.rev > 0) ? l.rev : 0; }
 function _nutCopieLigne_(l) { return JSON.parse(JSON.stringify(l)); }
@@ -2167,17 +2199,23 @@ function handleSaveProfile_(body) {
        suppression sans place est DIFFÉRÉE entrée par entrée, voir `_nutSupprimesFusion_`)
        fusionné. ⚖️ Le reste du profil (séances, records, pesées…) est ENREGISTRÉ quand même — règle d'or n°3 : une saturation du registre Nutrition ne doit jamais empêcher la sauvegarde d'une
        séance. La réponse dit exactement ce qui a été refusé (`ok:false`, code, `profilEnregistre:true`). */
-    var nutSortie = null, nutEchec = null;
+    var nutSortie = null, nutEchec = null, nutMarque = false;
     const nutAvant = { foodSupprimes: profile.foodSupprimes, foodLog: profile.foodLog, savedFoods: profile.savedFoods, nutRev: profile.nutRev, nutOps: profile.nutOps };
     const zoneAvant = (existing.recupNut === undefined) ? undefined : JSON.stringify(existing.recupNut);   // la zone de récupération fait partie de l'état d'avant (une erreur tardive peut l'avoir déjà touchée)
     const compat = _nutCompatibilite_(body, _requestId);
-    if (!compat.ok && NUT_COMPAT_STRICT_) {
-      /* NUT-SYNC-02 phase A — ANCIEN CLIENT : refus explicite et complet, AVANT toute lecture ou écriture Nutrition (voir `_nutCompatibilite_`). */
+    if (compat.volet && _nutSuspendu_()) {
+      /* ⏸️ SUSPENSION (02/11/2026) — AVANT toute lecture ou écriture Nutrition, et pour TOUT envoi qui porte du Nutrition (v3 ou ancien) : voir `_nutSuspendu_`. */
+      nutEchec = new NutSyncError('NUT_SUSPENDU', 'Synchronisation Nutrition suspendue momentanément.', {});
+      Logger.log('[FT SUSPENSION] Nutrition suspendue (propriété ' + NUT_SUSPENSION_PROP_ + ') — rien de Nutrition n\'est lu ni écrit, le reste du profil est enregistré');
+    } else if (compat.volet && !compat.ok && _nutAncienRefuse_(existing, compat)) {
+      /* 🚪 ANCIEN CLIENT SUR UN COMPTE À ÉTAT v3 (ou envoi « v3 » sans accusé possible) : refus explicite et complet, AVANT toute lecture ou écriture Nutrition (voir `_nutCompatibilite_`). */
       nutEchec = new NutSyncError('NUT_CLIENT_INCOMPATIBLE', 'Version de l\'application incompatible avec la synchronisation Nutrition.', { versionClient: compat.version, versionMin: NUT_PROTOCOLE_MIN_ });
-      Logger.log('[FT COMPAT] Nutrition refusée : client en version ' + compat.version + ' (minimum ' + NUT_PROTOCOLE_MIN_ + ') — rien de Nutrition n\'est appliqué, le reste du profil est enregistré');
+      Logger.log('[FT COMPAT] Nutrition refusée : client en version ' + compat.version + ' (minimum ' + NUT_PROTOCOLE_MIN_ + ') sur un compte à état v3 (protocole ' + _nutProtoDe_(existing) + ') — rien de Nutrition n\'est appliqué, le reste du profil est enregistré');
     } else {
+      if (compat.volet && !compat.ok) Logger.log('[FT COMPAT] ancien client toléré : version ' + compat.version + ', compte sans état v3 — chemin d\'avant (remplacement avec copie de sécurité)');
       try {
         nutSortie = _nutSynchroniser_(body, profile, existing, email, _requestId);
+        nutMarque = compat.volet && compat.ok && !nutSortie.refus;       // le volet a été APPLIQUÉ par un client v3 (même sans rien changer) : le compte a un état v3
       } catch (nutErr) {
         /* ⚙️ NUT-SYNC-02 phase A — CONFINEMENT. Avant : une erreur imprévue du bloc Nutrition (autre qu'une erreur métier nommée) était RELANCÉE → `SERVER_ERROR`, RIEN n'était écrit, séances, records et pesées compris. Maintenant : quelle que soit
            l'erreur, l'état d'avant du volet Nutrition est restitué (les cinq champs ET la zone de récupération), le reste du profil est enregistré, et la réponse dit `NUT_INTERNE` (réessayable, `profilEnregistre:true`).
@@ -2188,6 +2226,9 @@ function handleSaveProfile_(body) {
         if (zoneAvant === undefined) delete existing.recupNut; else existing.recupNut = JSON.parse(zoneAvant);
       }
     }
+    /* ⭐ LE MARQUEUR DE PROTOCOLE : posé ICI, dans l'objet qu'écrira l'UNIQUE `saveUserData_` plus bas — jamais avant que le volet ait été APPLIQUÉ, jamais pour un envoi refusé, suspendu ou en erreur, jamais par un envoi ancien. Si l'écriture échoue, l'accusé ne part pas non plus :
+       une transition n'est confirmée qu'une fois durable. */
+    if (nutMarque) existing.nutProto = Math.max(_nutProtoDe_(existing), Math.min(99, Math.floor(compat.version)));
     if (body.foodAiUses    !== undefined) profile.foodAiUses    = Math.max(parseInt(body.foodAiUses)||0, parseInt(profile.foodAiUses)||0);
     /* 🫙 LES TROIS POTS IA SÉPARÉS DE LA NUTRITION (19/09/2026, phase 3.1).
        ⛔ LA LISTE BLANCHE EST LA RAISON DE CES TROIS LIGNES : ce qu'elle ne nomme pas
@@ -2337,9 +2378,9 @@ function handleSaveProfile_(body) {
     }
 
     if (nutEchec) {
-      /* Réessayable : NUT_INTERNE (une erreur du serveur, qui peut passer). PAS réessayable : NUT_CLIENT_INCOMPATIBLE (renvoyer la même chose ne change rien — il faut mettre l'application à jour) ; et tout code nommé non listé ici. */
+      /* Réessayable : NUT_INTERNE (une erreur du serveur, qui peut passer) et NUT_SUSPENDU (suspension voulue, levée par l'admin). PAS réessayable : NUT_CLIENT_INCOMPATIBLE (renvoyer la même chose ne change rien — il faut mettre l'application à jour) ; et tout code nommé non listé ici. */
       return json_({status:'nut_refuse', ok:false, code:nutEchec.code, message:'Synchronisation Nutrition impossible.',
-                    retryable:(nutEchec.code === 'NUT_INTERNE'), requestId:_requestId, profilEnregistre:true, details:nutEchec.details, lockMs:lockMs});
+                    retryable:(nutEchec.code === 'NUT_INTERNE' || nutEchec.code === 'NUT_SUSPENDU'), requestId:_requestId, profilEnregistre:true, details:nutEchec.details, lockMs:lockMs});
     }
     if (nutSortie && nutSortie.refus) {
       return json_({status:'nut_refuse', ok:false, code:'NUT_ZONE_DRIVE', message:'Synchronisation Nutrition incomplète.', retryable:true, requestId:_requestId,
@@ -4878,7 +4919,13 @@ function handleAdminRestore_(body) {
   /* NUT-SYNC-02 phase A : une restauration réécrit le compte ENTIER — sous le même verrou que `saveProfile`, jamais entre sa lecture et son écriture. Occupé : réponse réessayable, rien n'est écrit. */
   const _hv = _nutVerrouPrendre_();
   if (!_hv) return json_({status:'error', error:'busy', ok:false, code:'NUT_LOCK_BUSY', retryable:true});
-  try { saveUserData_(email, data); } finally { _nutVerrouRendre_(_hv, 'adminRestore'); }
+  try {
+    /* NUT-SYNC-02 correction (02/11/2026) : une restauration ne fait JAMAIS régresser un compte vers la voie tolérante. Une sauvegarde d'AVANT l'état v3 n'en porte ni marqueur, ni registre, ni opérations : sans cette ligne, un ancien appareil
+       pourrait de nouveau écrire dans un compte dont les appareils à jour ont des suppressions à re-déclarer (leur guérison les renverra). Le marqueur du compte est donc conservé. */
+    var _proto = _nutProtoDe_(loadUserData_(email));
+    if (_proto >= NUT_PROTOCOLE_MIN_ && !(Number(data.nutProto) >= _proto)) data.nutProto = _proto;
+    saveUserData_(email, data);
+  } finally { _nutVerrouRendre_(_hv, 'adminRestore'); }
 
   try { _mirrorUserToSheet_(email, data); } catch(e) {
     Logger.log('[FT adminRestore] mirror sheet ignoré: ' + e.message);

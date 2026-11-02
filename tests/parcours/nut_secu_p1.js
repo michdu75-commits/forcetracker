@@ -107,9 +107,10 @@ function serveur(o) {
   };
   vm.createContext(ctx);
   vm.runInContext(o.code || CODE_SRC, ctx, { filename: 'Code.js' });   // `o.code` : une AUTRE version de Code.js (NUT-SYNC-01 : le serveur d'AVANT, pour la compatibilité) — par défaut, le vrai Code.js du dépôt
-  /* NUT-SYNC-02 phase A : la porte de version. Par défaut le serveur de banc est STRICT, comme la production (un envoi Nutrition sans `foodLogV >= 3` ET sans `requestId` est refusé). `o.compatStrict === false` rejoue le comportement d'AVANT
-     (levier de retour arrière `NUT_COMPAT_STRICT_ = false`) : réservé aux bancs qui ÉPROUVENT les anciens chemins (P1, NUT-SYNC-01), jamais à un banc de la phase A. Sans effet sur un `o.code` plus ancien qui n'a pas cette variable. */
-  if (o.compatStrict === false && 'NUT_COMPAT_STRICT_' in ctx) ctx.NUT_COMPAT_STRICT_ = false;
+  /* NUT-SYNC-02 phase A, REFAITE le 02/11/2026 : la porte de version est PAR COMPTE (`_nutAncienRefuse_` : un envoi ancien est refusé seulement sur un compte à état v3). `o.compatStrict === false` fait TOLÉRER tout envoi ancien, quel que soit l'état du compte : c'est un réglage de BANC,
+     réservé à ceux qui ÉPROUVENT les anciens chemins sur un compte qui a déjà des suppressions ou des révisions (P1, NUT-SYNC-01) — JAMAIS un levier de production : la constante globale `NUT_COMPAT_STRICT_` a été RETIRÉE (`= false` rouvrait la résurrection et l'écrasement). Sans effet
+     sur un `o.code` plus ancien qui n'a pas cette fonction. */
+  if (o.compatStrict === false && '_nutAncienRefuse_' in ctx) ctx._nutAncienRefuse_ = function () { return false; };
   const textes = [];
   const lire = r => {
     const t = (r && r.t != null) ? String(r.t) : String(r);
@@ -202,8 +203,8 @@ const court = (x, n) => String(x == null ? '' : x).slice(0, n || 200);
 const masque = s => String(s == null ? '' : s).replace(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g, '[adresse]');
 
 /* ══════════════════════════════ B-NSP1 — LE SERVEUR ══════════════════════════════ */
-/* NUT-SYNC-02 phase A : les bancs P1 éprouvent les ANCIENS chemins (un envoi SANS `foodLogV`, remplacement avec copie de sécurité). Ils tournent donc sur un serveur « legacy » — `NUT_COMPAT_STRICT_ = false`, le levier de retour arrière —
-   et NON plus sur celui de la production, dont la porte de version refuse ces envois (éprouvée par `nut_phasea01`). Sans cet enveloppeur, ces témoins ne mesureraient plus rien d'atteignable. */
+/* NUT-SYNC-02 phase A : les bancs P1 éprouvent les ANCIENS chemins (un envoi SANS `foodLogV`, remplacement avec copie de sécurité), y compris sur des comptes qui ont DÉJÀ des suppressions ou des révisions. Ils tournent donc sur un serveur « legacy » de BANC —
+   `compatStrict:false` : la porte par compte est neutralisée (voir `serveur`) — et NON sur la voie de la production, dont la porte refuse ces envois sur un compte à état v3 (éprouvée par `nut_phasea01` et `nut_phasea02`). Sans cet enveloppeur, ces témoins ne mesureraient plus rien d'atteignable. */
 const serveurLegacy = (o) => serveur(Object.assign({ compatStrict: false }, o));
 function serveurTests(t0) {
   const t = (nom, cond, det) => t0(nom, cond, det == null ? det : masque(det));

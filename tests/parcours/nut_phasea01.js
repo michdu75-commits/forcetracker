@@ -43,14 +43,16 @@ module.exports.ecran = async function ecran(t0, b, PORT) {
   /* ═══ S — le serveur, en mémoire ═══════════════════════════════════════════════════════════════════════════════════════════════════════════ */
   if (voulu('S')) {
 
-    /* ── 1. LA PORTE DE VERSION : un ancien client est REFUSÉ explicitement et en entier ── */
+    /* ── 1. LA PORTE DE VERSION : sur un compte à état v3, un ancien client est REFUSÉ explicitement et en entier ── */
     await garde('PA00', async () => {
       const X = P1.serveur(); const m = email('porte'); X.compte(m, { code: CODE_PERSO });
       env(X, m, { foodLog: [ligne('Repas A', 'pa-a-00000001'), ligne('Repas B', 'pa-b-00000001')], foodSupprimes: [{ i: 'pa-sup-00000001', t: 5 }], savedFoods: [FAV('Favori')] });
       env(X, m, { foodLog: [ligne('Repas A', 'pa-a-00000001', { rev: 1, kcal: 140 }), ligne('Repas B', 'pa-b-00000001', { rev: 1 })] });   // une modification : la zone de récupération garde l'ancienne version
       const avant = etatNut(X, m);
-      t('PA00 la porte est ARMÉE par défaut (production) : `NUT_COMPAT_STRICT_` vaut true, la version minimale du protocole vaut 3 ; l\'état de départ de ce banc est riche (registre, journal révisé, favoris, mémoire des opérations, zone de récupération non vide)',
-        X.ctx.NUT_COMPAT_STRICT_ === true && X.ctx.NUT_PROTOCOLE_MIN_ === 3 && (X.lireCompte(m).recupNut || {}).foodLog && X.lireCompte(m).recupNut.foodLog.length > 0 && (X.lireCompte(m).profile.nutOps || []).length === 2, '');
+      /* ↪️ ADAPTÉ le 02/11/2026 (correction, GO du Principal — R30). Avant : « la porte est armée par défaut : `NUT_COMPAT_STRICT_ === true` ». Cette constante globale est RETIRÉE (son contraire `= false` n'était pas un retour arrière sûr : il rouvrait la résurrection et l'écrasement) ;
+         la porte est PAR COMPTE. Le témoin protège désormais une ABSENCE (le levier non sûr n'existe plus), la version minimale du protocole et la richesse de l'état de départ — un compte à état v3 (registre, journal révisé, mémoire des opérations, marqueur), sur lequel un envoi ancien reste refusé. */
+      t('PA00 le levier global `NUT_COMPAT_STRICT_` N\'EXISTE PLUS (une absence protégée : `= false` rouvrait la résurrection et l\'écrasement), la porte est par compte (`_nutAncienRefuse_`), la version minimale du protocole vaut 3 ; l\'état de départ de ce banc est riche (registre, journal révisé, favoris, mémoire des opérations, marqueur, zone de récupération non vide)',
+        typeof X.ctx.NUT_COMPAT_STRICT_ === 'undefined' && typeof X.ctx._nutAncienRefuse_ === 'function' && X.ctx.NUT_PROTOCOLE_MIN_ === 3 && X.lireCompte(m).nutProto === 3 && (X.lireCompte(m).recupNut || {}).foodLog && X.lireCompte(m).recupNut.foodLog.length > 0 && (X.lireCompte(m).profile.nutOps || []).length === 2, '');
       const rL = ancien(X, m, { foodLog: [ligne('Repas ancien', 'pa-old-0000001')], savedFoods: [FAV('Fav ancien')], foodSupprimes: [{ i: 'pa-sup-00000002', t: 6 }], weightLog: [{ date: '2026-11-02', kg: 81 }], prs: { Squat: { rm1: 100, kg: 80, reps: 6, date: '2026-11-01' } }, sessions: [{ id: 's1', ts: 1, date: '2026-11-02', exs: [] }] });
       t('PA01 ⭐⭐ un ANCIEN client (ni `foodLogV` ni `requestId`) qui envoie du Nutrition est REFUSÉ EXPLICITEMENT ET EN ENTIER : { status:\'nut_refuse\', ok:false, code:\'NUT_CLIENT_INCOMPATIBLE\', retryable:false, profilEnregistre:true, details:{versionClient, versionMin} } — jamais `ok:true`, jamais d\'accusé',
         rL.j.status === 'nut_refuse' && rL.j.ok === false && rL.j.code === 'NUT_CLIENT_INCOMPATIBLE' && rL.j.retryable === false && rL.j.profilEnregistre === true && J(rL.j.details) === J({ versionClient: 0, versionMin: 3 }) && !('nut' in rL.j) && rL.j.requestId === '', rL.t.slice(0, 300));
@@ -85,23 +87,27 @@ module.exports.ecran = async function ecran(t0, b, PORT) {
         ['foodLogV:3 avec requestId valide', { foodLogV: 3, requestId: rid(), foodLog: [ligne('C6', 'pa-c6-00000001')] }, false],
         ['foodLogV:4 (un client plus récent) avec requestId valide', { foodLogV: 4, requestId: rid(), foodLog: [ligne('C7', 'pa-c7-00000001')] }, false],
       ];
+      /* ↪️ ADAPTÉ le 02/11/2026 (correction — R30) : les frontières se jouent sur un compte à ÉTAT v3 (une synchro v3 a déjà été appliquée : la porte y refuse). Sur un compte SANS état v3 la même voie ancienne est TOLÉRÉE (éprouvé par `nut_phasea02`, PB01) — seul un envoi qui se dit v3 sans pouvoir
+         lire d'accusé est refusé partout (PB04). `applique` se mesure sur l'état Nutrition complet : rien n'a bougé si l'envoi est refusé. */
       const res = cas.map(([nom, champs, refuse]) => {
         const Y = P1.serveur(); const mm = email('p2'); Y.compte(mm, { code: CODE_PERSO });
+        env(Y, mm, { foodLog: [ligne('Base', 'pa-base-0000001')] });                                  // une synchro v3 appliquée : le compte est à état v3
+        const avant = etatNut(Y, mm);
         const r = Y.post(Object.assign({ action: 'saveProfile', email: mm, authCode: CODE_PERSO }, champs));
-        const c = Y.lireCompte(mm).profile;
-        const applique = (c.foodLog || []).length > 0 || (c.savedFoods || []).length > 0 || (c.foodSupprimes || []).length > 0;
+        const applique = etatNut(Y, mm) !== avant;
         return { nom, refuse, ok: refuse ? (r.j.ok === false && r.j.code === 'NUT_CLIENT_INCOMPATIBLE' && !applique) : (r.j.ok === true && applique) };
       });
-      t('PA02 ⭐ les FRONTIÈRES de la porte : refusés (rien appliqué) — v2 même avec `requestId`, v3 sans `requestId`, `requestId` invalide, favoris seuls, suppressions seules ; acceptés (appliqués) — v3 avec `requestId`, v4 (un client plus récent)',
+      t('PA02 ⭐ les FRONTIÈRES de la porte, sur un compte à état v3 : refusés (rien appliqué) — v2 même avec `requestId`, v3 sans `requestId`, `requestId` invalide, favoris seuls, suppressions seules ; acceptés (appliqués) — v3 avec `requestId`, v4 (un client plus récent)',
         res.every((x) => x.ok), J(res.filter((x) => !x.ok)));
       const Y = P1.serveur(); const mm = email('p2b'); Y.compte(mm, { code: CODE_PERSO });
       const r = Y.post({ action: 'saveProfile', email: mm, authCode: CODE_PERSO, weightLog: [{ date: '2026-11-02', kg: 82 }], prs: { Squat: { rm1: 90, kg: 70, reps: 6, date: '2026-11-02' } } });
       t('PA02b un envoi d\'un ancien client SANS aucun champ Nutrition n\'est PAS refusé (rien à refuser) : `ok:true`, pesée et record enregistrés', r.j.ok === true && r.j.status === 'ok' && J(Y.lireCompte(mm).weightLog) === J([{ date: '2026-11-02', kg: 82 }]), r.t.slice(0, 160));
-      /* le levier de retour arrière : `NUT_COMPAT_STRICT_ = false` rétablit le comportement d'AVANT (production P1), c'est tout — il est écrit, et il ne se déclenche jamais seul */
-      const L = P1.serveur({ compatStrict: false }); const ml = email('levier'); L.compte(ml, { code: CODE_PERSO });
+      /* ↪️ REMPLACÉ le 02/11/2026 (correction — R30, un retrait s'écrit). Ce témoin prouvait « le levier de retour arrière `NUT_COMPAT_STRICT_ = false` existe et rétablit le comportement d'avant » : retiré avec le levier (il n'était PAS sûr — mesuré : une ancienne ligne sans identité
+         ressuscitait un repas supprimé). Ce qu'il garantissait de bien — « le refus de PA01 vient de la porte, pas d'autre chose » — reste : le MÊME envoi ancien, sur un compte SANS état v3, est accepté ; c'est l'ÉTAT DU COMPTE qui décide. */
+      const L = P1.serveur(); const ml = email('etat'); L.compte(ml, { code: CODE_PERSO });
       const rl = L.post({ action: 'saveProfile', email: ml, authCode: CODE_PERSO, foodLog: [ligne('Repas ancien', 'pa-lev-0000001')] });
-      t('PA04 le LEVIER de retour arrière existe et rétablit exactement le comportement d\'avant : avec `NUT_COMPAT_STRICT_ = false` le même envoi d\'ancien client est accepté (statut ok) — le refus de PA01 vient donc bien de la porte, pas d\'autre chose',
-        L.ctx.NUT_COMPAT_STRICT_ === false && rl.j.ok === true && (L.lireCompte(ml).profile.foodLog || []).some((l) => l.id === 'pa-lev-0000001'), rl.t.slice(0, 200));
+      t('PA04 ⭐ le refus de PA01 vient bien de l\'ÉTAT DU COMPTE : le MÊME envoi d\'ancien client, sur un compte SANS état v3, est accepté et appliqué (et il ne pose aucun marqueur)',
+        rl.j.ok === true && (L.lireCompte(ml).profile.foodLog || []).some((l) => l.id === 'pa-lev-0000001') && L.lireCompte(ml).nutProto === undefined && L.ctx._nutProtoDe_(L.lireCompte(ml)) === 0, rl.t.slice(0, 200));
     });
 
     /* ── 3. LES SUPPRESSIONS DIFFÉRÉES : l'accusé dit EXACTEMENT ce qui est inscrit et ce qui ne l'est pas ── */

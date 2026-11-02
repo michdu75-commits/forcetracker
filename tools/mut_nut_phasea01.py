@@ -22,17 +22,17 @@ FAKE = "({ v: { releaseLock: function() {} }, t0: 0, rendu: false, ms: 0 })"    
 MUT = [
     # ── serveur : la porte de version ──
     ('P01 la porte n exige plus de requestId (un client « v3 » sans identifiant d operation passe)',
-     [(CO, "  return { ok: !!requestId && version >= NUT_PROTOCOLE_MIN_, version: version };", "  return { ok: version >= NUT_PROTOCOLE_MIN_, version: version };")], G('PA02'), 'S', '', 'GARDE'),
+     [(CO, "  return { ok: !!requestId && version >= NUT_PROTOCOLE_MIN_, version: version, volet: true };", "  return { ok: version >= NUT_PROTOCOLE_MIN_, version: version, volet: true };")], G('PA02'), 'S', '', 'GARDE'),
     ('P02 la porte accepte la version 2 (un client plus ancien que le protocole des accuses)',
-     [(CO, "  return { ok: !!requestId && version >= NUT_PROTOCOLE_MIN_, version: version };", "  return { ok: !!requestId && version >= 2, version: version };")], G('PA02'), 'S', '', 'GARDE'),
+     [(CO, "  return { ok: !!requestId && version >= NUT_PROTOCOLE_MIN_, version: version, volet: true };", "  return { ok: !!requestId && version >= 2, version: version, volet: true };")], G('PA02'), 'S', '', 'GARDE'),
     ('P03 la porte ne regarde que le journal (des favoris seuls, des suppressions seules passent sans version)',
-     [(CO, "  var nutrition = !!body && (body.foodLog !== undefined || body.savedFoods !== undefined || body.foodSupprimes !== undefined);", "  var nutrition = !!body && (body.foodLog !== undefined);")], G('PA02'), 'S', '', 'GARDE'),
+     [(CO, "  var volet = !!body && (body.foodLog !== undefined || body.savedFoods !== undefined || body.foodSupprimes !== undefined);", "  var volet = !!body && (body.foodLog !== undefined);")], G('PA02'), 'S', '', 'GARDE'),
     ('P04 la porte est desarmee (un ancien client ecrit de nouveau : ressusciter, ecraser, perdre en silence)',
-     [(CO, "    if (!compat.ok && NUT_COMPAT_STRICT_) {", "    if (false) {")], G('PA01', 'PA01b', 'PA03a', 'PA03b', 'PA03c'), 'S', '', 'GARDE'),
+     [(CO, "    } else if (compat.volet && !compat.ok && _nutAncienRefuse_(existing, compat)) {", "    } else if (false) {")], G('PA01', 'PA01b', 'PA03a', 'PA03b', 'PA03c'), 'S', '', 'GARDE'),
     ('P05 le refus de la porte est annonce « reessayable » (l appareil bouclerait sur une impossibilite)',
-     [(CO, "retryable:(nutEchec.code === 'NUT_INTERNE')", "retryable:true")], G('PA01'), 'S', '', 'GARDE'),
+     [(CO, "retryable:(nutEchec.code === 'NUT_INTERNE' || nutEchec.code === 'NUT_SUSPENDU')", "retryable:true")], G('PA01'), 'S', '', 'GARDE'),
     ('P06 le refus de la porte n est plus journalise',
-     [(CO, "      Logger.log('[FT COMPAT] Nutrition refusée : client en version ' + compat.version + ' (minimum ' + NUT_PROTOCOLE_MIN_ + ') — rien de Nutrition n\\'est appliqué, le reste du profil est enregistré');\n", "")], G('PA01d'), 'S', '', 'GARDE'),
+     [(CO, "      Logger.log('[FT COMPAT] Nutrition refusée : client en version ' + compat.version + ' (minimum ' + NUT_PROTOCOLE_MIN_ + ') sur un compte à état v3 (protocole ' + _nutProtoDe_(existing) + ') — rien de Nutrition n\\'est appliqué, le reste du profil est enregistré');\n", "")], G('PA01d'), 'S', '', 'GARDE'),
     # ── serveur : les suppressions differees ──
     ('P07 le plafond de 3 000 saute (la phase B n est pas la : le stockage partage n est plus protege)',
      [(CO, "    if (nouvelle && out.length >= NUT_SUPPR_MAX_) return 'refusee';", "    if (false) return 'refusee';")], G('PA05', 'PA06'), 'S', '', 'GARDE'),
@@ -54,7 +54,7 @@ MUT = [
     ('P15 le confinement ne restitue plus les cinq champs Nutrition (un registre fusionne avant l erreur resterait ecrit a moitie)',
      [(CO, "        Object.keys(nutAvant).forEach(function(k) { if (nutAvant[k] === undefined) delete profile[k]; else profile[k] = nutAvant[k]; });\n", "")], G('PA08a', 'PA08b'), 'S', '', 'GARDE'),
     ('P16 l erreur interne est annoncee NON reessayable (l appareil abandonnerait une panne passagere)',
-     [(CO, "retryable:(nutEchec.code === 'NUT_INTERNE')", "retryable:false")], G('PA08a', 'PA08b'), 'S', '', 'GARDE'),
+     [(CO, "retryable:(nutEchec.code === 'NUT_INTERNE' || nutEchec.code === 'NUT_SUSPENDU')", "retryable:false")], G('PA08a', 'PA08b'), 'S', '', 'GARDE'),
     # ── serveur : un seul verrou pour tous les ecrivains du compte ──
     ('P17 la sante de la montre (pushHealth) ne prend plus le verrou commun',
      [(CO, "    _hv = _nutVerrouPrendre_();\n    if (!_hv) return json_({status:'error', ok:false, code:'NUT_LOCK_BUSY', retryable:true});", "    _hv = " + FAKE + ";\n    if (!_hv) return json_({status:'error', ok:false, code:'NUT_LOCK_BUSY', retryable:true});")], G('PA10', 'PA11', 'PD01'), 'S,D', 'PD01', 'GARDE'),

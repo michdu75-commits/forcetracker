@@ -238,8 +238,8 @@ module.exports.ecran = async function ecran(t, b, PORT) {
 
     /* ancien client (test 13) */
     {
-      /* ↪️ ADAPTÉ le 02/11/2026 (NUT-SYNC-02 phase A) : ces trois témoins éprouvent le chemin « ancien client » — il n'est plus atteignable en production (la porte de version le refuse en entier) mais RESTE le comportement du levier de retour arrière
-         `NUT_COMPAT_STRICT_ = false` : ils tournent donc sur un serveur legacy, explicitement. */
+      /* ↪️ ADAPTÉ le 02/11/2026 (NUT-SYNC-02 phase A, puis CORRECTION du même jour — R30) : ces trois témoins éprouvent le chemin « ancien client » SUR UN COMPTE QUI A DÉJÀ DES RÉVISIONS — en production la porte par compte le refuse en entier ; ils tournent donc sur un serveur « legacy » de BANC
+         (`compatStrict:false` : la porte par compte est neutralisée pour eux seuls), explicitement. Ce n'est PAS un levier de production : la constante globale `NUT_COMPAT_STRICT_` a été retirée. */
       const Z = P1.serveur({ compatStrict: false }); const mm = email('old'); Z.compte(mm, {});
       Z.envoi(mm, { foodLog: [ligne('Révisé', 'revis-00000001'), ligne('Frère', 'frere-00000001')], foodLogV: 3, requestId: rid() });
       Z.envoi(mm, { foodLog: [ligne('Révisé', 'revis-00000001', { rev: 1, kcal: 140 }), ligne('Frère', 'frere-00000001', { rev: 1 })], foodLogV: 3, requestId: rid() });   // révisé : rev 2

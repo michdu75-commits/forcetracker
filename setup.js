@@ -1070,6 +1070,7 @@ let _sessId=null,_sessEdits=null,_sdDelConfirm=false,_sdDelTimer=null;
 const _N_MSG_SYNC_DIFFEREE='Une suppression est gardée sur ce téléphone : le registre des suppressions du compte est plein. Le repas reste visible sur tes autres appareils tant qu\'elle n\'est pas enregistrée. Rien n\'est perdu, et tes autres repas se synchronisent normalement.';
 const _N_MSG_SYNC_INCOMPAT='Cette version de l\'application ne peut plus synchroniser la Nutrition avec ton compte. Rien n\'est perdu : tes repas restent sur ce téléphone. Ferme puis rouvre l\'application pour la mettre à jour.';
 const _N_MSG_SYNC_INTERNE='La synchronisation Nutrition a rencontré une erreur côté serveur. Rien n\'est perdu, elle sera retentée.';
+const _N_MSG_SYNC_SUSPENDUE='La synchronisation Nutrition est suspendue momentanément (maintenance). Rien n\'est perdu : tes repas et tes suppressions restent sur ce téléphone et partiront dès la reprise.';
 const _N_MSG_SYNC_ZONE='Synchronisation Nutrition incomplète : la sauvegarde de sécurité du serveur est indisponible. Rien n\'est perdu, elle sera retentée.';
 const _N_MSG_SYNC_ATTENTE='Suppression pas encore confirmée par le serveur : elle est gardée sur ce téléphone et sera renvoyée.';
 const _N_MSG_SYNC_CONFLIT='Ce repas a été modifié sur un autre appareil en même temps : les deux versions sont gardées dans ton journal. Supprime celle que tu ne veux pas.';
@@ -1110,6 +1111,7 @@ function _nutTraiterReponse(d,envoi){
       _nutAConfirmer=true;
       if(code==='NUT_ZONE_DRIVE') _nutAvertir(code,_N_MSG_SYNC_ZONE);
       if(code==='NUT_INTERNE') _nutAvertir(code,_N_MSG_SYNC_INTERNE);
+      if(code==='NUT_SUSPENDU') _nutAvertir(code,_N_MSG_SYNC_SUSPENDUE,10800000);   // NUT-SYNC-02 correction : suspension voulue côté serveur — au plus un message toutes les 3 heures ; les opérations en attente restent en attente
       _nutPlanifierRelance();
       return 'refuse_reessayable';
     }

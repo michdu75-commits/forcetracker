@@ -38,7 +38,7 @@ STOCKAGE-COMPTES est **préparé comme une dépendance de l'archivage, pas écar
 
 | La phase A fait | La phase A **ne fait pas** (dépend de STOCKAGE-COMPTES / phase B) |
 |---|---|
-| Porte de version : un ancien client est refusé **en entier et explicitement** (`NUT_CLIENT_INCOMPATIBLE`) | Segments Drive, pointeurs, index, curseur de rattrapage |
+| Porte de version **PAR COMPTE** : un ancien client est toléré tant que le compte n'a aucun état v3, refusé **en entier et explicitement** (`NUT_CLIENT_INCOMPATIBLE`) dès qu'il en a un ; suspension du volet Nutrition (`NUT_SUSPENDU`) pour le retour arrière — §6, BUGS.md §128 | Segments Drive, pointeurs, index, curseur de rattrapage |
 | Suppressions **différées entrée par entrée** au plafond (3 000 **conservé**) ; accusé `tomb.ok` / `tomb.diff` | Lever le plafond : aujourd'hui une suppression différée ne se propage pas aux autres appareils tant qu'elle n'est pas inscrite |
 | L'appareil ne confirme **que** ce que le serveur nomme ; guérison si le compte est revenu en arrière | Migration des comptes, nouvelles routes de production |
 | Confinement : une erreur Nutrition ne coûte plus séances / records / pesées | Mesure des limites sur un **vrai** Apps Script (projet de test isolé, autorisation spécifique) |
@@ -87,27 +87,49 @@ de la zone de récupération contiennent du **contenu rattaché à une adresse**
 * **C1** budgets en octets codés en constantes, avec assertions · **C2** ordre d'écriture du §2, panne injectée à chaque étape, mutations · **C3** tous les écrivains du compte
   sous un même verrou — **LIVRÉE par la phase A** (les 7 appels d'écriture du compte, dans 6 gestionnaires, passent par `_nutVerrouPrendre_` ; seule la route diagnostic `testGardeFou` reste hors verrou, sur une clé jetable) · **C4** curseur de rattrapage dans le même
   lot (sans lui, pas d'étage froid) · **C5** deux copies, dossier privé, audit, restauration jouée sur un compte de test · **C6** observabilité : journaliser les `SERVER_ERROR`
-  (**faite** en phase A pour `saveProfile`), compteur dans « Santé » (dont le **nombre d'anciens clients encore refusés**, pour décider si la porte reste stricte), alerte à 70 % de jauge · **C7** au premier déploiement (GO distinct) : sonde d'écriture de 12 Ko sur une clé
+  (**faite** en phase A pour `saveProfile`), compteur dans « Santé » (dont le **nombre d'envois anciens tolérés et refusés** (`[FT COMPAT]`), pour savoir combien d'anciens téléphones restent actifs), alerte à 70 % de jauge · **C7** au premier déploiement (GO distinct) : sonde d'écriture de 12 Ko sur une clé
   jetable effacée aussitôt, mesure de la latence Drive et de la durée du verrou — **jamais sur un compte de production**, sur un projet Apps Script de test isolé, après autorisation
   spécifique · **C8** intégrer 3B, NUT-SYNC-01 et 02 **ensemble**, jamais le lot FINAL seul.
 * **C9 (nouvelle) — `uid`, manifeste et registre des identités supprimées existent AVANT le premier segment** : aucun segment, index ou copie sans `uid` lisible (E1–E3).
 * **C10 (nouvelle) — le registre des identités supprimées est consulté par chaque écrivain avant d'écrire** (E4), et l'isolation (E5) a son test permanent.
 
-## 6. Ordre d'intégration recommandé (client d'abord, puis serveur — et pourquoi)
+## 6. Porte par compte, ordre d'intégration et retour arrière (↪️ REFAIT le 02/11/2026 — BUGS.md §128)
 
-Quatre situations existent selon l'état du téléphone et du serveur : ancien téléphone + serveur actuel (la production d'aujourd'hui) · **nouveau téléphone + serveur actuel** (E10 : aucun accusé reçu, donc aucune suppression « confirmée », un message
-honnête au plus toutes les 10 minutes si une suppression attend — rien n'est perdu) · **ancien téléphone + serveur de la phase A** (son Nutrition est refusé en entier ; il garde tout en local ; il ne peut pas en être prévenu) · nouveau + phase A (tout marche).
-Publier le serveur d'abord refuserait **tous** les téléphones d'un coup ; publier le client d'abord ne refuse, à l'armement de la porte, que les téléphones **qui n'ont pas encore été ouverts depuis**.
+> ↪️ **Ce que disait la 1ʳᵉ version de cette section, et pourquoi c'était faux (R30 — un retrait s'écrit).** Elle recommandait « client d'abord, puis serveur, en laissant passer 24 à 48 h » et donnait `NUT_COMPAT_STRICT_ = false` pour *levier de retour arrière*.
+> ① Le délai de 24 à 48 h n'était pas une mesure : rien dans le dépôt ne dit en combien de temps les téléphones se mettent à jour. ② Un merge sur `master` déclenche `deploy-pages.yml` **et** `deploy-appsscript.yml` sur le même événement, sans lien d'ordre entre eux (lu dans les deux fichiers de workflow, aucun run observé) : l'ordre « client puis serveur » n'est pas tenu
+> par la chaîne de déploiement. ③ `= false` n'était **pas** un retour arrière sûr : il rouvrait la **résurrection** (une ancienne ligne SANS identité ne retrouve pas son entrée du registre — mesuré) et l'**écrasement**. Cette constante n'existe plus. ④ La porte refusait aussi
+> **tous** les anciens clients, y compris ceux d'un compte qui n'a **aucun** appareil à jour : sa sauvegarde serveur du Nutrition s'arrêtait sans qu'il puisse le savoir.
 
-1. **Client** (3B + NUT-SYNC-01 + phase A), publié seul : il envoie déjà `foodLogV:3` et un `requestId`, il lit l'accusé, il ne confirme que ce qui est nommé. Les téléphones se mettent à jour à la prochaine ouverture. *Laisser passer 24 à 48 h* (décision du Principal) pour que
-   les appareils actifs se mettent à jour — au prix du message « suppression pas encore confirmée » pour qui supprime un repas dans l'intervalle.
-2. **Serveur** (`Code.js`) : `clasp push` puis `clasp deploy -i` (règle d'or n°1), contrôle `?test=1`. La porte est **armée par défaut** ; son levier de retour arrière est `NUT_COMPAT_STRICT_ = false` (retour exact au comportement d'avant pour les anciens clients — une décision à prendre
-   sciemment). Surveiller dans le journal du script : `[FT COMPAT]` (anciens clients refusés : à compter), `[FT NUT_INTERNE]`, `[FT VERROU]` (détention ≥ 2 s), `[FT GARDE-FOU foodSupprimes]`, `[FT saveProfile] ERREUR`. Un nombre de refus qui ne baisse pas = repasser le levier à `false`, le temps de comprendre.
-3. **Au premier déploiement seulement** (GO distinct, C7) : vérifier que `LockService` est bien autorisé (service refusé = réponse `NUT_LOCK_BUSY` à tous les envois : rien d'écrit côté serveur, rien de perdu côté téléphone, mais plus rien ne se synchronise) et relever la durée de détention réelle.
+**La porte est PAR COMPTE** (`_nutAncienRefuse_`, décidée sous le verrou, selon l'état durable du compte — `_nutProtoDe_`) :
+
+| Envoi | Compte SANS état v3 | Compte AVEC état v3 |
+|---|---|---|
+| ancien (ni `foodLogV` ni `requestId`) | **toléré** — le chemin d'avant (remplacement du journal avec copie de sécurité, P1), journalisé `[FT COMPAT] ancien client toléré` ; il ne pose jamais de marqueur | **refusé** en entier, explicitement (`NUT_CLIENT_INCOMPATIBLE`, non réessayable) avant toute lecture ou écriture Nutrition ; le reste du profil est enregistré |
+| se dit à jour (`foodLogV ≥ 3`) **sans** `requestId` valide | refusé (il ne pourrait pas lire d'accusé) | refusé |
+| à jour (`foodLogV ≥ 3` + `requestId` valide) | appliqué ; **pose le marqueur** | appliqué |
+
+**L'état v3 d'un compte est PROUVÉ, jamais déclaré par le client** : le marqueur `nutProto`, posé **dans le même enregistrement que les données** par la 1ʳᵉ synchro à jour *appliquée* (donc durable avant que l'accusé ne parte — y compris quand cette synchro ne change rien :
+un compte à jour qui n'a ni supprimé ni modifié n'a ni registre ni opération, **mesuré**), ou à défaut un registre non vide, une mémoire d'opérations non vide, une ligne déjà révisée. Ne comptent **pas** : `nutRev` (une écriture ancienne le fait monter) ni la zone de récupération (la voie ancienne en écrit aussi).
+Le marqueur ne recule jamais (une restauration admin le conserve), n'est jamais posé par un envoi suspendu, refusé, en erreur ou ancien.
+
+⚠️ **Un ancien client ne lit pas ce refus** (`no-cors`) : il n'affiche rien, et le seul message serveur qu'il lit au démarrage — le refus d'authentification — suspendrait **toute** sa sauvegarde : on ne s'en sert surtout pas. Son seul signal est la **mise à jour automatique de l'application**. ⛔ Ne jamais écrire qu'il « voit » ce refus.
+Ce qu'il saisit reste sur son téléphone (mesuré avec le vrai client de production : aucune erreur, aucun repas perdu localement) et part à sa mise à jour.
+
+**L'ordre d'intégration n'est plus une condition de sécurité.** À chaque instant, chaque compte est dans l'un des deux états et la règle de CE compte s'applique : *serveur d'abord* — aucun compte n'a d'état v3, les anciens clients sont tolérés jusqu'à la première synchro à jour ; *client d'abord* — l'ancien serveur ignore `foodLogV`, `requestId` et
+`foodSupprimes`, ne pose aucun marqueur, et le téléphone ne confirme rien (un message honnête au plus toutes les 10 minutes si une suppression attend). Les quatre situations — ancien téléphone + ancien serveur (la production d'aujourd'hui) · nouveau téléphone + ancien serveur (E10) · ancien téléphone + serveur corrigé · nouveau + serveur corrigé — sont jouées par `nut_phasea02`.
+
+**Le retour arrière sûr est de SUSPENDRE, jamais de régresser.** Propriété de script `NUT_SUSPENDU` (Paramètres du projet → Propriétés du script : instantané, sans redéploiement). Absente, vide, `0`, `false`, `non`, `off`, `no` = actif ; toute autre valeur = **suspendu** ; si la lecture échoue : suspendu. Suspendu, **tout** envoi qui porte du Nutrition (à jour comme ancien — aucun ne contourne) est refusé *avant* la moindre lecture ou écriture
+Nutrition : `{status:'nut_refuse', ok:false, code:'NUT_SUSPENDU', retryable:true, profilEnregistre:true}`, aucun accusé, rien à ressusciter ni à écraser. Séances, records, pesées, réglages sont enregistrés. L'appareil garde ses opérations en attente, réessaie à temporisation croissante et ne le dit qu'une fois toutes les 3 heures.
+La restauration admin reste possible (acte conscient). Pour reprendre : retirer la propriété (ou `0`).
+⛔ **Redéployer l'ancien code serveur n'est PAS établi comme un retour arrière sûr** une fois que des comptes ont un état v3 : l'ancien code ne connaît ni le registre ni les révisions (non mesuré — à ne pas présenter comme sûr). Suspendre, puis corriger en avant.
+
+1. **Publier** (client et serveur, dans n'importe quel ordre — voir plus haut). `clasp push` puis `clasp deploy -i` (règle d'or n°1), contrôle `?test=1`. ⚠️ Les contrôles automatiques après déploiement (`?test=1`, `authStatus`) **n'exercent ni `saveProfile` ni `LockService`** : voir 3.
+2. **Surveiller** dans le journal du script : `[FT COMPAT]` — « ancien client toléré » (combien d'anciens téléphones restent actifs sur des comptes sans appareil à jour) et « Nutrition refusée » (un ancien téléphone sur un compte à jour) —, `[FT SUSPENSION]`, `[FT NUT_INTERNE]`, `[FT VERROU]` (détention ≥ 2 s), `[FT GARDE-FOU foodSupprimes]`, `[FT saveProfile] ERREUR`.
+3. **Au premier déploiement seulement** (GO distinct, C7) : un essai manuel sur un compte JETABLE (une synchro à jour, puis un envoi ancien) et la vérification que `LockService` est bien autorisé (service refusé = `NUT_LOCK_BUSY` à tous les envois : rien d'écrit côté serveur, rien de perdu côté téléphone, mais plus rien ne se synchronise) ; relever la durée de détention réelle.
 4. Phase B et STOCKAGE-COMPTES : **chantiers distincts**, après décision, jamais dans le même déploiement.
 
 ## 7. NON TESTÉ (et pourquoi)
 
 Le vrai Apps Script (vrai `LockService` — premier usage dans ce code ; ses délais ; son autorisation), les vraies Script Properties et leurs plafonds, la latence Drive, le vrai
-Supabase, l'iPhone : le conteneur n'atteint ni `script.google.com` ni le Worker (`CONNECT tunnel failed, 403`, mesuré). Les bancs jouent le **vrai `Code.js`** dans un moteur Node avec
+Supabase, l'iPhone, la lecture **réelle** de la propriété `NUT_SUSPENDU` par un vrai Apps Script, et la mise à jour automatique de l'application chez un vrai utilisateur : le conteneur n'atteint ni `script.google.com` ni le Worker (`CONNECT tunnel failed, 403`, mesuré). Les bancs jouent le **vrai `Code.js`** dans un moteur Node avec
 des services Google simulés, de **vrais processus** avec un vrai verrou entre processus, et le **vrai client** dans Chromium.
