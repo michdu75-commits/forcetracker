@@ -2061,8 +2061,15 @@ function toggleSet(ei,si){
     }
     const sec=(set.rest>0?set.rest:(_versTravail?Math.max(_base,defForEx):_base));
     // ─── Dropset : avance entre paliers ─────────────────────────────────────
-    if(S.wkt.exs[ei].dropset){
-      const ds=S.wkt.exs[ei].dropset;
+    /* 📉 IMPORT-IA-FIDELITE-01 — UN DROPSET IMPORTÉ N'A PAS D'OBJET `ex.dropset` (celui-là n'est posé que par l'outil de la séance) :
+       ses paliers sont des séries de type « D », écrites par l'import avec leurs charges et leurs reps. Jusqu'ici l'app les
+       traitait comme des séries ordinaires : un repos ENTIER entre deux paliers d'une série dégressive. Même règle que l'outil
+       (`direction:'down'`) : pas de repos ENTRE deux paliers — sauf si le programme en a écrit un pour CE palier (`set.rest > 0`
+       gagne toujours) —, le repos de la série (celui du document) à la fin du dernier palier. */
+    const _exD=S.wkt.exs[ei], _suivD=_exD.sets[si+1];
+    const _dsImporte=(!_exD.dropset&&set.type==='D'&&!(set.rest>0)&&_suivD&&_suivD.type==='D'&&!_suivD.done)?{direction:'down'}:null;
+    if(_exD.dropset||_dsImporte){
+      const ds=_exD.dropset||_dsImporte;
       if(ds.direction==='down'){
         // Pas de repos entre paliers : on passe direct au suivant
         const nextSi=S.wkt.exs[ei].sets.findIndex((s,i)=>i>si&&!s.done);
@@ -5903,6 +5910,7 @@ function startRest(sec){
      seulement quand plusieurs séries d'un superset attendent leur question (24/09/2026). */
   _rirCible=Array.isArray(_rirPending)?(_rirPending.length>1?_rirPending:(_rirPending[0]||null)):_rirPending;
   _rirPending=null;
+  _restConsigneMontrer();        // IMPORT-IA-FIDELITE-01 : la consigne écrite (une plage) de la série dont le repos démarre
   updRest();_updPill();_renderRirRow();
   restIv=setInterval(_restTick,250);
   if(_pillIv)clearInterval(_pillIv);
@@ -5998,6 +6006,7 @@ function _stopRestTimerOnly(){
      CIBLE doit disparaître, sinon le repos suivant (démarré autrement) rouvrirait la question
      sur une série déjà passée. */
   _rirCible=null;
+  _restConsigne=null; { const rc=document.getElementById('rest-consigne'); if(rc){ rc.textContent=''; rc.style.display='none'; } }   // IMPORT-IA-FIDELITE-01
   const rz=document.getElementById('rest-rir');if(rz)rz.innerHTML='';
   _updPill();
 }
@@ -6119,6 +6128,28 @@ let _rirCible=null;                       // {ei, si}, null — ou une LISTE de 
    CONSOMME : un seul endroit décide, et un repos lancé autrement (bouton repos, enchaînement)
    trouve l'attente vide — donc ne pose aucune question sur une série qui n'existe pas. */
 let _rirPending=null;
+/* 📝 LA CONSIGNE DE REPOS ÉCRITE (IMPORT-IA-FIDELITE-01, 02/11/2026). Un programme importé dit parfois « 3-4 min » : c'est une
+   PLAGE, pas une durée. ⛔ Elle n'est jamais convertie en nombre (consigne de Michel) — mais elle ne doit pas non plus disparaître :
+   avant, le texte était perdu et le chrono prenait le réglage de la personne (90 s) devant un « 3-4 min » écrit. Maintenant le
+   dock DIT la consigne et « Régler » propose ses deux bornes ; la personne décide, la séance n'attend personne.
+   ⭐ Même mécanique que la cible du RIR (juste au-dessus) : `toggleSet` dépose la série (`_rirPending`), `startRest` la consomme ET
+   lit sa consigne ici — un seul endroit, quel que soit celui des cinq `startRest` qui s'exécute. Un repos lancé autrement
+   (« Régler » sans repos en cours) ne trouve rien et n'affiche rien. */
+let _restConsigne=null;                   // { txt, min, max } (secondes) de la série dont le repos court ; null sinon
+function _restConsigneMontrer(){
+  _restConsigne=null;
+  try{
+    const c=Array.isArray(_rirCible)?_rirCible[_rirCible.length-1]:_rirCible;
+    const ex=c&&S.wkt&&S.wkt.exs&&S.wkt.exs[c.ei], set=ex&&ex.sets&&ex.sets[c.si];
+    // un repos CHIFFRÉ gagne toujours : la consigne n'a de sens que si rien de ferme n'a été écrit pour cette série
+    if(set&&!(set.rest>0)&&set.restTxt){ const r=_reposLire(set.restTxt); _restConsigne={txt:String(set.restTxt),min:r.min,max:r.max}; }
+  }catch(e){}
+  const el=document.getElementById('rest-consigne');
+  if(el){
+    if(_restConsigne){ el.textContent='Consigne du programme : '+_restConsigne.txt+(_restConsigne.min?' · touche le temps pour choisir':''); el.style.display='block'; }
+    else { el.textContent=''; el.style.display='none'; }
+  }
+}
 
 /* ⛔ UN SEUL AUTEUR POUR `#rest-rir` (R2) — la leçon de `#rest-label`, ce matin : `updRest`
    tourne à chaque tick et aurait effacé ce que `startRest` y met. Ici, personne d'autre
@@ -6220,7 +6251,19 @@ function skipRest(){const cb=_restDoneCb;stopRest();if(cb)cb();}
 // ─── Réglage manuel du temps de repos (retour Emma, ft-v438) ──────────────────
 // Ouvre un mini-éditeur min:sec → règle la durée du repos en cours (avant, on ne pouvait
 // qu'ajouter/retirer 15s à répétition). Mémorise aussi la préférence pour l'exercice.
+function _fmtMmSs(sec){ sec=Math.max(0,Math.round(sec)); return Math.floor(sec/60)+':'+String(sec%60).padStart(2,'0'); }
 function openRestEdit(){
+  // IMPORT-IA-FIDELITE-01 : la consigne écrite du programme (ex. « 3-4 min »), avec SES DEUX BORNES en un geste. Rien n'est choisi
+  // pour la personne : les deux boutons passent par `setRestPreset`, le même chemin que les préréglages (même mémoire d'exercice).
+  const rc=document.getElementById('re-consigne');
+  if(rc){
+    if(_restConsigne&&_restConsigne.min&&_restConsigne.max&&restStartTs){
+      rc.innerHTML='<div class="re-perso">Consigne du programme</div><div class="re-cons-txt">'+_escNote(_restConsigne.txt)+'</div>'
+        +'<div class="re-presets"><button class="rbtn" id="rc-min" onclick="setRestPreset('+_restConsigne.min+');closeRestEdit()">'+_fmtMmSs(_restConsigne.min)+'</button>'
+        +'<button class="rbtn" id="rc-max" onclick="setRestPreset('+_restConsigne.max+');closeRestEdit()">'+_fmtMmSs(_restConsigne.max)+'</button></div>';
+      rc.style.display='block';
+    }else{ rc.innerHTML=''; rc.style.display='none'; }
+  }
   const mi=document.getElementById('re-min'),se=document.getElementById('re-sec');
   const left=restStartTs?Math.max(5,_restLeft()):(restTot||reposDefaut());
   if(mi)mi.value=Math.floor(left/60);
@@ -7492,10 +7535,9 @@ async function analyzeImportPhotos(){
     _impExtracted=d.data;
     if(!S.premium){S.progImports=(S.progImports||0)+1;persist();if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();} // compte l'import réussi (limite gratuite)
     _mergeImportSeances(); // fusionne « Séance 1 - Dorsaux/Biceps/… » en UNE séance (groupes = sections internes)
-    _mergeImportEchauffements(); // ⛔ AVANT le rattachement VM, et l'ordre compte : la fusion rend au nom sa forme
-                                 // nue (« Développé couché »), et c'est CE nom-là que le catalogue sait reconnaître.
-                                 // Après, on rattacherait « Développé couché (échauffement) » — c'est-à-dire rien.
-    _mergeImportBlocsEch();      // IMPORT-ECH-01 : même filet quand le nom est NU (échauffement en note / en type)
+    _mergeImportBlocsEch();      // ⛔ UN SEUL filet (IMPORT-IA-FIDELITE-01) : le regroupement échauffement + travail, AVANT le rattachement VM.
+                                 // L'ordre compte : il rend au nom sa forme nue (« Développé couché »), et c'est CE nom-là que le catalogue sait
+                                 // reconnaître. Après, on rattacherait « Développé couché (échauffement) » — c'est-à-dire rien.
     _vmMatchExtracted();   // VM : rattache aux références EXLIB (évite les doublons) AVANT l'aperçu
     _renderImpConfirm();
     impGoStep(4);
@@ -7542,7 +7584,11 @@ function _mergeImportSeances(){
   const out=[]; let merged=0;
   _impExtracted.days.forEach(day=>{
     const n=_seanceNum(day.label), prev=out[out.length-1];
-    if(prev && n!=null && _seanceNum(prev.label)===n){
+    /* 🅰️🅱️ IMPORT-IA-FIDELITE-01 : « J3A … Semaine A » et « J3B … Semaine B » sont deux VARIANTES d'un même jour, une
+       semaine sur deux — jamais une seule séance. Sans ce garde, deux libellés « Jour 3 — Semaine A / B » portant le même
+       numéro auraient été collés (les exercices de la A mêlés à ceux de la B). */
+    const _va=prev?_varianteSemaine(prev.label):null, _vb=_varianteSemaine(day.label);
+    if(prev && n!=null && _seanceNum(prev.label)===n && !(_va&&_vb&&_va!==_vb)){
       prev.exercises=(prev.exercises||[]).concat(day.exercises||[]);
       prev.label=_seanceKw(prev.label)+' '+n;   // « Séance N » propre (groupes musculaires = sections internes)
       merged++;
@@ -7576,7 +7622,15 @@ function _mergeImportSeances(){
    ⛔ ET ÇA NE REMPLACE PAS `setTypePerSet` (ft-v1156), ça s'y AJOUTE. Si le backend renvoie le
    champ, les noms ne portent aucun marqueur et cette fonction ne trouve rien à faire. Les deux
    coexistent — *un correctif qui REMPLACE le filet au lieu de s'y ajouter devient une
-   régression le jour où il ne s'applique pas* (leçon de ft-v1152). */
+   régression le jour où il ne s'applique pas* (leçon de ft-v1152).
+
+   ⚠️ MIS À JOUR LE 02/11/2026 (IMPORT-IA-FIDELITE-01) — ÉCRIT POUR QUE PERSONNE NE LE « RÉPARE » (R30).
+   `_mergeImportEchauffements` et `_fusionneEch` N'EXISTENT PLUS. Ce filet et `_mergeImportBlocsEch` répondaient à la même
+   question (« ces lignes forment-elles UN exercice ? ») avec deux preuves, deux tests d'identité et deux fusions qui
+   divergeaient. Il n'y en a plus qu'UNE : preuve = `_typesLigneImport`, identité = `_identiteBlocImport`, fusion =
+   `_fusionneBlocImport`. Ce que ce filet faisait en plus — fusionner d'office une ligne de travail qui PROLONGE le nom
+   (« X » puis « X / haltères ») — est devenu une PROPOSITION à confirmer : « guidé / haltères » peut désigner deux
+   mouvements (consigne de Michel, 02/11). `_nomSansEch` reste (c'est une preuve d'échauffement). */
 function _nomSansEch(name){
   const raw=String(name==null?'':name).trim();
   const m=raw.match(/^(.*?)\s*[([]([^)\]]*)[)\]]\s*$/);   // un parenthésé EN FIN de nom, et lui seul
@@ -7602,6 +7656,16 @@ function _estLaLigneDeTravail(nom,base){
   if(n.indexOf(base)!==0)return false;
   return /^[\s]*[/\-(:,]/.test(n.slice(base.length));   // un séparateur, pas un mot de plus
 }
+/* ⏱️ LE REPOS BRUT D'UNE SÉRIE — UN SEUL PROPRIÉTAIRE (IMPORT-IA-FIDELITE-01, R2). Le texte du document, tel que l'IA
+   l'a recopié (« 3 mins », « 60-90 s »), sans le lire : c'est `_reposLire` (constants.js) qui le lit. La valeur de LA série
+   si elle en a une, sinon celle de l'exercice, sinon `null`. ⚠️ Une valeur par série VIDE (« ») compte pour absente :
+   le contrat du Worker rend toujours `restPerSet` à la longueur des séries, avec « » là où la ligne n'a rien dit — la lire
+   comme une valeur ferait taire le repos écrit au niveau de l'exercice. */
+function _restBrut(ex,s){
+  const plein=v=>v!=null&&String(v).trim()!=='';
+  if(ex&&ex.restPerSet&&plein(ex.restPerSet[s]))return ex.restPerSet[s];
+  return (ex&&plein(ex.rest))?ex.rest:null;
+}
 // Déplie un exercice importé en séries : c'est la MÊME convention que `_buildProgDay`
 // (repsPerSet s'il existe, sinon `sets` × `reps` uniformes) — R2, une seule règle de lecture.
 function _seriesImport(ex){
@@ -7610,57 +7674,9 @@ function _seriesImport(ex){
   for(let s=0;s<n;s++){
     reps.push((ex.repsPerSet&&ex.repsPerSet[s]!=null)?ex.repsPerSet[s]:(ex.reps!=null?ex.reps:10));
     kgs .push((ex.kgPerSet &&ex.kgPerSet [s]!=null)?ex.kgPerSet [s]:(ex.kg||0));
-    // ⛔ on garde `null` tel quel : `_restAt` retombe alors sur `ex.rest`, exactement comme avant
-    rests.push((ex.restPerSet&&ex.restPerSet[s]!=null)?ex.restPerSet[s]:(ex.rest!=null?ex.rest:null));
+    rests.push(_restBrut(ex,s));          // `null` = rien d'écrit : le défaut de l'app s'applique, exactement comme avant
   }
   return {n,reps,kgs,rests};
-}
-function _fusionneEch(echs,trav){
-  const R=[],K=[],T=[],RE=[];
-  echs.forEach(e=>{const x=_seriesImport(e);R.push(...x.reps);K.push(...x.kgs);RE.push(...x.rests);for(let s=0;s<x.n;s++)T.push('W');});
-  const nEch=R.length;
-  const w=_seriesImport(trav);
-  R.push(...w.reps);K.push(...w.kgs);RE.push(...w.rests);for(let s=0;s<w.n;s++)T.push('');
-  const o=Object.assign({},trav);
-  o.repsPerSet=R;o.kgPerSet=K;o.setTypePerSet=T;o.sets=R.length;
-  if(RE.some(v=>v!=null))o.restPerSet=RE;
-  /* ⚠️ `specialSets` est une liste d'indices 0-based DANS la ligne de travail. Après fusion
-     elle ne désigne plus les mêmes séries : elle se DÉCALE du nombre d'échauffements ajoutés
-     devant. Sans ça, les séries marquées en rouge dans le PDF changeraient de place. */
-  if(Array.isArray(trav.specialSets)&&trav.specialSets.length)o.specialSets=trav.specialSets.map(k=>(parseInt(k)||0)+nEch);
-  /* ⛔ LA NOTE GARDÉE EST CELLE DE LA LIGNE DE TRAVAIL, ET C'EST UN CHOIX ÉCRIT (R30). C'est
-     elle qui porte la prescription (RIR cible, progression S1→S4, repos) ; les notes des lignes
-     d'échauffement sont du libellé (« ECH - série d'échauffement, non comptée »), et leurs
-     CHIFFRES survivent tous dans `repsPerSet` / `kgPerSet` / `restPerSet`. Les empiler rendrait
-     illisible la seule note que l'athlète lit vraiment. Si la ligne de travail n'a pas de note,
-     on prend la première des échauffements plutôt que de rester muet. */
-  if(!o.note){const n1=echs.map(e=>e.note).filter(Boolean)[0];if(n1)o.note=n1;}
-  o._echFusion=nEch;o._echLignes=echs.length;   // trace montrée dans l'aperçu : on informe, on ne cache pas
-  return o;
-}
-function _mergeImportEchauffements(){
-  if(!_impExtracted||!(_impExtracted.days||[]).length)return;
-  let fus=0;
-  (_impExtracted.days||[]).forEach(day=>{
-    const src=day.exercises||[],out=[];
-    for(let i=0;i<src.length;i++){
-      const b=_nomSansEch(src[i]&&src[i].name);
-      if(b===null){out.push(src[i]);continue;}
-      const bn=_naz(b);
-      let j=i;
-      while(j<src.length){const bj=_nomSansEch(src[j]&&src[j].name);if(bj===null||_naz(bj)!==bn)break;j++;}
-      const trav=src[j];
-      if(!trav||!_estLaLigneDeTravail(trav.name,bn)){
-        for(let k=i;k<j;k++)out.push(src[k]);   // pas de ligne de travail → on laisse le document tel quel
-        i=j-1;continue;
-      }
-      out.push(_fusionneEch(src.slice(i,j),trav));
-      fus++;
-      i=j;   // les échauffements ET la ligne de travail sont consommés
-    }
-    day.exercises=out;
-  });
-  if(fus)console.log('[Import] '+fus+' exercice(s) recomposé(s) : séries d\'échauffement regroupées avec leur série de travail');
 }
 /* 📥 IMPORT-ECH-01 (06/10/2026) — LE MÊME FILET, QUAND LE NOM NE PORTE PLUS DE MARQUEUR.
    ⛔⛔ CE QUI A CHANGÉ, ET C'EST MESURÉ. Le filet ci-dessus ne reconnaît un échauffement qu'à un parenthésé EN FIN de
@@ -7681,7 +7697,13 @@ function _echNomTete(name){
   return m&&m[1].trim()?m[1].trim():null;
 }
 // La NOTE ne prouve un échauffement que si elle COMMENCE par lui : « après l'échauffement général, 3 séries lourdes » est du travail.
-function _noteEch(note){ return /^(ech\b|echauff|warm[\s-]?up|montee\b|series? d.?echauff)/.test(_naz(String(note||'').trim())); }
+function _noteEch(note){
+  /* IMPORT-IA-FIDELITE-01 : « Montée en charge » ET « Monté en charge » (la faute que fait le coach du programme de
+     septembre : « monte » ≠ « montee », l'ancien motif ne la voyait pas), « Série de chauffe », « Série longue de
+     chauffe », « Chauffe ». ⛔ TOUJOURS « au DÉBUT de la note » : « après l'échauffement général, 3 séries lourdes » est du
+     travail. Et ce n'est qu'une PREUVE : sans ligne de travail du même exercice derrière, rien n'est regroupé ni retypé. */
+  return /^(ech\b|echauff|warm[\s-]?up|montee\b|mont[e]{1,2}s? en charge|series? (longues? )?(de |d.)?e?chauff|chauffe\b)/.test(_naz(String(note||'').trim()));
+}
 function _typesLigneImport(ex){
   const n=_seriesImport(ex).n;
   if(Array.isArray(ex.setTypePerSet)&&ex.setTypePerSet.length)   // le structuré passe AVANT le texte
@@ -7707,44 +7729,127 @@ function _fusionneBlocImport(lignes){
     if(Array.isArray(l.specialSets))l.specialSets.forEach(k=>SP.push((parseInt(k)||0)+off));
   });
   const trav=lignes.filter(l=>_typesLigneImport(l).some(v=>v!=='W'));
-  const o=Object.assign({},trav[0]);
-  o.name=_nomBlocImport(trav[0]);
+  const base=trav[0]||lignes[0];                    // un bloc d'échauffements SEULS (aucune ligne de travail) a aussi un nom
+  const o=Object.assign({},base);
+  delete o._propGrp; delete o._propRole;            // une proposition en attente n'est jamais recopiée dans l'exercice fusionné
+  o.name=_nomBlocImport(base);
   o.repsPerSet=R;o.kgPerSet=K;o.setTypePerSet=T;o.sets=R.length;
-  // Repos PAR SÉRIE : une ligne sans repos garde « défaut par type » ('') — sinon le repos du travail déborderait sur l'échauffement.
+  /* Repos PAR SÉRIE, toujours à la longueur des séries : une ligne sans repos garde « rien » ('') — le repos du travail ne
+     déborde JAMAIS sur l'échauffement. ⛔ Et `rest` (celui de l'exercice) est vidé : `_restBrut` le lirait comme repli pour
+     chaque série vide, c'est-à-dire qu'il recouvrirait le repos d'échauffement par celui du travail. */
   if(RE.some(v=>v!=null&&v!=='')){o.restPerSet=RE.map(v=>v==null?'':v);}else delete o.restPerSet;
+  o.rest='';
   if(SP.length)o.specialSets=SP;else delete o.specialSets;
-  // Même choix écrit que `_fusionneEch` : la note gardée est celle du TRAVAIL (toutes les notes de travail distinctes) ;
-  // à défaut, la première des échauffements.
+  /* Les notes : celles du TRAVAIL d'abord (c'est elles qui portent la prescription : RIR cible, progression, consigne),
+     à défaut la première des échauffements. ⭐ IMPORT-IA-FIDELITE-01 : une note d'échauffement qui dit AUTRE CHOSE que son
+     marqueur (« Charge : léger », « progressif, sans fatigue ») est de l'information du document, pas du libellé : elle est
+     gardée, étiquetée « Échauffement : … ». Seul le marqueur nu (« ECH », « Montée 2 ») n'apporte rien et n'est pas répété. */
   const notes=[...new Set(trav.map(l=>String(l.note||'').trim()).filter(Boolean))];
-  o.note=notes.length?notes.join(' | '):(lignes.map(l=>l.note).filter(Boolean)[0]||'');
+  const nu=n=>/^(ech|echauffement|warm[\s-]?up|montee( en charge)?( \d+)?|serie de chauffe|chauffe)\W*$/.test(_naz(n).trim());
+  const echN=[...new Set(lignes.filter(l=>!trav.includes(l)).map(l=>String(l.note||'').trim()).filter(n=>n&&!nu(n)))];
+  const lot=notes.slice();
+  echN.forEach(n=>{ if(!lot.some(x=>x.indexOf(n)>=0)) lot.push((trav.length?'Échauffement : ':'')+n); });
+  o.note=lot.length?lot.join(' | '):'';
   o._echFusion=nW;o._echLignes=nLW;o._blocLignes=lignes.length;
   return o;
 }
+/* ═══ L'IDENTITÉ D'UN EXERCICE IMPORTÉ — TROIS RÉPONSES, PAS DEUX (IMPORT-IA-FIDELITE-01, 02/11/2026) ═══════════════
+   « Ces deux lignes désignent-elles le même mouvement ? » avait deux réponses (oui / non) et DEUX propriétaires qui ne se
+   contredisaient pas par accident : l'un fusionnait d'office un nom qui en PROLONGE un autre (« X » → « X / haltères »),
+   l'autre exigeait la même clé. Le cas réel (J3B du Powerbuilding de Michel) tombe entre les deux : « Dev. épaules guidé »
+   (×2, échauffement) puis « Dev. épaules guidé / haltères » (travail) = trois cartes, parce que la clé diffère.
+   ⛔⛔ MAIS « guidé / haltères » PEUT désigner deux mouvements (la machine OU les haltères) : une simple ressemblance de nom
+   n'autorise JAMAIS une fusion automatique (décision de Michel, 02/11). D'où la 3ᵉ réponse :
+     · 'meme'        : même clé canonique (mêmes mots après retrait du marqueur, alias du catalogue compris) → regroupé d'office ;
+     · 'a-verifier'  : mêmes mots utiles (le matériel est un mot vide), OU le nom de travail PROLONGE le nom de base derrière
+                       un séparateur — et les matériels ÉCRITS ne se contredisent pas → une PROPOSITION, jamais une fusion ;
+     · 'autre'       : tout le reste — « Squat » / « Squat Bulgare », barre / haltères : jamais regroupés, jamais proposés.
+   Les matériels écrits : TOUS ceux du nom (« guidé / haltères » en écrit deux), pas seulement le premier — `_materielDe`
+   (IMPORT-MAP-01) n'en rend qu'un, par priorité, et ne verrait pas qu'« haltères » est aussi écrit. Mêmes mots que lui. */
+function _materielsEcrits(nom){
+  const s=' '+_normEx(nom)+' ', r=[];
+  if(/ smith /.test(s)) r.push('smith');
+  if(/ (poulie|cable|cables) /.test(s)) r.push('poulie');
+  if(/ (machine|guide|guidee|guides|guidees) /.test(s)) r.push('machine');
+  if(/ (haltere|halteres|dumbbell|dumbbells|kettlebell) /.test(s)) r.push('libre');
+  if(/ (barre|barbell|ez) /.test(s)) r.push('barre');
+  return r;
+}
+function _identiteBlocImport(a,b){
+  if(_cleBlocImport(a)===_cleBlocImport(b)) return 'meme';
+  const na=_nomBlocImport(a), nb=_nomBlocImport(b);
+  const prolonge=_estLaLigneDeTravail(nb,_naz(na));
+  const mots=x=>_exTokens(x).slice().sort().join('|');
+  const memesMots=!!mots(na)&&mots(na)===mots(nb);
+  if(!prolonge&&!memesMots) return 'autre';
+  const ma=_materielsEcrits(na), mb=_materielsEcrits(nb);
+  if(ma.length&&mb.length&&!ma.some(x=>mb.includes(x))) return 'autre';   // barre ≠ haltères : deux mouvements, point
+  return 'a-verifier';
+}
+let _propSeq=0;
+/* 📥 LE REGROUPEMENT ÉCHAUFFEMENT + TRAVAIL — UNE SEULE RÈGLE (IMPORT-ECH-01 → IMPORT-IA-FIDELITE-01).
+   Un BLOC CONTINU d'un même exercice qui COMMENCE par une preuve d'échauffement (`_typesLigneImport` : type structuré,
+   marqueur dans le nom, note qui COMMENCE par un marqueur) et contient au moins une série de travail = UN exercice.
+   ⛔ Sans preuve, rien ne bouge (deux lignes identiques peuvent être voulues — R29) ; un autre exercice entre deux lignes
+   COUPE le bloc ; un échauffement APRÈS le travail ouvre un autre bloc ; superset et dropset ne sont jamais touchés.
+   ⛔ Chaque série garde ses reps, sa charge, son type, son repos, et l'ordre du document.
+   ⭐ Des échauffements SEULS (≥ 2 lignes de même identité) sont regroupés eux aussi — sans perte — puis, si la ligne qui suit
+   est « à vérifier » (`_identiteBlocImport`), les deux reçoivent une MARQUE de proposition (`_propGrp`/`_propRole`) :
+   l'aperçu la montre, la personne tranche (`impGrouperEch` / `impGarderSepares`). Tant qu'elle n'a pas dit oui, RIEN n'est fusionné. */
 function _mergeImportBlocsEch(){
   if(!_impExtracted||!(_impExtracted.days||[]).length)return;
-  let fus=0;
+  let fus=0,props=0;
   (_impExtracted.days||[]).forEach(day=>{
     const src=day.exercises||[],out=[];
     let i=0;
     while(i<src.length){
       const a=src[i],ta=_blocCompatible(a)?_typesLigneImport(a):[];
       if(!ta.length||ta[0]!=='W'||!_wPuisTravail(ta)){out.push(a);i++;continue;}   // un bloc COMMENCE par une preuve d'échauffement
-      const cle=_cleBlocImport(a);
       let j=i+1,travail=ta.some(v=>v!=='W');
       while(j<src.length){
         const b=src[j];
-        if(!_blocCompatible(b)||_cleBlocImport(b)!==cle)break;          // un autre exercice (ou un superset, un dropset) coupe le bloc
+        if(!_blocCompatible(b)||_identiteBlocImport(a,b)!=='meme')break;   // un autre exercice (ou un superset, un dropset) coupe le bloc
         const tb=_typesLigneImport(b);
-        if(!_wPuisTravail(tb)||(travail&&tb.some(v=>v==='W')))break;    // un échauffement APRÈS le travail ouvre un autre bloc
+        if(!_wPuisTravail(tb)||(travail&&tb.some(v=>v==='W')))break;        // un échauffement APRÈS le travail ouvre un autre bloc
         if(tb.some(v=>v!=='W'))travail=true;
         j++;
       }
-      if(!travail||j-i<2){for(let k=i;k<j;k++)out.push(src[k]);i=j;continue;}   // pas de travail : on laisse le document tel quel
-      out.push(_fusionneBlocImport(src.slice(i,j)));fus++;i=j;
+      const bloc=src.slice(i,j);
+      if(travail){ out.push(bloc.length>=2?_fusionneBlocImport(bloc):a); if(bloc.length>=2)fus++; i=j; continue; }
+      // des échauffements SEULS : regroupés s'ils sont plusieurs (même identité = sans perte), puis la ligne qui suit est examinée
+      const ech=bloc.length>=2?_fusionneBlocImport(bloc):a;
+      if(bloc.length>=2)fus++;
+      const nxt=src[j];
+      if(nxt&&_blocCompatible(nxt)){
+        const tn=_typesLigneImport(nxt);
+        if(tn.length&&tn[0]!=='W'&&tn.some(v=>v!=='W')&&_identiteBlocImport(a,nxt)==='a-verifier'){
+          const pid='pg'+(++_propSeq);
+          ech._propGrp=pid; ech._propRole='ech'; nxt._propGrp=pid; nxt._propRole='travail'; props++;
+        }
+      }
+      out.push(ech); i=j;
     }
     day.exercises=out;
   });
-  if(fus)console.log('[Import] '+fus+' bloc(s) échauffement + travail regroupé(s) en un exercice (IMPORT-ECH-01)');
+  if(fus)console.log('[Import] '+fus+' bloc(s) échauffement + travail regroupé(s) en un exercice');
+  if(props)console.log('[Import] '+props+' regroupement(s) proposé(s) à la personne (identité à vérifier)');
+}
+/* ✅ / ✋ LA PERSONNE TRANCHE — `ei` est l'index de l'exercice de TRAVAIL (celui qui porte la proposition). */
+function impGrouperEch(di,ei){
+  const day=_impExtracted&&_impExtracted.days&&_impExtracted.days[di]; if(!day)return;
+  const ex=day.exercises[ei], prev=day.exercises[ei-1];
+  if(!ex||ex._propRole!=='travail'||!prev||prev._propGrp!==ex._propGrp)return;
+  const m=_fusionneBlocImport([prev,ex]);
+  day.exercises.splice(ei-1,2,m);
+  _vmMatchEx(m);                      // seul l'exercice fusionné est ré-examiné : les rattachements des autres ne bougent pas
+  _renderImpConfirm();
+}
+function impGarderSepares(di,ei){
+  const day=_impExtracted&&_impExtracted.days&&_impExtracted.days[di]; if(!day)return;
+  const ex=day.exercises[ei]; if(!ex||!ex._propGrp)return;
+  const g=ex._propGrp;
+  day.exercises.forEach(e=>{ if(e&&e._propGrp===g){ delete e._propGrp; delete e._propRole; } });
+  _renderImpConfirm();
 }
 /* ⛔⛔ R2 — UN SEUL PROPRIÉTAIRE de la question « cet exercice sera-t-il CRÉÉ à l'import ? »
    (ft-v1166). Elle était calculée à DEUX endroits, avec DEUX comparaisons DIFFÉRENTES :
@@ -7805,18 +7910,19 @@ function _exerciceInconnu(nom,connus){
 // Palier auto (confiance ≥90) = rattaché direct (nom remplacé, original gardé pour « annuler »).
 // Palier confirm (zone grise) = proposé à l'utilisateur (« ≈ Rattacher à X ? »), nom inchangé
 // tant qu'il n'a pas dit oui. Palier nouveau = laissé tel quel → exercice créé (comme avant).
+function _vmMatchEx(ex){
+  if(typeof _matchExercise!=='function'||!ex||!ex.name)return;
+  delete ex._vmFrom; delete ex._vmSuggest; delete ex._vmConf;
+  let r; try{ r=_matchExercise(ex.name); }catch(e){ return; }
+  if(!r||!r.match||r.match===ex.name)return; // rien à faire / déjà EXACTEMENT le nom canonique
+  // (une simple différence de casse/accents « Pec deck » → « Pec Deck » est un rattachement utile :
+  //  sinon l'exo importé ne partagerait ni stats ni figurine avec la référence EXLIB)
+  if(r.tier==='auto'){ ex._vmFrom=ex.name; ex._vmConf=r.confidence; ex.name=r.match; }
+  else if(r.tier==='confirm'){ ex._vmSuggest=r.match; ex._vmConf=r.confidence; }
+}
 function _vmMatchExtracted(){
   if(typeof _matchExercise!=='function'||!_impExtracted)return;
-  (_impExtracted.days||[]).forEach(day=>(day.exercises||[]).forEach(ex=>{
-    if(!ex||!ex.name)return;
-    delete ex._vmFrom; delete ex._vmSuggest; delete ex._vmConf;
-    let r; try{ r=_matchExercise(ex.name); }catch(e){ return; }
-    if(!r||!r.match||r.match===ex.name)return; // rien à faire / déjà EXACTEMENT le nom canonique
-    // (une simple différence de casse/accents « Pec deck » → « Pec Deck » est un rattachement utile :
-    //  sinon l'exo importé ne partagerait ni stats ni figurine avec la référence EXLIB)
-    if(r.tier==='auto'){ ex._vmFrom=ex.name; ex._vmConf=r.confidence; ex.name=r.match; }
-    else if(r.tier==='confirm'){ ex._vmSuggest=r.match; ex._vmConf=r.confidence; }
-  }));
+  (_impExtracted.days||[]).forEach(day=>(day.exercises||[]).forEach(_vmMatchEx));
 }
 function _impSetDayLabel(di,val){
   if(_impExtracted&&_impExtracted.days[di]) _impExtracted.days[di].label=(val||'').trim()||('Jour '+(di+1));
@@ -8157,22 +8263,22 @@ function finalImportProg(){
         };
         // Séries avec reps+kg par palier (dropsets) ou repsPerSet
         let sets;
-        // Repos par série : backend peut fournir restPerSet[] (secondes) ou rest unique — sinon 0 (défaut par type)
-        const _restAt=si=>(ex.restPerSet&&ex.restPerSet[si]!=null?_secRepos(ex.restPerSet[si]):_secRepos(ex.rest));
+        /* ⏱️ LE REPOS DE LA SÉRIE, LU UNE SEULE FOIS (IMPORT-IA-FIDELITE-01). `_restBrut` choisit le texte du document pour CETTE série
+           (la sienne, sinon celle de l'exercice) ; `_reposLire` le lit : une valeur ferme devient `rest` (secondes) ; une PLAGE ou un
+           texte (« 3-4 min », « selon ressenti ») n'est JAMAIS converti en nombre — `rest` reste 0 et le texte est CONSERVÉ dans `restTxt`
+           (la séance le montrera, la personne choisira). Rien n'est supprimé ni inventé. */
+        /* 📉 Un dropset : le repos de l'EXERCICE vaut pour la FIN de la série dégressive, pas pour chaque palier (sinon 2 min
+           entre deux paliers qui s'enchaînent). Un repos écrit pour un palier précis (`restPerSet`) reste à ce palier. */
+        const _nbSeries=(ex.repsPerSet&&ex.repsPerSet.length)||Math.max(1,ex.sets||3);
+        const _restAt=si=>{
+          const proprio=ex.restPerSet&&ex.restPerSet[si]!=null&&String(ex.restPerSet[si]).trim()!=='';
+          return (baseType==='D'&&!proprio&&si<_nbSeries-1)?_reposLire(null):_reposLire(_restBrut(ex,si));
+        };
+        const _setDe=(si,kg,reps)=>{ const r=_restAt(si); const o={kg,reps,type:_typeAt(si) /* échec auto à l'import désactivé (ft-v292) — ex.specialSets plus converti en 'E' */,rest:r.sec}; if(r.txt)o.restTxt=r.txt; return o; };
         if(ex.repsPerSet&&ex.repsPerSet.length>0){
-          sets=ex.repsPerSet.map((r,si)=>({
-            kg:(ex.kgPerSet&&ex.kgPerSet[si]!=null?ex.kgPerSet[si]:(ex.kg||0)),
-            reps:parseInt(r)||10,
-            type:_typeAt(si), /* échec auto à l'import désactivé (ft-v292) — ex.specialSets plus converti en 'E' */
-            rest:_restAt(si)
-          }));
+          sets=ex.repsPerSet.map((r,si)=>_setDe(si,(ex.kgPerSet&&ex.kgPerSet[si]!=null?ex.kgPerSet[si]:(ex.kg||0)),parseInt(r)||10));
         }else{
-          sets=Array.from({length:Math.max(1,ex.sets||3)},(_,si)=>({
-            kg:(ex.kgPerSet&&ex.kgPerSet[si]!=null?ex.kgPerSet[si]:(ex.kg||0)),
-            reps:ex.reps||10,
-            type:_typeAt(si), /* échec auto à l'import désactivé (ft-v292) — ex.specialSets plus converti en 'E' */
-            rest:_restAt(si)
-          }));
+          sets=Array.from({length:Math.max(1,ex.sets||3)},(_,si)=>_setDe(si,(ex.kgPerSet&&ex.kgPerSet[si]!=null?ex.kgPerSet[si]:(ex.kg||0)),ex.reps||10));
         }
         const obj={name:ex.name,note:ex.note||'',sets};
         if(group){obj.group=group;obj.groupType='super';} // FIX Emma : sans groupType='super' le superset importé n'était pas reconnu
@@ -9705,7 +9811,8 @@ function _loadProgDayVraiment(progIdx,dayIdx){
         kg:pp?pp.kg:(s.kg||0),
         reps:s.maxi?0:(pp?pp.reps:(s.reps||10)), // série "maxi" : reps vide, elle saisit ce qu'elle a fait
         maxi:!!s.maxi,
-        type:s.type||'N',done:false,rm1:0,rest:_secRepos(s.rest)
+        type:s.type||'N',done:false,rm1:0,rest:_secRepos(s.rest),
+        ...(s.restTxt?{restTxt:String(s.restTxt)}:{})   // IMPORT-IA-FIDELITE-01 : la consigne de repos écrite (une plage) suit la série
       };
     })};
     if(e.group){obj.group=e.group;obj.groupType=e.groupType||'super';} // propage le superset
@@ -10132,7 +10239,8 @@ function _loadProgVraiment(idx){
           kg:pp?pp.kg:(s.kg||0),
           reps:s.maxi?0:(pp?pp.reps:(s.reps||5)),
           maxi:!!s.maxi,
-          type:s.type||'N',done:false,rm1:0,rest:_secRepos(s.rest)
+          type:s.type||'N',done:false,rm1:0,rest:_secRepos(s.rest),
+          ...(s.restTxt?{restTxt:String(s.restTxt)}:{})
         };
       })};
       if(e.group){obj.group=e.group;obj.groupType=e.groupType||'super';} // propage le superset
