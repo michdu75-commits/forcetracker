@@ -1,0 +1,504 @@
+{
+ "id": "X03-echauffement-colonne",
+ "synthetique": true,
+ "source": "synthetique-echauffement-colonne",
+ "decrit": "Programme inventé : un exercice dont chaque série porte son type (échauffement W / travail) avec un repos par série dont des plages, des lignes d'échauffement écrites à part (marqueur « (ECH) » dans le nom, ou « Série de chauffe » / « Monté en charge » en note) à regrouper avec la ligne de travail du même exercice, et le même programme dans l'ANCIEN format du Worker (une ligne = un exercice, « ECH » en note). Contenu inventé.",
+ "incertitudes": [],
+ "aiOutput": {
+  "name": "Programme synthétique X03-echauffement-colonne",
+  "weeks": 0,
+  "startDate": "",
+  "days": [
+   {
+    "label": "Séance dos – Semaine B (inventée)",
+    "exercises": [
+     {
+      "name": "Soulevé de Terre",
+      "sets": 6,
+      "reps": 0,
+      "repsPerSet": [
+       8,
+       5,
+       3,
+       5,
+       5,
+       5
+      ],
+      "specialSets": [],
+      "kg": 0,
+      "kgPerSet": [
+       40,
+       60,
+       80,
+       100,
+       100,
+       100
+      ],
+      "supersetGroup": "",
+      "setType": "",
+      "setTypePerSet": [
+       "W",
+       "W",
+       "W",
+       "",
+       "",
+       ""
+      ],
+      "rest": "",
+      "restPerSet": [
+       "60 s",
+       "60-90 s",
+       "90 s",
+       "3-4 min",
+       "3-4 min",
+       "3-4 min"
+      ],
+      "note": "RIR 2"
+     },
+     {
+      "name": "Tirage Poulie Haute (Lat Pulldown) (ECH)",
+      "sets": 1,
+      "reps": 12,
+      "repsPerSet": [],
+      "specialSets": [],
+      "kg": 20,
+      "kgPerSet": [],
+      "supersetGroup": "",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "",
+      "restPerSet": [],
+      "note": "Monté en charge"
+     },
+     {
+      "name": "Tirage Poulie Haute (Lat Pulldown) (ECH)",
+      "sets": 1,
+      "reps": 10,
+      "repsPerSet": [],
+      "specialSets": [],
+      "kg": 35,
+      "kgPerSet": [],
+      "supersetGroup": "",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "",
+      "restPerSet": [],
+      "note": "Série de chauffe"
+     },
+     {
+      "name": "Tirage Poulie Haute (Lat Pulldown)",
+      "sets": 3,
+      "reps": 10,
+      "repsPerSet": [],
+      "specialSets": [],
+      "kg": 55,
+      "kgPerSet": [],
+      "supersetGroup": "",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "2 min",
+      "restPerSet": [
+       "2 min",
+       "2 min",
+       "2 min"
+      ],
+      "note": "RIR 2"
+     },
+     {
+      "name": "Rowing Haltère (Tirage Horizontal)",
+      "sets": 1,
+      "reps": 12,
+      "repsPerSet": [],
+      "specialSets": [],
+      "kg": 10,
+      "kgPerSet": [],
+      "supersetGroup": "",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "",
+      "restPerSet": [],
+      "note": "Série de chauffe"
+     },
+     {
+      "name": "Rowing Haltère (Tirage Horizontal)",
+      "sets": 1,
+      "reps": 8,
+      "repsPerSet": [],
+      "specialSets": [],
+      "kg": 16,
+      "kgPerSet": [],
+      "supersetGroup": "",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "",
+      "restPerSet": [],
+      "note": "Monté en charge"
+     },
+     {
+      "name": "Rowing Haltère (Tirage Horizontal)",
+      "sets": 3,
+      "reps": 10,
+      "repsPerSet": [],
+      "specialSets": [],
+      "kg": 24,
+      "kgPerSet": [],
+      "supersetGroup": "",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "90 s",
+      "restPerSet": [
+       "90 s",
+       "90 s",
+       "90 s"
+      ],
+      "note": "RIR 1-2"
+     }
+    ]
+   }
+  ]
+ },
+ "attendu": {
+  "totaux": {
+   "jours": 1,
+   "exercices": 3,
+   "series": 16,
+   "seriesEch": 7
+  },
+  "jours": [
+   {
+    "label": "Séance dos – Semaine B (inventée)",
+    "cardioAvant": null,
+    "exercices": [
+     {
+      "nom": "Soulevé de Terre",
+      "series": [
+       {
+        "type": "É",
+        "kg": 40,
+        "reps": 8,
+        "repos": 60,
+        "reposTxt": ""
+       },
+       {
+        "type": "É",
+        "kg": 60,
+        "reps": 5,
+        "repos": 0,
+        "reposTxt": "60-90 s"
+       },
+       {
+        "type": "É",
+        "kg": 80,
+        "reps": 3,
+        "repos": 90,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 100,
+        "reps": 5,
+        "repos": 0,
+        "reposTxt": "3-4 min"
+       },
+       {
+        "type": "N",
+        "kg": 100,
+        "reps": 5,
+        "repos": 0,
+        "reposTxt": "3-4 min"
+       },
+       {
+        "type": "N",
+        "kg": 100,
+        "reps": 5,
+        "repos": 0,
+        "reposTxt": "3-4 min"
+       }
+      ],
+      "noteContient": [
+       "RIR 2"
+      ],
+      "superset": "",
+      "catalogueAttendu": "Soulevé de Terre",
+      "statutAttendu": "ok"
+     },
+     {
+      "nom": "Tirage Poulie Haute (Lat Pulldown)",
+      "series": [
+       {
+        "type": "É",
+        "kg": 20,
+        "reps": 12,
+        "repos": 0,
+        "reposTxt": ""
+       },
+       {
+        "type": "É",
+        "kg": 35,
+        "reps": 10,
+        "repos": 0,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 55,
+        "reps": 10,
+        "repos": 120,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 55,
+        "reps": 10,
+        "repos": 120,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 55,
+        "reps": 10,
+        "repos": 120,
+        "reposTxt": ""
+       }
+      ],
+      "noteContient": [
+       "RIR 2"
+      ],
+      "superset": "",
+      "catalogueAttendu": "Tirage Poulie Haute (Lat Pulldown)",
+      "statutAttendu": "ok"
+     },
+     {
+      "nom": "Rowing Haltère (Tirage Horizontal)",
+      "series": [
+       {
+        "type": "É",
+        "kg": 10,
+        "reps": 12,
+        "repos": 0,
+        "reposTxt": ""
+       },
+       {
+        "type": "É",
+        "kg": 16,
+        "reps": 8,
+        "repos": 0,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 24,
+        "reps": 10,
+        "repos": 90,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 24,
+        "reps": 10,
+        "repos": 90,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 24,
+        "reps": 10,
+        "repos": 90,
+        "reposTxt": ""
+       }
+      ],
+      "noteContient": [
+       "RIR 1-2"
+      ],
+      "superset": "",
+      "catalogueAttendu": "Rowing Haltère (Tirage Horizontal)",
+      "statutAttendu": "ok"
+     }
+    ]
+   }
+  ],
+  "propositions": [],
+  "methodes": [],
+  "nonRepresentable": []
+ },
+ "aiOutputLegacy": {
+  "name": "Programme synthétique X03-echauffement-colonne (ancien format)",
+  "weeks": 0,
+  "startDate": "",
+  "days": [
+   {
+    "label": "Séance dos – Semaine B (inventée)",
+    "exercises": [
+     {
+      "name": "Soulevé de Terre",
+      "sets": 1,
+      "reps": 8,
+      "repsPerSet": [],
+      "specialSets": [],
+      "kg": 40,
+      "kgPerSet": [],
+      "supersetGroup": "",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "60 s",
+      "restPerSet": [
+       "60 s"
+      ],
+      "note": "ECH"
+     },
+     {
+      "name": "Soulevé de Terre",
+      "sets": 1,
+      "reps": 5,
+      "repsPerSet": [],
+      "specialSets": [],
+      "kg": 60,
+      "kgPerSet": [],
+      "supersetGroup": "",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "60-90 s",
+      "restPerSet": [
+       "60-90 s"
+      ],
+      "note": "ECH"
+     },
+     {
+      "name": "Soulevé de Terre",
+      "sets": 1,
+      "reps": 3,
+      "repsPerSet": [],
+      "specialSets": [],
+      "kg": 80,
+      "kgPerSet": [],
+      "supersetGroup": "",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "90 s",
+      "restPerSet": [
+       "90 s"
+      ],
+      "note": "ECH"
+     },
+     {
+      "name": "Soulevé de Terre",
+      "sets": 3,
+      "reps": 5,
+      "repsPerSet": [],
+      "specialSets": [],
+      "kg": 100,
+      "kgPerSet": [],
+      "supersetGroup": "",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "3-4 min",
+      "restPerSet": [
+       "3-4 min",
+       "3-4 min",
+       "3-4 min"
+      ],
+      "note": "RIR 2"
+     },
+     {
+      "name": "Tirage Poulie Haute (Lat Pulldown)",
+      "sets": 1,
+      "reps": 12,
+      "repsPerSet": [],
+      "specialSets": [],
+      "kg": 20,
+      "kgPerSet": [],
+      "supersetGroup": "",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "",
+      "restPerSet": [],
+      "note": "ECH | Monté en charge"
+     },
+     {
+      "name": "Tirage Poulie Haute (Lat Pulldown)",
+      "sets": 1,
+      "reps": 10,
+      "repsPerSet": [],
+      "specialSets": [],
+      "kg": 35,
+      "kgPerSet": [],
+      "supersetGroup": "",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "",
+      "restPerSet": [],
+      "note": "ECH | Série de chauffe"
+     },
+     {
+      "name": "Tirage Poulie Haute (Lat Pulldown)",
+      "sets": 3,
+      "reps": 10,
+      "repsPerSet": [],
+      "specialSets": [],
+      "kg": 55,
+      "kgPerSet": [],
+      "supersetGroup": "",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "2 min",
+      "restPerSet": [
+       "2 min",
+       "2 min",
+       "2 min"
+      ],
+      "note": "RIR 2"
+     },
+     {
+      "name": "Rowing Haltère (Tirage Horizontal)",
+      "sets": 1,
+      "reps": 12,
+      "repsPerSet": [],
+      "specialSets": [],
+      "kg": 10,
+      "kgPerSet": [],
+      "supersetGroup": "",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "",
+      "restPerSet": [],
+      "note": "Série de chauffe"
+     },
+     {
+      "name": "Rowing Haltère (Tirage Horizontal)",
+      "sets": 1,
+      "reps": 8,
+      "repsPerSet": [],
+      "specialSets": [],
+      "kg": 16,
+      "kgPerSet": [],
+      "supersetGroup": "",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "",
+      "restPerSet": [],
+      "note": "Monté en charge"
+     },
+     {
+      "name": "Rowing Haltère (Tirage Horizontal)",
+      "sets": 3,
+      "reps": 10,
+      "repsPerSet": [],
+      "specialSets": [],
+      "kg": 24,
+      "kgPerSet": [],
+      "supersetGroup": "",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "90 s",
+      "restPerSet": [
+       "90 s",
+       "90 s",
+       "90 s"
+      ],
+      "note": "RIR 1-2"
+     }
+    ]
+   }
+  ]
+ }
+}
