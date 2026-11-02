@@ -1677,13 +1677,22 @@ function nutDecisionModification(server, incoming) {
 var NUT_VERROU_MS_ = 20000;
 var NUT_OPS_MAX_ = 6, NUT_OPS_ACKS_MAX_ = 12, NUT_OPS_CONFLITS_MAX_ = 6;
 /* Le verrou du script, ou `null` s'il est indisponible. Hors Apps Script (certains bancs de test : service absent, ou objet vide sans `getScriptLock`) on rend un verrou factice : en production
-   le service existe toujours et complet. ⛔ Un service PRÉSENT et complet qui refuse le verrou (délai dépassé, exception) n'est JAMAIS traité comme absent : c'est `null` — réponse réessayable. */
+   le service existe toujours et complet. ⛔ Un service PRÉSENT et complet qui refuse le verrou (délai dépassé, exception) n'est JAMAIS traité comme absent : c'est `null` — réponse réessayable.
+   📋 FINALISATION NUT-SYNC-02 (02/11/2026) : une EXCEPTION du service (autorisation manquante, service indisponible) était avalée en silence — le client recevait `NUT_LOCK_BUSY` et rien, nulle part, ne disait que ce n'était pas une vraie contention. Elle laisse maintenant UNE ligne de journal
+   (`_nutVerrouException_`), sans donnée ni adresse ; la valeur rendue, donc la réponse, est INCHANGÉE. Un simple délai dépassé (`tryLock` rend faux) n'est pas une exception : il ne journalise rien, comme avant. */
 function _nutPrendreVerrou_() {
   if (typeof LockService === 'undefined' || !LockService || typeof LockService.getScriptLock !== 'function') return { releaseLock: function() {} };
   try {
     var v = LockService.getScriptLock();
     return v.tryLock(NUT_VERROU_MS_) ? v : null;
-  } catch (e) { return null; }
+  } catch (e) { _nutVerrouException_('prise du verrou', e); return null; }
+}
+/* Une ligne de journal pour une exception du service de verrou : le MESSAGE est nettoyé des adresses et borné à 160 caractères (comme les autres lignes du serveur) — jamais une donnée de compte, jamais une adresse.
+   Le journal ne doit JAMAIS changer le comportement du verrou : il avale sa propre erreur. */
+function _nutVerrouException_(contexte, e) {
+  try {
+    Logger.log('[FT VERROU] ' + contexte + ' : exception du service — ' + String(e && e.message || e).replace(/[^\s@]+@[^\s@]+/g, '[adresse]').slice(0, 160));
+  } catch (journalErr) { /* sans effet sur le verrou */ }
 }
 /* ⚙️⚙️ NUT-SYNC-02 PHASE A (02/11/2026, GO du Principal) — UN SEUL VERROU POUR TOUS LES ÉCRIVAINS DU COMPTE, ET SA DURÉE EST MESURÉE.
    Avant : seul `saveProfile` prenait le verrou ; cinq autres gestionnaires (santé de la montre ×2, confirmation d'e-mail, code perso, mémoire du coach, restauration admin) relisaient puis RÉÉCRIVAIENT l'enregistrement entier sans lui :
@@ -1701,7 +1710,7 @@ function _nutVerrouRendre_(h, origine) {
   if (h.rendu) return h.ms;                              // une seule libération, quel que soit le chemin (anticipée ou `finally`)
   h.rendu = true;
   h.ms = Math.max(0, _nutHorloge_() - h.t0);
-  try { h.v.releaseLock(); } catch (relErr) {}
+  try { h.v.releaseLock(); } catch (relErr) { _nutVerrouException_(origine + ' : libération du verrou', relErr); }
   if (h.ms >= NUT_VERROU_ALERTE_MS_) Logger.log('[FT VERROU] ' + origine + ' : verrou tenu ' + h.ms + ' ms (seuil ' + NUT_VERROU_ALERTE_MS_ + ' ms)');
   return h.ms;
 }
@@ -1712,7 +1721,7 @@ function _nutVerrouRendre_(h, origine) {
    sauvegarde serveur d'un téléphone sans qu'il puisse le savoir (il ne lit aucune réponse) ; ② `= false` n'était PAS sûr : il rouvrait la résurrection (une ancienne ligne SANS identité ne retrouve pas son entrée du registre — mesuré) et l'écrasement. Cette constante n'existe plus.
    LA RÈGLE, lue sous le verrou, selon l'ÉTAT DURABLE DU COMPTE (`_nutProtoDe_`) :
      · compte SANS état v3 : un envoi ancien est TOLÉRÉ — il n'y a ni registre, ni révision, ni mémoire d'opérations à violer, et le chemin est celui de la production d'avant (remplacement avec copie de sécurité, P1). Chaque envoi toléré est journalisé (des nombres) ;
-     · compte AVEC état v3 : un envoi ancien est REFUSÉ en entier et explicitement (`NUT_CLIENT_INCOMPATIBLE`, non réessayable) AVANT toute lecture ou écriture Nutrition ; le reste du profil — séances, records, pesées — est ENREGISTRÉ (règle d'or n°3). Rien n'est copié côté
+     · compte AVEC état v3 : le VOLET NUTRITION d'un envoi ancien (journal, favoris, suppressions) est REFUSÉ en entier et explicitement (`NUT_CLIENT_INCOMPATIBLE`, non réessayable) AVANT toute lecture ou écriture Nutrition ; TOUT LE RESTE de l'envoi — séances, records, pesées, réglages — est ENREGISTRÉ (règle d'or n°3). Rien n'est copié côté
        serveur : ce que l'appareil a saisi reste sur son téléphone et partira à sa mise à jour ;
      · un envoi qui se dit v3 (`foodLogV >= 3`) SANS `requestId` valide est refusé PARTOUT : il ne peut pas lire d'accusé.
    ⚠️ UN ANCIEN CLIENT NE LIT PAS CE REFUS (`no-cors`) : il n'affiche rien — et le seul message serveur qu'il lit au démarrage, le refus d'authentification, suspendrait TOUTE sa sauvegarde : on ne s'en sert surtout pas. Son seul signal est la mise à jour automatique de l'application.

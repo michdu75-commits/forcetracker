@@ -135,7 +135,7 @@ module.exports.ecran = async function ecran(t, b, PORT) {
       r4.j.ok === true && r4b.j.ok === true && r4.j.nut.tomb.ok.length === 3000 && r4.j.nut.tomb.diff.length === 0 && (X.lireCompte(m).profile.foodSupprimes || []).length === 3000 && canon(X.lireCompte(m).profile.foodSupprimes) === canon(mille(0, 2999).concat(mille(2999, 3000))), '');
     const avant6 = etat();
     const rV = X.envoi(m, { foodSupprimes: mille(3000, 3001), foodLogV: 3 });
-    t('B-NS02 B06 (ADAPTÉ phase A) sans `requestId` (appareil qui ne sait pas lire un accusé) la porte de version REFUSE explicitement et en entier (NUT_CLIENT_INCOMPATIBLE, non réessayable) et l\'état Nutrition est intact — le détail des cas est dans `nut_phasea01`',
+    t('B-NS02 B06 (ADAPTÉ phase A) sans `requestId` (appareil qui ne sait pas lire un accusé) la porte de version REFUSE explicitement et en entier le VOLET Nutrition (NUT_CLIENT_INCOMPATIBLE, non réessayable ; le reste de l\'envoi est enregistré) et l\'état Nutrition est intact — le détail des cas est dans `nut_phasea01`',
       rV.j.ok === false && rV.j.code === 'NUT_CLIENT_INCOMPATIBLE' && rV.j.retryable === false && rV.j.requestId === '' && etat() === avant6, rV.t.slice(0, 160));
   }
 

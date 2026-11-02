@@ -82,9 +82,9 @@ module.exports.ecran = async function ecran(t0, b, PORT, PORT_ANCIEN) {
       t('PB02 ⭐⭐⭐ ORDRE « ANCIEN → NOUVEAU » : l\'ancien appareil écrit d\'abord (toléré, aucun marqueur) ; l\'appareil à jour synchronise ensuite sur ses données : sa suppression est INSCRITE (accusée), son repas neuf ajouté, et le compte porte désormais le marqueur de protocole 3',
         r1.j.ok === true && J(idsApres1) === J(tri([A.id, B.id, C.id])) && np1 === undefined && r2.j.ok === true && J(r2.j.nut.tomb.ok) === J([B.id]) && J(idsDe(X, m)) === J(tri([A.id, C.id, D.id])) && c2.nutProto === 3 && (c2.profile.foodSupprimes || []).some((e) => e.i === B.id), r2.t.slice(0, 200));
       const avant = etatNut(X, m);
-      const r3 = ancien(X, m, { foodLog: [A, B, C, E], weightLog: [{ date: '2026-11-03', kg: 79 }], sessions: [SEANCE('pb-cy-s1')] });   // 3. O, qui a encore B ET un repas neuf E : refusé en entier
+      const r3 = ancien(X, m, { foodLog: [A, B, C, E], weightLog: [{ date: '2026-11-03', kg: 79 }], sessions: [SEANCE('pb-cy-s1')] });   // 3. O, qui a encore B ET un repas neuf E : son volet Nutrition est refusé en entier (le reste de l'envoi est enregistré)
       const c3 = X.lireCompte(m);
-      t('PB02b ⭐⭐⭐ … puis ORDRE « NOUVEAU → ANCIEN » : l\'ancien appareil, qui renvoie le repas supprimé B et un repas neuf E, est REFUSÉ EXPLICITEMENT ET EN ENTIER (`NUT_CLIENT_INCOMPATIBLE`, pas d\'accusé) — B ne ressuscite PAS, rien n\'est écrasé, E n\'est pas annoncé « enregistré » (il reste sur son téléphone) — et sa pesée et sa séance, elles, SONT enregistrées',
+      t('PB02b ⭐⭐⭐ … puis ORDRE « NOUVEAU → ANCIEN » : l\'ancien appareil, qui renvoie le repas supprimé B et un repas neuf E, voit son VOLET Nutrition REFUSÉ EXPLICITEMENT ET EN ENTIER (`NUT_CLIENT_INCOMPATIBLE`, pas d\'accusé) — B ne ressuscite PAS, rien n\'est écrasé, E n\'est pas annoncé « enregistré » (il reste sur son téléphone) — et sa pesée et sa séance, elles, SONT enregistrées',
         refus(r3, 'NUT_CLIENT_INCOMPATIBLE') && r3.j.retryable === false && etatNut(X, m) === avant && !idsDe(X, m).includes(B.id) && !idsDe(X, m).includes(E.id) && (c3.sessions || []).some((s) => s.id === 'pb-cy-s1') && (c3.weightLog || []).some((w) => w.date === '2026-11-03'), r3.t.slice(0, 200));
       const r4 = env(X, m, { foodLog: [A, B, C, E] });                                                            // 4. O se met à jour : il renvoie son journal tel quel (B y est encore, il ne connaît pas le registre)
       const ids4 = idsDe(X, m);
@@ -395,6 +395,69 @@ module.exports.ecran = async function ecran(t0, b, PORT, PORT_ANCIEN) {
       t('PB15 ⭐⭐ (LA RAISON DU RETRAIT, mesurée et figée — R30) SANS la porte par compte (le réglage de banc `compatStrict:false` fait exactement ce que faisait `NUT_COMPAT_STRICT_ = false`), un ancien envoi dont la ligne n\'a PAS d\'identité RESSUSCITE le repas supprimé — il revient au journal malgré son entrée au registre ; AVEC la porte il est refusé et le repas reste supprimé : c\'est pourquoi aucun levier global ne peut exister',
         sans.r.j.ok === true && sans.riz === 1 && avec.r.j.ok === false && avec.r.j.code === 'NUT_CLIENT_INCOMPATIBLE' && avec.riz === 0, J({ sans: [sans.r.j.ok, sans.riz], avec: [avec.r.j.ok, avec.riz] }));
     });
+
+    /* ── 12. LE TEST MANQUANT (finalisation NUT-SYNC-02, GO de Michel) : un ancien client REFUSÉ POUR NUTRITION enregistre TOUJOURS ses séances, ses records et ses pesées ── */
+    await garde('PB18', async () => {
+      const etats = [
+        ['compte à état v3 (la porte)', (X, m) => { env(X, m, { foodLog: [ligne('Base', 'pb-an-base0001')] }); }, 'NUT_CLIENT_INCOMPATIBLE'],
+        ['serveur SUSPENDU, compte sans état v3', (X) => { X.props[SUSPENSION] = '1'; }, 'NUT_SUSPENDU'],
+        ['serveur SUSPENDU, compte à état v3', (X, m) => { env(X, m, { foodLog: [ligne('Base', 'pb-an-base0001')] }); X.props[SUSPENSION] = '1'; }, 'NUT_SUSPENDU'],
+      ];
+      const res = etats.map(([nom, preparer, code], k) => {
+        const X = P1.serveur(); const m = email('anrest'); X.compte(m, { code: CODE_PERSO }); preparer(X, m);
+        const avant = etatNut(X, m);
+        const r = ancien(X, m, {
+          foodLog: [ligne('Repas de l\'ancien', 'pb-an-' + k + '0000001')], savedFoods: [FAV('Fav de l\'ancien')],                                  // le volet Nutrition : REFUSÉ
+          sessions: [SEANCE('pb-an-s' + k)], prs: { Squat: { rm1: 112, kg: 90, reps: 5, date: '2026-11-02' } }, weightLog: [{ date: '2026-11-02', kg: 79.5 }],   // séances, records, pesées : ENREGISTRÉS
+          foodMode: 'strict', fasting: '16:8', diet: 'vegetarien', manualKcal: 2600, foodAiUses: 7 });                                          // réglages Nutrition du profil : hors volet, ENREGISTRÉS
+        const c = X.lireCompte(m), p = c.profile;
+        const ok = refus(r, code) && etatNut(X, m) === avant
+          && (c.sessions || []).some((x) => x.id === 'pb-an-s' + k) && !!c.prs && !!c.prs.Squat && c.prs.Squat.kg === 90 && (c.weightLog || []).some((w) => w.date === '2026-11-02' && w.kg === 79.5)
+          && p.foodMode === 'strict' && p.fasting === '16:8' && p.diet === 'vegetarien' && p.manualKcal === 2600 && p.foodAiUses >= 7;
+        return { nom, ok, rep: r.t.slice(0, 90), s: (c.sessions || []).length, prs: Object.keys(c.prs || {}), w: (c.weightLog || []).length, reglages: [p.foodMode, p.fasting, p.diet, p.manualKcal, p.foodAiUses] };
+      });
+      t('PB18 ⭐⭐⭐ LE TEST MANQUANT — un ancien client REFUSÉ POUR NUTRITION (porte : compte à état v3 ; suspension : compte sans ou avec état v3) enregistre TOUJOURS, dans ce même envoi, ses SÉANCES, ses RECORDS et ses PESÉES — et ses réglages Nutrition du profil (mode alimentaire, jeûne, régime, kcal manuelles, compteur IA) ; seul son VOLET Nutrition (journal, favoris, suppressions) est refusé : le volet du compte est identique octet pour octet',
+        res.every((x) => x.ok), J(res.filter((x) => !x.ok)));
+    });
+
+    /* ── 13. LES EXCEPTIONS DU SERVICE DE VERROU SE VOIENT (finalisation NUT-SYNC-02) : une ligne de journal, sans donnée, et le comportement est INCHANGÉ ── */
+    await garde('PB16', async () => {
+      const MSG = 'Exception: autorisation manquante pour LockService.getScriptLock — proprietaire-fictif@example.test ' + 'z'.repeat(300);
+      const RQ = 'rq-verrou-exception-0001';
+      const corpsEnvoi = (m) => corps(m, { requestId: RQ, foodLog: [ligne('Jamais écrit', 'pb-vx-00000001')], weightLog: [{ date: '2026-11-02', kg: 70 }], sessions: [SEANCE('pb-vx-s')] });
+      const service = (quoi) => ({ getScriptLock: () => { if (quoi === 'getScriptLock') throw new Error(MSG); return { tryLock: () => { throw new Error(MSG); }, waitLock() {}, releaseLock() {}, hasLock: () => false }; } });
+      /* la RÉFÉRENCE : un délai simplement dépassé (`tryLock` rend faux) — pas une exception : même réponse, AUCUNE ligne de journal */
+      const Y = P1.serveur({ LockService: { getScriptLock: () => ({ tryLock: () => false, waitLock() {}, releaseLock() {}, hasLock: () => false }) } }); const my = email('vref'); Y.compte(my, { code: CODE_PERSO });
+      const rY = Y.post(corpsEnvoi(my));
+      const res = [['getScriptLock', false], ['tryLock', false], ['tryLock', true]].map(([quoi, journalEnPanne]) => {
+        const X = P1.serveur({ LockService: service(quoi) }); const m = email('vexc'); X.compte(m, { code: CODE_PERSO });
+        const avant = canon(X.lireCompte(m));
+        if (journalEnPanne) X.ctx.Logger = { log() { throw new Error('journal en panne (simulée)'); } };         // le journal lui-même est en panne : le verrou ne doit rien en savoir
+        const r = X.post(corpsEnvoi(m));
+        const lignes = X.journal.filter((l) => /\[FT VERROU\]/.test(l));
+        const l0 = lignes[0] || '';
+        const memeReponse = r.t === rY.t.replace(my, m);
+        const journalOk = journalEnPanne ? lignes.length === 0
+          : (lignes.length === 1 && /^\[FT VERROU\] prise du verrou : exception du service — Exception: autorisation manquante/.test(l0) && l0.indexOf('[adresse]') > 0 && !/example\.test|proprietaire-fictif/.test(l0) && l0.indexOf(m) < 0 && l0.length <= 230);
+        return { quoi: quoi + (journalEnPanne ? ' + journal en panne' : ''), ok: memeReponse && journalOk && canon(X.lireCompte(m)) === avant && r.j.code === 'NUT_LOCK_BUSY' && r.j.retryable === true, rep: r.t.slice(0, 100), lignes: lignes.length, l0: l0.slice(0, 120) };
+      });
+      t('PB16 ⭐⭐⭐ une EXCEPTION du service de verrou (levée par `getScriptLock` ou par `tryLock`) laisse UNE ligne `[FT VERROU] prise du verrou : exception du service — …` SANS donnée ni adresse (l\'adresse du message est masquée `[adresse]`, 160 caractères au plus, aucune adresse du compte) — et le COMPORTEMENT est INCHANGÉ : la réponse est octet pour octet celle d\'un simple délai dépassé (`NUT_LOCK_BUSY`, réessayable), rien n\'est écrit (ni séance, ni pesée, ni repas), même quand le journal lui-même est en panne',
+        res.every((x) => x.ok) && rY.j.code === 'NUT_LOCK_BUSY' && Y.journal.filter((l) => /\[FT VERROU\]/.test(l)).length === 0, J({ res: res.filter((x) => !x.ok), ref: rY.t.slice(0, 100), refLignes: Y.journal.filter((l) => /\[FT VERROU\]/.test(l)).length }));
+    });
+    await garde('PB17', async () => {
+      const MSG = 'Exception: libération impossible — proprietaire-fictif@example.test ' + 'y'.repeat(300);
+      const X = P1.serveur({ LockService: { getScriptLock: () => ({ tryLock: () => true, waitLock() {}, releaseLock: () => { throw new Error(MSG); }, hasLock: () => true }) } });
+      const m = email('vrel'); X.compte(m, { code: CODE_PERSO });
+      const r = env(X, m, { foodLog: [ligne('Écrit malgré tout', 'pb-vr-00000001')], weightLog: [{ date: '2026-11-02', kg: 71 }], sessions: [SEANCE('pb-vr-s')] });
+      const c = X.lireCompte(m);
+      const lignes = X.journal.filter((l) => /\[FT VERROU\] saveProfile : libération du verrou : exception du service — /.test(l));
+      const r2 = X.post({ action: 'pushHealth', email: m, authCode: CODE_PERSO, sleep: 7.5, date: '2026-11-02' });
+      const lignes2 = X.journal.filter((l) => /\[FT VERROU\] pushHealth : libération du verrou : exception du service — /.test(l));
+      t('PB17 ⭐⭐ une EXCEPTION À LA LIBÉRATION du verrou est journalisée avec l\'écrivain qui le tenait (`saveProfile`, `pushHealth`) — UNE ligne chacun, sans donnée ni adresse — et le comportement est INCHANGÉ : la sauvegarde réussit, accusée, le repas, la séance et la pesée sont au compte, la santé de la montre est enregistrée',
+        r.j.ok === true && idsDe(X, m).includes('pb-vr-00000001') && (c.sessions || []).some((x) => x.id === 'pb-vr-s') && (c.weightLog || []).some((w) => w.date === '2026-11-02')
+        && lignes.length === 1 && lignes[0].indexOf('[adresse]') > 0 && lignes[0].length <= 260 && !/example\.test|proprietaire-fictif/.test(lignes[0])
+        && r2.j.status === 'ok' && lignes2.length === 1 && !/example\.test|proprietaire-fictif/.test(lignes2[0]), J({ ok: r.j.ok, l: lignes.length, l2: lignes2.length, r2: r2.t.slice(0, 80) }));
+    });
   }
 
   /* ═══ D et C — de VRAIS processus serveur, puis les VRAIS clients reliés à eux ═══════════════════════════════════════════════════════════════ */
@@ -571,6 +634,12 @@ module.exports.ecran = async function ecran(t0, b, PORT, PORT_ANCIEN) {
             await N.supprimer('sem2-00000002'); await N.sync();                                                   // … et supprime un repas (registre)
             const avantCompte = await compte(m);
             await O1.ev((l) => { S.foodLog.push(l); persist(); }, ligne('Repas neuf de l\'ancien', 'ancien-nouv-0001'));
+            await O1.ev(() => {                                                                                   // … et, saisis sur le MÊME téléphone : UNE séance, UN record, UNE pesée (rien de Nutrition)
+              S.sessions = (S.sessions || []).concat([{ id: 'ancien-sc-0001', date: '2026-11-02', ts: 1760002000000, exs: [], vol: 0 }]);
+              S.prs = Object.assign({}, S.prs || {}, { Squat: { rm1: 112, kg: 90, reps: 5, date: '2026-11-02' } });
+              S.weightLog = (S.weightLog || []).concat([{ date: '2026-11-02', kg: 79.5 }]);
+              persist();
+            });
             O1.corps.length = 0;
             await O1.sync();                                                                                      // l'ancien appareil resynchronise : il a encore sem2 ET un repas neuf
             const apresCompte = await compte(m);
@@ -581,6 +650,10 @@ module.exports.ecran = async function ecran(t0, b, PORT, PORT_ANCIEN) {
             const jO = await O1.journal();
             t('PC20c ⭐⭐ … et l\'ancien client n\'est pas cassé pour autant : AUCUNE erreur de page, AUCUN message d\'erreur, son journal local garde ses 4 repas (le repas neuf n\'est pas perdu : il part dès la mise à jour), il peut toujours enregistrer en local — le refus lui est invisible, c\'est la limite écrite (`no-cors`)',
               O1.erreurs.length === 0 && jO.length === 4 && jO.some((l) => l.id === 'ancien-nouv-0001') && jO.some((l) => l.id === 'sem2-00000002') && !toastsO.some((x) => /erreur|échec|impossible|incompatible/i.test(x)), J({ err: O1.erreurs, n: jO.length, toastsO }));
+            const sess = apresCompte.sessions || [], prsC = apresCompte.prs || {}, wl = apresCompte.weightLog || [];
+            const absentAvant = !(avantCompte.sessions || []).some((x) => x.id === 'ancien-sc-0001') && !(avantCompte.prs || {}).Squat && !(avantCompte.weightLog || []).some((w) => w.kg === 79.5);   // la donnée n'existait pas au compte : elle ne peut venir que de l'envoi refusé
+            t('PC20e ⭐⭐⭐ (LE TEST MANQUANT — VRAI ancien client de production, compte À ÉTAT v3) son VOLET Nutrition est refusé (PC20b) MAIS, dans ce même envoi, sa séance, son record (Squat 90 kg) et sa pesée (79,5 kg), saisis sur l\'ancien téléphone, sont ENREGISTRÉS au compte — qui n\'en avait aucun avant : seul le Nutrition est refusé',
+              absentAvant && sess.some((x) => x.id === 'ancien-sc-0001') && !!prsC.Squat && prsC.Squat.kg === 90 && wl.some((w) => w.date === '2026-11-02' && w.kg === 79.5), J({ absentAvant, s: sess.length, prs: Object.keys(prsC), wl: wl.length }));
             await O1.fermer(); await N.fermer();
           }
           /* (b2) LA CONCURRENCE avec les deux vrais clients : leurs requêtes sont RETENUES puis lâchées ensemble — le serveur (vrais processus, vrai verrou) les reçoit presque en même temps */
@@ -613,12 +686,17 @@ module.exports.ecran = async function ecran(t0, b, PORT, PORT_ANCIEN) {
             const O1 = await ancienAppareil('O', 1, m);
             suspendre(dirPool);
             await O1.graine(lignesO.map(copie));
-            await O1.ev(() => { S.weightLog = (S.weightLog || []).concat([{ date: '2026-11-02', kg: 80.5 }]); persist(); });
+            await O1.ev(() => {
+              S.weightLog = (S.weightLog || []).concat([{ date: '2026-11-02', kg: 80.5 }]);
+              S.sessions = (S.sessions || []).concat([{ id: 'ancien-sd-0001', date: '2026-11-02', ts: 1760003000000, exs: [], vol: 0 }]);
+              S.prs = Object.assign({}, S.prs || {}, { Squat: { rm1: 105, kg: 85, reps: 5, date: '2026-11-02' } });
+              persist();
+            });
             await O1.sync();
             const c = await compte(m);
             reprendre(dirPool);
-            t('PC20d ⭐⭐ (VRAI ancien client, serveur SUSPENDU) son volet Nutrition n\'est pas écrit (journal du compte vide) alors qu\'un compte sans état v3 l\'aurait toléré — et sa pesée est ENREGISTRÉE ; aucune erreur de page',
-              (c.profile.foodLog || []).length === 0 && (c.weightLog || []).some((w) => w.date === '2026-11-02') && O1.erreurs.length === 0, J({ n: (c.profile.foodLog || []).length, w: (c.weightLog || []).length, err: O1.erreurs }));
+            t('PC20d ⭐⭐ (VRAI ancien client, serveur SUSPENDU) son volet Nutrition n\'est pas écrit (journal du compte vide) alors qu\'un compte sans état v3 l\'aurait toléré — et sa pesée, sa séance et son record (Squat 85 kg) sont ENREGISTRÉS ; aucune erreur de page',
+              (c.profile.foodLog || []).length === 0 && (c.weightLog || []).some((w) => w.date === '2026-11-02') && (c.sessions || []).some((x) => x.id === 'ancien-sd-0001') && !!c.prs && !!c.prs.Squat && c.prs.Squat.kg === 85 && O1.erreurs.length === 0, J({ n: (c.profile.foodLog || []).length, w: (c.weightLog || []).length, s: (c.sessions || []).length, prs: Object.keys(c.prs || {}), err: O1.erreurs }));
             await O1.fermer();
           }
         });

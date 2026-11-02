@@ -114,6 +114,23 @@ MUT = [
      [(SU, "      _nutAConfirmer=true;\n      if(code==='NUT_ZONE_DRIVE')", "      _nutAConfirmer=true;\n      S.foodSupprimes=_foodSupprimesNormaliser(S.foodSupprimes).map(e=>(sup.has(e.i)&&!e.c)?Object.assign({},e,{c:Date.now()}):e); _ecrireSuppressionsLocal();\n      if(code==='NUT_ZONE_DRIVE')")], G('PC10', 'PC10c'), 'C', 'PC10', 'GARDE'),
     ('M40 le client rejette (marque « rejetee ») ce qu il a envoye quand le serveur est suspendu (la suppression sortirait de la file)',
      [(SU, "      _nutAConfirmer=true;\n      if(code==='NUT_ZONE_DRIVE')", "      _nutAConfirmer=true;\n      S.foodSupprimes=_foodSupprimesNormaliser(S.foodSupprimes).map(e=>(sup.has(e.i)&&!e.c)?Object.assign({},e,{x:code}):e); _ecrireSuppressionsLocal();\n      if(code==='NUT_ZONE_DRIVE')")], G('PC10', 'PC10c'), 'C', 'PC10', 'GARDE'),
+    # ── finalisation (02/11/2026) : « seul le Nutrition est refuse » et les exceptions du verrou ──
+    ('M41 le refus d un ancien client repond AVANT d ecrire le reste (seances, records, pesees perdus : la regression bloquante que le test manquant doit voir)',
+     [(CO, "    } else if (compat.volet && !compat.ok && _nutAncienRefuse_(existing, compat)) {", "    } else if (compat.volet && !compat.ok && _nutAncienRefuse_(existing, compat)) {\n      return json_({status:'nut_refuse', ok:false, code:'NUT_CLIENT_INCOMPATIBLE', retryable:false, requestId:_requestId, profilEnregistre:true, details:{}, lockMs:0});")], G('PB02b', 'PB18', 'PD11', 'PC20e'), 'S,D,C', 'PD11,PC20', 'GARDE'),
+    ('M42 la suspension repond AVANT d ecrire le reste (seances, records, pesees perdus pendant la suspension)',
+     [(CO, "    if (compat.volet && _nutSuspendu_()) {", "    if (compat.volet && _nutSuspendu_()) {\n      return json_({status:'nut_refuse', ok:false, code:'NUT_SUSPENDU', retryable:true, requestId:_requestId, profilEnregistre:true, details:{}, lockMs:0});")], G('PB09b', 'PB09c', 'PB18', 'PD20', 'PC20d'), 'S,D,C', 'PD20,PC10,PC20', 'GARDE'),
+    ('M43 une exception a la PRISE du verrou n est plus journalisee (avalee en silence, comme avant la finalisation)',
+     [(CO, "  } catch (e) { _nutVerrouException_('prise du verrou', e); return null; }", "  } catch (e) { return null; }")], G('PB16'), 'S', '', 'GARDE'),
+    ('M44 une exception a la LIBERATION du verrou n est plus journalisee',
+     [(CO, "catch (relErr) { _nutVerrouException_(origine + ' : libération du verrou', relErr); }", "catch (relErr) {}")], G('PB17'), 'S', '', 'GARDE'),
+    ('M45 le message d exception du verrou n est plus nettoye des adresses (une adresse du message partirait dans le journal)',
+     [(CO, r"exception du service — ' + String(e && e.message || e).replace(/[^\s@]+@[^\s@]+/g, '[adresse]').slice(0, 160));", r"exception du service — ' + String(e && e.message || e).slice(0, 160));")], G('PB16', 'PB17'), 'S', '', 'GARDE'),
+    ('M46 le message d exception du verrou n est plus borne a 160 caracteres',
+     [(CO, r"exception du service — ' + String(e && e.message || e).replace(/[^\s@]+@[^\s@]+/g, '[adresse]').slice(0, 160));", r"exception du service — ' + String(e && e.message || e).replace(/[^\s@]+@[^\s@]+/g, '[adresse]'));")], G('PB16', 'PB17'), 'S', '', 'GARDE'),
+    ('M47 une exception a la prise du verrou est RELANCEE (le comportement change : SERVER_ERROR au lieu de NUT_LOCK_BUSY)',
+     [(CO, "  } catch (e) { _nutVerrouException_('prise du verrou', e); return null; }", "  } catch (e) { _nutVerrouException_('prise du verrou', e); throw e; }")], G('PB16'), 'S', '', 'GARDE'),
+    ('M48 le journal d exception n est plus protege (un journal en panne ferait echouer le verrou)',
+     [(CO, "  } catch (journalErr) { /* sans effet sur le verrou */ }", "  } finally { }")], G('PB16'), 'S', '', 'GARDE'),
 ]
 
 

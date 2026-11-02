@@ -43,7 +43,7 @@ module.exports.ecran = async function ecran(t0, b, PORT) {
   /* ═══ S — le serveur, en mémoire ═══════════════════════════════════════════════════════════════════════════════════════════════════════════ */
   if (voulu('S')) {
 
-    /* ── 1. LA PORTE DE VERSION : sur un compte à état v3, un ancien client est REFUSÉ explicitement et en entier ── */
+    /* ── 1. LA PORTE DE VERSION : sur un compte à état v3, le VOLET Nutrition d'un ancien client est REFUSÉ explicitement et en entier — le reste de l'envoi (séances, records, pesées) est enregistré ── */
     await garde('PA00', async () => {
       const X = P1.serveur(); const m = email('porte'); X.compte(m, { code: CODE_PERSO });
       env(X, m, { foodLog: [ligne('Repas A', 'pa-a-00000001'), ligne('Repas B', 'pa-b-00000001')], foodSupprimes: [{ i: 'pa-sup-00000001', t: 5 }], savedFoods: [FAV('Favori')] });
@@ -54,7 +54,7 @@ module.exports.ecran = async function ecran(t0, b, PORT) {
       t('PA00 le levier global `NUT_COMPAT_STRICT_` N\'EXISTE PLUS (une absence protégée : `= false` rouvrait la résurrection et l\'écrasement), la porte est par compte (`_nutAncienRefuse_`), la version minimale du protocole vaut 3 ; l\'état de départ de ce banc est riche (registre, journal révisé, favoris, mémoire des opérations, marqueur, zone de récupération non vide)',
         typeof X.ctx.NUT_COMPAT_STRICT_ === 'undefined' && typeof X.ctx._nutAncienRefuse_ === 'function' && X.ctx.NUT_PROTOCOLE_MIN_ === 3 && X.lireCompte(m).nutProto === 3 && (X.lireCompte(m).recupNut || {}).foodLog && X.lireCompte(m).recupNut.foodLog.length > 0 && (X.lireCompte(m).profile.nutOps || []).length === 2, '');
       const rL = ancien(X, m, { foodLog: [ligne('Repas ancien', 'pa-old-0000001')], savedFoods: [FAV('Fav ancien')], foodSupprimes: [{ i: 'pa-sup-00000002', t: 6 }], weightLog: [{ date: '2026-11-02', kg: 81 }], prs: { Squat: { rm1: 100, kg: 80, reps: 6, date: '2026-11-01' } }, sessions: [{ id: 's1', ts: 1, date: '2026-11-02', exs: [] }] });
-      t('PA01 ⭐⭐ un ANCIEN client (ni `foodLogV` ni `requestId`) qui envoie du Nutrition est REFUSÉ EXPLICITEMENT ET EN ENTIER : { status:\'nut_refuse\', ok:false, code:\'NUT_CLIENT_INCOMPATIBLE\', retryable:false, profilEnregistre:true, details:{versionClient, versionMin} } — jamais `ok:true`, jamais d\'accusé',
+      t('PA01 ⭐⭐ un ANCIEN client (ni `foodLogV` ni `requestId`) qui envoie du Nutrition voit son VOLET Nutrition REFUSÉ EXPLICITEMENT ET EN ENTIER (le reste de l\'envoi est enregistré : PA01c) : { status:\'nut_refuse\', ok:false, code:\'NUT_CLIENT_INCOMPATIBLE\', retryable:false, profilEnregistre:true, details:{versionClient, versionMin} } — jamais `ok:true`, jamais d\'accusé',
         rL.j.status === 'nut_refuse' && rL.j.ok === false && rL.j.code === 'NUT_CLIENT_INCOMPATIBLE' && rL.j.retryable === false && rL.j.profilEnregistre === true && J(rL.j.details) === J({ versionClient: 0, versionMin: 3 }) && !('nut' in rL.j) && rL.j.requestId === '', rL.t.slice(0, 300));
       t('PA01b ⭐⭐ RIEN de Nutrition n\'a été lu ni écrit : registre, journal, favoris, révision du compte, mémoire des opérations ET zone de récupération sont IDENTIQUES octet pour octet à ceux d\'avant l\'envoi',
         etatNut(X, m) === avant, '');
@@ -398,7 +398,7 @@ module.exports.ecran = async function ecran(t0, b, PORT) {
           await A.fermer();
         });
 
-        /* PC05 — le serveur REFUSE ce client en entier (version incompatible) : rien n'est confirmé, rien n'est effacé, aucune boucle de réessais, un message clair UNE fois */
+        /* PC05 — le serveur REFUSE le VOLET Nutrition de ce client en entier (version incompatible) : rien n'est confirmé, rien n'est effacé, aucune boucle de réessais, un message clair UNE fois */
         if (bloc('PC05')) await garde('PC05', async () => {
           const m = email('c05'); await pool.init(0, m, { code: CODE_PERSO });
           const A = await appareil('A', 1, m);
@@ -411,7 +411,7 @@ module.exports.ecran = async function ecran(t0, b, PORT) {
           const minuteur = await A.ev(() => _nutRelance.timer !== null);
           const jAp = canon(await A.journal()); const dsk = await A.registreDisque();
           A.fabriqueSeul = false; A.reponseFabriquee = null; await A.sync();
-          t('PC05 ⭐⭐ (vrai client) le serveur REFUSE ce client en entier (`NUT_CLIENT_INCOMPATIBLE`, non réessayable) : la suppression reste « en attente » (ni confirmée, ni marquée rejetée, ni effacée — sur disque comme en mémoire), le journal est intact, AUCUNE boucle de réessais n\'est planifiée, le message dit de rouvrir l\'application et que rien n\'est perdu — UNE seule fois malgré deux tentatives, aucun succès affiché',
+          t('PC05 ⭐⭐ (vrai client) le serveur REFUSE le VOLET Nutrition de ce client en entier (`NUT_CLIENT_INCOMPATIBLE`, non réessayable ; le reste de l\'envoi est enregistré) : la suppression reste « en attente » (ni confirmée, ni marquée rejetée, ni effacée — sur disque comme en mémoire), le journal est intact, AUCUNE boucle de réessais n\'est planifiée, le message dit de rouvrir l\'application et que rien n\'est perdu — UNE seule fois malgré deux tentatives, aucun succès affiché',
             !!e1.i && !e1.c && !e1.x && dsk.some((e) => e.i === 'sem2-00000002' && !e.c && !e.x) && jAp === journalAvant && minuteur === false
             && tc.filter((x) => /ne peut plus synchroniser la Nutrition/.test(x) && /Rien n'est perdu/.test(x)).length === 1 && !tc.some((x) => SUCCES.test(x)), J({ e1, minuteur, tc }));
           t('PC05b ⭐ … et quand le serveur accepte de nouveau, la MÊME suppression est confirmée sans geste ni doublon : le refus n\'avait rien abîmé',
