@@ -18,6 +18,8 @@
        - AJOUTEES : W22 [equivalente] (clearTimeout au lieu de clearInterval : la preuve que `_restIvCale` etait inutile),
          D22 a D31 (upSet non idempotent, lecture de tous les champs, refus du rendu cible muets ou absents, onchange des
          repetitions retire).
+[!!] SEANCE-HL-01 (02/11/2026) : D32 et D33 gardent l'etiquette « Serie degressive terminee » (posee APRES startRest, qui vide #rest-label) :
+     D32 = dropset ↓ dans l'exercice (DOM-T20), D33 = dernier exercice d'un groupe « drop » (DOM-T20b).
 [!!] DANS LA COPIE MUTEE : chaque mutation est appliquee a un ARBRE COPIE, jamais au depot (BUGS.md §60).
 Point de depart : 0 rouge sur l'arbre sain, mesure d'abord ; l'arbre sain est REJOUE a la fin (banc instable = campagne refusee).
 Les mutations [deguisee] cassent l'invariant sans toucher a la ligne evidente ; [negatif] et [equivalente] ne doivent PAS
@@ -185,6 +187,14 @@ MUT = [
      [(LO, "      if(!a||!b||!carte.contains(a)) return _rcRefus('ligne '+(k+1)+' absente');", "      if(!a||!b||!carte.contains(a)) return false;")], 'GARDE', 'DOM-T17', 'dom'),
     ('D31 un champ manquant dans la serie validee n\'est plus verifie',
      [(LO, "\n        ||(k===si&&a.querySelectorAll('.sinp').length!==b.querySelectorAll('.sinp').length&&'.sinp');", ";")], 'GARDE', 'DOM-T17', 'dom'),
+    ("D32 le dropset ↓ pose son etiquette AVANT startRest (qui la vide) : elle n'est jamais lue",
+     [(LO, "        startRest(sec);\n        if(lbl)lbl.textContent='📉 Série dégressive terminée';\n",
+           "        if(lbl)lbl.textContent='📉 Série dégressive terminée';\n        startRest(sec);\n")], 'GARDE', 'DOM-T20', 'dom'),
+    ("D33 le dernier exercice d'un groupe « drop » pose son etiquette AVANT startRest (qui la vide) : elle n'est jamais lue",
+     [(LO, "      // Dernier palier : repos complet — l'étiquette « Série dégressive terminée » se pose plus bas, APRÈS `startRest()` (SEANCE-HL-01)\n",
+           "      // Dernier palier : repos complet\n      const lbl=document.getElementById('rest-label');\n      if(lbl)lbl.textContent='📉 Série dégressive terminée';\n"),
+      (LO, "    if(lbl&&groupType==='drop'&&S.wkt.exs[ei].group)lbl.textContent='📉 Série dégressive terminée';   // SEANCE-HL-01 : dernier exercice d'un groupe « drop » — APRÈS `startRest()`, qui vide `#rest-label`\n", "")],
+     'GARDE', 'DOM-T20b', 'dom'),
     ('D14 [negatif] un commentaire du rendu cible est reformule',
      [(LO, "// au moindre doute : la reconstruction d'avant", "// en cas de doute : reconstruction")], 'OK', None, 'dom'),
 ]

@@ -421,6 +421,12 @@ le lot) ; `upSet` ne retire pas un 1RM devenu sans objet quand la charge passe �
 kg × reps à la fin — piste, non reproduite sur le lot) ; dropset ↓ : l'étiquette « 📉 Série dégressive terminée » posée avant
 `startRest()`, qui l'efface (vu à la lecture, non reproduit, hors lot) ; `tools/mut_rir_superset.py` M9 (§5).
 
+> ↪️ **02/11, SEANCE-HL-01** : l'étiquette « 📉 Série dégressive terminée » est corrigée sur la branche `claude/seance-hl-01` (posée APRÈS `startRest()`,
+> aux deux endroits qui l'écrivaient : dropset ↓ dans l'exercice, dernier exercice d'un groupe « drop »). Témoins DOM-T20, T20b, T20c ; mutations D32, D33.
+> Même famille, NON touchée : « Échauffement », « Récup. à l'échec » et « Abdos » restent vidés par `startRest()` (journal ft-v1082, décision R30).
+> Harnais du banc DOM (test seul) : `ft4_lms` y est désormais CALCULÉ (mois écoulé). Sans cela le banc plantait dès le 1ᵉʳ novembre — la fenêtre du bilan mensuel
+> (fixture PREV datée du 27/10) interceptait les clics ; mesuré le 02/11 sur `9bb9fcb7` non modifié : 20 OK puis plantage, indépendamment de HL-01.
+
 **Régressions du lot** : deux, trouvées par les tests, **corrigées** (correctifs 1 et 2) ; aucune connue à ce jour.
 
 ## 7. Recette iPhone — PRÉPARÉE, NON EXÉCUTÉE
@@ -621,7 +627,7 @@ Exécution future (sur GO TESTS) : nouveau banc ≈ 3 min ; bancs voisins `seanc
 
 **Constatés en lisant, hors de ce lot, non reproduits, non corrigés** :
 - dropset ↓ dans un exercice : l'étiquette « 📉 Série dégressive terminée » est posée AVANT `startRest()`, qui l'efface — le témoin DOM-T07
-  ne l'exige donc pas ;
+  ne l'exige donc pas ; ↪️ **02/11 : corrigé (SEANCE-HL-01), exigé par DOM-T20 / T20b** ;
 - `tools/mut_rir_superset.py` M9 : son ancre dans `setup.js` est déjà absente sur `e2b942f3` (mutation invalide avant ce lot) ;
 - au retour au premier plan après la fin d'un repos : une vibration de fin et l'avance automatique ; à la réouverture de l'app : ni l'une ni
   l'autre (comportement existant, décision produit, inchangé ici).

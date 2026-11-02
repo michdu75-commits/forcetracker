@@ -30,9 +30,14 @@
    ═══════════════════════════════════════════════════════════════════════════════ */
 'use strict';
 
+// ⚠️ SEANCE-HL-01 (02/11/2026) : le bilan mensuel (`checkMonthlySummary`, app.js) s'ouvre 2,2 s après le chargement quand le mois ÉCOULÉ contient des
+// séances — la fixture PREV est datée du 27/10 : dès le 1ᵉʳ novembre il interceptait les clics de tout ce banc (plantage mesuré le 02/11 sur 9bb9fcb7,
+// SANS la correction HL-01). On le déclare déjà annoncé (`ft4_lms`), quelle que soit la date du jour : calculé, jamais figé sur un mois.
+const MOIS_ECOULE = (() => { const [y, m] = new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/Paris' }).split('-').map(Number);
+  return m === 1 ? (y - 1) + '-12' : y + '-' + String(m - 1).padStart(2, '0'); })();
 const BASE = { ft4_bw: '82', ft4_age: '41', ft4_ht: '178', ft4_gender: 'H', ft4_goal: 'force', ft4_ob2: '1', ft4_name: 'Test',
   ft4_email: 't@t.t', ft4_devtoken: 'f'.repeat(64), ft4_tester_eq_v1: '1', ft4_ok: '1', ft4_stmig1: '1',
-  ft4_guide_shown: '1', ft4_wn_seen: '999', ft4_rest: '120', ft4_sessions: '[]' };
+  ft4_guide_shown: '1', ft4_wn_seen: '999', ft4_rest: '120', ft4_lms: MOIS_ECOULE, ft4_sessions: '[]' };
 const DC = 'Développé Couché', SQ = 'Squat à la Barre';
 const S8 = (kg, reps, done) => ({ kg, reps, type: 'N', done: !!done });
 // Deux exercices ordinaires (hors groupe) : 4 séries pré-remplies à 60 kg × 8, puis 3 à 100 kg × 5. Séance démarrée il y a 10 min.
@@ -485,12 +490,63 @@ async function ecran(t, b, PORT) {
       toggleSet(0, 2); await attendre(150);
       const f = { repos: !!restIv, faits: S.wkt.exs[0].sets.map(s => !!s.done) };
       stopRest(); return { p, f }; });
-    /* ⚠️ L'étiquette « 📉 Série dégressive terminée » n'est PAS exigée ici : dans `toggleSet`, elle est posée AVANT `startRest()`, qui
-       l'efface (`_stopRestTimerOnly`) — comportement existant, vu à la lecture le 30/10, non reproduit, hors de ce lot (signalé dans
-       docs/WORKOUT-CORE-01.md). Ce témoin garde l'enchaînement : pas de repos entre paliers, focus au palier suivant, repos à la fin. */
+    /* ↪️ 02/11 (SEANCE-HL-01) : l'étiquette « 📉 Série dégressive terminée » n'est pas exigée ICI mais par DOM-T20 / T20b (elle était posée AVANT
+       `startRest()`, qui l'efface — corrigé). Ce témoin garde l'enchaînement : pas de repos entre paliers, focus au palier suivant, repos à la fin. */
     t('DOM-T07 ⭐ dropset ↓ : palier 1 validé → pas de repos, le focus va au palier suivant (comme avant) ; dernier palier → le repos part',
       r10.p.focus === 'sr-0-1' && !r10.p.repos && r10.f.repos && _det(r10.f.faits) === _det([true, true, true]), _det(r10));
     await X.cx.close();
+  }
+  {
+    /* ── D ter. « 📉 Série dégressive terminée » SURVIT AU DÉPART DU REPOS (SEANCE-HL-01, 02/11/2026) ─────────────────────────────────
+       `toggleSet` posait l'étiquette AVANT `startRest()`, dont `stopRest()` vide `#rest-label` : personne ne l'a jamais lue. Témoin de
+       COMPORTEMENT — ce que la personne lit dans le dock du repos : l'étiquette est là et VISIBLE dès le dernier palier, elle est encore là
+       après le 1ᵉʳ tic du minuteur, elle part avec le repos (« Passer »), et une série ordinaire n'en reçoit jamais. Les deux chemins qui la
+       posent sont joués : dropset ↓ DANS l'exercice (T20), dernier exercice d'un groupe « drop » (T20b). */
+    const ETIQ = '📉 Série dégressive terminée';
+    const XD = await ouvrir({ wkt: WKT({ exs: [{ name: DC, sets: [S8(60, 8), S8(55, 8), S8(50, 8)], dropset: { paliers: 3, pct: 10, direction: 'down' } }] }) });
+    const e1 = await XD.pg.evaluate(async () => {
+      const attendre = ms => new Promise(r => setTimeout(r, ms));
+      const lit = () => { const l = document.getElementById('rest-label'), r = l ? l.getBoundingClientRect() : { width: 0, height: 0 };
+        return { txt: l ? l.textContent : null, vu: !!l && r.width > 0 && r.height > 0 && getComputedStyle(l).display !== 'none',
+          barre: document.getElementById('rest-bar').classList.contains('show') }; };
+      toggleSet(0, 0); await attendre(200); const p1 = lit();
+      toggleSet(0, 1); await attendre(200); const p2 = lit();
+      toggleSet(0, 2); await attendre(200); const fin = lit();
+      await attendre(1300); const tic = lit();                  // le 1ᵉʳ tic du métronome (calage ≤ 1,1 s) est passé
+      stopRest(); const arret = lit();                           // « Passer »
+      return { p1, p2, fin, tic, arret }; });
+    t('DOM-T20 ⭐ dropset ↓ : le dernier palier validé affiche « 📉 Série dégressive terminée » dans le dock (visible), elle SURVIT au premier tic du minuteur et part avec le repos ; avant le dernier palier, ni repos ni étiquette',
+      !e1.p1.barre && !/dégressive/.test(e1.p1.txt || '') && !e1.p2.barre && !/dégressive/.test(e1.p2.txt || '')
+      && e1.fin.barre && e1.fin.txt === ETIQ && e1.fin.vu && e1.tic.barre && e1.tic.txt === ETIQ && e1.tic.vu
+      && !e1.arret.barre && e1.arret.txt === '', _det(e1));
+    await XD.cx.close();
+    const XG = await ouvrir({ wkt: WKT({ exs: [Object.assign({ name: DC, sets: [S8(60, 8), S8(55, 8)] }, { group: 'g3', groupType: 'drop' }),
+      Object.assign({ name: SQ, sets: [S8(100, 5), S8(90, 5)] }, { group: 'g3', groupType: 'drop' })] }) });
+    const e2 = await XG.pg.evaluate(async () => {
+      const attendre = ms => new Promise(r => setTimeout(r, ms));
+      const lit = () => { const l = document.getElementById('rest-label'), r = l ? l.getBoundingClientRect() : { width: 0, height: 0 };
+        return { txt: l ? l.textContent : null, vu: !!l && r.width > 0 && r.height > 0 && getComputedStyle(l).display !== 'none',
+          barre: document.getElementById('rest-bar').classList.contains('show') }; };
+      toggleSet(0, 0); await attendre(200); const a = lit(), exp = _expandedEx;   // 1ᵉʳ exercice du groupe : on passe au suivant, sans repos
+      toggleSet(1, 0); await attendre(200); const fin = lit();                     // dernier exercice du groupe : le repos part
+      await attendre(1300); const tic = lit();
+      stopRest(); const arret = lit();
+      return { a, exp, fin, tic, arret }; });
+    t('DOM-T20b ⭐ groupe « drop » : le dernier exercice du groupe validé affiche « 📉 Série dégressive terminée » (visible, encore là après le premier tic, retirée avec le repos) ; le premier exercice ne déclenche ni repos ni étiquette',
+      !e2.a.barre && e2.exp === 1 && !/dégressive/.test(e2.a.txt || '') && e2.fin.barre && e2.fin.txt === ETIQ && e2.fin.vu
+      && e2.tic.txt === ETIQ && e2.tic.vu && !e2.arret.barre && e2.arret.txt === '', _det(e2));
+    await XG.cx.close();
+    const XO = await ouvrir();
+    const e3 = await XO.pg.evaluate(async () => {
+      const attendre = ms => new Promise(r => setTimeout(r, ms));
+      const lit = () => { const l = document.getElementById('rest-label'), r = l ? l.getBoundingClientRect() : { width: 0, height: 0 };
+        return { txt: l ? l.textContent : null, vu: !!l && r.width > 0 && r.height > 0 && getComputedStyle(l).display !== 'none',
+          barre: document.getElementById('rest-bar').classList.contains('show') }; };
+      toggleSet(0, 0); await attendre(200); const o = lit();
+      stopRest(); return { o }; });
+    t('DOM-T20c une série ORDINAIRE n\'affiche jamais « Série dégressive terminée » (le repos part, sans cette étiquette)',
+      e3.o.barre && !/dégressive/.test(e3.o.txt || ''), _det(e3));
+    await XO.cx.close();
   }
   {
     // dropset ↑ (« monte le poids — repos normal entre les séries ») : il passe par la fin ordinaire de `toggleSet`, mais la ligne du

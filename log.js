@@ -2179,8 +2179,10 @@ function toggleSet(ei,si){
           return;
         }
         // Dernier palier → repos
-        if(lbl)lbl.textContent='📉 Série dégressive terminée';
+        // ⚠️ SEANCE-HL-01 (02/11/2026) : l'étiquette se pose APRÈS `startRest()`, comme la pyramide plus bas — `startRest()` appelle `stopRest()`,
+        // qui VIDE `#rest-label` : posée avant, « Série dégressive terminée » n'a jamais été lue par personne (témoin DOM-T20).
         startRest(sec);
+        if(lbl)lbl.textContent='📉 Série dégressive terminée';
         if(!isAbdo&&_REPOS_PRESETS.includes(sec))_highlightRestPreset(sec);else _highlightRestPreset(-1);
         if(navigator.vibrate)navigator.vibrate([50]);
         renderExBlocks();return;
@@ -2220,9 +2222,7 @@ function toggleSet(ei,si){
       if(navigator.vibrate)navigator.vibrate([50]);
       return;
     } else if(groupType==='drop'&&S.wkt.exs[ei].group){
-      // Dernier palier : repos complet
-      const lbl=document.getElementById('rest-label');
-      if(lbl)lbl.textContent='📉 Série dégressive terminée';
+      // Dernier palier : repos complet — l'étiquette « Série dégressive terminée » se pose plus bas, APRÈS `startRest()` (SEANCE-HL-01)
     } else if(groupType==='super'&&S.wkt.exs[ei].group){
       // Dernier exo du tour → retour au 1er exercice du groupe pour le tour suivant
       const gMembers=_ssMembers(S.wkt.exs[ei].group);
@@ -2277,6 +2277,7 @@ function toggleSet(ei,si){
       // serait plus déroutant que de ne rien faire (R29 — le coût de l'erreur décide).
     }
     startRest(sec);
+    if(lbl&&groupType==='drop'&&S.wkt.exs[ei].group)lbl.textContent='📉 Série dégressive terminée';   // SEANCE-HL-01 : dernier exercice d'un groupe « drop » — APRÈS `startRest()`, qui vide `#rest-label`
     /* 🗣️ ON DIT POURQUOI LE CHRONO A CHANGÉ, sinon 2 min au lieu de 45 s se lit comme un bug
        (R30 appliqué à l'écran).
        ⚠️⚠️ ET C'EST POSÉ **APRÈS** `startRest`, PAS AVANT — trouvé en vérifiant à l'écran, pas
