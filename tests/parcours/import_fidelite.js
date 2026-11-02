@@ -170,6 +170,20 @@ module.exports.ecran = async function (t, b, PORT) {
   t('IIF-B10 ⭐⭐ « Régler » propose les DEUX BORNES de la consigne (3:00 et 4:00) ; la personne choisit 4:00 → le chrono passe à 240 s (même chemin que les préréglages)',
     choix.avant.min && choix.avant.max && /3-4 min/.test(choix.avant.txt) && choix.apres.tot === 240 && choix.apres.pref === 240, js(choix));
   t('IIF-B11 rien n\'est choisi À LA PLACE de la personne : avant son geste le chrono tournait au réglage global (130 s)', choix.avant.tot === 130, js(choix.avant));
+  // un repos CHIFFRÉ (choisi dans l'éditeur) gagne sur la consigne écrite : rien de contradictoire à l'écran
+  const dbl = await pg.evaluate(() => {
+    S.defRest = 130; S.exRestPref = {};
+    const avant = S.programmes;                                            // on AJOUTE un programme, on n'écrase pas ceux des autres tests
+    S.programmes = avant.concat([{ id: 'p9', name: 'Mixte', weeks: 0, startDate: '', days: [{ label: 'J1', exs: [{ name: 'Squat à la Barre', sets: [{ kg: 100, reps: 5, type: 'N', rest: 150, restTxt: '2-3 min' }, { kg: 100, reps: 5, type: 'N', rest: 0, restTxt: '2-3 min' }] }] }] }]);
+    S.wkt = null; _loadProgDayVraiment(S.programmes.length - 1, 0); stopRest();
+    toggleSet(0, 0); const a = { tot: restTot, cons: (document.getElementById('rest-consigne') || {}).style && document.getElementById('rest-consigne').style.display };
+    stopRest(); toggleSet(0, 1); const b2 = { tot: restTot, cons: document.getElementById('rest-consigne').style.display, txt: document.getElementById('rest-consigne').textContent };
+    const garde = S.wkt.exs[0].sets[0].restTxt;
+    stopRest(); S.programmes = avant; S.wkt = null; persist();
+    return { a, b: b2, restTxtGarde: garde };
+  });
+  t('IIF-B14 ⭐ une série au repos CHIFFRÉ (150 s, choisi dans l\'éditeur) lance 150 s SANS afficher la consigne « 2-3 min » ; la voisine non chiffrée l\'affiche — et le texte écrit n\'a pas été effacé',
+    dbl.a.tot === 150 && dbl.a.cons !== 'block' && dbl.b.tot === 130 && dbl.b.cons === 'block' && /2-3 min/.test(dbl.b.txt) && dbl.restTxtGarde === '2-3 min', js(dbl));
   // le « + » central (règle d'or n°9) ne bouge pas quand la consigne s'affiche
   const fab = await pg.evaluate(() => {
     const r = () => { const e = document.getElementById('nb-log'); const q = e && e.getBoundingClientRect(); return q ? [Math.round(q.left), Math.round(q.top), Math.round(q.width), Math.round(q.height)] : null; };
@@ -231,6 +245,16 @@ module.exports.ecran = async function (t, b, PORT) {
   t('IIF-C03 ⭐⭐ ÉCRITURE DU COACH — « 1.30 mins » = 90 s, « 40 sec » = 40 s, appliqués à chaque série ; la dernière série d\'un exercice utilise SON repos (pas celui de l\'exercice suivant)',
     trans.leg1.join() === '90' && trans.leg2.join() === '90' && trans.mol1.join() === '40', js({ l1: trans.leg1, l2: trans.leg2, m1: trans.mol1 }));
 
+  // ── A (suite). Lecture du repos par série et séries en couleur — après le chrono, qui lit le programme de la section A ──
+  await importer({ name: 'Couleur', weeks: 0, startDate: '', days: [{ label: 'J1', exercises: [L('Curl barre EZ', 5, 8, 30, 'Méthode du coach', { specialSets: [3, 4] })] }] });
+  const pCoul = await enregistrer();
+  t('IIF-A08 ⛔ les séries « en couleur » du document (specialSets) ne sont plus jetées en silence : le programme dit QUELLES séries (n° 4, 5), sans deviner leur sens',
+    /Séries en couleur dans le document : n° 4, 5/.test(pCoul.days[0].exs[0].note) && /Méthode du coach/.test(pCoul.days[0].exs[0].note), js(pCoul.days[0].exs[0]));
+  await importer({ name: 'Repli', weeks: 0, startDate: '', days: [{ label: 'J1', exercises: [L('Rowing barre', 3, 8, 60, '', { rest: '2 min', restPerSet: ['', '', '3 mins'] })] }] });
+  const pRepli = await enregistrer();
+  t('IIF-A07 ⭐ une valeur par série VIDE retombe sur le repos de l\'exercice (« 2 min »), une valeur écrite pour LA série gagne (« 3 mins » = 180 s)',
+    pRepli.days[0].exs[0].sets.map(s => s.rest).join() === '120,120,180', js(SERIES(pRepli.days[0].exs[0])));
+
   // ── outils des sections D à H ──
   const jour = (exs) => ({ name: 'Cas', weeks: 0, startDate: '', days: [{ label: 'J1', exercises: exs }] });
   const ECH = (name, reps, kg, note, extra) => L(name, 1, reps, kg, note === undefined ? 'ECH' : note, extra);
@@ -246,6 +270,9 @@ module.exports.ecran = async function (t, b, PORT) {
     D1.ex.length === 1 && TYPES(D1.ex[0]) === 'ÉÉÉÉNNN' && D1.ex[0].sets.map(s => s.kg).join() === '50,65,80,85,90,90,90' && D1.ex[0].sets.map(s => s.reps).join() === '5,3,2,1,3,3,3'
     && D1.ex[0].sets.map(s => s.rest).join() === '0,0,90,120,0,0,0' && D1.ex[0].sets.map(s => s.restTxt || '').join('|') === '60-90 s|60-90 s|||3-4 min|3-4 min|3-4 min', js(SERIES(D1.ex[0])));
   t('IIF-D01b … et le repos du travail ne déborde PAS sur les échauffements (la 1ʳᵉ série n\'a pas « 3-4 min »)', D1.ex[0].sets[0].restTxt === '60-90 s', js(SERIES(D1.ex[0])));
+  const D1c = await vue([ECH('Soulevé de terre', 5, 60, 'ECH'), ECH('Soulevé de terre', 3, 80, 'ECH'), L('Soulevé de terre', 3, 3, 130, 'RIR 2', { rest: '3 min' })]);
+  t('IIF-D01c ⛔ un échauffement SANS repos écrit n\'hérite JAMAIS du repos de la ligne de travail (0, 0, puis 180 ×3) — pas de décalage, pas de débordement',
+    D1c.ex.length === 1 && D1c.ex[0].sets.map(s => s.rest).join() === '0,0,180,180,180' && TYPES(D1c.ex[0]) === 'ÉÉNNN', js(SERIES(D1c.ex[0])));
   const D3 = await vue([L('Développé couché', 1, 5, 50, 'Échauffement'), L('Développé couché', 1, 3, 65, 'échauffement léger'), L('Développé couché', 3, 5, 85, '')]);
   t('IIF-D02 échauffement présent DANS UNE NOTE seulement → regroupé (ÉÉNNN)', D3.ex.length === 1 && TYPES(D3.ex[0]) === 'ÉÉNNN', js(D3.ex.map(e => e.name + ':' + TYPES(e))));
   const D4 = await vue([L('Curl biceps', 1, 12, 14, ''), L('Curl biceps', 1, 10, 16, '')]);
@@ -325,7 +352,8 @@ module.exports.ecran = async function (t, b, PORT) {
     L('Presse Zeta Prototype', 3, 10, 120, 'Consigne du coach', { rest: '2 min' }),
     L('Squat machine', 3, 8, 100, '', { rest: '2 min' }),
     L('Élévations latérales poulie', 3, 12, 10, '', { rest: '90 s' }),
-    L('Développé couché Smith', 3, 8, 60, '', { rest: '2 min' })];
+    L('Développé couché Smith', 3, 8, 60, '', { rest: '2 min' }),
+    L('Chest Press déclinée', 3, 8, 40, '', { rest: '2 min' })];
   await importer(jour(PV));
   const aperc = await pg.evaluate(() => {
     document.querySelectorAll('.overlay.open').forEach(o => o.classList.remove('open'));
@@ -347,9 +375,27 @@ module.exports.ecran = async function (t, b, PORT) {
   const sqM = vmDe(/squat machine/i), elP = vmDe(/lat[ée]rales.*(poulie|c[âa]ble)/i), smi = vmDe(/couch[ée].*smith|smith.*couch[ée]/i);
   t('IIF-F05 ⛔⛔ AUCUN rattachement automatique à un AUTRE MATÉRIEL (squat machine ↛ squat barre ; poulie ↛ haltères ; Smith ↛ libre) — garde-fous IMPORT-MAP conservés',
     !/barre/i.test(sqM.n || '') && /machine/i.test(sqM.n || '') && /c[âa]ble|poulie/i.test(elP.n || '') && !/halt[èe]re/i.test(elP.n || '') && /smith/i.test(smi.n || ''), js({ sqM, elP, smi }));
+  const cCP = aperc.cartes[aperc.cartes.length - 1];
+  t('IIF-F09 ⭐ un exercice AMBIGU est annoncé « À confirmer » (jamais rattaché d\'office) et son nom du document est conservé tant que la personne n\'a pas dit oui',
+    cCP.statut === 'conf' && /À confirmer/.test(cCP.lib) && /Chest Press déclinée/i.test(cCP.nom), js(cCP));
+  // confort sur un téléphone (Chromium 390 × 844 — PAS un iPhone) : rien ne déborde, les cibles tactiles tiennent
+  const lay = await pg.evaluate(() => {
+    const ex = _impExtracted.days[0].exercises; const nom0 = ex[0].name, note0 = ex[0].note;     // restaurés plus bas : F06 / F07 repartent du même état
+    ex[0].name = 'Développé couché incliné prise neutre aux haltères avec pause en bas de mouvement et contrôle de la phase excentrique (variante du coach)';
+    ex[0].note = 'RIR 2-3 | ' + 'consigne très longue sans espace '.repeat(8) + 'x'.repeat(60);
+    _impOuverts.clear(); impToggleDet(0, 0); impEditRepos(0, 0, 2);
+    const pv = document.getElementById('imp-preview'), W = innerWidth;
+    const dehors = [...pv.querySelectorAll('.imp-card, .imp-card *')].filter(e => { const r = e.getBoundingClientRect(); return r.width > 0 && (r.right > W + 0.5 || r.left < -0.5); }).length;
+    const h = sel => [...pv.querySelectorAll(sel)].map(b => Math.round(b.getBoundingClientRect().height));
+    const res = { deborde: pv.scrollWidth - pv.clientWidth, dehors, det: h('.imp-det'), x: h('.imp-x'), rp: h('.imp-rp'), ty: h('.imp-ty'), puces: h('.imp-rpe-c button'), ok: h('.imp-prop-b button') };
+    ex[0].name = nom0; ex[0].note = note0; _impOuverts.clear(); _renderImpConfirm();
+    return res;
+  });
+  t('IIF-F10 ⭐ confort téléphone : un nom de 130 caractères et une consigne sans espace ne font pas déborder l\'aperçu ; boutons « Voir / corriger » et ✕ ≥ 40 px, puces de repos et de type ≥ 34 px',
+    lay.deborde <= 0 && lay.dehors === 0 && lay.det.every(v => v >= 40) && lay.x.every(v => v >= 40) && lay.rp.every(v => v >= 34) && lay.ty.every(v => v >= 33) && lay.puces.every(v => v >= 34), js(lay));
   // corrections : le type et le repos d'une série se corrigent DANS l'aperçu, et c'est ce qui est enregistré
   const corr = await pg.evaluate(() => {
-    impToggleDet(0, 0);
+    _impOuverts.clear(); impToggleDet(0, 0);
     impBasculerType(0, 0, 1);                    // la 2ᵉ série d'échauffement (65×3) passe en travail
     impFixerRepos(0, 0, 3, 240);                 // « 3-4 min » → 4 min pour la 4ᵉ série
     impEditRepos(0, 0, 2);

@@ -7538,6 +7538,7 @@ async function analyzeImportPhotos(){
     _mergeImportBlocsEch();      // ⛔ UN SEUL filet (IMPORT-IA-FIDELITE-01) : le regroupement échauffement + travail, AVANT le rattachement VM.
                                  // L'ordre compte : il rend au nom sa forme nue (« Développé couché »), et c'est CE nom-là que le catalogue sait
                                  // reconnaître. Après, on rattacherait « Développé couché (échauffement) » — c'est-à-dire rien.
+    _impConserverSpeciales();    // les séries « en couleur » du document ne sont plus jetées en silence
     _vmMatchExtracted();   // VM : rattache aux références EXLIB (évite les doublons) AVANT l'aperçu
     _impOuverts.clear(); _impRepos=null;   // un NOUVEAU scan repart d'un aperçu fermé (l'état d'écran d'avant ne le concerne plus)
     _renderImpConfirm();
@@ -7753,6 +7754,22 @@ function _fusionneBlocImport(lignes){
   o.note=lot.length?lot.join(' | '):'';
   o._echFusion=nW;o._echLignes=nLW;o._blocLignes=lignes.length;
   return o;
+}
+/* 🎨 LES SÉRIES « EN COULEUR » DU DOCUMENT (`specialSets`, IMPORT-IA-FIDELITE-01). Le prompt demande à l'IA d'indiquer quelles séries ont leurs
+   reps en rouge / en couleur dans le PDF (méthode, échec, consigne du coach…). L'app, elle, n'en faisait RIEN depuis ft-v292 (le champ n'était plus
+   converti en « échec ») : l'indication disparaissait entre l'IA et le programme, sans un mot. Une donnée du document qu'on ne sait pas exécuter
+   ne se jette pas : elle est CONSERVÉE dans la note de l'exercice, numérotée de 1 (« n° 2, 3 »), et donc visible dans l'aperçu et à la séance.
+   ⛔ On ne devine pas ce que la couleur veut dire (échec ? méthode ?) : on dit seulement QUELLES séries. Appelée APRÈS les regroupements, quand les indices
+   sont ceux de l'exercice final (`_fusionneBlocImport` les a décalés). */
+function _impConserverSpeciales(){
+  ((_impExtracted&&_impExtracted.days)||[]).forEach(day=>(day.exercises||[]).forEach(ex=>{
+    if(!ex||!Array.isArray(ex.specialSets)||!ex.specialSets.length)return;
+    const n=_seriesImport(ex).n;
+    const idx=[...new Set(ex.specialSets.map(k=>parseInt(k)).filter(k=>k>=0&&k<n))].sort((a,b)=>a-b);
+    delete ex.specialSets;
+    if(!idx.length)return;
+    if(String(ex.note||'').indexOf('Séries en couleur')<0)ex.note=(ex.note?ex.note+' | ':'')+'Séries en couleur dans le document : n° '+idx.map(k=>k+1).join(', ');
+  }));
 }
 /* ═══ L'IDENTITÉ D'UN EXERCICE IMPORTÉ — TROIS RÉPONSES, PAS DEUX (IMPORT-IA-FIDELITE-01, 02/11/2026) ═══════════════
    « Ces deux lignes désignent-elles le même mouvement ? » avait deux réponses (oui / non) et DEUX propriétaires qui ne se
