@@ -23,7 +23,7 @@ MUT = [
     ('M02 « 1.30 » se lit « 1,3 minute » (78 s) au lieu de 1 min 30',
      [(CO, "    if(m[2].length===2&&+m[2]<60) return {sec:(+m[1])*60+(+m[2]),u:'m'};      // 1.30 = 1 min 30\n", "")], 'GARDE'),
     ('M03 une PLAGE devient un repos chiffré (la borne basse est INVENTÉE comme durée)',
-     [(CO, "if(d&&g&&g.sec>0&&d.sec>g.sec&&d.sec<=3600) return {sec:0,min:g.sec,max:d.sec,txt};", "if(d&&g&&g.sec>0&&d.sec>g.sec&&d.sec<=3600) return {sec:g.sec,min:g.sec,max:d.sec,txt};")], 'GARDE'),
+     [(CO, "if(d&&g&&g.sec>0&&d.sec>g.sec&&d.sec<=3600&&d.sec<=g.sec*5) return {sec:0,min:g.sec,max:d.sec,txt};", "if(d&&g&&g.sec>0&&d.sec>g.sec&&d.sec<=3600&&d.sec<=g.sec*5) return {sec:g.sec,min:g.sec,max:d.sec,txt};")], 'GARDE'),
     ('M04 le TEXTE d\'une plage ou d\'une consigne floue est perdu (txt vidé)',
      [(CO, "  return {sec:0,min:0,max:0,txt};\n}\nfunction _secRepos", "  return {sec:0,min:0,max:0,txt:''};\n}\nfunction _secRepos")], 'GARDE'),
     ('M05 un entier seul (« 2 ») se lit en SECONDES au lieu de minutes',

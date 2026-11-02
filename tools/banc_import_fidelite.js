@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+require('../tests/_garde_reseau.js');   // ⛔ GARDE RÉSEAU EN 1ʳᵉ INSTRUCTION (D-031-SÉCURITÉ-01 : un nouveau banc se garde lui-même)
 /* BANC — IMPORT-IA-FIDELITE-01 (session-C, 02/11/2026) : du document au chronomètre (blocs B-IIF-*).
    Destiné à la passe complète (tests/parcours/runner.js) ET au contrôle négatif : `python3 tools/mut_import_fidelite.py`.
    Usage : node tools/banc_import_fidelite.js [pur|ecran]   (depuis la racine du dépôt ou d'un arbre copié)
