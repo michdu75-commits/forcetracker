@@ -2053,7 +2053,9 @@ function _logHistShrink_(email, recues, enBase) {
       dépend pas de l'ordre des entrées. Les anciennes chaînes nues (d'avant le 23/10) ne sont PAS reconnues ici — le client ne les envoie jamais.
    ⛔ Aucune normalisation du nom (`_afNorm` reste du client, B2) : `id:…` et `nom:…` ne se confondent jamais. Sans effet sur `foodLog`,
       `savedFoods` et P1 : ce sont des propositions qu'on masque, pas des repas, et aucun favori n'est supprimé (la suppression à la
-      remise à zéro est un autre sujet). Dictionnaire sans prototype : une clé comme `__proto__` n'est qu'une clé. */
+      remise à zéro est un autre sujet). Dictionnaire sans prototype : une clé comme `__proto__` n'est qu'une clé.
+   🚪 INTÉGRÉE À NUT-SYNC-02 (03/11/2026, décision de Michel : `hiddenFoods` appartient au domaine Nutrition). Elle ne s'exécute QUE derrière la porte du volet : `handleSaveProfile_` (porte ouverte, sous le verrou, restituée avec le reste du volet si une erreur survient)
+   et `handleAdminRestore_` (sous le même verrou ; voie réservée à l'administrateur, ouverte même pendant `NUT_SUSPENDU`). Un envoi suspendu, ou d'un ancien appareil sur un compte à état v3, ne la déclenche pas — et n'empêche jamais d'enregistrer séances, records et pesées. */
 var NUT_MASQUES_MAX_ = 300;
 function _nutMasquesFusion_(existant, recu) {
   var maintenant = Date.now(), par = Object.create(null);
@@ -4959,22 +4961,24 @@ function handleAdminRestore_(body) {
   let data = body.data;
   if (!data || !data.profile) return json_({status:'error', error:'data.profile required'});
 
-  /* 🙈 D-141 minimal : une sauvegarde d'AVANT ne fait pas revenir un aliment masqué depuis. Les masquages du compte (dont `*`) sont
-     FUSIONNÉS à ceux de la sauvegarde (le plus tard gagne, un envoi plus court ou absent ne retire rien). Sur une COPIE du profil :
-     le fichier de sauvegarde reçu n'est pas modifié. Les autres champs (journal, favoris…) suivent le chemin de restauration d'avant. */
-  const _avant = loadUserData_(email);
-  const _masques = _nutMasquesFusion_(_avant && _avant.profile && _avant.profile.hiddenFoods, data.profile.hiddenFoods);
-  if (_masques.length) data = Object.assign({}, data, { profile: Object.assign({}, data.profile, { hiddenFoods: _masques }) });
-
-  data.email = email;
-  data.updatedAt = new Date().toISOString();
   /* NUT-SYNC-02 phase A : une restauration réécrit le compte ENTIER — sous le même verrou que `saveProfile`, jamais entre sa lecture et son écriture. Occupé : réponse réessayable, rien n'est écrit. */
   const _hv = _nutVerrouPrendre_();
   if (!_hv) return json_({status:'error', error:'busy', ok:false, code:'NUT_LOCK_BUSY', retryable:true});
   try {
+    /* 🙈 D-141 — UNE SEULE LECTURE DU COMPTE, SOUS LE VERROU : elle sert aux masquages (ici) ET au marqueur de protocole (plus bas). Lue AVANT le verrou (première version reçue de D-141), un `saveProfile` concurrent pouvait ajouter un masquage entre cette lecture et
+       l'écriture : la restauration l'aurait écrasé — ce que la ligne ci-dessus interdit (« jamais entre sa lecture et son écriture »). Les masquages du compte (dont `*`) sont FUSIONNÉS à ceux de la sauvegarde (le plus tard gagne, un envoi plus court ou absent
+       ne retire rien : une sauvegarde d'AVANT ne fait pas revenir un aliment masqué depuis), sur une COPIE du profil — le fichier reçu n'est pas modifié. Les autres champs (journal, favoris…) suivent le chemin de restauration d'avant.
+       ⏸️ LA SUSPENSION (`NUT_SUSPENDU`) NE BLOQUE PAS CETTE VOIE, exprès (décision de Michel, 03/11/2026 ; D-148) : c'est l'outil de secours de l'administrateur — jeton `ADMIN_TOKEN` vérifié EN PREMIER, donc aucun client ordinaire n'y accède ni n'en profite pour contourner la
+       suspension. Fusionner les masquages pendant une suspension est sans risque (la fusion ne peut que masquer). Chaque restauration faite pendant une suspension s'écrit au journal d'exploitation MANUEL (`docs/EXPLOITATION-NUT-SUSPENSION.md`) : aucun code de
+       traçabilité n'est ajouté (D-148). ⛔ Ne pas ajouter ici de refus « suspendu ». */
+    const _courant = loadUserData_(email);
+    const _masques = _nutMasquesFusion_(_courant && _courant.profile && _courant.profile.hiddenFoods, data.profile.hiddenFoods);
+    if (_masques.length) data = Object.assign({}, data, { profile: Object.assign({}, data.profile, { hiddenFoods: _masques }) });
+    data.email = email;
+    data.updatedAt = new Date().toISOString();
     /* NUT-SYNC-02 correction (02/11/2026) : une restauration ne fait JAMAIS régresser un compte vers la voie tolérante. Une sauvegarde d'AVANT l'état v3 n'en porte ni marqueur, ni registre, ni opérations : sans cette ligne, un ancien appareil
        pourrait de nouveau écrire dans un compte dont les appareils à jour ont des suppressions à re-déclarer (leur guérison les renverra). Le marqueur du compte est donc conservé. */
-    var _proto = _nutProtoDe_(loadUserData_(email));
+    var _proto = _nutProtoDe_(_courant);
     if (_proto >= NUT_PROTOCOLE_MIN_ && !(Number(data.nutProto) >= _proto)) data.nutProto = _proto;
     saveUserData_(email, data);
   } finally { _nutVerrouRendre_(_hv, 'adminRestore'); }
