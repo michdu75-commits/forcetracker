@@ -82,7 +82,7 @@ MUT = [
     ('M26 la suspension n est plus journalisee',
      [(CO, "      Logger.log('[FT SUSPENSION] Nutrition suspendue (propriété ' + NUT_SUSPENSION_PROP_ + ') — rien de Nutrition n\\'est lu ni écrit, le reste du profil est enregistré');\n", "")], G('PB09b'), 'S', '', 'GARDE'),
     ('M27 une suspension laisse passer les envois sans changement apparent (le volet « vide » n est pas suspendu)',
-     [(CO, "  var volet = !!body && (body.foodLog !== undefined || body.savedFoods !== undefined || body.foodSupprimes !== undefined);", "  var volet = !!body && ((Array.isArray(body.foodLog) && body.foodLog.length > 0) || body.savedFoods !== undefined || body.foodSupprimes !== undefined);")], G('PB09e'), 'S', '', 'GARDE'),
+     [(CO, "  var volet = !!body && (body.foodLog !== undefined || body.savedFoods !== undefined || body.foodSupprimes !== undefined || body.hiddenFoods !== undefined);", "  var volet = !!body && ((Array.isArray(body.foodLog) && body.foodLog.length > 0) || body.savedFoods !== undefined || body.foodSupprimes !== undefined || body.hiddenFoods !== undefined);")], G('PB09e'), 'S', '', 'GARDE'),
     # ── la restauration admin ──
     ('M28 une restauration admin ne conserve plus le marqueur (le compte redevient « sans etat v3 » : un ancien appareil reecrit)',
      [(CO, "    if (_proto >= NUT_PROTOCOLE_MIN_ && !(Number(data.nutProto) >= _proto)) data.nutProto = _proto;\n", "")], G('PB12'), 'S', '', 'GARDE'),
