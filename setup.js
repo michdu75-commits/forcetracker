@@ -1124,6 +1124,10 @@ function _nutTraiterReponse(d,envoi){
   }
   /* ✅ ACCUSÉ VALIDE (ok:true, notre requestId). */
   _nutRelance.n=0; _nutAConfirmer=false;
+  /* 🪞 MIROIR, FAVORIS ET MASQUAGES (finalisation Nutrition, 03/11/2026) — du MÊME volet que le journal : Apps Script les refuse ou les suspend avec lui, et un envoi qu'il n'a pas acquitté n'est pas une sauvegarde. Ils n'arrivent donc au miroir QU'ICI, et seulement si
+     l'accusé rend compte du volet (`d.nut` : Apps Script l'a APPLIQUÉ). Ce sont les deux listes que CET envoi portait. Tout refus (suspension, version incompatible, zone de sécurité, erreur interne, verrou), toute réponse illisible ou sans notre `requestId` est sorti plus
+     haut : le miroir n'en reçoit rien, et rattrape à l'accusé valide suivant (chaque envoi porte les listes entières). Placé ICI, avant le traitement des conflits : il ne dépend de rien d'autre que de la validité de l'accusé. */
+  try{ if(d.nut && typeof d.nut==='object' && envoi.favoris && typeof sbEnvoyerFavoris==='function') sbEnvoyerFavoris(envoi.favoris.savedFoods,envoi.favoris.hiddenFoods); }catch(e){}
   const nut=(d.nut && typeof d.nut==='object') ? d.nut : {};
   let journal=false, registre=false, conflits=0, retires=0;
   const maintenant=Date.now();
@@ -1283,7 +1287,9 @@ function _cloudSync(){
          ⛔ NUT-SYNC-01 FINAL — CE CORPS RESTE LE SEUL CONSTRUCTEUR (R2), servi aux deux destinations. Mais le miroir Supabase REMPLACE un champ présent (migration 0003 : « un champ absent garde sa
          valeur ») : un journal plus COURT que celui du compte — appareil neuf, historique local raccourci par une panne — y remplacerait l'historique complet. La PORTE du miroir (`sbEnvoyer`,
          supabase.js) retire donc `foodLog` et `foodSupprimes` de tout envoi, comme elle retire déjà les justificatifs (la règle appartient à la porte, pas à l'appelant) ; ils n'y vont que par
-         `sbEnvoyerJournal`, appelée plus bas APRÈS un accusé valide qui dit que l'envoi couvrait tout le journal du compte (`complet`). */
+         `sbEnvoyerJournal`, appelée plus bas APRÈS un accusé valide qui dit que l'envoi couvrait tout le journal du compte (`complet`).
+         🪞 FINALISATION NUTRITION (03/11/2026) : `savedFoods` et `hiddenFoods` sont du MÊME volet — Apps Script les refuse ou les suspend avec le journal (`NUT_SUSPENDU`, `NUT_CLIENT_INCOMPATIBLE`…) alors que ce corps partait au miroir sans attendre sa réponse. La porte
+         les retire aussi ; ils n'y vont que par `sbEnvoyerFavoris`, APRÈS un accusé valide, avec CES deux listes (`_envoi.favoris`, plus bas) — celles que cet envoi portait, pas celles que le téléphone contient quand l'accusé revient. */
       foodSupprimes:_supEnvoi,
       savedFoods:(S.savedFoods||[]).slice(0,200), // aliments favoris (re-ajout rapide)
       /* NV2-FIAB (24/10) — les masquages (« ✕ ») et la remise à zéro voyagent : des dates de départ, fusionnées par le max
@@ -1311,7 +1317,7 @@ function _cloudSync(){
      ⛔ Une requête dont la réponse n'est pas lisible n'est JAMAIS une sauvegarde confirmée : elle est « non confirmée », rien n'est effacé, tout est renvoyé à la synchronisation suivante
      (le serveur est idempotent). */
   const _requestId=_nutNouvelIdOperation();
-  const _envoi={requestId:_requestId, sup:_supEnvoi.map(e=>e.i)};
+  const _envoi={requestId:_requestId, sup:_supEnvoi.map(e=>e.i), favoris:{savedFoods:_corpsSync.savedFoods, hiddenFoods:_corpsSync.hiddenFoods}};   // `favoris` : les deux listes que CET envoi porte — le miroir ne les reçoit qu'à l'accusé (voir `_nutTraiterReponse`)
   let _p;
   try{
     _p=fetch(S.url,{method:'POST',redirect:'follow',
@@ -1331,7 +1337,7 @@ function _cloudSync(){
      jeton S1 résolu côté serveur. ⛔ `sbMirror` n'est PAS supprimée : elle reste disponible
      pour le retour en arrière, qui tient en une ligne (`SB_VOIE` dans `supabase.js`).
      ⛔ Le corps reste le MÊME que celui d'Apps Script (R2) : on ne construit pas un second
-     instantané métier, qui finirait par diverger. (NUT-SYNC-01 FINAL : la porte en retire le journal et le registre — voir plus haut.) */
+     instantané métier, qui finirait par diverger. (NUT-SYNC-01 FINAL : la porte en retire le journal et le registre ; finalisation Nutrition : aussi les favoris et les masquages — voir plus haut.) */
   try{ if(typeof sbEnvoyer==='function')sbEnvoyer(_corpsSync); }catch(e){}
 }
 // Alias pour compatibilité
