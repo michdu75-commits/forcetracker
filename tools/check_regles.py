@@ -658,10 +658,28 @@ print(f"✅ documents : aucun écrasement"
 # ⚠️ Et le motif exige le tiret cadratin (`**ft-vNNN —`) : sans lui, une simple RÉFÉRENCE en
 # gras en début de ligne (« **ft-v1009** pendant ce travail… ») compte comme une entrée. Mon
 # premier détecteur l'a fait, et il a annoncé un 8ᵉ doublon qui n'existait pas.
+#
+# ⭐ L'EXCEPTION ft-v1263 EST NOMMÉE ET CIBLÉE (03/11/2026, R30 ; GO de Michel « finalisation
+# Nutrition »). Les deux entrées `**ft-v1263 —` de l'archive sont DEUX ÉVÉNEMENTS, pas deux
+# copies — lues en entier avant de décider, pas supposées :
+#   · la 1ʳᵉ (commit 68ad9f9a, 30/10) est le CONTENU de la version, écrit « préparée le 30/10/2026
+#     (publication en cours) » : quoi, pourquoi, ce que ça ne fait pas, le détail des trois lots ;
+#   · la 2ᵉ (commit 2bf7737d, 30/10, après le déploiement) est la PUBLICATION CONSTATÉE, écrite en
+#     « ajout » : master 3d8d49ef → 922c5d51, run Pages n°1363, tests, repère de version — et
+#     surtout ce qui n'a PAS pu être vérifié en réel (site public injoignable depuis le conteneur).
+# Les fusionner perdrait cette limite écrite, et l'archive ne se réécrit jamais. Mais l'exception
+# ne doit pas devenir un trou : elle ne tient que si ces conditions sont vraies, vérifiées à CHAQUE
+# passe — (a) exactement DEUX entrées ft-v1263 ; (b) la DERNIÈRE s'ouvre sur « publication
+# constatée » (l'ajout reste identifiable) ; (c) AUCUNE autre n'y ouvre : deux copies identiques,
+# comme en fabrique une fusion d'union, ne passeraient donc pas. Une troisième entrée, une copie, ou
+# un « ajout » qui disparaît font REROUGIR le contrôle. Toute AUTRE version écrite deux fois reste
+# rouge : la protection générale n'est ni retirée ni assouplie. Contrôle ciblé, qui mute le contrôle
+# lui-même pour prouver que chaque condition mord : tools/mut_check_regles_archive.py.
+_CIBLEES = {"ft-v1263": {"entrees": 2, "marque": "publication constatée"}}
 try:
     _arch = (racine / "docs" / "JOURNAL-ARCHIVE.md").read_text(encoding="utf-8")
     _vus = re.findall(r"(?m)^\*\*(ft-v\d+) —", _arch)
-    _EXCEPTIONS = {"ft-v887"}
+    _EXCEPTIONS = {"ft-v887"} | set(_CIBLEES)
     _dbl = sorted({v for v in _vus if _vus.count(v) > 1} - _EXCEPTIONS,
                   key=lambda x: int(x[5:]))
     if _dbl:
@@ -671,8 +689,29 @@ try:
               "sont identiques (aux lignes vides près) AVANT d'en retirer une : si elles "
               "diffèrent ailleurs, c'est un choix, pas un nettoyage — il revient à Michel.")
         sys.exit(1)
+    # 🎯 Les exceptions CIBLÉES portent des conditions : tant qu'une version ciblée est écrite
+    #    plusieurs fois, on les vérifie (écrite une seule fois : rien à exercer, rien à signaler).
+    for _v, _c in _CIBLEES.items():
+        _corps = [re.sub(r"\s+", " ", _x).strip()
+                  for _x in re.findall(r"(?ms)^\*\*" + re.escape(_v) + r" —(.*?)(?=^\*\*ft-v\d+ —|\Z)", _arch)]
+        if len(_corps) < 2:
+            continue
+        _raisons = []
+        if len(_corps) != _c["entrees"]:
+            _raisons.append(f"{len(_corps)} entrées au lieu de {_c['entrees']}")
+        if not _corps[-1].startswith(_c["marque"]):
+            _raisons.append(f"la dernière entrée ne s'ouvre pas sur « {_c['marque']} »")
+        if any(_x.startswith(_c["marque"]) for _x in _corps[:-1]):
+            _raisons.append(f"une autre entrée s'ouvre aussi sur « {_c['marque']} » (une copie, pas un ajout)")
+        if _raisons:
+            print(f"❌ archive : l'exception documentée de {_v} ne tient plus — " + " ; ".join(_raisons))
+            print("   → relire les entrées de cette version dans docs/JOURNAL-ARCHIVE.md avant de toucher "
+                  "quoi que ce soit : l'archive ne se réécrit pas, et dire que l'exception ne se justifie "
+                  "plus revient à Michel.")
+            sys.exit(1)
+    _s = "s" if len(_EXCEPTIONS) > 1 else ""
     print(f"✅ archive : {len(set(_vus))} entrées, aucune écrite deux fois"
-          + (f" ({len(_EXCEPTIONS)} exception documentée)" if _EXCEPTIONS else ""))
+          + (f" ({len(_EXCEPTIONS)} exception{_s} documentée{_s})" if _EXCEPTIONS else ""))
 except SystemExit:
     raise
 except Exception:
