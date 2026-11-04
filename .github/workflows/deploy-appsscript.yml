@@ -66,6 +66,8 @@ jobs:
           # le code poussé ne diffère du candidat QUE par cette ligne (une ligne retirée, une ajoutée) :
           test "$(diff Code.js stage/Code.js | grep -c '^[<>]')" = "2"
           printf '{"scriptId":"%s","rootDir":"."}' "$SCRIPT_ID" > stage/.clasp.json
+          # même forme que le .claspignore de production (tout ignoré, sauf une liste) : seuls ces trois fichiers partent dans le projet de TEST
+          printf '**/**\n!Code.js\n!appsscript.json\n!TestP1.js\n' > stage/.claspignore
           ls -la stage
           echo "✅ dossier prêt : Code.js (1 ligne neutralisée) + appsscript.json + TestP1.js"
 
