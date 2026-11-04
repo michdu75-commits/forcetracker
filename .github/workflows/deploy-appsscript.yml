@@ -1,81 +1,130 @@
-name: Déployer le backend (Apps Script)
-
-# Se déclenche automatiquement dès que Code.js (ou appsscript.json) change sur master,
-# et peut aussi être lancé à la main depuis l'onglet "Actions" de GitHub.
+name: "Essai P1 — Apps Script de TEST (⛔ NE DÉPLOIE PAS LA PRODUCTION)"
+# ⛔ CE FICHIER NE VIT QUE SUR LA BRANCHE `test/p1-apps-script-2026-11-04` (même nom de fichier que le workflow de production, pour pouvoir être lancé
+#    à la main depuis cette branche : GitHub n'autorise `workflow_dispatch` que pour un fichier déjà présent sur master). ⛔ NE JAMAIS LE FUSIONNER.
+#    Il pousse le Code.js du CANDIDAT dans un projet Apps Script de TEST (Script ID donné à la main, jamais celui de la production), SANS la Sheet de production,
+#    crée un déploiement web de TEST, puis joue les scénarios P1 par HTTP (comptes fictifs @example.invalid seulement).
+#    BROUILLON NON EXÉCUTÉ : écrit d'après le workflow de production (mêmes commandes clasp 3.3.0) ; ses gardes et son découpage sont éprouvés en local, pas sa conversation avec Google.
 on:
-  push:
-    branches: [master]
-    paths:
-      - 'Code.js'
-      - 'appsscript.json'
-      # `.claspignore` décide de CE QUI PART en prod : le corriger doit redéployer.
-      # Ajouté le 04/08 après un correctif de `.claspignore` qui n'a relancé aucun
-      # run — le déploiement restait donc cassé, en silence, sans que rien ne l'indique.
-      - '.claspignore'
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      etape:
+        description: 'deployer (pousse + crée le déploiement de TEST) | essais (scénarios P1) | suspension (scénario P1-09, après avoir posé NUT_SUSPENDU) | sonde (sonde du verrou, ZÉRO donnée écrite : adresse de TEST ou, par défaut, de la production APRÈS son déploiement)'
+        required: true
+        default: 'deployer'
+      script_id:
+        description: '(deployer seulement) Script ID du projet de TEST (⛔ jamais celui de la production)'
+        required: false
+        default: ''
+      url_exec:
+        description: '(essais / suspension / sonde) adresse /exec ; pour la sonde, vide = la production'
+        required: false
+        default: ''
 
 jobs:
-  deploy:
+  p1:
     runs-on: ubuntu-latest
     steps:
-      - name: Récupérer le code
+      - name: "Récupérer le code"
         uses: actions/checkout@v4
 
-      - name: Installer Node
+      - name: "Gardes — jamais sur master, jamais sur le projet de production"
+        env:
+          SCRIPT_ID: ${{ inputs.script_id }}
+          ETAPE: ${{ inputs.etape }}
+        run: |
+          set -euo pipefail
+          echo "=== ESSAI P1 — workflow D'ESSAI (ce n'est PAS le workflow de production) · ref ${GITHUB_REF} · étape ${ETAPE} ==="
+          [ "${GITHUB_REF}" != "refs/heads/master" ] || { echo "::error::refus : ce workflow d'essai ne tourne pas sur master"; exit 1; }
+          case "$ETAPE" in deployer|essais|suspension|sonde) ;; *) echo "::error::etape inconnue : $ETAPE"; exit 1;; esac
+          if [ "$ETAPE" = "deployer" ]; then
+            # (le .clasp.json de CETTE branche pointe lui-même vers le projet de TEST — ceinture : si GitHub exécutait par erreur le workflow de PRODUCTION sur cette branche, il pousserait dans le projet de TEST et échouerait au redéploiement)
+            [ -n "$SCRIPT_ID" ] || { echo "::error::script_id vide"; exit 1; }
+            [ "$SCRIPT_ID" != "1RwE46heNmZrykInYcrMgm1OZWt4NmS6NjTqttvAevZLuqo2v6EEb1Drw" ] || { echo "::error::REFUS : Script ID de production"; exit 1; }
+            printf '%s' "$SCRIPT_ID" | grep -qE '^1[A-Za-z0-9_-]{40,60}$' || { echo "::error::script_id : format inattendu"; exit 1; }
+            echo "✅ gardes passées : ${GITHUB_REF} · Script ID de test ≠ production"
+          else
+            echo "✅ gardes passées : ${GITHUB_REF} · étape ${ETAPE} (aucune poussée de code, aucun secret clasp utilisé)"
+          fi
+
+      - name: "Installer Node"
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
-      - name: Installer clasp
+      - name: "Préparer le dossier poussé (Code.js du candidat, Sheet de production NEUTRALISÉE, + TestP1.js)"
+        if: ${{ inputs.etape == 'deployer' }}
+        env:
+          SCRIPT_ID: ${{ inputs.script_id }}
+        run: |
+          set -euo pipefail
+          mkdir stage
+          cp Code.js appsscript.json stage/
+          cp p1/TestP1.js stage/TestP1.js
+          sed -i "s/^var SHEET_ID_ = '[^']*';/var SHEET_ID_ = 'TEST-SANS-FEUILLE-DE-PRODUCTION';/" stage/Code.js
+          test "$(grep -c "^var SHEET_ID_ = 'TEST-SANS-FEUILLE-DE-PRODUCTION';" stage/Code.js)" = "1"
+          test "$(grep -c "1b0kuCk6kuNi26hMJq5Q5R6-mKFeXEexfm2P9SryJ-eg" stage/Code.js)" = "0"
+          # le code poussé ne diffère du candidat QUE par cette ligne (une ligne retirée, une ajoutée) :
+          test "$(diff Code.js stage/Code.js | grep -c '^[<>]')" = "2"
+          printf '{"scriptId":"%s","rootDir":"."}' "$SCRIPT_ID" > stage/.clasp.json
+          ls -la stage
+          echo "✅ dossier prêt : Code.js (1 ligne neutralisée) + appsscript.json + TestP1.js"
+
+      - name: "Installer clasp"
+        if: ${{ inputs.etape == 'deployer' }}
         run: npm install -g @google/clasp@3.3.0
 
-      - name: Restaurer l'authentification clasp (depuis le secret)
+      - name: "Restaurer l'authentification clasp (depuis le secret)"
+        if: ${{ inputs.etape == 'deployer' }}
         env:
           CLASPRC_JSON: ${{ secrets.CLASPRC_JSON }}
         run: printf '%s' "$CLASPRC_JSON" > "$HOME/.clasprc.json"
 
-      - name: Pousser Code.js (respecte .claspignore = seulement Code.js + appsscript.json)
-        run: clasp push --force
-
-      - name: Redéployer la web app (déploiement existant — clasp v3 create-deployment, repli sur deploy)
+      - name: "Pousser dans le projet de TEST"
+        if: ${{ inputs.etape == 'deployer' }}
+        working-directory: stage
         run: |
-          ID=AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNqCztZNDMD9N4qbA
-          clasp create-deployment -i "$ID" -d "Auto-deploy GitHub" || clasp deploy -i "$ID" -d "Auto-deploy GitHub"
+          set -euo pipefail
+          clasp push --force
 
-      # ⚠️ CETTE ÉTAPE NE VÉRIFIAIT RIEN (constaté le 04/08/2026, run @124).
-      # Deux défauts qui se cumulaient :
-      #   ① `curl -s` sans -L ne SUIT PAS la redirection — or Apps Script redirige toujours vers
-      #      googleusercontent.com. Le journal affichait « Moved Temporarily », jamais la réponse.
-      #   ② `|| true` : l'étape ne pouvait pas échouer, donc le feu vert ne prouvait rien.
-      # C'est la famille « un contrôle qui ne peut pas échouer ne contrôle rien » (BUGS.md §12),
-      # et ça vide la règle R18 de son sens : on vérifiait le push, pas le déploiement.
-      - name: Vérifier que le backend répond VRAIMENT
+      - name: "Créer le déploiement web de TEST (NOUVEAU déploiement : aucun identifiant de production)"
+        if: ${{ inputs.etape == 'deployer' }}
+        working-directory: stage
         run: |
-          sleep 5
-          REP=$(curl -sSL --max-time 30 "https://script.google.com/macros/s/AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNqCztZNDMD9N4qbA/exec?test=1")
-          echo "Réponse du backend : $REP"
-          echo "$REP" | grep -q '"status":"online"' || {
-            echo "::error::Le backend ne répond PAS « online » après déploiement — l'app est peut-être cassée pour tout le monde."
-            exit 1
-          }
-          echo "✅ Backend en ligne."
+          set -euo pipefail
+          SORTIE=$(clasp create-deployment -d "P1 TEST ${GITHUB_SHA::8}" 2>&1 | tee /dev/stderr)
+          ID=$(echo "$SORTIE" | grep -oE 'AKfyc[0-9A-Za-z_-]{20,}' | head -1 || true)
+          [ -n "$ID" ] || { echo "::error::identifiant de déploiement introuvable dans la sortie de clasp"; exit 1; }
+          [ "$ID" != "AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNqCztZNDMD9N4qbA" ] || { echo "::error::REFUS : déploiement de production"; exit 1; }
+          echo "::notice::ADRESSE DE TEST : https://script.google.com/macros/s/${ID}/exec"
+          echo "ADRESSE_EXEC=https://script.google.com/macros/s/${ID}/exec" | tee -a "$GITHUB_STEP_SUMMARY"
+          echo "→ Ouvrir le projet de TEST dans l'éditeur, lancer UNE FOIS la fonction preparerEssaiP1 et accepter les autorisations ; puis relancer ce workflow avec etape=essais et url_exec=<l'adresse ci-dessus>."
 
-      # Contrôle ciblé du correctif du 04/08 : authStatus en mode light doit répondre sans
-      # charger le compte. Sur une adresse inexistante, la réponse doit rester structurée.
-      - name: Vérifier authStatus (mode light)
+      - name: "Scénarios P1 (par HTTP, comptes fictifs @example.invalid seulement)"
+        if: ${{ inputs.etape == 'essais' || inputs.etape == 'suspension' }}
+        env:
+          URL_EXEC: ${{ inputs.url_exec }}
+          ETAPE: ${{ inputs.etape }}
         run: |
-          # ⚠️ PAS de -X POST ici : avec -X, curl REJOUE la requête en POST sur l'adresse de
-          # redirection de Google (qui n'accepte que des GET) → « unable to open the file ».
-          # Sans -X, `--data` suffit à faire un POST, et curl bascule en GET après la redirection.
-          # Piège vécu le 04/08 : le run a échoué en désignant le backend, alors que le backend
-          # allait bien — c'était le contrôle qui était faux.
-          REP=$(curl -sSL --max-time 30 \
-            -H "Content-Type: text/plain;charset=utf-8" \
-            --data '{"action":"authStatus","email":"controle-deploiement@exemple.invalid","light":true}' \
-            "https://script.google.com/macros/s/AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNqCztZNDMD9N4qbA/exec")
-          echo "Réponse authStatus : $REP"
-          echo "$REP" | grep -q '"hasCode"' || {
-            echo "::error::authStatus ne répond pas comme attendu."
-            exit 1
-          }
-          echo "✅ authStatus répond."
+          set -euo pipefail
+          [ -n "$URL_EXEC" ] || { echo "::error::url_exec vide"; exit 1; }
+          case "$URL_EXEC" in *AKfycbxWUsEFIlmx*) echo "::error::REFUS : adresse de production"; exit 1;; esac
+          if [ "$ETAPE" = "suspension" ]; then node p1/p1_scenarios.js "$URL_EXEC" --suspendu --rapport p1/rapport_suspension.json; else node p1/p1_scenarios.js "$URL_EXEC" --rapport p1/rapport.json; fi
+
+      # SONDE DU VERROU — ZÉRO donnée écrite : un seul POST « pushHealth » vers une adresse FICTIVE sans compte (voir p1/sonde_verrou.js). Ne lit ni n'utilise CLASPRC_JSON.
+      # Vide = l'adresse /exec de la PRODUCTION (la même que celle de .github/workflows/deploy-appsscript.yml) ; à lancer APRÈS le déploiement du candidat, jamais avant (l'ancien Code.js ne prend aucun verrou).
+      - name: "Sonde du verrou (rien n'est écrit)"
+        if: ${{ inputs.etape == 'sonde' }}
+        env:
+          URL_EXEC: ${{ inputs.url_exec }}
+        run: |
+          set -euo pipefail
+          [ -n "$URL_EXEC" ] || URL_EXEC="https://script.google.com/macros/s/AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNqCztZNDMD9N4qbA/exec"
+          node p1/sonde_verrou.js "$URL_EXEC"
+
+      - name: "Garder le rapport"
+        if: ${{ always() && (inputs.etape == 'essais' || inputs.etape == 'suspension') }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: "rapport-p1"
+          path: p1/rapport*.json
+          if-no-files-found: ignore
