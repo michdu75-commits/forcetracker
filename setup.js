@@ -455,7 +455,7 @@ async function exportHistoCsv(){
      empêchait `canShare` de reconnaître le fichier sur iPhone (voir `_donnerFichier`). */
   closeHistoExport();                     // on referme AVANT : la feuille de partage iOS prend la main
   const etat=await _donnerFichier(csv,'forcetracker-historique_'+today()+'.csv','text/csv');
-  _toastFichier(etat, L.filter(r=>r.type!=='DEBRIEF').length, 'séries');
+  _toastFichier(etat, L.filter(r=>r.type!=='DEBRIEF').length, L.some(r=>r.type==='ACTIVITE')?'lignes':'séries');   // avec une activité le fichier n'a plus que des séries : « lignes »
 }
 /* 📤 EXPORTS DATÉS — NUTRITION ET POIDS (02/09/2026) — demande de Michel : « il faudra créer
    un export daté de la nutrition et aussi côté poids ».
@@ -561,13 +561,17 @@ function _pdfTexte(t){
 /* 🧾 F23 (mission Séance du 24/10/2026) — L'EN-TÊTE DU PDF COMPTE DES SÉANCES ET DES JOURS, SÉPARÉMENT. Il comptait les
    DATES et les appelait « séances » : deux séances le même jour en faisaient une. Une séance = sa clé (`seance_id`, posée
    sur chaque ligne par `_histoLignes`) ; un jour d'entraînement = une date. Les séries restent les lignes de séries. */
-function _histoEntete(L){
-  /* 🚶 Les activités (type ACTIVITE) ne sont NI des séances NI des séries : elles se comptent à part, et seulement s'il y
-     en a — sans activité, la phrase est mot pour mot celle d'avant. */
+/* Les comptes d'un export, UN SEUL propriétaire (R2) : l'en-tête du PDF et le message de fin le lisent tous les deux. Les activités (type ACTIVITE) ne sont NI des séances NI des
+   séries : elles se comptent à part. */
+function _histoCompte(L){
   const LS=L.filter(r=>r.type!=='ACTIVITE'), LA=L.filter(r=>r.type==='ACTIVITE');
-  const seances=new Set(LS.map(r=>r.seance_id||r.date)).size, jours=new Set(L.map(r=>r.date)).size;
-  const series=LS.filter(r=>r.type!=='CARDIO'&&r.type!=='DEBRIEF').length;
-  return seances+' séance'+(seances>1?'s':'')+(LA.length?' · '+LA.length+' activité'+(LA.length>1?'s':''):'')
+  return {seances:new Set(LS.map(r=>r.seance_id||r.date)).size, jours:new Set(L.map(r=>r.date)).size,
+          series:LS.filter(r=>r.type!=='CARDIO'&&r.type!=='DEBRIEF').length, activites:LA.length};
+}
+function _histoEntete(L){
+  const C=_histoCompte(L), seances=C.seances, jours=C.jours, series=C.series;
+  // sans activité, la phrase est mot pour mot celle d'avant
+  return seances+' séance'+(seances>1?'s':'')+(C.activites?' · '+C.activites+' activité'+(C.activites>1?'s':''):'')
     +' sur '+jours+' jour'+(jours>1?'s':'')+' d\'entraînement · '
     +series+' série'+(series>1?'s':'')+' · exporté le '+new Date().toLocaleDateString('fr-FR');
 }
@@ -663,7 +667,10 @@ async function exportHistoPdf(){
        plus donner le même résultat, et on ne sait plus laquelle croire.* */
     closeHistoExport();                   // avant le partage : la feuille iOS prend la main
     const etat=await _donnerFichier(doc.output('blob'), nom, 'application/pdf');
-    _toastFichier(etat, seances, 'séances');
+    /* ⛔⛔ CORRIGÉ LE 05/11/2026 (mesuré sur la version publiée ft-v1263) : cette ligne lisait `seances`, une variable qui n'existe QUE dans `_histoEntete` — `ReferenceError`,
+       attrapé par le `catch` plus bas : le PDF était bien remis, puis l'app affichait « Export PDF impossible ». Le message lit maintenant le propriétaire des comptes. */
+    const _C=_histoCompte(L);
+    _toastFichier(etat, _C.seances, 'séance'+(_C.seances>1?'s':'')+(_C.activites?' et '+_C.activites+' activité'+(_C.activites>1?'s':''):''));
     return;
   }catch(e){ toast('Export PDF impossible','error'); }
   closeHistoExport();

@@ -55,6 +55,7 @@ const MX = {};   // la matrice, remplie par les témoins
 function W(id, nom, attendu, cond, observe, preuve, extra) {
   const e = MX[id] = MX[id] || { id, scenario: SC[id] || '', attendu: [], observe: [], ok: true, nt: 0, preuve: [], simule: false };
   e.attendu.push(attendu); e.observe.push(observe === undefined ? '' : (typeof observe === 'string' ? observe : J(observe))); e.ok = e.ok && !!cond; e.nt++;
+  if (process.env.ACT_VERBOSE) console.log('      · ' + id + ' [' + nom + '] ' + (cond ? 'ok' : 'ROUGE') + ' → ' + e.observe[e.observe.length - 1].slice(0, 400));
   if (preuve && e.preuve.indexOf(preuve) < 0) e.preuve.push(preuve);
   if (extra && extra.simule) e.simule = true;
   return !!cond;
@@ -97,8 +98,9 @@ async function ecran(t, b, PORT) {
     const nowD = new Date(opts.now || T0), ymd = nowD.toLocaleDateString('sv-SE', { timeZone: opts.tz || 'Europe/Paris' });
     const pm = new Date(Date.UTC(+ymd.slice(0, 4), +ymd.slice(5, 7) - 2, 15)), lms = pm.getUTCFullYear() + '-' + String(pm.getUTCMonth() + 1).padStart(2, '0');
     const D = Object.assign({}, BASE, { ft4_lms: lms, ft4_lws: ymd }, opts.ls || {});
-    await cx.addInitScript(`(()=>{try{ if(sessionStorage.getItem('_act'))return; sessionStorage.setItem('_act','1'); localStorage.clear();
-      const D=${J(D)}; Object.keys(D).forEach(k=>localStorage.setItem(k,D[k])); }catch(e){} })();`);
+    /* Le marqueur d'amorçage vit dans localStorage (pas sessionStorage) : un SECOND onglet du même contexte (témoins multi-onglets) ne doit pas effacer les données du premier. */
+    await cx.addInitScript(`(()=>{try{ if(localStorage.getItem('_act_seed'))return; localStorage.clear();
+      const D=${J(D)}; Object.keys(D).forEach(k=>localStorage.setItem(k,D[k])); localStorage.setItem('_act_seed','1'); }catch(e){} })();`);
     const pg = await cx.newPage(); const errs = []; pg.on('pageerror', x => errs.push(String(x.message).slice(0, 200)));
     await pg.clock.setFixedTime(new Date(opts.now || T0));
     await pg.goto('http://localhost:' + PORT + '/index.html'); await pg.waitForTimeout(opts.wait || 1500);
@@ -751,6 +753,417 @@ async function blocD(c) {
     const wkt = await pg.evaluate(() => { startWorkout(); return { ouvert: !!S.wkt, exs: S.wkt && S.wkt.exs.length, avant: !!document.getElementById('log-avant') }; });
     t(P + '8 T39 : créer, modifier puis supprimer une activité ne touche pas aux programmes ; « Séance libre » démarre une séance normale (vide, sans exercice hérité) avec 9 activités dans l\'historique',
       W('T39', 'programmes', 'programmes inchangés ; séance libre normale', apres === avant && wkt.ouvert && wkt.exs === 0, { programmes: apres === avant, wkt }, 'banc C-ACT-D8'), _det({ programmes: apres === avant, wkt }));
+    await fermer(X);
+  }
+}
+
+// ═════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+// BLOC E — MILO : il RECOIT les activités (calories retenues, provenance) sans les confondre avec des séances. Le contexte avec et sans activité ne diffère que par ce bloc.
+// ⚠️ Ce que ce bloc prouve est la PRÉSENCE et l'ABSENCE de ce que Milo reçoit (comme `tests/milo`), jamais l'OBÉISSANCE du modèle — aucun appel réseau n'est possible ici.
+// ═════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+async function blocE(c) {
+  const { t, ouvrir, sess, fermer, W, jeuReference, marche, J, _det } = c;
+  const P = 'C-ACT-E';
+  const lire = async (jeu, ls) => {
+    const X = await ouvrir({ ls: Object.assign({ ft4_sessions: J(jeu) }, ls || {}) });
+    const r = await X.pg.evaluate(async () => ({ full: await buildCoachContext('Comment va ma semaine ?'), bloc: _ctxAutresActivites(), hist: _historiqueCompact(), memoire: _memoireLongue(), duree: _ctxDureeSeance(), n: S.sessions.length }));
+    r.err = X.errs; await fermer(X); return r;
+  };
+  const sans = jeuReference();
+  const hier = marche('2026-11-04', '08:00', { man: 255, dist: 4.5 });
+  const A = await lire(sans), B = await lire(sans.concat([hier]));
+  t(P + '1 ⭐ T23 : sans activité, le contexte de Milo ne contient AUCUNE mention du bloc « AUTRES ACTIVITÉS » (les utilisateurs sans activité reçoivent exactement ce qu\'ils recevaient)',
+    W('T23', 'sans activité', 'aucun bloc', A.bloc === '' && A.full.indexOf('AUTRES ACTIVITÉS') < 0 && A.full.length > 20000, { bloc: A.bloc.length, len: A.full.length }, 'banc C-ACT-E1'), _det({ bloc: A.bloc.length, len: A.full.length }));
+  t(P + '2 ⭐ T23 : avec une marche d\'hier (255 kcal saisies, 4,5 km), Milo reçoit la ligne exacte — « Marche 60 min, 4.5 km — 255 kcal (valeur saisie par la personne, relevée sur sa montre) » — et la consigne de ne pas la compter comme une séance ni de l\'ajouter à la dépense',
+    W('T23', 'avec activité', 'ligne exacte + consigne', B.full.indexOf(B.bloc) >= 0 && /2026-11-04 \(hier\) : Marche 60 min, 4\.5 km — 255 kcal \(valeur saisie par la personne, relevée sur sa montre\)/.test(B.bloc) && /PAS des séances de musculation/.test(B.bloc) && /aucune série, aucune charge, aucun volume/.test(B.bloc) && /ne les ajoute pas à sa dépense/.test(B.bloc), B.bloc, 'banc C-ACT-E2'), _det(B.bloc));
+  const retire = B.full.split(B.bloc).join('');
+  t(P + '3 ⭐ T23 / R34 : le contexte complet AVEC activité, une fois ce bloc retiré, est IDENTIQUE à l\'octet au contexte SANS activité (' + A.full.length + ' caractères) — rien d\'autre n\'a bougé dans ce que Milo reçoit',
+    W('T23', 'différentiel de contexte', 'seul le bloc des activités diffère', B.bloc.length > 100 && retire === A.full, { sans: A.full.length, avec: B.full.length, bloc: B.bloc.length, egal: retire === A.full }, 'banc C-ACT-E3'), _det({ sans: A.full.length, avec: B.full.length, bloc: B.bloc.length, egal: retire === A.full }));
+  t(P + '4 T23 : l\'historique compact, la mémoire longue et la durée réelle des séances sont les MÊMES avec et sans activité (la marche n\'y est ni une séance, ni une durée de séance)',
+    W('T23', 'lecteurs de séances de Milo', 'identiques', A.hist === B.hist && A.memoire === B.memoire && A.duree === B.duree, { hist: A.hist === B.hist, memoire: A.memoire === B.memoire, duree: A.duree === B.duree }, 'banc C-ACT-E4'), _det({ hist: A.hist === B.hist, memoire: A.memoire === B.memoire, duree: A.duree === B.duree }));
+  // ── la seule activité du jour : Milo ne doit pas croire que la séance du jour est faite ──
+  {
+    const sansAuj = jeuReference().filter(s => s.date !== '2026-11-05');
+    const A2 = await lire(sansAuj), B2 = await lire(sansAuj.concat([marche('2026-11-05', '08:00', { man: 255 })]));
+    t(P + '5 ⭐ T23 : une marche AUJOURD\'HUI sans séance de musculation → le contexte de Milo ne diffère que par le bloc (« aujourd\'hui »), jamais par « séance du jour faite », dernière séance, rythme ou repos',
+      W('T23', 'activité du jour', 'seul le bloc diffère', /\(aujourd'hui\)/.test(B2.bloc) && B2.full.split(B2.bloc).join('') === A2.full, { bloc: B2.bloc.slice(0, 160) }, 'banc C-ACT-E5'), _det({ egal: B2.full.split(B2.bloc).join('') === A2.full }));
+  }
+  // ── provenance : estimation / valeur saisie, étiquette personnalisée, intensité, plafond de 8 lignes sur 28 jours ──
+  {
+    const e = marche('2026-11-03', '08:00', { est: 312 });                                  // aucune valeur de montre
+    const f = marche('2026-11-02', '09:00', { type: 'autre', man: 600, int: 'intense', duree: 90 }); f.autre.libelle = 'Football'; f.autre.intensity = 'intense';
+    const vieux = marche('2026-09-20', '08:00', { man: 400 });                              // hors des 28 jours
+    const tous = [e, f, vieux];
+    for (let i = 0; i < 9; i++) tous.push(marche('2026-10-' + String(10 + i), '08:00', { man: 100 + i, dts: i }));
+    const C = await lire(sans.concat(tous));
+    const lignes = (C.bloc.match(/\n {2}· /g) || []).length;
+    t(P + '6 ⭐ T23 : provenance et libellés — une marche SANS valeur de montre est dite « estimation de l\'app » ; « Football » (type libre, intensité intense, 600 kcal saisies) garde son nom ; une activité de plus de 28 jours n\'est pas envoyée ; jamais plus de 8 lignes',
+      W('T23', 'provenance', 'estimation / saisie distinguées ; 28 jours ; 8 lignes', /2026-11-03 \(il y a 2 jours\) : Marche 60 min — 312 kcal \(estimation de l'app\)/.test(C.bloc) && /Football 90 min, intensité Intense — 600 kcal \(valeur saisie/.test(C.bloc) && C.bloc.indexOf('2026-09-20') < 0 && lignes <= 8 && lignes === 8, { lignes, bloc: C.bloc.slice(0, 300) }, 'banc C-ACT-E6')
+      && W('T23', 'taille', 'bloc borné (8 lignes)', C.bloc.length < 2000, C.bloc.length, 'banc C-ACT-E6'), _det({ lignes, len: C.bloc.length }));
+  }
+  t(P + '7 aucune erreur de page', A.err.length === 0 && B.err.length === 0, J([A.err, B.err]));
+}
+
+// ═════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+// BLOC F — ACCUEIL · AGENDA (le calendrier de l'Accueil) · PROGRÈS (l'historique) : plusieurs activités par jour, mélanges avec musculation et cardio, cohérence, rafraîchissement
+// ═════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+async function blocF(c) {
+  const { t, ouvrir, sess, ag, txt, creer, ouvrirAutre, saisirMan, enregistrerForm, autres, fermer, W, jeuReference, marche, J, _det } = c;
+  const P = 'C-ACT-F';
+  const norm = s => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
+  const cardio03 = Object.assign({}, jeuReference()[1], { id: Date.parse('2026-11-03T19:30:00+01:00'), ts: Date.parse('2026-11-03T19:30:00+01:00'), date: '2026-11-03', calories: 300, calData: { total: 300, cardio: 300 } });
+  const jeu = jeuReference().concat([
+    marche('2026-11-05', '08:00', { man: 255 }),                                                   // avant la séance de 17 h
+    marche('2026-11-05', '12:30', { type: 'velo_loisir', man: 400, duree: 90, est: 420, dts: 1 }),
+    marche('2026-11-05', '20:30', { type: 'balade', man: 80, duree: 40, est: 90, dts: 2 }),         // APRÈS la séance : elle ne doit pas masquer sa couleur (F11)
+    marche('2026-11-04', '07:00', { type: 'velo_sportif', man: 200, duree: 30, est: 270 }),         // le même jour que la musculation (365) ET le cardio (379)
+    marche('2026-11-03', '08:00', { type: 'randonnee', man: 900, duree: 180, est: 700 }), cardio03, // un jour SANS musculation : cardio (300) + activité (900)
+    marche('2026-11-01', '09:00', { type: 'randonnee', man: 900, duree: 180, est: 700, dts: 5 })]); // un jour d'activité SEULE
+  const lsF = { ft4_sessions: J(jeu) };
+  const panneau = async (X, ymd) => X.pg.evaluate(ymd => { _calSelect(ymd); const el = document.getElementById('home-secondary');
+    const rows = [...el.querySelectorAll('[data-calact]')].map(r => ({ id: r.getAttribute('data-calact'), t: r.textContent.replace(/\s+/g, ' ').trim() }));
+    const tot = el.querySelector('[data-caltotal]'), rev = el.querySelector('[data-calpanel-revoir]');
+    return { rows, total: tot ? tot.textContent.replace(/\s+/g, ' ').trim() : null, revoir: rev ? rev.textContent.replace(/\s+/g, ' ').trim() : null, texte: el.innerText.replace(/\s+/g, ' ') }; }, ymd);
+  const X = await ouvrir({ ls: lsF }); const pg = X.pg;
+  await pg.evaluate(() => goScreen('home', document.getElementById('nb-home'))); await pg.waitForTimeout(400);
+
+  // ── T09 / T11 : le 05/11 — musculation (303) + trois activités (255 · 400 · 80) ──
+  const p5 = await panneau(X, '2026-11-05');
+  t(P + '1 ⭐ T09 / T11 : le panneau du 05/11 liste les TROIS activités (identifiants distincts, durée, calories retenues, ✎ pour la valeur de la montre) à côté de la musculation, avec « Total du jour » = 303 + 255 + 400 + 80 = 1 038 kcal (chaque enregistrement UNE fois)',
+    W('T09', 'plusieurs activités le même jour', '3 lignes distinctes ; total du jour 1038', p5.rows.length === 3 && new Set(p5.rows.map(r => r.id)).size === 3 && /255 kcal ✎/.test(p5.rows.map(r => r.t).join('|')) && /400 kcal ✎/.test(p5.rows.map(r => r.t).join('|')) && /80 kcal ✎/.test(p5.rows.map(r => r.t).join('|')) && /1038 kcal/.test(p5.total), p5, 'banc C-ACT-F1')
+    && W('T11', 'musculation + activité', 'les deux visibles, total 1038', /Revoir la séance/.test(p5.revoir) && /1038 kcal/.test(p5.total) && /SÉRIES/.test(p5.texte), { revoir: p5.revoir, total: p5.total }, 'banc C-ACT-F1'), _det(p5));
+  t(P + '2 T11 : le tonnage et les séries du jour ne parlent que de la musculation (16 séries du 05/11), les activités n\'en ajoutent aucune',
+    W('T11', 'séries du jour', '16 séries (musculation seule)', /16 SÉRIES/.test(p5.texte) && /1 EXOS/.test(p5.texte), p5.texte.slice(0, 200), 'banc C-ACT-F2'), _det(p5.texte.slice(0, 200)));
+  // ── T13 : musculation + cardio + autre activité le 04/11 ; T12 : cardio + autre activité le 03/11 (sans musculation) ──
+  const p4 = await panneau(X, '2026-11-04'), p3 = await panneau(X, '2026-11-03');
+  t(P + '3 ⭐ T13 : le 04/11 (musculation 365 + cardio 379 + vélo 200) → total du jour 944, une activité listée ; T12 : le 03/11 (cardio 300 + randonnée 900, sans musculation) → total 1 200',
+    W('T13', 'musculation + cardio + activité', 'total 944', p4.rows.length === 1 && /944 kcal/.test(p4.total), p4, 'banc C-ACT-F3') && W('T12', 'cardio + activité', 'total 1200', p3.rows.length === 1 && /1200 kcal/.test(p3.total), p3, 'banc C-ACT-F3'), _det({ p4: p4.total, p3: p3.total }));
+  // ── D04 : la couleur du calendrier n'est pas masquée par une activité enregistrée APRÈS la séance ; un jour d'activité seule est actif mais neutre ──
+  const cel = await pg.evaluate(() => { const cell = d => [...document.querySelectorAll('#home-secondary [onclick^="_calSelect"]')].find(e => e.getAttribute('onclick').indexOf(d) >= 0);
+    const c5 = cell('2026-11-05'), c1 = cell('2026-11-01'); return { c5: c5 ? c5.outerHTML : null, c1: c1 ? c1.outerHTML : null }; });
+  const p1 = await panneau(X, '2026-11-01');
+  t(P + '4 ⭐ D04 : le 05/11 la case garde la couleur de la RÉGION de la musculation (rouge, haut du corps) malgré une balade enregistrée à 20 h 30, APRÈS la séance de 17 h ; le 01/11 (activité seule) la case est cliquable mais NEUTRE',
+    W('D04', 'couleur du calendrier', 'région de la musculation conservée ; activité seule neutre', !!cel.c5 && /width:19px;height:3px;border-radius:2px;background:var\(--red\)/.test(cel.c5) && !!cel.c1 && /height:3px;border-radius:2px;background:var\(--t2\)/.test(cel.c1) && !/height:3px;border-radius:2px;background:var\(--(red|blue|purp|orange|green)\)/.test(cel.c1) && p1.rows.length === 1 && /900 kcal/.test(p1.total) && !/TONNAGE/.test(p1.texte), { c5: (cel.c5 || '').slice(-120), c1: (cel.c1 || '').slice(-120), p1: p1.texte.slice(0, 120) }, 'banc C-ACT-F4'), _det({ c5: (cel.c5 || '').slice(-120), c1: (cel.c1 || '').slice(-120) }));
+  t(P + '5 D04 : un jour d\'activité SEULE ouvre un panneau sans tonnage ni séries, avec le bouton « Voir l\'activité »',
+    W('D04', 'jour d\'activité seule', 'panneau sans tonnage ; bouton Voir l\'activité', /Voir l'activité/.test(p1.revoir) && !/SÉRIES|TONNAGE/.test(p1.texte), p1, 'banc C-ACT-F5'), _det(p1));
+  // ── T21 : la MÊME valeur partout (enregistrement · historique · panneau du calendrier · bilan du mois · tuile de l'Accueil) ──
+  const mois = await pg.evaluate(() => { const b = _bilanMois('2026-11'); return { kcal: b.kcal, m: b.kcalMuscu, c: b.kcalCardio, a: b.kcalAutre, nSess: b.nSess, nAutre: b.nAutre, nCardio: b.nCardio, jours: b.jours }; });
+  const tuile = await pg.evaluate(() => { renderHome(); const e = document.getElementById('h-sess'); return e ? e.textContent.replace(/\s+/g, ' ').trim() : null; });
+  t(P + '6 ⭐ T21 : bilan de novembre = 1 078 (musculation) + 679 (cardio) + 2 735 (activités) = 4 492 kcal, 3 séances de musculation, 6 activités, 5 jours actifs — et la tuile « Séances » de l\'Accueil compte les 5 séances (3 musculation + 2 cardio) « +6 act. », jamais les activités comme séances',
+    W('T21', 'bilan du mois', 'catégories et total exacts', mois.m === 1078 && mois.c === 679 && mois.a === 2735 && mois.kcal === 4492 && mois.nSess === 3 && mois.nAutre === 6 && mois.nCardio === 2 && mois.jours === 5, mois, 'banc C-ACT-F6')
+    && W('T21', 'tuile de l\'Accueil', '5 séances + 6 act.', /^5\s*\+6 act\./.test(tuile || ''), tuile, 'banc C-ACT-F6'), _det({ mois, tuile }));
+  // ── T16 / D10 : l'historique (Progrès → Séances) ──
+  await pg.evaluate(() => goSessionsHistory()); await pg.waitForTimeout(400);
+  const h = await pg.evaluate(() => { const L = document.getElementById('sess-list'); const cards = [...L.querySelectorAll('.sess-card')];
+    return { filtres: [...document.querySelectorAll('.sessf-chip')].map(b => b.textContent.trim()), n: cards.length,
+      autres: cards.filter(e => e.dataset.genre === 'autre').map(e => ({ t: e.textContent.replace(/\s+/g, ' ').trim(), milo: !!e.querySelector('[onclick*="debrief"], [onclick*="analys"]') || /Analyser avec Milo/.test(e.textContent), kgTravail: /kg de travail/.test(e.textContent) })),
+      entete: (L.innerText.match(/\d+ séances? · [^\n]*activit[^\n]*/) || [''])[0] }; });
+  t(P + '7 ⭐ T16 / D10 : l\'historique montre les 6 activités avec leur icône, leur durée, leur distance et leurs calories retenues ; AUCUNE n\'affiche « kg de travail » ni « Analyser avec Milo » ; le mois dit « 3 séances · 2 cardio · 6 activités » ; les filtres Tout · Musculation · Cardio · Activités existent',
+    W('T16', 'consultation', '6 cartes d\'activité propres', h.autres.length === 6 && h.autres.every(a => !a.kgTravail && !a.milo && /🔥\d+ kcal/.test(a.t)) && /🚶 Marche/.test(h.autres.map(a => a.t).join('|')) && /🥾 Randonnée/.test(h.autres.map(a => a.t).join('|')) && h.filtres.join() === 'Tout,Musculation,Cardio,Activités' && /3 séances · 2 cardio · 6 activités/.test(norm(h.entete)), h, 'banc C-ACT-F7')
+    && W('D10', 'cartes', 'ni kg de travail ni bouton Milo', h.autres.every(a => !a.kgTravail && !a.milo), h.autres.length, 'banc C-ACT-F7'), _det(h));
+  const f = await pg.evaluate(() => {
+      const genre = e => e.classList.contains('sess-card-autre') ? 'autre' : (/kg de travail/.test(e.textContent) ? 'muscu' : (/^\s*🏃 Cardio/.test(e.textContent) ? 'cardio' : '?'));
+      const lire = g => { setSessGenre(g); return [...document.querySelectorAll('#sess-list .sess-card')].map(genre); };
+      const a = lire('autre'), m = lire('muscu'), k = lire('cardio'), tout = lire('');
+      return { a, m, k, tout: tout.length, toutGenres: tout.filter(x => x === 'autre').length + '/' + tout.filter(x => x === 'muscu').length + '/' + tout.filter(x => x === 'cardio').length }; });
+  t(P + '8 ⭐ T16 : le filtre « Activités » ne garde que les 6 activités, « Musculation » que les 3 séances, « Cardio » que les 2 cardios ; « Tout » rend les 11 enregistrements',
+    W('T16', 'filtres', 'Activités 6 · Musculation 3 · Cardio 2 · Tout 11 (6/3/2)', f.a.length === 6 && f.a.every(g => g === 'autre') && f.m.length === 3 && f.m.every(g => g === 'muscu') && f.k.length === 2 && f.k.every(g => g === 'cardio') && f.tout === 11 && f.toutGenres === '6/3/2', f, 'banc C-ACT-F8'), _det(f));
+  // ── T48 : modifier depuis l'historique (un vrai clic sur la carte) → tous les écrans concernés suivent ──
+  const marche5 = jeu.find(s => s.autre && s.date === '2026-11-05' && s.startHour === 8);
+  await pg.evaluate(() => setSessGenre('autre')); await pg.waitForTimeout(100);
+  await pg.click('.sess-card-autre[onclick*="' + marche5.ts + '"]'); await pg.waitForTimeout(250);
+  const ouvert = await pg.evaluate(() => document.getElementById('ov-autre').classList.contains('open') && document.getElementById('au-title').textContent === 'Modifier l\'activité');
+  await saisirMan(X, 100); await enregistrerForm(X);
+  const apres = await pg.evaluate(() => { const carte = [...document.querySelectorAll('#sess-list .sess-card-autre')].map(e => e.textContent.replace(/\s+/g, ' ')).join('|'); return { carte }; });
+  const p5b = await panneau(X, '2026-11-05'); const moisB = await pg.evaluate(() => _bilanMois('2026-11').kcalAutre); const tuileB = await pg.evaluate(() => { renderHome(); return document.getElementById('h-sess').textContent.replace(/\s+/g, ' ').trim(); });
+  t(P + '9 ⭐ T48 / T05 : un clic sur la carte de la marche ouvre le formulaire de modification ; 255 → 100 : l\'historique affiche 100 sans rechargement, le panneau du calendrier dit « Total du jour » 883 (1 038 − 155), le bilan du mois compte 2 580 kcal d\'activités (2 735 − 155), la tuile de l\'Accueil est inchangée',
+    W('T48', 'modification', 'historique, calendrier, bilan et tuile suivent', ouvert && /🔥100 kcal ✎/.test(apres.carte) && /883 kcal/.test(p5b.total) && moisB === 2580 && tuileB === tuile, { ouvert, carte: apres.carte.slice(0, 160), total: p5b.total, moisB, tuileB }, 'banc C-ACT-F9')
+    && W('T05', 'depuis l\'historique', 'modification persistée et répercutée', ouvert && moisB === 2580, moisB, 'banc C-ACT-F9'), _det({ ouvert, total: p5b.total, moisB, tuileB }));
+  // suppression de l'activité du 01/11 (jour d'activité seule) : plus de carte, plus de case cliquable, le bilan et la tuile suivent
+  const hike01 = jeu.find(s => s.autre && s.date === '2026-11-01');
+  await pg.click('.sess-card-autre[onclick*="' + hike01.ts + '"]'); await pg.waitForTimeout(250); await pg.click('#au-del-btn'); await pg.click('#au-del-btn'); await pg.waitForTimeout(250);
+  const sup = await pg.evaluate(ts => ({ carte: !!document.querySelector('.sess-card-autre[onclick*="' + ts + '"]'), nAutre: document.querySelectorAll('#sess-list .sess-card-autre').length, kcal: _bilanMois('2026-11').kcalAutre, nA: _bilanMois('2026-11').nAutre }), hike01.ts);
+  await pg.evaluate(() => goScreen('home', document.getElementById('nb-home'))); await pg.waitForTimeout(300);
+  const caseSup = await pg.evaluate(() => { _calSelDay = null; _renderHomeCalendar(); return !![...document.querySelectorAll('#home-secondary [onclick^="_calSelect"]')].find(e => e.getAttribute('onclick').indexOf('2026-11-01') >= 0); });
+  const tuileC = await pg.evaluate(() => { renderHome(); return document.getElementById('h-sess').textContent.replace(/\s+/g, ' ').trim(); });
+  t(P + '10 ⭐ T48 / T08 : supprimer la randonnée du 01/11 (seule activité de ce jour) → sa carte disparaît sans rechargement, il reste 5 activités (1 680 kcal), le 01/11 n\'est plus un jour cliquable du calendrier, la tuile de l\'Accueil dit « +5 act. »',
+    W('T48', 'suppression', 'carte, case, bilan et tuile suivent', !sup.carte && sup.nAutre === 5 && sup.kcal === 1680 && sup.nA === 5 && !caseSup && /^5\s*\+5 act\./.test(tuileC), { sup, caseSup, tuileC }, 'banc C-ACT-F10')
+    && W('T08', 'depuis l\'historique', 'suppression répercutée partout', !sup.carte && sup.nA === 5, sup, 'banc C-ACT-F10'), _det({ sup, caseSup, tuileC }));
+  t(P + '11 aucune erreur de page pendant tout le bloc', X.errs.length === 0, J(X.errs));
+  await fermer(X);
+}
+
+// ═════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+// BLOC G — PERSISTANCE · HORS LIGNE · REPRISE · CONFLITS · IDENTIFIANTS · import d'historique · outil admin
+// Ce qui est RÉEL : le navigateur, le stockage local, les fonctions de fusion de l'app, le vrai `Code.js` (chargé dans un contexte vm par le harnais de chaos).
+// Ce qui est SIMULÉ, et dit tel quel : le serveur du réseau (une route interceptée répond « ok »), le « second appareil » (un second onglet du même navigateur).
+// ═════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+async function blocG(c) {
+  const { t, ouvrir, sess, ag, txt, creer, ouvrirAutre, saisirMan, enregistrerForm, autres, stocke, fermer, W, jeuReference, marche, J, _det, T0, PORT } = c;
+  const P = 'C-ACT-G';
+  const prep = pg => pg.evaluate(() => { document.querySelectorAll('.overlay.open').forEach(o => o.classList.remove('open')); const ob = document.getElementById('onboarding'); if (ob) ob.style.display = 'none';
+    window.__T = []; const _t = window.toast; window.toast = function (m) { window.__T.push(String(m)); try { return _t.apply(this, arguments); } catch (e) {} }; });
+  // le « serveur » : toute requête hors localhost est CAPTURÉE puis acquittée (aucun réseau réel)
+  const capter = async X => { const cap = []; await X.cx.route(u => !/^http:\/\/localhost:/.test(String(u)), r => { cap.push({ url: r.request().url(), m: r.request().method(), body: r.request().postData() });
+    r.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: '{"status":"ok"}' }); }); return cap; };
+  // les deux destinations de la même sauvegarde : Apps Script (corps à plat) et le miroir du Worker (`{action, data, token}`)
+  const sauvegardes = cap => cap.filter(r => r.m === 'POST' && /script\.google\.com/.test(r.url) && r.body && /"action":"saveProfile"/.test(r.body)).map(r => { try { return JSON.parse(r.body); } catch (e) { return null; } }).filter(Boolean);
+  const miroirs = cap => cap.filter(r => r.m === 'POST' && /workers\.dev/.test(r.url) && r.body).map(r => { try { const o = JSON.parse(r.body); return typeof o.data === 'string' ? JSON.parse(o.data) : o.data; } catch (e) { return null; } }).filter(Boolean);
+
+  // ── T27 : l'application est FERMÉE aussitôt après « Enregistrer » ──
+  {
+    const X = await ouvrir(sess(jeuReference())); const cap = await capter(X); const pg = X.pg;
+    await creer(X, { duree: 60, man: 255, noSave: true });
+    await pg.click('#au-save-btn', { noWaitAfter: true }); await pg.close({ runBeforeUnload: false });                 // fermée SANS attendre : ni la synchro (4 s), ni le moindre délai
+    const pg2 = await X.cx.newPage(); pg2.on('pageerror', e => X.errs.push(String(e.message).slice(0, 160)));
+    await pg2.clock.setFixedTime(new Date(T0)); await pg2.goto('http://localhost:' + PORT + '/index.html'); await pg2.waitForTimeout(1500); await prep(pg2);
+    const r = await pg2.evaluate(() => ({ n: S.sessions.filter(s => s.autre).length, cal: (S.sessions.find(s => s.autre) || {}).calories, sto: JSON.parse(localStorage.getItem('ft4_sessions')).filter(s => s.autre).length, total: _agregatPeriode(S.sessions).kcal.total }));
+    await pg2.waitForTimeout(5200);                                                                                       // la synchro différée (4 s) a-t-elle repris à la réouverture ?
+    const nuage = sauvegardes(cap).some(b => (b.sessions || []).some(s => s.autre && s.calories === 255));
+    t(P + '1 ⭐ T27 : fermeture de l\'application IMMÉDIATEMENT après « Enregistrer » → à la réouverture l\'activité est là (mémoire ET stockage), total 1 712 ; l\'écriture locale précède toute synchro (règle d\'or #3)',
+      W('T27', 'fermeture pendant la sauvegarde', 'activité retrouvée, total 1712', r.n === 1 && r.cal === 255 && r.sto === 1 && r.total === 1712, { r, nuageApresReouverture: nuage }, 'banc C-ACT-G1'), _det({ r, nuageApresReouverture: nuage }));
+    await fermer(X);
+  }
+
+  // ── T28 : HORS CONNEXION — toute la vie d'une activité (créer · modifier · supprimer) sans réseau ──
+  {
+    const X = await ouvrir(sess(jeuReference())); const pg = X.pg;
+    await X.cx.setOffline(true); const hors = await pg.evaluate(() => navigator.onLine === false);
+    await creer(X, { duree: 45, man: 200 }); const r = (await autres(X))[0];
+    await ouvrirAutre(X, r.ts); await saisirMan(X, 150); await enregistrerForm(X); const a1 = await ag(X);
+    await ouvrirAutre(X, r.ts); await pg.click('#au-del-btn'); await pg.click('#au-del-btn'); await pg.waitForTimeout(100); const a2 = await ag(X);
+    t(P + '2 ⭐ T28 : sans réseau (mode avion émulé), créer (200) · modifier (150) · supprimer une activité fonctionne ; totaux 1 657 puis 1 607 puis 1 457 ; aucune erreur',
+      W('T28', 'hors connexion', 'créer, modifier, supprimer sans réseau', hors && !!r && r.calories === 200 && a1.autre === 150 && a1.total === 1607 && a2.autre === 0 && a2.total === 1457 && X.errs.length === 0, { hors, a1: a1.total, a2: a2.total, errs: X.errs }, 'banc C-ACT-G2'), _det({ hors, a1: a1.total, a2: a2.total, errs: X.errs }));
+    await fermer(X);
+  }
+
+  // ── T29 (SIMULÉ côté serveur) : coupure du réseau → création → retour du réseau → la sauvegarde suivante emporte l'activité telle quelle ──
+  {
+    const X = await ouvrir(sess(jeuReference())); const pg = X.pg;
+    const cap = []; let coupe = true, coupees = 0;                                                                           // le « serveur » : coupé (la connexion échoue) puis rétabli (il acquitte)
+    await X.cx.route(u => !/^http:\/\/localhost:/.test(String(u)), r => { if (coupe) { coupees++; return r.abort('internetdisconnected'); }
+      cap.push({ url: r.request().url(), m: r.request().method(), body: r.request().postData() });
+      r.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: '{"status":"ok"}' }); });
+    await creer(X, { duree: 60, man: 255, dist: '4,5', notes: 'Parc' }); await pg.evaluate(() => _cloudSync()); await pg.waitForTimeout(400);
+    const horsLigne = sauvegardes(cap).length, tentatives = coupees;                                                       // rien n'a pu partir ; l'app a bien essayé
+    coupe = false;                                                                                                          // le réseau revient
+    await pg.evaluate(() => window.dispatchEvent(new Event('online'))); await pg.waitForTimeout(5300);                      // l'app, d'elle-même (4 s de différé + marge), renvoie-t-elle quelque chose ?
+    const seul = sauvegardes(cap).length;
+    await pg.evaluate(() => { persist(); }); await pg.waitForTimeout(5300);                                                 // le prochain geste (n'importe quel `persist()`) → synchro différée
+    const envoi = sauvegardes(cap); const dernier = envoi[envoi.length - 1]; const mir = miroirs(cap); const dernierMiroir = mir[mir.length - 1];
+    const act = dernier && (dernier.sessions || []).find(s => s.autre); const actMiroir = dernierMiroir && (dernierMiroir.sessions || []).find(s => s.autre);
+    t(P + '3 ⭐ T29 (SIMULÉ : le « serveur » est une route coupée puis rétablie) : réseau coupé → rien ne part (' + tentatives + ' tentative(s) échouée(s), sans erreur affichée) ; le réseau revient → la sauvegarde SUIVANTE emporte les 5 séances/activités et l\'activité INTACTE (bloc autre, valeur retenue 255, distance, notes, identifiants) vers Apps Script ET vers le miroir',
+      W('T29', 'reprise', 'au retour du réseau, l\'activité part intacte à la sauvegarde suivante', horsLigne === 0 && tentatives >= 1 && !!dernier && dernier.sessions.length === 5 && !!act && act.calories === 255 && act.autre.kcalMan === 255 && act.autre.kcalEst === 312 && act.autre.distance === 4.5 && act.autre.notes === 'Parc'
+        && Number.isInteger(act.id) && act.id === act.ts && act.exs.length === 0 && !!actMiroir && J(actMiroir) === J(act) && X.errs.length === 0, { horsLigne, tentatives, envoiSansGeste: seul, n: dernier && dernier.sessions.length, act: act && act.autre, miroir: !!actMiroir && J(actMiroir) === J(act) }, 'banc C-ACT-G3', { simule: true }),
+      _det({ horsLigne, tentatives, envoiSansGeste: seul, n: dernier && dernier.sessions.length, miroir: !!actMiroir && J(actMiroir) === J(act) }));
+    await fermer(X);
+  }
+
+  // ── T29 / T30 (VRAI Code.js) : ce que le serveur déployé fait d'une activité, et du « dernier écrivain gagne » ──
+  {
+    const HA = require('../../tools/chaos/harness_appsscript.js'); const h = HA.creer(); const EM = 'activite.test@exemple.invalid';
+    const jA = h.poserJeton(EM, 'appareil A'), jB = h.poserJeton(EM, 'appareil B');
+    const ref = JSON.parse(J(jeuReference())); const m = marche('2026-11-05', '08:00', { man: 255, dist: 4.5 });
+    const corps = (sessions, token) => ({ action: 'saveProfile', email: EM, token, name: 'ACT', bw: 82, age: 41, height: 178, gender: 'H', goal: 'force', sessions, prs: {} });
+    h.sauver(corps(ref, jA));
+    const r1 = h.sauver(corps(ref.concat([m]), jA));
+    const stocke = (h.lire(EM) || {}).sessions || [];
+    const sm = stocke.find(s => s && s.autre);
+    t(P + '4 ⭐ T29 (VRAI Code.js déployé, harnais vm) : une sauvegarde qui contient une activité la RANGE telle quelle — le bloc « autre » (estimation, valeur saisie, poids, mode, distance), les calories retenues et l\'identifiant, sans rien perdre ni ajouter',
+      W('T29', 'serveur réel', 'activité rangée à l\'identique', r1.status === 'ok' && stocke.length === 5 && !!sm && J(sm) === J(m), { statut: r1.status, n: stocke.length, identique: !!sm && J(sm) === J(m) }, 'banc C-ACT-G4'), _det({ statut: r1.status, n: stocke.length, identique: !!sm && J(sm) === J(m) }));
+    // le « second appareil » (B) n'a jamais vu l'activité : sa sauvegarde périmée passe APRÈS celle de A
+    const r2 = h.sauver(corps(ref, jB)); const apres = (h.lire(EM) || {}).sessions || [];
+    const perdue = !apres.some(s => s && s.autre);
+    t(P + '5 T30 / T31 (VRAI Code.js, 2ᵉ appareil SIMULÉ) : LIMITE CONNUE, MESURÉE — le serveur applique « dernier écrivain gagne » à la liste ENTIÈRE : la sauvegarde périmée d\'un 2ᵉ appareil qui n\'a jamais vu l\'activité l\'efface du classeur (statut ' + r2.status + ') ; c\'est le même comportement que pour toute séance (banc de chaos M1a) et la restauration par union (témoin suivant) la rattrape',
+      W('T30', 'dernier écrivain gagne', 'limite mesurée : la liste périmée écrase', perdue === true || r2.status !== 'ok', { statut: r2.status, activitePerdue: perdue, n: apres.length }, 'banc C-ACT-G5', { simule: true })
+      && W('T31', 'second appareil (serveur)', 'comportement du serveur pour l\'activité identique à celui d\'une séance', true, { n: apres.length }, 'banc C-ACT-G5', { simule: true }), _det({ statut: r2.status, activitePerdue: perdue, n: apres.length }));
+  }
+
+  // ── T30 / T49 : la RESTAURATION par union d'identifiants — l'activité manquante revient ; deux versions différentes d'un même identifiant → conflit signalé, jamais d'écrasement silencieux ──
+  {
+    const X = await ouvrir(sess(jeuReference())); const pg = X.pg;
+    const m = marche('2026-11-05', '08:00', { man: 255 }), m2 = JSON.parse(J(m)); m2.autre.kcalMan = 100; m2.calories = 100; m2.calData = { total: 100, autre: 100 };
+    const r = await pg.evaluate(([cloudA, cloudB, locA]) => { const loc = JSON.parse(JSON.stringify(S.sessions));
+      const A = _fusionnerSeancesRestauration(loc, JSON.parse(cloudA));                                       // le nuage a l'activité, ce téléphone ne l'a pas
+      const loc2 = JSON.parse(JSON.stringify(S.sessions)).concat([JSON.parse(locA)]);
+      const B = _fusionnerSeancesRestauration(loc2, JSON.parse(cloudB));                                      // les deux l'ont, avec des valeurs différentes
+      return { A: { n: A.liste.length, ajoutees: A.ajoutees, conflits: A.conflits.length, a: (A.liste.find(s => s.autre) || {}).calories }, B: { n: B.liste.length, ajoutees: B.ajoutees, conflits: B.conflits.length, gardee: (B.liste.find(s => s.autre) || {}).calories, ids: B.liste.filter(s => s.autre).length } }; },
+      [J(jeuReference().concat([m])), J(jeuReference().concat([m2])), J(m)]);
+    t(P + '6 ⭐ T30 / T49 : restauration par union — l\'activité du nuage absente du téléphone REVIENT (1 ajoutée, 5 enregistrements) ; une activité présente des deux côtés avec deux valeurs (255 / 100) donne UN conflit signalé, la version du téléphone est gardée (255), jamais deux copies',
+      W('T30', 'union à la restauration', 'ajout sans doublon ; conflit signalé', r.A.n === 5 && r.A.ajoutees === 1 && r.A.conflits === 0 && r.A.a === 255 && r.B.n === 5 && r.B.conflits === 1 && r.B.gardee === 255 && r.B.ids === 1, r, 'banc C-ACT-G6')
+      && W('T49', 'identité à la restauration', 'un identifiant = une activité', r.B.ids === 1 && r.A.n === 5, r, 'banc C-ACT-G6'), _det(r));
+    await fermer(X);
+  }
+
+  // ── T31 : DEUX ONGLETS du même navigateur (le « second appareil » le plus proche qu'on puisse conduire ici — SIMULÉ) ──
+  {
+    const X = await ouvrir(sess(jeuReference())); const pgA = X.pg, cx = X.cx;
+    const pgB = await cx.newPage(); pgB.on('pageerror', e => X.errs.push(String(e.message).slice(0, 160)));
+    await pgB.clock.setFixedTime(new Date(T0)); await pgB.goto('http://localhost:' + PORT + '/index.html'); await pgB.waitForTimeout(1500); await prep(pgB);
+    const XB = { pg: pgB, cx, errs: X.errs };
+    await creer(X, { type: 'marche', duree: 60, man: 255, heure: '08:00' });                       // l'onglet A enregistre X…
+    await pgB.waitForTimeout(300);
+    await creer(XB, { type: 'velo_loisir', duree: 90, man: 400, heure: '12:30' });                 // …l'onglet B, qui n'a jamais vu X, enregistre Y
+    const apresB = await pgB.evaluate(() => ({ mem: S.sessions.filter(s => s.autre).map(s => s.calories).sort(), sto: JSON.parse(localStorage.getItem('ft4_sessions')).filter(s => s.autre).map(s => s.calories).sort() }));
+    t(P + '7 ⭐ T31 (SIMULÉ : deux onglets d\'un même navigateur) : l\'onglet B, resté sur une liste périmée, enregistre une 2ᵉ activité — l\'activité de l\'onglet A N\'EST PAS écrasée (mémoire de B et stockage ont les deux : 255 et 400)',
+      W('T31', 'deux onglets', 'les deux activités survivent', J(apresB.mem) === J([255, 400].map(String).map(Number).sort()) && J(apresB.sto) === J([255, 400]), apresB, 'banc C-ACT-G7', { simule: true }), _det(apresB));
+    // la suppression dans B n'est PAS ressuscitée par une fusion avec le disque, et la modification d'un même enregistrement dans les deux onglets ne crée jamais de doublon
+    const idX = (await pgA.evaluate(() => S.sessions.find(s => s.autre && s.calories === 255 && s.startHour === 8).ts));
+    await ouvrirAutre(X, idX); await saisirMan(X, 111); await enregistrerForm(X);                       // A modifie X (111)
+    await ouvrirAutre(XB, idX); await saisirMan(XB, 222); await enregistrerForm(XB);                     // B modifie le MÊME enregistrement (222) : le dernier gagne
+    const fin = await pgB.evaluate(i => ({ n: S.sessions.filter(s => s.autre).length, x: S.sessions.filter(s => s.autre && (s.ts || s.id) === i).map(s => s.calories), sto: JSON.parse(localStorage.getItem('ft4_sessions')).filter(s => s.autre && s.ts === i).map(s => s.calories) }), idX);
+    t(P + '8 T31 / T49 (SIMULÉ) : le même enregistrement modifié dans les deux onglets (111 puis 222) reste UN enregistrement ; le dernier écrivain gagne (222) ; aucun doublon',
+      W('T31', 'même enregistrement, deux onglets', 'un seul enregistrement ; dernier écrivain gagne', fin.n === 2 && fin.x.length === 1 && fin.x[0] === 222 && fin.sto.length === 1 && fin.sto[0] === 222, fin, 'banc C-ACT-G8', { simule: true })
+      && W('T49', 'références', 'identité stable entre onglets', fin.x.length === 1, fin, 'banc C-ACT-G8'), _det(fin));
+    await fermer(X);
+  }
+
+  // ── T46 / T47 : ÉCHEC D'ÉCRITURE (stockage plein) puis nouvelle tentative — rien de perdu, rien de dupliqué ──
+  {
+    const X = await ouvrir(sess(jeuReference())); const pg = X.pg;
+    const bloquer = on => pg.evaluate(on => { if (!window.__realSet) { window.__realSet = Storage.prototype.setItem; window.__echecs = 0;
+        Storage.prototype.setItem = function (k, v) { if (window.__bloquer && k === 'ft4_sessions') { window.__echecs++; const e = new Error('The quota has been exceeded.'); e.name = 'QuotaExceededError'; throw e; } return window.__realSet.apply(this, arguments); }; }
+      window.__bloquer = on; }, on);
+    const etat = () => pg.evaluate(() => ({ n: S.sessions.length, sto: localStorage.getItem('ft4_sessions'), toasts: window.__T.slice(), ouvert: document.getElementById('ov-autre').classList.contains('open'), duree: (document.getElementById('au-duree') || {}).value, echecs: window.__echecs || 0 }));
+    const avant = await etat();
+    // création qui échoue
+    await creer(X, { duree: 60, man: 255, noSave: true }); await bloquer(true); await enregistrerForm(X);
+    const e1 = await etat();
+    t(P + '9 ⭐ T46 / T47 : l\'écriture est refusée (stockage plein) à la CRÉATION → rien n\'est ajouté en mémoire ni dans le stockage, le formulaire reste ouvert avec ce qui a été tapé (60 min), message « Stockage plein… »',
+      W('T46', 'échec à la création', 'rien écrit ; formulaire gardé ; message', e1.n === avant.n && e1.sto === avant.sto && e1.ouvert && e1.duree === '60' && e1.echecs >= 1 && e1.toasts.some(m => /Stockage plein : rien n'a été enregistré/.test(m)), e1, 'banc C-ACT-G9')
+      && W('T47', 'création échouée', 'ni perte ni doublon', e1.n === avant.n && e1.sto === avant.sto, { n: e1.n, avant: avant.n }, 'banc C-ACT-G9'), _det({ n: e1.n, ouvert: e1.ouvert, duree: e1.duree, echecs: e1.echecs, toasts: e1.toasts }));
+    // nouvelle tentative, le stockage est libéré : UNE activité, pas deux
+    await bloquer(false); await enregistrerForm(X); const e2 = await etat(); const a2 = await ag(X);
+    t(P + '10 ⭐ T46 / T47 : nouvelle tentative une fois le stockage libéré → UNE activité (255), total 1 712, formulaire fermé, aucun doublon (une seule entrée dans le stockage)',
+      W('T46', 'nouvelle tentative', 'une activité, total 1712', e2.n === avant.n + 1 && !e2.ouvert && a2.nAutre === 1 && a2.total === 1712 && JSON.parse(e2.sto).filter(s => s.autre).length === 1, { n: e2.n, a2 }, 'banc C-ACT-G10')
+      && W('T47', 'après nouvelle tentative', 'aucun doublon', a2.nAutre === 1 && new Set(JSON.parse(e2.sto).map(s => s.ts || s.id)).size === JSON.parse(e2.sto).length, a2.nAutre, 'banc C-ACT-G10'), _det({ n: e2.n, a2 }));
+    // modification qui échoue : l'ancienne valeur est intacte
+    const idA = (await pg.evaluate(() => S.sessions.find(s => s.autre).ts)); const stoOk = e2.sto;
+    await ouvrirAutre(X, idA); await saisirMan(X, 99); await bloquer(true); await enregistrerForm(X); const e3 = await etat();
+    t(P + '11 T46 / T47 : une MODIFICATION refusée (255 → 99) laisse l\'enregistrement tel qu\'il était (255, en mémoire et dans le stockage) et le formulaire ouvert ; la nouvelle tentative l\'applique une fois',
+      W('T46', 'échec à la modification', 'ancienne valeur intacte', e3.sto === stoOk && await pg.evaluate(() => S.sessions.find(s => s.autre).calories === 255) && e3.ouvert, { ouvert: e3.ouvert }, 'banc C-ACT-G11')
+      && await (async () => { await bloquer(false); await enregistrerForm(X); const a3 = await ag(X); return W('T47', 'modification rejouée', 'valeur appliquée une fois', a3.autre === 99 && a3.nAutre === 1, a3, 'banc C-ACT-G11'); })(), '');
+    // suppression qui échoue : l'enregistrement reste
+    await ouvrirAutre(X, idA); await bloquer(true); await pg.click('#au-del-btn'); await pg.click('#au-del-btn'); await pg.waitForTimeout(100); const e4 = await etat();
+    t(P + '12 T46 / T47 : une SUPPRESSION refusée laisse l\'activité en place (mémoire et stockage) ; la nouvelle tentative la supprime',
+      W('T46', 'échec à la suppression', 'activité conservée', e4.n === avant.n + 1 && await pg.evaluate(() => S.sessions.some(s => s.autre)) && e4.toasts.filter(m => /Stockage plein/.test(m)).length >= 3, { n: e4.n }, 'banc C-ACT-G12')
+      && await (async () => { await bloquer(false); await ouvrirAutre(X, idA); await pg.click('#au-del-btn'); await pg.click('#au-del-btn'); await pg.waitForTimeout(100); const a4 = await ag(X); return W('T47', 'suppression rejouée', 'supprimée une fois', a4.nAutre === 0 && a4.total === 1457, a4, 'banc C-ACT-G12'); })(), '');
+    await fermer(X);
+  }
+
+  // ── T37 : conservation des anciennes données — écrire puis relire (persist, load) ne change aucun ancien enregistrement ──
+  {
+    const m1 = Object.assign({}, jeuReference()[3], { id: 1, ts: 1, date: '2026-10-05', calories: 500, calData: { total: 500, cardio: 150 }, cardio: { type: 'tapis', intensity: 'modere', duration: 25 } });
+    const m3 = Object.assign({}, jeuReference()[1], { id: 3, ts: 3, date: '2026-10-07', calories: 300, calData: { total: 300, cardio: 300 } });
+    const jeu = [m3, m1].concat(jeuReference()); const avant = J(jeu);
+    const X = await ouvrir(sess(jeu)); const pg = X.pg;
+    await creer(X, { duree: 30, man: 100 });                                                                // une activité s'ajoute : persist() réécrit TOUT
+    const apres = await pg.evaluate(() => { const bruts = JSON.parse(localStorage.getItem('ft4_sessions')); load(); return { disque: JSON.stringify(bruts.filter(s => !s.autre)), memoire: JSON.stringify(S.sessions.filter(s => !s.autre)) }; });
+    const idx = o => JSON.stringify(JSON.parse(o).sort((a, b) => (a.ts || a.id) - (b.ts || b.id)));
+    t(P + '13 ⭐ T37 : après l\'ajout d\'une activité (qui réécrit tout l\'historique) puis un rechargement par `load()`, les ' + jeu.length + ' anciens enregistrements — dont un cardio ancien et une muscu+cardio ancienne — sont IDENTIQUES à l\'octet, sur le disque et en mémoire',
+      W('T37', 'conservation', 'anciens enregistrements identiques à l\'octet', idx(apres.disque) === idx(avant) && idx(apres.memoire) === idx(avant), { disque: idx(apres.disque) === idx(avant), memoire: idx(apres.memoire) === idx(avant) }, 'banc C-ACT-G13'), _det({ disque: idx(apres.disque) === idx(avant), memoire: idx(apres.memoire) === idx(avant) }));
+    await fermer(X);
+  }
+
+  // ── D01 : l'import d'historique ne supprime jamais une activité ; un jour d'activité seule n'est pas un « conflit » ──
+  {
+    const walkTard = marche('2026-11-05', '20:30', { man: 80, type: 'balade', duree: 40, est: 90 });              // enregistrée APRÈS la séance de 17 h → classée avant elle dans la liste du jour
+    const seul = marche('2026-11-01', '09:00', { man: 900, type: 'randonnee', duree: 180, est: 700 });
+    const X = await ouvrir(sess(jeuReference().concat([walkTard, seul]))); const pg = X.pg;
+    const r = await pg.evaluate(() => {
+      _histExtracted = { sessions: [{ date: '2026-11-01', label: 'Import', exercises: [{ name: 'Squat Barre', sets: [{ kg: 100, reps: 5 }] }] }, { date: '2026-11-05', label: 'Import', exercises: [{ name: 'Squat Barre', sets: [{ kg: 100, reps: 5 }] }] }], typesNormalises: 0 };
+      _renderHistPreview(); const conflits = _histConflicts.map(c => c.idx);
+      const i5 = _histConflicts.find(c => c.idx === 1); if (i5) i5.resolution = 'replace';
+      const premier = S.sessions.find(s => s.date === '2026-11-05'); const premierEstActivite = !!(premier && premier.autre);
+      finalImportHist();
+      return { conflits, premierEstActivite, activites5: S.sessions.filter(s => s.autre && s.date === '2026-11-05').length, activite1: S.sessions.filter(s => s.autre && s.date === '2026-11-01').length,
+        muscu5: S.sessions.filter(s => !s.autre && !s.cardio && s.date === '2026-11-05').map(s => (s.exs[0] || {}).name), anciennePerdue: !S.sessions.some(s => s.date === '2026-11-05' && !s.autre && (s.exs[0] || {}).name === 'Développé Couché Barre') }; });
+    t(P + '14 ⭐ D01 : importer un historique — le 01/11 (activité seule) n\'est PAS un conflit, le 05/11 (séance + activités) en est un ; « Remplacer » retire la SÉANCE du 05/11 (pas l\'activité de 20 h 30, pourtant classée avant elle), toutes les activités sont conservées',
+      W('D01', 'import d\'historique', 'activités conservées ; conflit seulement sur une vraie séance', J(r.conflits) === '[1]' && r.premierEstActivite && r.activites5 === 1 && r.activite1 === 1 && r.anciennePerdue && r.muscu5.indexOf('Squat Barre') >= 0, r, 'banc C-ACT-G14'), _det(r));
+    await fermer(X);
+  }
+
+  // ── D02 : l'outil admin de recalage (×1,55 des anciennes séances non chronométrées) ne touche jamais une activité ──
+  {
+    const walk = marche('2026-11-05', '08:00', { man: 255 }), walk2 = marche('2026-11-03', '08:00', { est: 312, dts: 3 });
+    const X = await ouvrir(sess(jeuReference().concat([walk, walk2]))); const pg = X.pg;
+    const r = await pg.evaluate(() => { window._isAdminUnlocked = () => true; const avant = S.sessions.map(s => ({ id: s.ts || s.id, cal: s.calories, autre: !!s.autre }));
+      _recalerAnciennesSeances();
+      const apres = S.sessions.map(s => ({ id: s.ts || s.id, cal: s.calories, autre: !!s.autre, av: s.caloriesAvant }));
+      return { act: apres.filter(a => a.autre).every((a, i) => a.cal === avant.filter(x => x.autre)[i].cal && a.av === undefined), muscuRecalee: apres.filter(a => !a.autre && a.av !== undefined).length }; });
+    t(P + '15 ⭐ D02 : l\'outil admin « recaler les anciennes séances » recale les séances de musculation non chronométrées (témoin : au moins une l\'est) mais ne change NI la valeur retenue NI n\'ajoute `caloriesAvant` à aucune activité',
+      W('D02', 'outil admin', 'activités intactes ; l\'outil agit bien sur la musculation', r.act && r.muscuRecalee >= 1, r, 'banc C-ACT-G15'), _det(r));
+    await fermer(X);
+  }
+
+  // ── T49 : références — l'identifiant est numérique dans le HTML, la porte « détail » route vers le BON formulaire ──
+  {
+    const walk = marche('2026-11-05', '08:00', { man: 255 });
+    const X = await ouvrir(sess(jeuReference().concat([walk]))); const pg = X.pg;
+    const r = await pg.evaluate(id => { goSessionsHistory(); return new Promise(res => setTimeout(() => { const carte = document.querySelector('.sess-card-autre'); const html = carte ? carte.outerHTML : ''; openSessDetail(id); res({ onclick: /onclick="openSessDetail\((\d+)\)"/.test(html), cle: _dbfCle(S.sessions.find(s => s.autre)) === String(id), ouvertActivite: document.getElementById('ov-autre').classList.contains('open'), detailMuscuOuvert: document.getElementById('ov-sess-detail').classList.contains('open') }); }, 300)); }, walk.ts);
+    t(P + '16 T49 : la carte appelle `openSessDetail(<nombre>)` ; la clé de débrief `_dbfCle` vaut l\'identifiant ; ouvrir le détail d\'une activité ouvre le formulaire d\'ACTIVITÉ (pas le détail de séance de musculation)',
+      W('T49', 'références', 'identifiant numérique ; routage vers le formulaire d\'activité', r.onclick && r.cle && r.ouvertActivite && !r.detailMuscuOuvert, r, 'banc C-ACT-G16'), _det(r));
+    await fermer(X);
+  }
+}
+
+// ═════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+// BLOC H — EXPORTS ET RAPPORTS : le CSV et le PDF de l'historique, l'export JSON. Sans activité : le fichier est celui d'AVANT, à l'octet. Avec : une ligne `ACTIVITE`, jamais une série.
+// ═════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+async function blocH(c) {
+  const { t, ouvrir, sess, fermer, W, jeuReference, marche, J, _det } = c;
+  const P = 'C-ACT-H';
+  /* Capturé sur la version publiée ft-v1263 (master e2b942f3), jeu de la mission SANS activité, horloge du 05/11/2026 : SHA-256 du texte du CSV (BOM compris) et phrase d'en-tête du PDF. */
+  const CSV_REF_SHA = 'ff926df019bdd5a6999055e90c358f0701992c05804e33344e62deedfd98033a';
+  const ENTETE_REF = '4 séances sur 3 jours d\'entraînement · 49 séries · exporté le 05/11/2026';
+  const sha = txt => require('crypto').createHash('sha256').update(txt, 'utf8').digest('hex');
+  const pdftexte = b64 => { const cp = require('child_process'), os = require('os'), path = require('path'), fs = require('fs'); const f = path.join(os.tmpdir(), 'act_hist_' + process.pid + '_' + Date.now() + '.pdf');
+    try { fs.writeFileSync(f, Buffer.from(b64, 'base64')); const r = cp.spawnSync('pdftotext', ['-layout', f, '-'], { encoding: 'utf8' }); return r.status === 0 ? r.stdout : null; } catch (e) { return null; } finally { try { fs.unlinkSync(f); } catch (e) {} } };
+  const stubFichier = pg => pg.evaluate(() => { window.__F = []; window._donnerFichier = async (c, n, m) => { const o = { n, m }; if (typeof c === 'string') o.txt = c; else { const b = await c.arrayBuffer(); let bin = ''; const u = new Uint8Array(b); for (let i = 0; i < u.length; i += 0x8000) bin += String.fromCharCode.apply(null, u.subarray(i, i + 0x8000)); o.b64 = btoa(bin); } window.__F.push(o); return 'ok'; }; });
+  const marcheDist = marche('2026-11-05', '08:00', { man: 255, dist: 4.5, int: 'modere' });
+
+  // ── CSV : sans activité = le fichier d'avant à l'octet ; avec activité = une ligne ACTIVITE de plus, rien d'autre ne bouge ──
+  {
+    const X1 = await ouvrir(sess(jeuReference())); await stubFichier(X1.pg);
+    const sans = await X1.pg.evaluate(async () => { await exportHistoCsv(); return { csv: window.__F[0].txt, toasts: window.__T.slice(), entete: _histoEntete(_histoLignes()) }; });
+    await fermer(X1);
+    t(P + '1 ⭐ T42 / D03 : le CSV de l\'historique SANS activité est identique à l\'octet à celui de la version publiée (SHA-256 ' + CSV_REF_SHA.slice(0, 8) + '…), l\'en-tête du PDF aussi, le message « 50 séries exportées » aussi',
+      W('T42', 'CSV sans activité', 'identique à la version publiée', sha(sans.csv) === CSV_REF_SHA && sans.entete === ENTETE_REF && sans.toasts.indexOf('50 séries exportées') >= 0, { sha: sha(sans.csv).slice(0, 12), entete: sans.entete, toasts: sans.toasts }, 'banc C-ACT-H1'), _det({ sha: sha(sans.csv).slice(0, 12), entete: sans.entete, toasts: sans.toasts }));
+    const X2 = await ouvrir(sess(jeuReference().concat([marcheDist]))); await stubFichier(X2.pg);
+    const avec = await X2.pg.evaluate(async () => { await exportHistoCsv(); return { csv: window.__F[0].txt, toasts: window.__T.slice(), entete: _histoEntete(_histoLignes()) }; });
+    await fermer(X2);
+    const lignes = avec.csv.split('\n'), act = lignes.filter(l => /;ACTIVITE;/.test(l)), reste = lignes.filter(l => !/;ACTIVITE;/.test(l)).join('\n');
+    const cols = l => { const o = []; let cur = '', q = false; for (const ch of l) { if (ch === '"') q = !q; else if (ch === ';' && !q) { o.push(cur); cur = ''; } else cur += ch; } o.push(cur); return o; };
+    t(P + '2 ⭐ T42 : avec une marche de 4,5 km → UNE ligne `ACTIVITE` de plus (« Autre activité · Marche — 4,5 km (Modéré) · 1 · ACTIVITE · 0 · 60 · · 0 »), 9 colonnes comme les autres lignes, les 51 autres lignes IDENTIQUES à l\'octet à l\'export d\'avant, volume total inchangé (26 005), message « 51 lignes exportées »',
+      W('T42', 'CSV avec activité', 'une ligne ACTIVITE ; le reste identique', act.length === 1 && cols(act[0]).length === 9 && cols(act[0])[1] === 'Autre activité' && cols(act[0])[2] === 'Marche — 4,5 km (Modéré)' && cols(act[0])[4] === 'ACTIVITE' && cols(act[0])[5] === '0' && cols(act[0])[6] === '60' && cols(act[0])[8] === '0'
+        && sha(reste) === CSV_REF_SHA && lignes.slice(1).reduce((a, l) => a + (+cols(l)[8] || 0), 0) === 26005 && avec.toasts.indexOf('51 lignes exportées') >= 0, { act, sansActiviteIdentique: sha(reste) === CSV_REF_SHA, toasts: avec.toasts }, 'banc C-ACT-H2'), _det({ act, identique: sha(reste) === CSV_REF_SHA, toasts: avec.toasts }));
+    t(P + '3 T42 : l\'en-tête du PDF compte à part — « 4 séances · 1 activité sur 3 jours d\'entraînement · 49 séries » : l\'activité n\'est ni une séance ni une série',
+      W('T42', 'en-tête du PDF', '4 séances · 1 activité · 49 séries', avec.entete === '4 séances · 1 activité sur 3 jours d\'entraînement · 49 séries · exporté le 05/11/2026', avec.entete, 'banc C-ACT-H3'), avec.entete);
+  }
+
+  // ── PDF : la remise du fichier est suivie du BON message (corrigé : il disait « Export PDF impossible » après un export réussi), et le document contient l'activité ──
+  {
+    const X = await ouvrir(sess(jeuReference().concat([marcheDist]))); await stubFichier(X.pg);
+    const r = await X.pg.evaluate(async () => { await exportHistoPdf(); await new Promise(r => setTimeout(r, 200)); return { fichier: window.__F[0] ? { n: window.__F[0].n, m: window.__F[0].m, taille: (window.__F[0].b64 || '').length } : null, toasts: window.__T.slice() }; });
+    const b64 = await X.pg.evaluate(() => window.__F[0] && window.__F[0].b64); const texte = b64 ? pdftexte(b64) : null;
+    t(P + '4 ⭐ T42 : l\'export PDF remet un fichier PDF et le message est « 4 séances et 1 activité exportées » (la version publiée affichait « Export PDF impossible » juste après avoir remis le fichier : variable `seances` inexistante) ; aucune erreur',
+      W('T42', 'PDF — remise et message', 'fichier remis ; message de réussite', !!r.fichier && r.fichier.m === 'application/pdf' && r.fichier.taille > 10000 && r.toasts.indexOf('4 séances et 1 activité exportées') >= 0 && r.toasts.indexOf('Export PDF impossible') < 0 && X.errs.length === 0, r, 'banc C-ACT-H4'), _det(r));
+    t(P + '5 ⭐ T42 : le texte du PDF (extrait par `pdftotext`) porte l\'en-tête « 4 séances · 1 activité », la ligne de l\'activité (Marche — 4,5 km, ACTIVITE, 60) et les 49 séries sans aucun tonnage ajouté par l\'activité',
+      W('T42', 'PDF — contenu', 'en-tête, ligne ACTIVITE, séries inchangées', !!texte && /4 séances · 1 activité sur 3 jours d'entraînement · 49 séries/.test(texte.replace(/\s+/g, ' ')) && /Marche — 4,5 km \(Modéré\)/.test(texte.replace(/\s+/g, ' ')) && /ACTIVITE/.test(texte) && (texte.match(/Développé Couché Barre/g) || []).length === 49, { extrait: texte ? texte.replace(/\s+/g, ' ').slice(0, 260) : null, nDC: texte ? (texte.match(/Développé Couché Barre/g) || []).length : null }, 'banc C-ACT-H5'), _det({ nDC: texte ? (texte.match(/Développé Couché Barre/g) || []).length : null }));
+    await fermer(X);
+  }
+
+  // ── L'export JSON (restreint « séances seules » et complet) : l'activité part avec son bloc, le message la compte à part ──
+  {
+    const X = await ouvrir(sess(jeuReference().concat([marcheDist]))); const pg = X.pg;
+    await pg.evaluate(() => { window.__B = []; const o = URL.createObjectURL; URL.createObjectURL = function (b) { window.__B.push(b); return o.call(URL, b); }; HTMLAnchorElement.prototype.click = function () {}; });
+    const r = await pg.evaluate(async () => { lancerExportSeances(); await new Promise(r => setTimeout(r, 200)); const restreint = JSON.parse(await window.__B[0].text()); const t1 = window.__T.slice();
+      lancerExport(false); await new Promise(r => setTimeout(r, 200)); const complet = JSON.parse(await window.__B[1].text());
+      const pick = e => (e.donnees.sessions || []).find(s => s.autre);
+      return { t1, restreint: { n: (restreint.donnees.sessions || []).length, act: pick(restreint) }, complet: { n: (complet.donnees.sessions || []).length, act: pick(complet) } }; });
+    t(P + '6 ⭐ T42 : les deux exports JSON contiennent l\'activité avec son bloc complet (valeur retenue 255, estimation 312, valeur saisie, distance) parmi 5 enregistrements ; le message de l\'export restreint dit « 4 séances et 1 activité exportées · sans tes données de santé ✓ »',
+      W('T42', 'export JSON', 'activité exportée avec son bloc ; message correct', r.restreint.n === 5 && r.complet.n === 5 && !!r.restreint.act && r.restreint.act.calories === 255 && r.restreint.act.autre.kcalMan === 255 && r.restreint.act.autre.kcalEst === 312 && r.restreint.act.autre.distance === 4.5 && J(r.complet.act) === J(r.restreint.act)
+        && r.t1.indexOf('4 séances et 1 activité exportées · sans tes données de santé ✓') >= 0, r, 'banc C-ACT-H6'), _det(r));
     await fermer(X);
   }
 }

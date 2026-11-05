@@ -349,10 +349,17 @@ function _auRafraichir(){
   try{ if(document.getElementById('sess-list')&&typeof renderSessions==='function')renderSessions(); }catch(e){}
   try{ if(typeof renderHome==='function')renderHome(); }catch(e){}
 }
+/* Le filet multi-onglets de `state.js` (`_ftAutreOnglet`) ne couvre que `persist()`. Nos écritures « locales d'abord » (`_auPersister`) passent AVANT lui : un onglet resté ouvert
+   avec une liste périmée aurait écrasé ce qu'un autre onglet venait d'enregistrer. On absorbe donc d'abord ce qui est sur le disque (union par identité, la mémoire gagne à égalité),
+   PUIS on applique le geste — jamais l'inverse : fusionner après une suppression la ressusciterait. */
+function _auAbsorberAutreOnglet(){
+  try{ if(typeof _ftAutreOnglet!=='undefined'&&_ftAutreOnglet&&typeof _fusionnerAvecLeDisque==='function'){ _ftAutreOnglet=false; _fusionnerAvecLeDisque(); } }catch(e){}
+}
 function autreEnregistrer(){
   if(!_au)return;
   const r=_auValider(); if(!r.ok){ _auErr(r.raison); return; }
   _auErr('');
+  _auAbsorberAutreOnglet();
   const idx=(_au.id!=null)?(S.sessions||[]).findIndex(x=>x&&(x.ts||x.id)===_au.id&&_estAutre(x)):-1;
   const ancien=(idx>=0)?S.sessions[idx]:null;
   if(_au.id!=null&&!ancien){ _auErr('Cette activité n\'existe plus (supprimée sur un autre appareil ?). Ferme et recommence.'); return; }
@@ -376,6 +383,7 @@ function autreSupprimerOuConfirmer(){
     return;
   }
   if(_auDelTimer){clearTimeout(_auDelTimer);_auDelTimer=null;}
+  _auAbsorberAutreOnglet();
   const id=_au.id, avant=S.sessions.slice();
   S.sessions=S.sessions.filter(s=>!(s&&_estAutre(s)&&(s.ts||s.id)===id));
   if(S.sessions.length===avant.length){ closeAutreActivite(); return; }
