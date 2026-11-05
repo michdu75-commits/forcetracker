@@ -271,6 +271,30 @@ function _ctxReposRegles(){
 // on ne corrige jamais en silence — on donne les DEUX et on laisse Milo (et la personne)
 // arbitrer. Et on ne dit RIEN tant qu'on n'a pas assez de séances pour parler d'une
 // tendance : une séance courte n'est pas une habitude (R12 · Constitution P19).
+/* 🚶 LES AUTRES ACTIVITÉS, POUR MILO (05/11/2026, mission de Michel — `docs/AUTRE-ACTIVITE-CALORIES.md`).
+   ⛔ R4 : l'app SAIT qu'une randonnée a été faite hier ; si Milo ne le sait pas, il redemande ou dit « aucune séance ». Mais une activité n'est PAS une séance : les 9 lecteurs de
+   séances de ce fichier ne la voient pas (`_seancesTrain`), et elle arrive ICI, dans un bloc à elle — sans série, sans charge, sans volume. Ses calories sont celles RETENUES
+   (la valeur de la montre si la personne l'a saisie, sinon l'estimation) avec leur origine DITE (MILO-CTX1 : un chiffre sans statut se fait réinterpréter). La règle de fourchettes
+   (anti-faux-précis) ne s'applique pas à une mesure donnée par la personne : le bloc le dit. Bloc conditionnel aux données (comme `_memoireLongue`) : sans activité, le contexte
+   est identique à l'octet. Il est dans la partie PERSONNELLE (jamais dans le commun, dont la marge est de ≈ 1 100 caractères) ; 8 lignes au plus, 28 jours. */
+function _ctxAutresActivites(){
+  try{
+    const L=(S.sessions||[]).filter(_estAutre);
+    if(!L.length)return '';
+    const t=today();
+    const ecart=d=>Math.round((new Date(t+'T12:00:00')-new Date(d+'T12:00:00'))/864e5);
+    const rec=L.filter(s=>s&&s.date&&ecart(s.date)>=0&&ecart(s.date)<=28).sort(_cmpSeances).slice(0,8);
+    if(!rec.length)return '';
+    const lignes=rec.map(s=>{
+      const a=s.autre||{}, kb=kcalBloc({duration:a.duration,kcalEst:a.kcalEst,kcalMan:a.kcalMan}), d=ecart(s.date);
+      const quand=d===0?"aujourd'hui":(d===1?'hier':'il y a '+d+' jours');
+      return s.date+' ('+quand+') : '+autreLabel(a)+' '+a.duration+' min'+(a.distance!=null?', '+a.distance+' km':'')+(a.intensity?', intensité '+(CARDIO_INTENSITES[a.intensity]||a.intensity):'')
+        +' — '+(+s.calories||0)+' kcal ('+(kb.remplacee?'valeur saisie par la personne, relevée sur sa montre':"estimation de l'app")+')';
+    });
+    return '\n🚶 AUTRES ACTIVITÉS (hors musculation) — enregistrées à part, sur les 28 derniers jours :\n  · '+lignes.join('\n  · ')
+      +'\n→ Ce ne sont PAS des séances de musculation : aucune série, aucune charge, aucun volume — n\'en invente pas et ne les compte pas comme des séances. Leurs calories sont celles RETENUES par la personne : cite-les telles quelles (c\'est sa mesure, sans fourchette) et ne les ajoute pas à sa dépense (elles sont déjà comprises dans son niveau d\'activité).';
+  }catch(e){ return ''; }
+}
 function _ctxDureeSeance(){
   try{
     const sess=_seancesTrain().filter(s=>s&&+s.duration>0).slice(0,12);   // 🚶 sans les activités (`_estAutre`) : la durée type d'une SÉANCE
@@ -4078,7 +4102,7 @@ ${(()=>{
 })()}
 ${_coachQuizContext()}
 ${_memoireLongue()}
-${_historiqueCompact()}
+${_historiqueCompact()}${_ctxAutresActivites()}
 ${_ctxDiscipline()}
 ${_ctxRythme()}
 ${_ctxCharges()}

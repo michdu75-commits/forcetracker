@@ -300,6 +300,19 @@ function _histoLignes(avecDebriefs){
       const nom=s.name||s.label||'';
       const sid=(typeof _dbfCle==='function')?_dbfCle(s):String(s.id||s.ts||s.date);
       const _n0=out.length;
+      /* 🚶 AUTRE ACTIVITÉ (05/11/2026) — UNE LIGNE `type = ACTIVITE`, jamais une « séance de 0 série ».
+         ⛔ Une activité (marche, vélo…) n'a ni série, ni charge, ni tonnage : son enregistrement porte `exs:[]`, donc sans
+         cette ligne elle serait ABSENTE du fichier (même défaut que le cardio avant le 04/09). La DURÉE va dans `reps`,
+         `kg`/`volume` restent à 0, la distance et l'intensité sont dites dans le libellé (le format du fichier ne change
+         pas : mêmes colonnes que l'onglet `Sessions`, R2/R33). Les calories n'y entrent pas, comme pour le cardio. */
+      if(typeof _estAutre==='function'&&_estAutre(s)){
+        const a=s.autre;
+        out.push({date:s.date, seance:'Autre activité',
+                  exercise:(typeof autreLabel==='function'?autreLabel(a):String(a.type||'Activité'))
+                    +(a.distance!=null&&isFinite(+a.distance)?' — '+String(+a.distance).replace('.',',')+' km':'')
+                    +(a.intensity&&typeof CARDIO_INTENSITES!=='undefined'&&CARDIO_INTENSITES[a.intensity]?' ('+CARDIO_INTENSITES[a.intensity]+')':''),
+                  set_num:1, type:'ACTIVITE', kg:0, reps:+a.duration||0, rir:'', volume:0});
+      }
       /* 🏃 LE CARDIO ENTRE DANS L'EXPORT (04/09/2026). Michel, en regardant son fichier :
          *« il faut que le cardio soit sur l'export de l'historique »*.
          ⛔⛔ IL N'Y ÉTAIT PAS DU TOUT, et pas par oubli de filtrage : ce producteur ne parcourt
@@ -549,9 +562,13 @@ function _pdfTexte(t){
    DATES et les appelait « séances » : deux séances le même jour en faisaient une. Une séance = sa clé (`seance_id`, posée
    sur chaque ligne par `_histoLignes`) ; un jour d'entraînement = une date. Les séries restent les lignes de séries. */
 function _histoEntete(L){
-  const seances=new Set(L.map(r=>r.seance_id||r.date)).size, jours=new Set(L.map(r=>r.date)).size;
-  const series=L.filter(r=>r.type!=='CARDIO'&&r.type!=='DEBRIEF').length;
-  return seances+' séance'+(seances>1?'s':'')+' sur '+jours+' jour'+(jours>1?'s':'')+' d\'entraînement · '
+  /* 🚶 Les activités (type ACTIVITE) ne sont NI des séances NI des séries : elles se comptent à part, et seulement s'il y
+     en a — sans activité, la phrase est mot pour mot celle d'avant. */
+  const LS=L.filter(r=>r.type!=='ACTIVITE'), LA=L.filter(r=>r.type==='ACTIVITE');
+  const seances=new Set(LS.map(r=>r.seance_id||r.date)).size, jours=new Set(L.map(r=>r.date)).size;
+  const series=LS.filter(r=>r.type!=='CARDIO'&&r.type!=='DEBRIEF').length;
+  return seances+' séance'+(seances>1?'s':'')+(LA.length?' · '+LA.length+' activité'+(LA.length>1?'s':''):'')
+    +' sur '+jours+' jour'+(jours>1?'s':'')+' d\'entraînement · '
     +series+' série'+(series>1?'s':'')+' · exporté le '+new Date().toLocaleDateString('fr-FR');
 }
 async function exportHistoPdf(){
@@ -903,7 +920,7 @@ function goSessionsHistory(cles){
   _sessCibles=Array.isArray(cles)?cles.filter(k=>k!=null&&k!==0):[];
   const vis=_sessCibles.length?(S.sessions||[]).filter(s=>_sessCibles.indexOf(s.ts||s.id||0)>=0):[];
   const mois=vis.length?vis.map(_sessMoisDe):[_sessMoisDe({date:today()})];
-  _sessFiltres=[];
+  _sessFiltres=[]; _sessGenre='';   // 🚶 la porte montre TOUT : l'enregistrement visé (peut-être une activité) ne doit jamais être filtré
   _sessOuvrir(mois);
   _progTab='seances'; _progCibleNav=true;
   goScreen('progress',document.getElementById('nb-progress'));
@@ -1312,6 +1329,7 @@ function _sdEntete(sess){
 function openSessDetail(id){
   const sess=S.sessions.find(s=>(s.ts||s.id)===id);
   if(!sess)return;
+  if(_estAutre(sess)){ openAutreActivite(id); return; }   // 🚶 une activité s'ouvre dans SON formulaire (pas de séries à éditer) — le seul chemin, pour la carte comme pour le calendrier
   _sessId=id;
   _sessEdits=JSON.parse(JSON.stringify(sess));
   /* ⚠️ UNE SEULE remise à zéro, et c'est MESURÉ : j'en avais posé deux (ici et à la fermeture).
@@ -1942,6 +1960,11 @@ function showSessMuscleMap(i,ev){
    Accueil / calendrier (`goSessionsHistory`).
    ⚠️ Inchangé, et exprès hors de ce lot : les pastilles viennent des muscles DOMINANTS, le filtre teste la PRÉSENCE. */
 let _sessFiltres=[];
+/* 🚶 Le filtre de TYPE (05/11/2026) : Tout · Musculation · Cardio · Activités. En mémoire seulement (aucune clé), comme les zones ; remis à « Tout » par les portes. Il ne s'affiche
+   que s'il y a au moins deux types dans l'historique — avec de la musculation seule, l'écran est celui d'avant. */
+let _sessGenre='';
+const _SESS_GENRES=[['muscu','Musculation'],['cardio','Cardio'],['autre','Activités']];
+function setSessGenre(g){ _sessGenre=(_sessGenre===g)?'':g; renderSessions(); }
 function _sessTopMuscle(s){
   const sc=_mscScoresVus(s.exs||s.exercises||[]);const _sc=sc.sc||{};
   let b='',bv=0;for(const g in _sc){if(_sc[g]>bv){bv=_sc[g];b=g;}}
@@ -1970,20 +1993,30 @@ function renderSessions(){
   // Sécurité : un muscle filtré qui n'existe plus est retiré (s'il n'en reste aucun, on est sur « Tous »)
   _sessFiltres=_sessFiltres.filter(m=>present.includes(m));
   const nomM=m=>_MG[m]?_MG[m].label:m;
+  const _genresVus=new Set(S.sessions.map(_genreSeance));
+  if(!_genresVus.has(_sessGenre))_sessGenre='';   // un type qui n'existe plus dans l'historique est retiré (on revient à « Tout »)
+  const _chipsGenre=(_genresVus.size>=2)
+    ? '<span style="flex-basis:100%;font-size:11px;font-weight:700;color:var(--t3);letter-spacing:.04em;">TYPE</span>'
+      +'<button class="sessf-chip'+(!_sessGenre?' on':'')+'" aria-pressed="'+!_sessGenre+'" onclick="setSessGenre(\'\')">Tout</button>'
+      +_SESS_GENRES.filter(x=>_genresVus.has(x[0])).map(x=>'<button class="sessf-chip'+(_sessGenre===x[0]?' on':'')+'" aria-pressed="'+(_sessGenre===x[0])+'" data-genre="'+x[0]+'" onclick="setSessGenre(\''+x[0]+'\')">'+x[1]+'</button>').join('')
+    : '';
   if(fEl){
-    if(present.length>=2){
-      fEl.innerHTML='<button class="sessf-chip'+(!_sessFiltres.length?' on':'')+'" aria-pressed="'+!_sessFiltres.length+'" onclick="setSessFilter(null)">Tous</button>'+
+    if(_chipsGenre&&present.length<2){ fEl.innerHTML=_chipsGenre; }
+    else if(present.length>=2){
+      fEl.innerHTML=(_chipsGenre?_chipsGenre+'<span style="flex-basis:100%;font-size:11px;font-weight:700;color:var(--t3);letter-spacing:.04em;margin-top:4px;">MUSCLE</span>':'')+'<button class="sessf-chip'+(!_sessFiltres.length?' on':'')+'" aria-pressed="'+!_sessFiltres.length+'" onclick="setSessFilter(null)">Tous</button>'+
         present.map(m=>{const on=_sessFiltres.indexOf(m)>=0;
           return '<button class="sessf-chip'+(on?' on':'')+'" aria-pressed="'+on+'" data-m="'+m+'" onclick="setSessFilter(\''+m+'\')">'+_escNote(nomM(m))+'</button>';}).join('');
     } else fEl.innerHTML='';
   }
   /* Le panneau n'existe que s'il y a de quoi filtrer ; fermé, il dit ce qui est filtré (une ligne). */
   if(fAcc)fAcc.hidden=!(fEl&&fEl.innerHTML);
-  if(fRes)fRes.textContent='Filtrer les séances · '+(!_sessFiltres.length?'Tous'
-    :_sessFiltres.length<=2?_sessFiltres.map(nomM).join(' + '):nomM(_sessFiltres[0])+' + '+(_sessFiltres.length-1)+' autres');
+  const _gTxt=_sessGenre?(_SESS_GENRES.find(x=>x[0]===_sessGenre)||['',''])[1]:'';
+  if(fRes)fRes.textContent='Filtrer les séances · '+(!_sessFiltres.length&&!_gTxt?'Tous'
+    :[_gTxt].concat(_sessFiltres.length?[_sessFiltres.length<=2?_sessFiltres.map(nomM).join(' + '):nomM(_sessFiltres[0])+' + '+(_sessFiltres.length-1)+' autres']:[]).filter(Boolean).join(' · '));
   let flist=S.sessions;
+  if(_sessGenre)flist=flist.filter(s=>_genreSeance(s)===_sessGenre);
   if(_sessFiltres.length)flist=flist.filter(s=>{const p=_sessMusclesPresent(s);return _sessFiltres.some(m=>p.includes(m));});
-  if(!flist.length){el.innerHTML='<div class="empty">Aucune séance pour '+(_sessFiltres.length>1?'ces muscles':'ce muscle')+'</div>';return;}
+  if(!flist.length){el.innerHTML='<div class="empty">'+(_sessFiltres.length?'Aucune séance pour '+(_sessFiltres.length>1?'ces muscles':'ce muscle'):'Aucun enregistrement de ce type')+'</div>';return;}
   /* 🗂️ PROGRES-SEANCES-01 — ANNÉE → MOIS → SÉANCE, ET PLUS DE PLAFOND DE 20 (contrat UX-HIST du 08/10).
      Avant : `slice(0,20)` — la 21ᵉ séance n'était atteignable NULLE PART dans l'app (63 séances réelles
      chez Michel le 14/10). Maintenant toutes le sont ; pour ne pas dessiner 1 500 cartes, on ne dessine
@@ -1993,20 +2026,27 @@ function renderSessions(){
      et la carte reste produite par une seule fonction (`_sessCarteHtml`). Rien n'est stocké. */
   const ans=[],parAn={};
   flist.forEach(s=>{const m=_sessMoisDe(s),an=m==='?'?'?':m.slice(0,4);
-    if(!parAn[an]){parAn[an]={mois:[],parMois:{},n:0};ans.push(an);}
-    const A=parAn[an];if(!A.parMois[m]){A.parMois[m]=[];A.mois.push(m);}A.parMois[m].push(s);A.n++;});
+    if(!parAn[an]){parAn[an]={mois:[],parMois:{},n:0,g:{muscu:0,cardio:0,autre:0}};ans.push(an);}
+    const A=parAn[an];if(!A.parMois[m]){A.parMois[m]=[];A.mois.push(m);}A.parMois[m].push(s);A.n++;A.g[_genreSeance(s)]++;});
   const desc=(a,b)=>a==='?'?1:b==='?'?-1:(a<b?1:a>b?-1:0);   // le plus récent d'abord, « sans date » à la fin
   ans.sort(desc);
   const chev=o=>'<span class="sess-chev'+(o?' ouvert':'')+'">›</span>';
-  const nb=n=>n+' séance'+(n>1?'s':'');
+  /* 🚶 Le compteur DIT ce qu'il compte : « 3 séances · 1 cardio · 2 activités » (séances de musculation, cardio seul, autres activités). Tant qu'il n'y a ni cardio seul ni
+     activité, le texte est celui d'avant : « N séances ». */
+  const nbG=g=>{const m=g.muscu||0,c=g.cardio||0,a=g.autre||0,t=[];
+    if(m||(!c&&!a))t.push(m+' séance'+(m>1?'s':''));
+    if(c)t.push(c+' cardio');
+    if(a)t.push(a+' activité'+(a>1?'s':''));
+    return t.join(' · ');};
+  const gDe=L=>{const g={muscu:0,cardio:0,autre:0};L.forEach(s=>{g[_genreSeance(s)]++;});return g;};
   el.innerHTML=ans.map(an=>{const A=parAn[an],ouvert=_sessAnEstOuvert(an);A.mois.sort(desc);
     return '<div class="sess-an-bloc" data-an="'+an+'">'
       +'<button class="sess-an" data-an="'+an+'" aria-expanded="'+ouvert+'" onclick="basculerSessAnnee(\''+an+'\')">'
-        +chev(ouvert)+'<span class="sess-an-nom">'+(an==='?'?'Sans date':an)+'</span><span class="sess-n">'+nb(A.n)+'</span></button>'
+        +chev(ouvert)+'<span class="sess-an-nom">'+(an==='?'?'Sans date':an)+'</span><span class="sess-n">'+nbG(A.g)+'</span></button>'
       +(!ouvert?'':A.mois.map(m=>{const o=_sessMoisEstOuvert(m),L=A.parMois[m];
         return '<div class="sess-mois-bloc" data-mois="'+m+'">'
           +'<button class="sess-mois" data-mois="'+m+'" aria-expanded="'+o+'" onclick="basculerSessMois(\''+m+'\')">'
-            +chev(o)+'<span class="sess-mois-nom">'+_sessMoisNom(m)+'</span><span class="sess-n">'+nb(L.length)+'</span></button>'
+            +chev(o)+'<span class="sess-mois-nom">'+_sessMoisNom(m)+'</span><span class="sess-n">'+nbG(gDe(L))+'</span></button>'
           +(o?'<div class="sess-mois-cartes">'+L.map(_sessCarteHtml).join('')+'</div>':'')
           +'</div>';}).join(''))
       +'</div>';}).join('');
@@ -2031,7 +2071,27 @@ function basculerSessAnnee(an){_sessAnOuvert[an]=!_sessAnEstOuvert(an);renderSes
 function basculerSessMois(m){_sessMoisOuvert[m]=!_sessMoisEstOuvert(m);renderSessions();}
 /* La carte d'UNE séance — l'unique producteur (inchangé : même contenu, même identité `ts||id`,
    même bouton de débrief). Seule nouveauté : la marque `sess-cible` quand une porte d'entrée la vise. */
+/* 🚶 La carte d'une AUTRE ACTIVITÉ (05/11/2026) : son type et son icône, sa date (et son heure), sa durée, sa distance, son intensité, ses calories RETENUES
+   (« ✎ » quand c'est la valeur de la montre) et ses notes. Aucune ligne « kg de travail », aucune figurine : elle n'a ni série ni muscle. Même `onclick` que toute carte
+   (`openSessDetail`, qui l'ouvre dans SON formulaire). */
+function _autreCarteHtml(s){
+  const a=s.autre||{};
+  const kb=kcalBloc({duration:a.duration,kcalEst:a.kcalEst,kcalMan:a.kcalMan,kcalPoids:a.kcalPoids});
+  const kcal=(typeof s.calories==='number')?s.calories:kb.retenue;
+  const dur=+a.duration||0;
+  const parts=['<span class="sess-date2">'+fmtD(s.date)+(a.heure?' · '+_escNote(a.heure):'')+'</span>'];
+  if(dur)parts.push('<span class="sess-dur2">⏱️'+(dur>=60?Math.floor(dur/60)+'h'+String(dur%60).padStart(2,'0'):dur+' min')+'</span>');
+  if(a.distance!=null)parts.push('<span class="sess-date2">'+String(a.distance).replace('.',',')+' km</span>');
+  if(a.intensity)parts.push('<span class="sess-date2">'+_escNote(CARDIO_INTENSITES[a.intensity]||a.intensity)+'</span>');
+  parts.push('<span class="sess-cal2">🔥'+kcal+' kcal'+(kb.remplacee?' ✎':'')+'</span>');
+  const note=a.notes?'<div class="sess-exs2">'+_escNote(a.notes)+'</div>':'';
+  const _cible=_sessCibles.indexOf(s.ts||s.id||0)>=0;
+  return'<div class="sess-card sess-card-autre'+(_cible?' sess-cible':'')+'" data-genre="autre" onclick="openSessDetail('+(s.ts||s.id||0)+')" style="cursor:pointer;padding:12px 14px;">'
+    +'<div style="display:flex;align-items:flex-start;gap:10px;"><div style="flex:1;min-width:0;"><div class="sess-title">'+_escNote(autreIcone(a)+' '+autreLabel(a))+'</div>'
+    +'<div class="sess-meta">'+parts.join('<span style="opacity:.4">·</span>')+'</div>'+note+'</div></div></div>';
+}
 function _sessCarteHtml(s){
+    if(_estAutre(s))return _autreCarteHtml(s);
     const i=S.sessions.indexOf(s);
     const exs=(s.exs||s.exercises||[]).map(e=>e.name).join(', ');
     // ⚠️ NUAGE DESSINÉ, PAS L'EMOJI ☁️ (05/08/2026, signalé par Michel : « le petit nuage est

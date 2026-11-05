@@ -715,6 +715,7 @@ const _OVERLAY_CLOSERS={
   'ov-export-choix':'closeExportChoix',           // fermer au doigt = annuler, jamais exporter
   'ov-ex-swap':'closeExSwap',                      // pas de marqueur à poser, mais la paire en cours doit être oubliée
   'ov-prev4':'closeDernieresSeances',              // D-093 « 4 dernières séances » (R15 : tout chemin de fermeture ; lecture seule)
+  'ov-autre':'closeAutreActivite',                 // 🚶 Autre activité (R15 : le brouillon du formulaire est remis à zéro par tous les chemins de fermeture)
   /* 🔴🔴 ft-v1073 — LE PLUS COÛTEUX DE LA FAMILLE R15, ET IL CORROMPAIT L'HISTORIQUE.
      Michel : *« mon tirage a été remplacé par le rowing hammer »*.
      Le sélecteur d'exercices garde un MODE (`_exPickerMode`) et un INDEX (`_replaceEi`), tous
@@ -2213,6 +2214,13 @@ let _calZoomWeek=null;         // null = vue mois ; sinon index (0-5) de la sema
 function _calPad(n){return (n<10?'0':'')+n;}
 function _calYmd(d){return d.getFullYear()+'-'+_calPad(d.getMonth()+1)+'-'+_calPad(d.getDate());}
 function _calSessLabel(s){ if(!s)return 'Séance'; if(s.progLabel)return s.progLabel; return 'Séance'; }
+/* 🚶 Les libellés d'un jour (vue semaine) : « 💪 Séance » pour l'entraînement — exactement comme avant —, « 🚶 Marche » pour une activité. */
+function _calLibellesJour(L){
+  const tr=L.filter(s=>!_estAutre(s)), ac=L.filter(_estAutre), p=[];
+  if(tr.length)p.push('💪 '+_escFood(tr.map(_calSessLabel).join(', ')));
+  ac.forEach(s=>p.push(_escFood(autreIcone(s.autre)+' '+autreLabel(s.autre))));
+  return p.join(' · ');
+}
 // Jours où au moins une série a battu un record (même règle que le popup PR :
 // 1er passage d'un exo OU 1RM > meilleur précédent ; W/É exclus). Rejoue tout
 // l'historique dans l'ordre chronologique pour trouver ces jours.
@@ -2349,7 +2357,9 @@ function _calSelect(ymd){
 }
 function _renderHomeCalendar(){
   const el=document.getElementById('home-secondary');if(!el)return;
-  const sessSet={};(S.sessions||[]).forEach(s=>{if(s&&s.date)sessSet[s.date]=(sessSet[s.date]||0)+1;});
+  /* 🚶 Deux ensembles de jours : les jours de SÉANCE (musculation + cardio) et les jours d'ACTIVITÉ (`_estAutre`). Un jour d'activité est actif et cliquable, mais il ne colore pas
+     le calendrier d'une région musculaire et ne pèse pas dans la gouttière « tonnage / N× ». */
+  const sessSet={}, actSet={};(S.sessions||[]).forEach(s=>{if(s&&s.date){ if(_estAutre(s))actSet[s.date]=(actSet[s.date]||0)+1; else sessSet[s.date]=(sessSet[s.date]||0)+1; }});
   const prSet=_calPrDays();
   const y=_calDate.getFullYear(), m=_calDate.getMonth();
   const todayY=_calYmd(new Date());
@@ -2375,17 +2385,18 @@ function _renderHomeCalendar(){
     weeks.forEach((wk,wi)=>{
       const wVol=wk.reduce((a,c)=>a+(volByDay[_calYmd(c.d)]||0),0);
       const wSess=wk.filter(c=>sessSet[_calYmd(c.d)]).length;   // une séance au poids du corps pèse 0 kg : ce n'est PAS du repos
+      const wAct=wk.filter(c=>actSet[_calYmd(c.d)]).length;     // 🚶 jours d'activité de la semaine
       html+='<div onclick="_calZoom('+wi+')" class="ft-press" style="display:flex;flex-direction:column;justify-content:center;gap:2px;cursor:pointer;">'
         +'<span style="font-family:var(--font-cond);font-size:11.5px;font-weight:700;color:var(--t3);line-height:1;">S'+_calIsoWeek(wk[0].d)+'</span>'
-        +'<span style="font-size:8.5px;font-weight:700;line-height:1;color:'+(wSess?'var(--red)':'var(--t3)')+';">'
-          +(wSess?(wVol?_calFmtT(wVol):wSess+'×'):'repos')+'</span>'
+        +'<span style="font-size:8.5px;font-weight:700;line-height:1;color:'+(wSess?'var(--red)':(wAct?'var(--t2)':'var(--t3)'))+';">'
+          +(wSess?(wVol?_calFmtT(wVol):wSess+'×'):(wAct?'act.':'repos'))+'</span>'
         +'</div>';
 
       wk.forEach(c=>{
         const ymd=_calYmd(c.d), num=c.d.getDate();
-        const vol=volByDay[ymd]||0, has=!!sessSet[ymd];
+        const vol=volByDay[ymd]||0, jourSeance=!!sessSet[ymd], has=jourSeance||!!actSet[ymd];
         const isPr=has&&prSet[ymd], isToday=ymd===todayY, isSel=ymd===_calSelDay;
-        const sess=has?(S.sessions||[]).find(s=>s.date===ymd):null;
+        const sess=jourSeance?_seancesTrain().find(s=>s.date===ymd):null;   // 🚶 la couleur vient d'une SÉANCE du jour, jamais d'une activité
         const rat=maxVol?vol/maxVol:0;
 
         let st='position:relative;min-height:46px;display:flex;flex-direction:column;align-items:center;'
@@ -2401,7 +2412,7 @@ function _renderHomeCalendar(){
                 +'<svg width="11" height="11" viewBox="0 0 24 24" fill="var(--gold)"><path d="m12 2 3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1L12 2Z"/></svg></span>':'')
           +'<span style="font-family:var(--font-cond);font-size:16px;font-weight:700;line-height:1;color:'
             +(c.inMonth?'var(--t1)':'var(--t3)')+';">'+num+'</span>'
-          +(has?'<span style="width:'+(10+Math.round(9*rat))+'px;height:3px;border-radius:2px;background:'+_calSessColor(sess)+';"></span>'
+          +(has?'<span style="width:'+(10+Math.round(9*rat))+'px;height:3px;border-radius:2px;background:'+(jourSeance?_calSessColor(sess):'var(--t2)')+';"></span>'
                :(isToday?'<span style="font-size:7.5px;font-weight:800;letter-spacing:.06em;line-height:1;color:var(--red);">AUJ</span>':''))
           +'</div>';
       });
@@ -2415,6 +2426,7 @@ function _renderHomeCalendar(){
         +'<span style="width:12px;height:12px;border-radius:4px;background:rgba(255,45,85,.21);background:color-mix(in srgb,var(--red) 55%,var(--bg2));"></span></span>'
       +[['var(--red)','Haut'],['var(--blue)','Dos'],['var(--purp)','Bas'],['var(--orange)','Tronc'],['var(--green)','Full']]
         .map(g=>'<span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:3px;border-radius:2px;background:'+g[0]+';"></span>'+g[1]+'</span>').join('')
+      +(Object.keys(actSet).length?'<span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:3px;border-radius:2px;background:var(--t2);"></span>Activité</span>':'')   // 🚶 seulement s'il y en a
       +'<span style="display:flex;align-items:center;gap:4px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="var(--gold)"><path d="m12 2 3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1L12 2Z"/></svg>Record</span>'
       +'</div>';
 
@@ -2436,7 +2448,7 @@ function _renderHomeCalendar(){
       html+='<div onclick="'+(daySess.length?'goSessionsHistory('+_argAttr(daySess.map(s=>s.ts||s.id||0))+')':'')+'" style="display:flex;align-items:center;gap:10px;padding:10px 6px;border-bottom:1px solid var(--sep);'+(isToday?'background:rgba(255,45,85,.06);':'')+(daySess.length?'cursor:pointer;':'')+'">'
         +'<div style="width:44px;text-align:center;flex-shrink:0;"><div style="font-size:10px;color:var(--t3);text-transform:capitalize;">'+dow+'</div><div style="font-size:17px;font-weight:800;color:'+(c.inMonth?'var(--t1)':'var(--t3)')+';">'+c.d.getDate()+'</div></div>'
         +'<div style="flex:1;min-width:0;">'
-          +'<div style="font-size:12.5px;'+(daySess.length?'color:var(--t1);font-weight:600;':'color:var(--t3);')+'">'+(daySess.length?('💪 '+_escFood(daySess.map(_calSessLabel).join(', '))+(isPr?' <span style="display:inline-block;width:10px;height:10px;border-radius:50%;box-shadow:inset 0 0 0 2px var(--gold);vertical-align:-1px;"></span> <span style="color:var(--gold);font-weight:800;">Record !</span>':'')):'Repos')+'</div>'
+          +'<div style="font-size:12.5px;'+(daySess.length?'color:var(--t1);font-weight:600;':'color:var(--t3);')+'">'+(daySess.length?(_calLibellesJour(daySess)+(isPr?' <span style="display:inline-block;width:10px;height:10px;border-radius:50%;box-shadow:inset 0 0 0 2px var(--gold);vertical-align:-1px;"></span> <span style="color:var(--gold);font-weight:800;">Record !</span>':'')):'Repos')+'</div>'
           +ctx
         +'</div>'
         +(daySess.length?'<span style="font-size:11px;color:var(--red);font-weight:700;flex-shrink:0;align-self:flex-start;margin-top:2px;">'+daySess.length+'×</span>':'')
@@ -2449,8 +2461,11 @@ function _renderHomeCalendar(){
 // Détail du jour sélectionné, sous la grille. Réutilise _calDayContext (sommeil/moral/douleur).
 function _calDayPanel(volByDay,prSet){
   if(!_calSelDay)return '';
-  const sess=(S.sessions||[]).filter(s=>s&&s.date===_calSelDay);
-  if(!sess.length)return '';
+  const tout=(S.sessions||[]).filter(s=>s&&s.date===_calSelDay);
+  if(!tout.length)return '';
+  /* 🚶 Le jour peut porter des séances (musculation, cardio) ET des activités. Le tonnage, les séries et les exercices ne parlent QUE des séances ; les activités ont leur
+     propre liste (type, durée, calories retenues). Un jour sans activité est dessiné exactement comme avant. */
+  const sess=tout.filter(s=>!_estAutre(s)), acts=tout.filter(_estAutre);
   const d=new Date(_calSelDay+'T12:00:00');
   const titre=d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
   const vol=volByDay[_calSelDay]||0;
@@ -2463,22 +2478,39 @@ function _calDayPanel(volByDay,prSet){
   const sep='<div style="width:1px;background:var(--sep);"></div>';
   return '<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--sep);">'
     +'<div style="display:flex;align-items:center;gap:9px;margin-bottom:10px;">'
-      +'<span style="width:8px;height:8px;border-radius:3px;flex:none;background:'+_calSessColor(sess[0])+';"></span>'
+      +'<span style="width:8px;height:8px;border-radius:3px;flex:none;background:'+(sess.length?_calSessColor(sess[0]):'var(--t2)')+';"></span>'
       +'<span style="font-family:var(--font-cond);font-size:16px;font-weight:700;color:var(--t1);line-height:1;text-transform:capitalize;">'+titre+'</span>'
       +'<span style="flex:1;"></span>'
       +(isPr?'<span style="font-size:9.5px;font-weight:800;letter-spacing:.06em;color:var(--bg);background:var(--gold);border-radius:5px;padding:3px 7px;line-height:1;">RECORD</span>':'')
     +'</div>'
-    +'<div style="font-size:12.5px;font-weight:600;color:var(--t2);margin-bottom:10px;">'+_escFood(sess.map(s=>_calSessLabel(s)).join(', '))+'</div>'
+    +(sess.length?'<div style="font-size:12.5px;font-weight:600;color:var(--t2);margin-bottom:10px;">'+_escFood(sess.map(s=>_calSessLabel(s)).join(', '))+'</div>'
     +'<div style="display:flex;background:var(--bg3);border-radius:var(--r-sm);padding:9px 0;">'
       +cell(vol?_calFmtT(vol):'—','TONNAGE')+sep+cell(sets,'SÉRIES')+sep+cell(exs,'EXOS')
-    +'</div>'
+    +'</div>':'')
+    +_calActivitesJour(acts,tout)
     +_calDayContext(_calSelDay)
     /* 🗂️ PROGRES-SEANCES-01 (contrat UX-HIST) — « Revoir la séance » ouvre CETTE séance dans Séances, par sa
        clé ; plusieurs séances ce jour-là → toutes celles du jour. Avant : le haut de l'historique, sans cible. */
-    +'<div onclick="goSessionsHistory('+_argAttr(sess.map(s=>s.ts||s.id||0))+')" class="ft-press" style="margin-top:11px;height:42px;border-radius:var(--r);background:var(--bg3);display:flex;align-items:center;justify-content:center;gap:7px;cursor:pointer;">'
-      +'<span style="font-size:13px;font-weight:700;color:var(--t1);">Revoir la séance</span>'
+    +'<div onclick="goSessionsHistory('+_argAttr(tout.map(s=>s.ts||s.id||0))+')" class="ft-press" data-calpanel-revoir style="margin-top:11px;height:42px;border-radius:var(--r);background:var(--bg3);display:flex;align-items:center;justify-content:center;gap:7px;cursor:pointer;">'
+      +'<span style="font-size:13px;font-weight:700;color:var(--t1);">'+(sess.length?'Revoir la séance':(acts.length>1?'Voir les activités':'Voir l\'activité'))+'</span>'
       +'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--t1)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>'
     +'</div></div>';
+}
+/* 🚶 Les activités d'un jour, dans le panneau du calendrier : une ligne par activité (type, durée, calories RETENUES, « ✎ » si c'est la valeur de la montre) et, dès qu'il y a une
+   activité, le total des calories du jour (séances + activités : chaque enregistrement compte UNE fois, par sa valeur retenue). Vide s'il n'y a aucune activité. */
+function _calActivitesJour(acts,tout){
+  if(!acts.length)return '';
+  const kc=s=>(typeof s.calories==='number')?s.calories:0;
+  const lignes=acts.map(s=>{
+    const a=s.autre||{}, kb=kcalBloc({duration:a.duration,kcalEst:a.kcalEst,kcalMan:a.kcalMan,kcalPoids:a.kcalPoids}), dur=+a.duration||0;
+    return '<div data-calact="'+(s.ts||s.id)+'" style="display:flex;align-items:baseline;gap:8px;padding:5px 2px;font-size:12.5px;color:var(--t1);">'
+      +'<span style="flex:1;min-width:0;font-weight:600;">'+_escFood(autreIcone(a)+' '+autreLabel(a))+'</span>'
+      +'<span style="color:var(--t3);font-size:11.5px;">'+(dur>=60?Math.floor(dur/60)+'h'+String(dur%60).padStart(2,'0'):dur+' min')+'</span>'
+      +'<span style="color:var(--t2);font-weight:700;">🔥'+kc(s)+' kcal'+(kb.remplacee?' ✎':'')+'</span></div>';
+  }).join('');
+  const total=tout.reduce((a,s)=>a+kc(s),0);
+  return '<div style="margin-top:8px;padding:6px 10px;border-radius:var(--r-sm);background:var(--bg3);">'+lignes
+    +'<div data-caltotal style="display:flex;justify-content:space-between;border-top:1px solid var(--sep);margin-top:4px;padding:6px 2px 2px;font-size:12px;color:var(--t2);font-weight:700;"><span>Total du jour</span><span>🔥'+total+' kcal</span></div></div>';
 }
 // Contexte d'un jour dans le calendrier (brique 7) : sommeil + humeur/énergie + douleur, s'ils ont été notés ce jour-là.
 function _calDayContext(ymd){
