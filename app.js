@@ -241,9 +241,18 @@ function _auNouveau(){
 }
 function _auDepuis(s){
   const a=s.autre||{};
+  const man=(typeof a.kcalMan==='number'&&isFinite(a.kcalMan))?a.kcalMan:undefined;
+  let est, poids=(+a.kcalPoids>0?+a.kcalPoids:(+S.bw>0?+S.bw:80));
+  if(typeof a.kcalEst==='number'&&isFinite(a.kcalEst)) est=a.kcalEst;
+  else{
+    /* Un enregistrement venu d'AILLEURS (autre appareil, autre version) sans estimation figée ni valeur saisie : la valeur RANGÉE (`calories`) fait foi. On la garde telle quelle — c'est
+       l'estimation, au poids implicite qui la reproduit — et jamais un recalcul au poids du jour : rouvrir puis réenregistrer ne doit pas la changer en silence. */
+    const brut=_metBloc('autre',a)*((+a.duration||0)/60);
+    if(man===undefined&&typeof s.calories==='number'&&isFinite(s.calories)&&s.calories>=0&&brut>0){ est=s.calories; poids=Math.round(1000*est/brut)/1000; }
+    else est=kcalEstimerBloc(a,'autre',poids);
+  }
   return{id:(s.ts||s.id),type:a.type||'autre',intensity:a.intensity||'',dureeTxt:String(a.duration||''),
-         kcalEst:(typeof a.kcalEst==='number')?a.kcalEst:kcalEstimerBloc(a,'autre',a.kcalPoids),
-         kcalPoids:(+a.kcalPoids>0?+a.kcalPoids:(+S.bw>0?+S.bw:80)),kcalMode:a.kcalMode||KCAL_MODE,kcalMan:(typeof a.kcalMan==='number')?a.kcalMan:undefined,
+         kcalEst:est,kcalPoids:poids,kcalMode:a.kcalMode||KCAL_MODE,kcalMan:man,
          date:s.date||today(),heure:a.heure||'',distTxt:(a.distance!=null?String(a.distance).replace('.',','):''),libelle:a.libelle||'',notes:a.notes||''};
 }
 function _auDuree(){ const d=parseInt(_au&&_au.dureeTxt,10); return d>0?d:0; }

@@ -39236,6 +39236,13 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
      met les calories à jour à l'échelle de la séance (K1) sans effacer ce qui est tapé (K2). Blocs C-NUM-*.
      Banc : tools/banc_seance_chiffres.js · contrôle négatif : tools/mut_seance_chiffres.py. */
   await require('./seance_chiffres.js').ecran(t, b, PORT);
+  /* 🚶 MISSION « AUTRE ACTIVITÉ » + CALORIES PERSONNALISABLES (session-C, Claude N°2 Séance, 05/11/2026, mission de Michel — docs/AUTRE-ACTIVITE-CALORIES.md) :
+     la tuile « Autre activité » sous « Programme », sa création / consultation / modification / suppression, la valeur de la montre qui REMPLACE l'estimation (cardio et
+     activité, jamais additionnée), les bilans de la semaine et du mois par catégorie, et — surtout — les INVARIANTS : une activité n'est jamais une séance (Nutrition,
+     fréquence, récupération, badges, registre, programmes identiques avec et sans activité), Milo, l'Accueil, le calendrier, l'historique, les exports, la persistance
+     (hors ligne, reprise simulée, vrai Code.js, échec d'écriture). La matrice T01-T50 de la mission y est jouée. Blocs C-ACT-*.
+     Banc : tools/banc_autre_activite.js · contrôle négatif : tools/mut_autre_activite.py. */
+  await require('./autre_activite.js').ecran(t, b, PORT);
   /* 📐 D031S-B — LES TÉMOINS PRÉPARÉS DE D-091 (D-031-SÉCURITÉ-01, Claude Nutrition, 19/10/2026), BRANCHÉS le 20/10 par Principal
      avec la livraison de D-091 (lot final ft-v1257), comme le prévoyait la passation (docs/D031-SECURITE-01.md § 6) : le panneau
      « Ta séance jusqu'ici » compte les échauffements validés dans les TOTAUX et dit le travail à part ; la séance enregistrée

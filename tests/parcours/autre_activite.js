@@ -50,6 +50,7 @@ const SC = {
   'D08': 'DÉCOUVERT — limites de saisie : durée 1-1440, distance, date non future, heure valide',
   'D09': 'DÉCOUVERT — la valeur « 0 kcal » saisie est une valeur (≠ champ vide)',
   'D10': 'DÉCOUVERT — l\'historique : filtre « Activités », compteurs, aucune ligne « 0 kg de travail », aucun bouton d\'analyse muscu',
+  'D11': 'DÉCOUVERT — un enregistrement d\'activité venu d\'ailleurs, sans estimation figée, garde sa valeur rangée quand on le rouvre puis l\'enregistre',
 };
 const MX = {};   // la matrice, remplie par les témoins
 function W(id, nom, attendu, cond, observe, preuve, extra) {
@@ -671,7 +672,8 @@ async function blocD(c) {
       volume: 1000, uniConv: 1, synced: true, duration: 3600, progLabel: '', calories: 300, calData: { total: 300 } });
   }
   const base = jeuReference().concat(hist);
-  const marches = [marche('2026-11-05', '08:00', { man: 255 })];
+  // la marche d'aujourd'hui est enregistrée À 20 h 30 : APRÈS la séance de 17 h, donc l'enregistrement le plus récent de l'historique est une ACTIVITÉ — c'est le cas qui piège les lecteurs « dernière séance »
+  const marches = [marche('2026-11-05', '20:30', { man: 255 })];
   for (let sem = 0; sem < 4; sem++) for (const j of [2, 6]) marches.push(marche(J2(sem * 7 + j + 5), '08:00', { man: 255, dts: sem * 1000 + j }));
   const lsProfil = { ft4_act: '1.55', ft4_act_src: 'choisi', ft4_work: 'bureau', ft4_nphase: 'maintien', ft4_progs: J([{ name: 'Push', date: '2026-10-01', exs: [{ name: 'Développé Couché Barre', sets: [{ reps: 8, kg: 0 }] }] }]) };
   const lire = async jeu => {
@@ -1096,6 +1098,29 @@ async function blocG(c) {
     await fermer(X);
   }
 
+  // ── T17 : modification d'une ANCIENNE activité (octobre, enregistrée à 90 kg, le poids du jour est 82) ; D11 : un enregistrement venu d'ailleurs, sans estimation figée ──
+  {
+    const vieille = marche('2026-10-12', '08:00', { man: 255, est: 342 }); vieille.autre.kcalPoids = 90;                                        // 3,8 MET × 90 kg × 1 h = 342
+    const etrangere = { id: 1790000000000, ts: 1790000000000, date: '2026-10-14', exs: [], exercises: [], volume: 0, uniConv: 1, synced: true, duration: 3600, progLabel: '', calories: 250, calData: { total: 250, autre: 250 }, autre: { type: 'marche', duration: 60 } };
+    const X = await ouvrir(sess(jeuReference().concat([vieille, etrangere]))); const pg = X.pg;
+    const lire = id => pg.evaluate(i => JSON.parse(JSON.stringify(S.sessions.find(s => (s.ts || s.id) === i))), id);
+    // ① on rouvre et on ne change que les notes : rien d'autre ne bouge (ni la valeur, ni l'estimation figée à 90 kg)
+    await ouvrirAutre(X, vieille.ts); await pg.fill('#au-notes', 'revue en novembre'); await enregistrerForm(X); const r1 = await lire(vieille.ts);
+    // ② on change la date (12 → 13 octobre) : même identifiant, même valeur
+    await ouvrirAutre(X, vieille.ts); await pg.fill('#au-date', '2026-10-13'); await enregistrerForm(X); const r2 = await lire(vieille.ts);
+    // ③ on change la durée : la valeur de la montre reste, l'estimation suit AU POIDS RANGÉ (90 kg → 171), jamais au poids du jour (82 kg → 156)
+    await ouvrirAutre(X, vieille.ts); await pg.fill('#au-duree', '30'); await enregistrerForm(X); const r3 = await lire(vieille.ts);
+    t(P + '17 ⭐ T17 : une ANCIENNE activité (12/10, enregistrée à 90 kg) rouverte puis enregistrée garde sa valeur (255), son estimation figée (342) et son poids (90) ; changer sa date la garde sous le même identifiant ; changer sa durée refait l\'estimation au poids RANGÉ (171, pas 156)',
+      W('T17', 'ancienne activité', 'valeurs figées conservées ; date modifiable ; durée au poids rangé', r1.calories === 255 && r1.autre.kcalEst === 342 && r1.autre.kcalPoids === 90 && r1.autre.notes === 'revue en novembre' && r2.date === '2026-10-13' && (r2.ts || r2.id) === vieille.ts && r2.calories === 255
+        && r3.calories === 255 && r3.autre.kcalMan === 255 && r3.autre.kcalEst === 171 && r3.autre.kcalPoids === 90, { r1: r1.autre, r2: r2.date, r3: r3.autre }, 'banc C-ACT-G17')
+      && W('T05', 'ancienne activité', 'modification après coup sans recalcul silencieux', r1.calories === 255 && r1.autre.kcalEst === 342, r1.calories, 'banc C-ACT-G17'), _det({ r1: r1.autre, r2: r2.date, r3: r3.autre }));
+    // D11 : un enregistrement SANS estimation figée (autre appareil, autre version) : rouvert puis réenregistré tel quel, sa valeur rangée (250) ne change pas en silence
+    await ouvrirAutre(X, etrangere.ts); const eForm = await txt(X, '#au-kcal'); await enregistrerForm(X); const r4 = await lire(etrangere.ts);
+    t(P + '18 ⭐ D11 : un enregistrement venu d\'ailleurs, SANS estimation figée (calories rangées 250, marche de 60 min), rouvert puis réenregistré sans rien changer garde 250 (le formulaire l\'affiche comme estimation) — jamais un recalcul au poids du jour (312)',
+      W('D11', 'enregistrement étranger', 'valeur rangée conservée', r4.calories === 250 && r4.autre.kcalEst === 250 && /Retenu 250 kcal/.test(eForm || '') && !('kcalMan' in r4.autre), { cal: r4.calories, est: r4.autre.kcalEst, eForm }, 'banc C-ACT-G18'), _det({ cal: r4.calories, est: r4.autre.kcalEst, eForm }));
+    await fermer(X);
+  }
+
   // ── T49 : références — l'identifiant est numérique dans le HTML, la porte « détail » route vers le BON formulaire ──
   {
     const walk = marche('2026-11-05', '08:00', { man: 255 });
@@ -1167,4 +1192,5 @@ async function blocH(c) {
     await fermer(X);
   }
 }
+
 module.exports = { ecran };

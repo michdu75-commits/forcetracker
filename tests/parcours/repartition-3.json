@@ -6,6 +6,7 @@
 "./auth_ia.js": 0,
 "./auth_new_device.js": 2,
 "./auth_signup_strict.js": 1,
+"./autre_activite.js": 1,
 "./cc01_dropset.js": 2,
 "./coach_memoire.js": 0,
 "./contrat_milo.js": 2,
