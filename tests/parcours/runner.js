@@ -1212,7 +1212,7 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
   const c6=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844}});
   const p6=await c6.newPage();
   await p6.goto('http://localhost:'+PORT+'/index.html'); await p6.waitForTimeout(2200);
-  const r=await p6.evaluate(()=>{
+  const r=await p6.evaluate(async()=>{
    try{
     const o={};
     // ① la troncature de secours pose le drapeau
@@ -1258,6 +1258,9 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
     const _corpsMiroir = (x)=>{ const o2=JSON.parse(x); return o2.data||o2.p_data||{}; };
     o.miroirSansSessions = vus.sb ? (_corpsMiroir(vus.sb).sessions===undefined) : null;
     // ③ témoin : SANS le drapeau, les séances repartent normalement
+    /* NUT-SYNC-03 : UN SEUL ENVOI ACTIF À LA FOIS — un 2ᵉ `_cloudSync()` demandé pendant le vol du 1ᵉʳ est GARDÉ puis rejoué à sa fin, il ne fait plus de `fetch` immédiat. Ce témoin mesure le CONTENU d'un envoi
+       (les séances repartent-elles sans le drapeau ?), pas la concurrence : on laisse donc le 1ᵉʳ envoi finir (le faux `fetch` répond à l'instant) avant d'en demander un autre. */
+    await new Promise(r=>setTimeout(r,60));
     S.histTronque=false; localStorage.removeItem('ft4_hist_tronque');
     vus={}; window.fetch=espion;
     _cloudSync();
@@ -27890,6 +27893,7 @@ console.log('\n-- CCXLI. Les mensurations survivent a un changement de telephone
        le DÉBUT. Un `slice(-800)` copié sur ses voisins jetterait les mesures d'AUJOURD'HUI. */
     S.mensLog=[{d:'2026-09-06',k:'taille',v:88,s:'manuel'}];
     for(let i=0;i<900;i++) S.mensLog.push({d:'2019-01-01',k:'cou',v:40,s:'x'});
+    await new Promise(r=>setTimeout(r,60));   // NUT-SYNC-03 : un seul envoi actif — on laisse le 1ᵉʳ finir ; ce témoin mesure le CONTENU du 2ᵉ envoi (la coupe de `mensLog`), pas la concurrence
     envoye=null; espion(); await _cloudSync(); window.fetch=vrai;
     o.coupe = envoye ? {n:(envoye.mensLog||[]).length,
                         garde_recent:(envoye.mensLog||[]).some(e=>e.d==='2026-09-06')} : {absent:true};

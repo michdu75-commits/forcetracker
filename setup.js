@@ -1174,8 +1174,20 @@ function _nutTraiterReponse(d,envoi){
     }
   });
   if(retires){ _foodAppliquerSuppressions(); journal=true; }
-  if(journal){ try{ _journalPersister(); }catch(e){} }
-  else if(registre){ _ecrireSuppressionsLocal(); }
+  /* ⚙️ NUT-SYNC-03 (A2) — UN ACCUSÉ QUI N'APPREND QU'UNE RÉVISION NE RELANCE PAS UN ENVOI COMPLET. Avant : `_journalPersister()` → `persist()` → `_cloudSyncDebounced()` : chaque accusé qui faisait avancer une révision
+     déclenchait, 4 s plus tard, un 2ᵉ envoi de tout le profil (mesuré : 11 envois au lieu de 6 pour 6 gestes ; +83 % de données, sans rien à dire au serveur — il connaît déjà ces révisions). Maintenant : on ÉCRIT sur le
+     téléphone ce que l'accusé a changé (le registre AVANT le journal, comme `persist()`, et avec le même statut d'écriture `_journalOk`) sans toucher au minuteur de synchronisation.
+     ⛔ CE QUI DOIT ENCORE REPARTIR REPART : un conflit (la copie de la personne devient un repas neuf que le serveur n'a pas) et la guérison du registre demandent chacun leur envoi, plus bas et plus haut — inchangés.
+     Un repas retiré parce que supprimé ailleurs n'en demande pas : sa suppression vient du COMPTE, donc elle est déjà marquée confirmée (`_foodSupprimesFusion(…,true)`) — mesuré : la mutation « on ne renvoie plus » ne fait
+     rougir aucun témoin. Une VRAIE modification en attente n'est pas touchée : elle a déjà son minuteur (ou sa demande gardée si un envoi est en vol). */
+  if(journal||registre){
+    /* ⛔ LA FUSION « DEUX ONGLETS » DE `persist()` (ft-v1094) : un autre onglet a écrit sur le disque depuis notre dernière sauvegarde → on AJOUTE, on n'écrase pas. Sans elle, cet accusé aurait réécrit le journal depuis la mémoire
+       de CET onglet et effacé le repas que l'autre venait d'y mettre (relu par une relecture indépendante, reproduit). Si la fusion a ramené des lignes, elles repartent comme avant (`persist()` finissait toujours par une synchro différée). */
+    const fusion=_ftAutreOnglet; if(fusion){ _ftAutreOnglet=false; try{ _fusionnerAvecLeDisque(); }catch(e){} }
+    if(registre) _ecrireSuppressionsLocal();
+    if(journal){ try{ _ecrireJournalLocal(); }catch(e){} }
+    if(fusion){ try{ _cloudSyncDebounced(); }catch(e){} }
+  }
   if(journal){ try{ if(typeof renderFoodJournal==='function') renderFoodJournal(); }catch(e){} }
   if(conflits){ try{ toast(_N_MSG_SYNC_CONFLIT,'error'); }catch(e){} try{ _cloudSyncDebounced(); }catch(e){} }
   if(retires){ try{ toast(_N_MSG_SYNC_SUPPRIME_AILLEURS,'error'); }catch(e){} }
@@ -1188,10 +1200,35 @@ function _nutTraiterReponse(d,envoi){
   }catch(e){}
   return 'confirme';
 }
+/* ⚙️⚙️ NUT-SYNC-03 (05/11/2026) — UN SEUL ENVOI DE SYNCHRONISATION ACTIF À LA FOIS, PAR APPAREIL.
+   ⛔ POURQUOI. MESURÉ (rapport C1–C6 du 05/11, VRAI client + VRAI Code.js, serveur simulé) : dès qu'une réponse tarde (~10 s et plus) ou qu'un téléversement est lent, `_cloudSync` repartait sans attendre — la
+   synchro différée n'a que 4 s et aucune garde. Le 2ᵉ envoi porte alors la révision APPRISE AVANT le 1ᵉʳ (l'accusé du 1ᵉʳ n'est pas revenu), donc le serveur le traite en CONFLIT contre l'appareil lui-même et garde
+   les deux versions : jusqu'à 8 « Pates » sur le téléphone ET sur le serveur, avec le faux message « modifié sur un autre appareil ». ft-v1263 (sans révisions) n'en souffrait pas : c'était une RÉGRESSION de ft-v1264.
+   ⭐ LA RÈGLE. Un envoi en vol : toute nouvelle demande (minuteur de 4 s, relance, retour réseau, retour à l'écran, appel direct) est GARDÉE (`redemande`) — jamais abandonnée — et repart UNE fois, à la fin du
+   vol, avec ce que l'accusé vient d'apprendre (les révisions). Les modifications faites pendant l'envoi sont donc déjà sur le téléphone (local d'abord) et partent ensuite, regroupées.
+   ⏱️ LA TEMPORISATION (`_SYNC_VOL_MAX_MS`) : une requête qui ne répond jamais ne bloque pas la synchro à vie. Passé ce délai l'envoi est tenu pour NON CONFIRMÉ (rien n'est effacé, ses suppressions restent en attente), la garde
+   est libérée et la demande gardée repart. Choisi > 120 s (un envoi de 4 Mo à 0,3 Mbit/s en dure ~110) ; Safari iOS rejette de lui-même bien avant sur une requête morte. Un accusé qui arrive APRÈS cette échéance reste traité
+   (il porte son propre `requestId` ; ses révisions ne reculent jamais) mais ne libère rien d'autre : l'identifiant de vol compare.
+   ⛔ LIMITE ÉCRITE (non corrigée ici, elle relève du protocole) : un accusé PERDU (réponse illisible : lecture CORS bloquée, page fermée) laisse le téléphone ignorer la révision de ce que le serveur a appliqué ; retoucher ensuite
+   CE MÊME repas donne un conflit (les deux versions gardées, rien de perdu). Cette garde ne le crée pas, ne l'aggrave pas, et ne prétend pas le guérir.
+   Aucune donnée persistée : l'état est en mémoire — fermer l'application le remet à zéro, et la réouverture synchronise tout. */
+let _syncVol={id:0,t0:0,actif:false,redemande:false,minuteur:null,envoi:null};
+const _SYNC_VOL_MAX_MS=180000;
+function _syncVolFin(id,delai){
+  if(!_syncVol.actif || _syncVol.id!==id) return;       // un envoi plus récent a pris la place (ou celui-ci est déjà libéré) : rien à faire
+  clearTimeout(_syncVol.minuteur); _syncVol.minuteur=null; _syncVol.actif=false;
+  const envoi=_syncVol.envoi; _syncVol.envoi=null;
+  if(delai){ try{ _nutNonConfirme(envoi,'DELAI'); }catch(e){} }
+  if(_syncVol.redemande){ _syncVol.redemande=false; try{ _cloudSyncDebounced(); }catch(e){} }
+}
 function _cloudSync(){
   if(window._demoMode)return; // mode démo : aucune écriture cloud
   if(!S.email||!S.url)return;
   if(typeof _restauAttendue==='function'&&_restauAttendue())return;   // COOKIE-PROFILE-01 : rien pour un compte pas encore récupéré
+  if(_syncVol.actif){                                                  // NUT-SYNC-03 : un envoi est en vol — cette demande est gardée, jamais perdue
+    if(Date.now()-_syncVol.t0<_SYNC_VOL_MAX_MS){ _syncVol.redemande=true; return; }
+    _syncVol.redemande=false; _syncVolFin(_syncVol.id,true);          // la minuterie n'a pas pu tourner (application en veille) : même décision, ici — et CET appel est l'envoi suivant
+  }
   // ⚠️ Le corps du message est construit UNE SEULE FOIS et servi aux DEUX destinations
   // (Apps Script + miroir Supabase). Deux constructions séparées finiraient par diverger,
   // et on enverrait deux versions différentes du même compte (R2).
@@ -1318,6 +1355,8 @@ function _cloudSync(){
      (le serveur est idempotent). */
   const _requestId=_nutNouvelIdOperation();
   const _envoi={requestId:_requestId, sup:_supEnvoi.map(e=>e.i), favoris:{savedFoods:_corpsSync.savedFoods, hiddenFoods:_corpsSync.hiddenFoods}};   // `favoris` : les deux listes que CET envoi porte — le miroir ne les reçoit qu'à l'accusé (voir `_nutTraiterReponse`)
+  const _idVol=++_syncVol.id; _syncVol.actif=true; _syncVol.t0=Date.now(); _syncVol.redemande=false; _syncVol.envoi=_envoi;   // NUT-SYNC-03 : le vol commence ICI, avant le fetch
+  clearTimeout(_syncVol.minuteur); _syncVol.minuteur=setTimeout(function(){ _syncVolFin(_idVol,true); },_SYNC_VOL_MAX_MS);
   let _p;
   try{
     _p=fetch(S.url,{method:'POST',redirect:'follow',
@@ -1328,7 +1367,7 @@ function _cloudSync(){
       }))
     });
   }catch(e){ _p=Promise.reject(e); }
-  Promise.resolve(_p).then(r=>r.json()).then(d=>_nutTraiterReponse(d,_envoi)).catch(()=>{ try{ _nutNonConfirme(_envoi,'RESEAU'); }catch(e){} });
+  Promise.resolve(_p).then(r=>r.json()).then(d=>_nutTraiterReponse(d,_envoi)).catch(()=>{ try{ _nutNonConfirme(_envoi,'RESEAU'); }catch(e){} }).then(function(){ _syncVolFin(_idVol,false); });   // NUT-SYNC-03 : accusé traité OU échec — le vol est fini, la demande gardée repart
   /* MIROIR SUPABASE — deuxième copie, en écriture seule. Apps Script reste la source de
      vérité ; ceci n'ajoute qu'un filet. Non configuré ou injoignable → il ne se passe rien,
      et surtout : ça ne retarde ni ne bloque JAMAIS la sauvegarde principale (règle d'or #3).
