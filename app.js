@@ -10047,6 +10047,9 @@ function exitDemoMode(){
 // ── GUIDE DE L'APPLICATION (diaporama, Menu → L'application) ────────
 // Guide-film : chaque slide = un vrai écran de l'app (guide/*.jpg) + un doigt animé (tap) + une phrase.
 const APP_GUIDE_SLIDES=[
+  /* 🚶 DIAPO DU GUIDE (règle d'or #11, point 5), SANS IMAGE : la capture de l'écran Séance dépend de l'état (avant / pendant une séance) et des tuiles qui s'y ajoutent ;
+     Michel fournit les captures du Guide. Elle dit ce que la pop-up ne dit pas : OÙ la retrouver, et que les calories de la montre REMPLACENT l'estimation. */
+  {icon:'🚶', t:'Une marche n\'est pas une séance', cap:'<b>Séance → « Autre activité »</b>, juste sous « Programme » : marche, randonnée, vélo, course… <b>sans série ni volume</b>. Tu notes la durée ; l\'app <b>estime</b> les calories. Ta montre dit autre chose ? Tape sa valeur : elle <b>remplace</b> l\'estimation, jamais additionnée.<br><br>Retrouve-la dans le <b>calendrier de l\'Accueil</b> et dans <b>Progrès → Séances</b> (modifier, supprimer). Elle a sa ligne dans les <b>bilans</b> de la semaine et du mois.'},
   /* 🛡️ SESSION-INTEGRITY-01 — DIAPO DU GUIDE (règle d'or #11, point 5), SANS IMAGE : une capture montrerait
      un débrief qui n'est pas celui du lecteur. Elle dit ce que la pop-up ne dit pas : OÙ le retrouver. */
   {icon:'💬', t:'Chaque séance garde son débrief', cap:'À la fin d\'une séance, tes chiffres s\'affichent tout de suite ; l\'avis de Milo se <b>demande</b> : <b>« ✨ Analyser cette séance avec Milo »</b> (rien ne part sans ce geste). Son débrief est alors <b>rangé avec la séance</b>. Retrouve-le quand tu veux : <b>Progrès → Séances → « 💬 Voir le débrief Milo »</b> — sans réseau, sans appel. À l\'export, c\'est toi qui choisis : <b>avec</b> ou <b>sans</b> les débriefs.'},
@@ -10631,12 +10634,17 @@ function checkWeeklySummary(){
     .map(([id])=>BADGES.find(b=>b.id===id)).filter(Boolean);
   const el=document.getElementById('week-sum-content');if(!el)return;
   const ligneW=(l,v)=>`<div class="week-sum-row"><span class="week-sum-lbl">${l}</span><span class="week-sum-val">${v}</span></div>`;
-  let rows;
-  if(AG.muscuSeul){   // semaine de musculation seule : exactement l'affichage d'avant
-    rows=ligneW('🏋️ Séances',sessCount)+ligneW('📦 Volume total',Math.round(totalVol)+' kg')+(totalCal?ligneW('🔥 Calories',totalCal+' kcal'):'');
+  if(AG.muscuSeul){   // semaine de musculation seule : le gabarit d'AVANT, mot pour mot (espaces et retours à la ligne compris — un témoin le compare à la version publiée)
+    el.innerHTML=`
+    <div style="font-size:13px;color:var(--t3);font-weight:700;margin-bottom:4px;">Semaine du ${fmtD(ws)} au ${fmtD(we)}</div>
+    <div class="week-sum-row"><span class="week-sum-lbl">🏋️ Séances</span><span class="week-sum-val">${sessCount}</span></div>
+    <div class="week-sum-row"><span class="week-sum-lbl">📦 Volume total</span><span class="week-sum-val">${Math.round(totalVol)} kg</span></div>
+    ${totalCal?`<div class="week-sum-row"><span class="week-sum-lbl">🔥 Calories</span><span class="week-sum-val">${totalCal} kcal</span></div>`:''}
+    ${newBadges.length?`<div class="week-badge-pill">🏅 ${newBadges.map(b=>b.icon+' '+b.name).join(' · ')}</div>`:''}
+  `;
   }else{              // 🚶 musculation · cardio · autres activités, séparés ; calories par catégorie ET total ; les séries et le volume ne parlent que de la musculation
     const det=_bilanKcalDetail(AG);
-    rows=(AG.nMuscu?ligneW('🏋️ Séances de musculation',AG.nMuscu):'')
+    const rows=(AG.nMuscu?ligneW('🏋️ Séances de musculation',AG.nMuscu):'')
         +(AG.nCardio?ligneW('🏃 Activités cardio',AG.nCardio):'')
         +(AG.nAutre?ligneW('🚶 Autres activités',AG.nAutre):'')
         +ligneW('📅 Jours actifs',AG.jours)
@@ -10645,12 +10653,12 @@ function checkWeeklySummary(){
           +(det.length>1?'<div data-kcal-detail style="font-size:11.5px;color:var(--t3);text-align:right;margin:-2px 0 4px;">dont '+det.join(' · ')+'</div>':''):'')
         +'<div style="font-size:11px;color:var(--t3);margin-top:6px;">Jours actifs : jours avec au moins une séance ou une activité.'
         +(AG.cardioNonRepartie?' '+AG.cardioNonRepartie+' ancienne'+(AG.cardioNonRepartie>1?'s':'')+' séance'+(AG.cardioNonRepartie>1?'s':'')+' avec cardio : sa part de cardio n\'est pas séparable (comptée en musculation).':'')+'</div>';
-  }
-  el.innerHTML=`
+    el.innerHTML=`
     <div style="font-size:13px;color:var(--t3);font-weight:700;margin-bottom:4px;">Semaine du ${fmtD(ws)} au ${fmtD(we)}</div>
     ${rows}
     ${newBadges.length?`<div class="week-badge-pill">🏅 ${newBadges.map(b=>b.icon+' '+b.name).join(' · ')}</div>`:''}
   `;
+  }
   _weekSumText=AG.muscuSeul
     ? `Force Tracker — Semaine du ${fmtD(ws)}\n🏋️ ${sessCount} séance${sessCount>1?'s':''}\n📦 Volume : ${Math.round(totalVol)} kg\n${totalCal?'🔥 Calories : '+totalCal+' kcal\n':''}${newBadges.length?'🏅 Badges : '+newBadges.map(b=>b.icon+' '+b.name).join(', ')+'\n':''}💪 Force Tracker`
     : `Force Tracker — Semaine du ${fmtD(ws)}\n`+(AG.nMuscu?`🏋️ ${AG.nMuscu} séance${AG.nMuscu>1?'s':''} de musculation\n`:'')+(AG.nCardio?`🏃 ${AG.nCardio} activité${AG.nCardio>1?'s':''} cardio\n`:'')+(AG.nAutre?`🚶 ${AG.nAutre} autre${AG.nAutre>1?'s':''} activité${AG.nAutre>1?'s':''}\n`:'')+`📅 ${AG.jours} jour${AG.jours>1?'s':''} actif${AG.jours>1?'s':''}\n`+(AG.nMuscu?`📦 Volume : ${Math.round(totalVol)} kg\n`:'')+(totalCal?`🔥 Calories : ${totalCal} kcal (${_bilanKcalDetail(AG).join(' · ')})\n`:'')+`${newBadges.length?'🏅 Badges : '+newBadges.map(b=>b.icon+' '+b.name).join(', ')+'\n':''}💪 Force Tracker`;

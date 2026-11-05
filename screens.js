@@ -367,7 +367,10 @@ const _HELP_DATA={
       {i:'🔥',t:'<b>D\'où vient ton BMR</b> (métabolisme de base, ce que ton corps brûle au repos) : si tu as renseigné un <b>bilan corporel</b> ou ton <b>% de masse grasse</b>, l\'app le calcule sur ta <b>masse maigre</b> (formule de Katch-McArdle) au lieu de ton seul poids — chez quelqu\'un de musclé ça change souvent de <b>100 à 200 kcal par jour</b>, parce que le muscle consomme au repos et le gras beaucoup moins. Sinon, elle utilise la formule générique (Mifflin-St Jeor). <b>La ligne sous le chiffre dit toujours laquelle</b> : tape-la, le calcul est posé avec tes nombres. ⚠️ Un bilan de plus de 3 mois, ou un poids qui a bougé de plus de 5 % depuis, n\'est pas utilisé : on ne sait pas si les kilos sont du muscle ou du gras. Le métabolisme affiché par ta balance, lui, est enregistré mais pas utilisé dans le calcul — chaque marque a sa formule secrète, invérifiable.'},
       {i:'📈',t:'Phase Charge = surplus calorique pour prendre du muscle. Phase Décharge = déficit pour perdre du gras. Alterne selon tes cycles.'},
       {i:'💊',t:'Suppléments : créatine (phases charge/entretien) et whey dosés selon ton poids. Combinaisons Premium : 4 stacks complets (muscle, force, cardio, perte de poids).'},
-      {i:'🔥',t:'Les calories brûlées au cardio (bloc cardio dans ta séance) s\'ajoutent à ton TDEE estimé du jour.'},
+      /* ⚠️ TEXTE FAUX CORRIGÉ LE 05/11/2026 : il disait que les calories du cardio « s'ajoutent à ton TDEE ». Le code ne l'a jamais fait pour la cible (`calcTDEE` = BMR × niveau
+         d'activité + travail + autre sport déclaré + pas ; verrouillé par nutri_moteur.js et nut_punch01.js) : ton niveau d'activité compte DÉJÀ tes entraînements. Une aide qui
+         promet un calcul que l'app ne fait pas est pire qu'une aide absente (R23). */
+      {i:'🔥',t:'Les calories brûlées en séance (musculation, cardio) et en « Autre activité » <b>ne s\'ajoutent pas</b> à ta cible du jour : ton <b>niveau d\'activité</b> (Profil) compte déjà ton entraînement — les ajouter serait le compter deux fois.'},
       {i:'🍽️',t:'Le plan de repas détaillé (5 repas) est généré depuis tes macros — adapté à ta phase et ton objectif.'},
       {i:'📓',t:'Onglet Journal : note ce que tu manges dans la journée et compare aux objectifs. 3 façons d\'ajouter un aliment : saisie à la main (gratuit, illimité — avec le poids de ce que tu as mangé), 🤖 estimation IA (décris ton repas : l\'IA propose les valeurs et un poids, que tu prends d\'un toucher — 25 gratuites, illimité en Premium), ou par code-barres (produit reconnu via une base mondiale ; tu choisis la quantité, en grammes — en ml pour une boisson).'},
       {i:'📷',t:'Code-barres : tape les chiffres écrits sous le code (gratuit) OU appuie sur « 📷 Photographier le code-barres » et prends-le en photo — l\'IA lit le numéro pour toi (utile si les chiffres sont petits/abîmés). La lecture photo utilise 1 essai IA ; ensuite la recherche du produit et le score santé restent gratuits.'},
@@ -436,6 +439,9 @@ const _HELP_DATA={
   log:{
     title:'⚡ Séance',
     tips:[
+      /* 🚶 Mission « Autre activité » (05/11/2026) — règle d'or #11, point 3 : ce qu'on ne devine pas, c'est que la marche n'est PAS une séance (aucune série, aucun
+         volume, pas de badge) et que les calories de la montre REMPLACENT l'estimation au lieu de s'y ajouter. */
+      {i:'🚶',t:'<b>Autre activité</b> (juste sous « Programme ») : marche, randonnée, vélo, course… <b>sans série ni volume</b>. L\'app <b>estime</b> les calories ; tape celles de ta <b>montre</b> et elles <b>remplacent</b> l\'estimation — jamais additionnées (estimé 300, montre 255 → <b>255</b>). Tu la retrouves dans le calendrier de l\'Accueil et dans <b>Progrès → Séances</b>, où tu peux la <b>modifier</b> ou la <b>supprimer</b>.'},
       /* 🏋️ UX SÉANCE (16/10/2026, cadrage validé par Michel) — règle d'or #11, point 3 : l'écran a changé de FORME.
          Ce qu'on ne devine pas : où sont passés Pause / Vider / Changer et les préréglages de repos, et ce que compte
          « N / M séries » (les séries de TRAVAIL, décision ①). */

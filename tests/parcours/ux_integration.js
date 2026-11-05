@@ -246,9 +246,15 @@ async function ecran(t, b, PORT) {
     t('B-UXI-F2 l\'étiquette « la tienne » n\'est plus rouge', ty.tag === null || !/255, 106, 115|255, 45, 85/.test(ty.tag), _det(ty));
     const k = await X.pg.evaluate(([VIS]) => { const vis = eval(VIS), q = id => document.getElementById(id);
       const top = id => q(id) && vis(q(id)) ? Math.round(q(id).getBoundingClientRect().top) : null;
-      return { autres: top('la-autres'), cardio: top('log-cardio'), types: top('log-types'), autreAct: /Autre activit/i.test(document.getElementById('s-log').textContent) }; }, [VIS]);
+      return { autres: top('la-autres'), cardio: top('log-cardio'), types: top('log-types'),
+        tuiles: [...document.querySelectorAll('#log-avant .la-go > button')].map(b => ({ t: b.textContent.replace(/\s+/g, ' ').trim().slice(0, 24), top: Math.round(b.getBoundingClientRect().top), bottom: Math.round(b.getBoundingClientRect().bottom) })) }; }, [VIS]);
     t('B-UXI-F3 décision K : le cardio reste à part, sous « Autres options », après les types de séance', k.autres !== null && k.cardio !== null && k.cardio >= k.autres && k.autres > k.types, _det(k));
-    t('B-UXI-F4 décision L : « Autre activité » n\'est PAS construite (aucune entrée à l\'écran Séance)', !k.autreAct, _det(k));
+    /* ⛔ R30 — LA DÉCISION L (D-085, 17/10/2026 : « Autre activité » NON construite, piste à étudier) EST REMPLACÉE par l'ordre de Michel du 05/11/2026 : une vraie tuile
+       « Autre activité », JUSTE SOUS « Programme », distincte de « Séance libre » (docs/AUTRE-ACTIVITE-CALORIES.md). Ce témoin gardait une ABSENCE ; il garde maintenant la
+       PLACE : trois tuiles, dans cet ordre, la troisième collée à la deuxième (jamais rangée dans « Autres options », jamais avant « Programme »). */
+    t('B-UXI-F4 ⛔ R30 — la décision L est REMPLACÉE (ordre de Michel, 05/11) : « Autre activité » est la 3ᵉ tuile, JUSTE SOUS « Programme », distincte de « Séance libre »',
+      k.tuiles.length === 3 && /^Séance libre/.test(k.tuiles[0].t) && /^Programme/.test(k.tuiles[1].t) && /^Autre activit/.test(k.tuiles[2].t)
+        && k.tuiles[2].top >= k.tuiles[1].bottom && k.tuiles[2].top - k.tuiles[1].bottom <= 16, _det(k));
     await X.cx.close();
   }
   {

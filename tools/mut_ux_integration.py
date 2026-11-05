@@ -51,7 +51,9 @@ MUT = [
     ('M17 le cardio passe AVANT les types de seance',
      [(IX, '  <div id="log-types" style="padding-top:6px;"></div>\n  <div class="la-sec" id="la-autres">Autres options</div>\n  <div id="log-cardio"></div>',
            '  <div class="la-sec" id="la-autres">Autres options</div>\n  <div id="log-cardio"></div>\n  <div id="log-types" style="padding-top:6px;"></div>')], 'GARDE', 'B-UXI-F3'),
-    ('M18 une entree « Autre activite » apparait (decision L : non construite)', [(IX, '  <div id="log-cardio"></div>', '  <div id="log-cardio"></div>\n  <button class="btn btn-bg2">Autre activité</button>')], 'GARDE', 'B-UXI-F4'),
+    # R30 — la decision L (« Autre activite » NON construite) est REMPLACEE par l'ordre de Michel du 05/11/2026 : M18 ne garde plus une ABSENCE mais la PLACE de la tuile.
+    ('M18 la tuile « Autre activite » perd son libelle (decision L remplacee le 05/11 : la tuile existe, sous « Programme »)', [(IX, '<span class="la-cta-t"><b>Autre activité</b>', '<span class="la-cta-t"><b>Cardio</b>')], 'GARDE', 'B-UXI-F4'),
+    ('M18b [deguisee] la tuile « Autre activite » remonte AU-DESSUS de « Programme » (meme DOM, autre place a l\'ecran)', [(IX, '<button class="la-cta2 ft-press" id="la-autre"', '<button class="la-cta2 ft-press" style="order:-1" id="la-autre"')], 'GARDE', 'B-UXI-F4'),
     # R30 — D-086 (18/10) remplace la decision G (badge sur le numero) par une pastille de type dans sa colonne : M19 vise la pastille.
     ('M19 la pastille de type ne montre plus le type', [(LO, '<span class="tbtn ${_tt}">${_tt}</span>', '<span class="tbtn ${_tt}"></span>')], 'GARDE', 'B-UXI-F5'),
     ('M20 [deguisee] le 1RM retourne DANS un bouton', [(LO, "+`<div class=\"srm\" id=\"trm-${ei}-${si}\">${set.done&&set.rm1?'~'+fmt(set.rm1):liveRM?'~'+liveRM:''}</div>`", "+`<button class=\"srm\" id=\"trm-${ei}-${si}\">${set.done&&set.rm1?'~'+fmt(set.rm1):liveRM?'~'+liveRM:''}</button>`")], 'GARDE', 'B-UXI-F6'),

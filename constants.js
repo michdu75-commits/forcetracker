@@ -542,6 +542,11 @@ const FEAT_SI = {
   testeur:       () => { try{ return typeof _isTester==='function' && _isTester(); }catch(e){ return false; } }
 };
 const NEW_FEATURES=[
+  /* 🚶 POINT ROUGE sur SÉANCE (mission « Autre activité » de Michel, 05/11/2026 — docs/AUTRE-ACTIVITE-CALORIES.md) — la tuile « Autre activité » est sous « Programme », donc
+     là que la pastille doit ramener. ⛔ Sans `spot`, comme les entrées voisines de cet écran : la tuile n'existe que dans l'état « avant la séance » (ft-v1153 : un ancrage
+     absent est une annonce qui n'a jamais lieu, en silence). ⛔ PAS DE POP-UP (R25) : une porte s'ajoute, rien n'est à faire et aucun repère n'a bougé (les bilans qui
+     séparaient mal le cardio sont un correctif). La décision WHATS_NEW se confirme à la PUBLICATION (elle exige un numéro de version, interdit pendant le travail). */
+  {id:'autre-activite', screen:'log', desc:'Nouveau : <b>« Autre activité »</b>, juste sous « Programme » — marche, randonnée, vélo, course… sans série ni volume. Et tu peux taper <b>les calories de ta montre</b> : elles <b>remplacent</b> l\'estimation (cardio comme activité), jamais additionnées.'},
   /* ⏱️ POINT ROUGE sur SÉANCE (SEANCE-REPOS-01, 22/10/2026, décisions de Michel — docs/SEANCE-REPOS-01.md) — le repos survit à la fermeture de
      l'app. ⛔ Sans `spot`, comme les entrées voisines : le dock n'existe que pendant un repos. ⛔ PAS DE POP-UP (R25) : rien
      n'est à faire et aucun repère n'a bougé — le repos revient là où on l'attend. */
