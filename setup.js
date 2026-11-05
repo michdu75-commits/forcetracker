@@ -1900,6 +1900,7 @@ function _kcalApresEdition(avant, apres){
 
 function saveSessEdits(){
   if(!_sessEdits||_sessId===null)return;
+  if(typeof kcalValiderChampsEnAttente==='function'&&!kcalValiderChampsEnAttente('#sd-content'))return;   // la valeur de la montre tapée à l'instant (champ pas encore quitté) est lue AVANT d'enregistrer
   const idx=S.sessions.findIndex(s=>(s.ts||s.id)===_sessId);
   if(idx===-1)return;
   const _avant=S.sessions[idx];

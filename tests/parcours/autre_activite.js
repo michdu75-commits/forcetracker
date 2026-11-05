@@ -138,11 +138,12 @@ async function ecran(t, b, PORT) {
   const c = { t, b, PORT, ouvrir, sess, ag, toasts, txt, creer, ouvrirAutre, saisirMan, enregistrerForm, autres, stocke, fermer, W, MX, SC, jeuReference, marche, J, _det, BASE, T0, AG };
 
   /* ACT_BLOCS (ex. « A,B ») : ne jouer que certains blocs — boucle de mise au point seulement ; la passe et le banc jouent TOUT. */
-  const sel = process.env.ACT_BLOCS ? process.env.ACT_BLOCS.split(',') : ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
-  const BL = { A: () => blocA(c), B: () => blocB(c), C: () => blocC(c), D: () => blocD(c), E: () => blocE(c), F: () => blocF(c), G: () => blocG(c), H: () => blocH(c) };
-  for (const k of ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']) if (sel.indexOf(k) >= 0) await BL[k]();
+  const sel = process.env.ACT_BLOCS ? process.env.ACT_BLOCS.split(',') : ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'];
+  const BL = { A: () => blocA(c), B: () => blocB(c), C: () => blocC(c), D: () => blocD(c), E: () => blocE(c), F: () => blocF(c), G: () => blocG(c), H: () => blocH(c), I: () => blocI(c) };
+  for (const k of ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I']) if (sel.indexOf(k) >= 0) await BL[k]();
   /* A le parcours réel et la référence · B le mécanisme commun du cardio · C les bilans et les frontières de période · D les invariants (Nutrition, récupération,
-     fréquence, badges, programmes) · E Milo · F Accueil · Agenda · Progrès · G persistance, hors ligne, reprise, conflits, identifiants · H exports et rapports. */
+     fréquence, badges, programmes) · E Milo · F Accueil · Agenda · Progrès · G persistance, hors ligne, reprise, conflits, identifiants · H exports et rapports · I valeur de la montre
+     tapée mais champ pas encore quitté (iPhone). */
 
   // ── ce qui n'a PAS pu être exécuté ici, dit avec sa cause ──
   c.BLOQUES = {
@@ -1189,6 +1190,64 @@ async function blocH(c) {
     t(P + '6 ⭐ T42 : les deux exports JSON contiennent l\'activité avec son bloc complet (valeur retenue 255, estimation 312, valeur saisie, distance) parmi 5 enregistrements ; le message de l\'export restreint dit « 4 séances et 1 activité exportées · sans tes données de santé ✓ »',
       W('T42', 'export JSON', 'activité exportée avec son bloc ; message correct', r.restreint.n === 5 && r.complet.n === 5 && !!r.restreint.act && r.restreint.act.calories === 255 && r.restreint.act.autre.kcalMan === 255 && r.restreint.act.autre.kcalEst === 312 && r.restreint.act.autre.distance === 4.5 && J(r.complet.act) === J(r.restreint.act)
         && r.t1.indexOf('4 séances et 1 activité exportées · sans tes données de santé ✓') >= 0, r, 'banc C-ACT-H6'), _det(r));
+    await fermer(X);
+  }
+}
+
+
+// ═════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+// BLOC I — LA VALEUR DE LA MONTRE TAPÉE, LE CHAMP PAS ENCORE QUITTÉ (iPhone : un bouton touché ne retire pas toujours le focus, donc `change` n'a pas eu lieu)
+// Un clic PROGRAMMATIQUE (`.click()`) ne déplace pas le focus : c'est exactement ce cas. Sans la lecture avant d'enregistrer, la valeur tapée serait perdue en silence.
+// ═════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+async function blocI(c) {
+  const { t, ouvrir, sess, ag, creer, autres, fermer, W, jeuReference, J, _det } = c;
+  const P = 'C-ACT-I';
+  const clic = (pg, sel) => pg.evaluate(s => document.querySelector(s).click(), sel);
+  // ── le formulaire d'activité ──
+  {
+    const X = await ouvrir(sess(jeuReference())); const pg = X.pg;
+    await creer(X, { duree: 60, noSave: true });
+    await pg.locator('#au-kcal input').fill('255');                                  // tapé, pas de Tab : aucun `change`
+    const avant = await pg.evaluate(() => ({ man: _au.kcalMan, champ: document.querySelector('#au-kcal input').value }));
+    await clic(pg, '#au-save-btn'); await pg.waitForTimeout(150);
+    const r = (await autres(X))[0]; const a = await ag(X);
+    t(P + '1 ⭐ T04 : 255 tapé dans « Calories de ta montre » SANS quitter le champ, puis « Enregistrer » (le focus ne bouge pas) → l\'activité est enregistrée à 255 (pas à l\'estimation 312) ; le brouillon ne la connaissait pas encore',
+      W('T04', 'valeur tapée, champ non quitté', 'enregistrée à 255', avant.man === undefined && avant.champ === '255' && !!r && r.calories === 255 && r.autre.kcalMan === 255 && r.autre.kcalEst === 312 && a.total === 1712, { avant, cal: r && r.calories, a: a.total }, 'banc C-ACT-I1'), _det({ avant, cal: r && r.calories }));
+    await fermer(X);
+  }
+  {
+    const X = await ouvrir(sess(jeuReference())); const pg = X.pg; const n0 = await pg.evaluate(() => S.sessions.length);
+    await creer(X, { duree: 60, noSave: true });
+    await pg.locator('#au-kcal input').fill('abc');
+    await clic(pg, '#au-save-btn'); await pg.waitForTimeout(150);
+    const r = await pg.evaluate(() => ({ n: S.sessions.length, ouvert: document.getElementById('ov-autre').classList.contains('open'), err: document.getElementById('au-err').style.display === 'block' ? document.getElementById('au-err').textContent : '' }));
+    t(P + '2 ⭐ T44 : une valeur INVALIDE tapée sans quitter le champ (« abc ») puis « Enregistrer » → rien n\'est enregistré, le formulaire reste ouvert avec le message — la valeur n\'est jamais ignorée en silence',
+      W('T44', 'invalide non quittée', 'refus visible, rien d\'écrit', r.n === n0 && r.ouvert && /nombre de kcal/i.test(r.err), r, 'banc C-ACT-I2'), _det(r));
+    await fermer(X);
+  }
+  // ── la séance en cours (cardio seul) : « Terminer » / « C'est noté » avec la valeur tapée à l'instant ──
+  {
+    const X = await ouvrir(sess([], { ft4_bw: '72.5' })); const pg = X.pg;
+    await pg.evaluate(() => { startWorkout(); _cardioOpen = true; setCardioField('type', 'elliptique', 'apres'); setCardioField('intensity', 'leger', 'apres'); setCardioField('duration', 30, 'apres'); renderCardioBlock(); });
+    await pg.locator('#log-cardio .kcal-ed input').fill('115');
+    await clic(pg, '#cardio-save-btn'); await pg.waitForTimeout(100);                 // « ✓ C'est noté »
+    const note = await pg.evaluate(() => ({ man: S.wkt.cardio.kcalMan, est: S.wkt.cardio.kcalEst }));
+    await pg.evaluate(() => { _cardioOpen = true; renderCardioBlock(); });
+    await pg.locator('#log-cardio .kcal-ed input').fill('120');                       // une autre valeur, tapée à l'instant, puis « Terminer » directement
+    const r = await pg.evaluate(async () => { await finishWorkout(); return JSON.parse(JSON.stringify(S.sessions[0])); });
+    t(P + '3 ⭐ T02 : cardio seul — « ✓ C\'est noté » lit la valeur tapée à l\'instant (115, estimation 145), puis « Terminer » lit une nouvelle valeur tapée sans quitter le champ (120) → séance enregistrée à 120, estimation 145 conservée',
+      W('T02', 'cardio, valeur tapée à l\'instant', '« C\'est noté » puis « Terminer » lisent le champ', note.man === 115 && note.est === 145 && !!r && r.cardio.kcalMan === 120 && r.cardio.kcalEst === 145 && r.calories === 120 && r.calData.cardio === 120, { note, cal: r && r.calories, bloc: r && r.cardio }, 'banc C-ACT-I3'), _det({ note, cal: r && r.calories }));
+    await fermer(X);
+  }
+  // ── le détail d'une séance passée : « Enregistrer » avec la valeur tapée à l'instant ──
+  {
+    const X = await ouvrir(sess(jeuReference())); const pg = X.pg; const id = jeuReference()[1].ts;
+    await pg.evaluate(i => openSessDetail(i), id); await pg.waitForTimeout(250);
+    await pg.locator('#sd-content .kcal-ed input').fill('300');
+    await pg.evaluate(() => [...document.querySelectorAll('#ov-sess-detail button')].find(x => /Enregistrer/.test(x.textContent)).click()); await pg.waitForTimeout(200);
+    const r = await pg.evaluate(i => JSON.parse(JSON.stringify(S.sessions.find(s => (s.ts || s.id) === i))), id);
+    t(P + '4 ⭐ T05 : détail d\'un ancien cardio — 300 tapé SANS quitter le champ puis « Enregistrer » → calories 300 (valeur de la montre), estimation figée 379 (valeur rangée), jamais le total d\'avant',
+      W('T05', 'détail, valeur tapée à l\'instant', 'enregistrée à 300', r.calories === 300 && r.cardio.kcalMan === 300 && r.cardio.kcalEst === 379, { cal: r.calories, bloc: r.cardio }, 'banc C-ACT-I4'), _det({ cal: r.calories, bloc: r.cardio }));
     await fermer(X);
   }
 }

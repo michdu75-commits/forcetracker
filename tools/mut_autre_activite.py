@@ -110,6 +110,17 @@ MUT = [
      [(SE, "const LS=L.filter(r=>r.type!=='ACTIVITE'), LA=L.filter(r=>r.type==='ACTIVITE');", "const LS=L, LA=L.filter(r=>r.type==='ACTIVITE');")], 'GARDE', 'C-ACT-H3', 'H'),
     ('M42 le message de fin de l\'export PDF relit de nouveau une variable inexistante (le defaut de la version publiee)',
      [(SE, "const _C=_histoCompte(L);\n    _toastFichier(etat, _C.seances,", "_toastFichier(etat, seances,")], 'GARDE', 'C-ACT-H4', 'H'),
+    # ── I · la valeur de la montre tapee, le champ pas encore quitte (iPhone) ───────────────────────────────────────
+    ('M43 « Enregistrer » (formulaire d\'activite) ne lit plus la valeur de la montre tapee a l\'instant',
+     [(AP, "  if(!kcalValiderChampsEnAttente('#ov-autre'))return;   // la valeur de la montre tapée à l'instant compte ; une valeur invalide n'est jamais ignorée en silence\n", "")], 'GARDE', 'C-ACT-I1', 'I'),
+    ('M44 « Terminer la seance » ne lit plus la valeur de la montre tapee a l\'instant (cardio de la seance en cours)',
+     [(LO, "  if(typeof kcalValiderChampsEnAttente==='function'&&!kcalValiderChampsEnAttente('#log-cardio'))return;   // la valeur de la montre tapée à l'instant (champ pas encore quitté) est lue AVANT d'enregistrer\n", "")], 'GARDE', 'C-ACT-I3', 'I'),
+    ('M45 « Enregistrer » du detail d\'une seance ne lit plus la valeur de la montre tapee a l\'instant',
+     [(SE, "  if(typeof kcalValiderChampsEnAttente==='function'&&!kcalValiderChampsEnAttente('#sd-content'))return;   // la valeur de la montre tapée à l'instant (champ pas encore quitté) est lue AVANT d'enregistrer\n", "")], 'GARDE', 'C-ACT-I4', 'I'),
+    ('M46 [deguisee] le champ en attente est detecte par `defaultValue` (que l\'app aligne sur chaque frappe) : plus rien n\'est jamais « en attente »',
+     [(AP, "if(i.value.trim()===String(i.getAttribute('data-kcal-man')||'').trim())return;", "if(i.value===i.defaultValue)return;")], 'GARDE', 'C-ACT-I1', 'I'),
+    ('M47 une valeur INVALIDE tapee a l\'instant est ignoree en silence (l\'assistant ne rend plus « faux »)',
+     [(AP, "if(kcalSaisieValide(i.value).etat==='invalide')ok=false;", "")], 'GARDE', 'C-ACT-I2', 'I'),
     # ── equivalente ────────────────────────────────────────────────────────────────────────────────────────────────
     ('M37 [equivalente] l\'ordre de trois affectations independantes est inverse (meme resultat)',
      [(AP, 'a.kcalEst=_au.kcalEst; a.kcalPoids=_au.kcalPoids; a.kcalMode=_au.kcalMode;', 'a.kcalMode=_au.kcalMode; a.kcalPoids=_au.kcalPoids; a.kcalEst=_au.kcalEst;')], 'OK', None, 'A'),

@@ -201,11 +201,28 @@ function _kcalEditeurHtml(o){
     </div>
     <div style="display:flex;align-items:center;gap:6px;margin-top:6px;">
       <span style="font-size:11.5px;color:var(--t2);flex:1;line-height:1.3;">Calories de ta montre <span style="color:var(--t3);">(activité seule, sans le repos)</span></span>
-      <input type="text" inputmode="decimal" autocomplete="off" value="${man}" placeholder="—" aria-label="Calories de ta montre pour cette activité, en kcal" onchange="${o.onSaisie}" style="width:74px;padding:6px 8px;border-radius:8px;border:1px solid var(--sep);background:var(--bg2);color:var(--t1);font-size:14px;font-weight:700;font-family:var(--font);text-align:center;">
+      <input type="text" inputmode="decimal" autocomplete="off" value="${man}" data-kcal-man="${man}" placeholder="—" aria-label="Calories de ta montre pour cette activité, en kcal" onchange="${o.onSaisie}" style="width:74px;padding:6px 8px;border-radius:8px;border:1px solid var(--sep);background:var(--bg2);color:var(--t1);font-size:14px;font-weight:700;font-family:var(--font);text-align:center;">
       <span style="font-size:11.5px;color:var(--t3);">kcal</span>
     </div>
     ${k.remplacee?`<button type="button" class="btn btn-bg2" style="margin-top:6px;padding:5px 10px;font-size:11.5px;" onclick="${o.onRetour}">↩︎ Revenir à l'estimation</button>`:''}
   </div>`;
+}
+/* Une valeur de montre TAPÉE mais pas encore « validée » : le champ n'a pas perdu le focus (un bouton touché ne retire pas toujours le focus sur iPhone), donc `change` n'a pas eu lieu et le
+   geste d'enregistrer lirait l'ANCIENNE valeur. On la lit AVANT d'enregistrer en rejouant le `change` du champ — le même code que la validation normale, jamais une seconde copie (R2).
+   Rend `false` si la valeur tapée est invalide (le propriétaire du champ a déjà dit pourquoi) : on n'enregistre pas en l'ignorant. */
+function kcalValiderChampsEnAttente(racine){
+  let ok=true;
+  try{
+    const r=(typeof racine==='string')?document.querySelector(racine):racine; if(!r)return true;
+    r.querySelectorAll('.kcal-ed input').forEach(i=>{
+      /* ⛔ On compare à la valeur ENREGISTRÉE (`data-kcal-man`, posée au rendu), JAMAIS à `defaultValue` : l'app aligne `defaultValue` sur chaque frappe (« trick iOS » : plus de boîte
+         « annuler la saisie ? », app.js, écouteur global `input`), donc `defaultValue` vaut toujours ce qui vient d'être tapé. */
+      if(i.value.trim()===String(i.getAttribute('data-kcal-man')||'').trim())return;
+      if(kcalSaisieValide(i.value).etat==='invalide')ok=false;
+      i.dispatchEvent(new Event('change',{bubbles:true}));
+    });
+  }catch(e){}
+  return ok;
 }
 /* ═══ 🚶 AUTRE ACTIVITÉ — créer · consulter · modifier · supprimer (05/11/2026, mission de Michel — `docs/AUTRE-ACTIVITE-CALORIES.md`) ═══
    Une activité hors musculation (marche, randonnée, vélo, course…) est un ENREGISTREMENT de `S.sessions` portant un bloc `autre` — pas un tableau à part
@@ -366,6 +383,7 @@ function _auAbsorberAutreOnglet(){
 }
 function autreEnregistrer(){
   if(!_au)return;
+  if(!kcalValiderChampsEnAttente('#ov-autre'))return;   // la valeur de la montre tapée à l'instant compte ; une valeur invalide n'est jamais ignorée en silence
   const r=_auValider(); if(!r.ok){ _auErr(r.raison); return; }
   _auErr('');
   _auAbsorberAutreOnglet();
@@ -529,6 +547,7 @@ function renderCardioBlock(){
    👉 Celui-ci dit maintenant ce qu'il fait (**noter**) et NOMME le geste qui reste — en lisant le
    vrai libellé du bouton du bas (`_labelFinSeance`, R2) plutôt qu'en le recopiant. */
 function saveCardioEntry(){
+  if(!kcalValiderChampsEnAttente('#log-cardio'))return;   // une valeur de montre tapée à l'instant est lue avant de replier le bloc
   if(!S.wkt||!_aUnCardio()){toast('Entre une durée de cardio','info');return;}
   _cardioOpen=false;persist();renderCardioBlock();
   if(typeof renderLogFinish==='function')renderLogFinish();

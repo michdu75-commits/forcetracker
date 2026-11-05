@@ -392,7 +392,9 @@ async function _complementsLot0(t, b, PORT) {
   await C.recharger();
   const C2 = await lireC();
   t('B-NP01-A ⭐ cardio APRÈS la musculation : la séance garde ses exercices, ses séries validées ET son cardio (type, intensité, durée), datée du jour local',
-    _det(C1.cardio) === _det({ type: 'velo', intensity: 'modere', duration: 20 }) && _det(C1.noms) === _det(['Squat à la Barre', 'Press Jambes 45°'])
+    /* ⛔ R17 — l'INVARIANT est « la séance garde son cardio : type, intensité, durée ». Il comparait l'OBJET ENTIER : depuis la mission « Autre activité » (05/11/2026) le bloc porte aussi ses calories
+       figées (`kcalEst`, `kcalPoids`, `kcalMode`, et `kcalMan` si la personne a saisi la valeur de sa montre) — des champs en plus, pas un cardio perdu ou changé. */
+    !!C1.cardio && C1.cardio.type === 'velo' && C1.cardio.intensity === 'modere' && C1.cardio.duration === 20 && _det(C1.noms) === _det(['Squat à la Barre', 'Press Jambes 45°'])
     && _det(C1.done) === _det([[true, true], [true]]) && C1.date === '2026-10-05' && C1.startHour === 18 && C1.nbJour === 1, _det(C1));
   t('B-NP01-A ⛔ cardio après : rechargé, l\'historique revient OCTET POUR OCTET (cardio compris)', C2.brut === C1.brut, C2.brut.slice(0, 160));
   _obs('O7', 'cardio APRÈS une séance de jambes (même séance) → un seul événement, jour « fait », région de la musculation',

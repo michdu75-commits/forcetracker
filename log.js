@@ -5069,6 +5069,7 @@ function _serieFaitFoiPourPR(s){
   return !!(s && s.done && s.kg && s.reps && s.type!=='É' && s.type!=='W');
 }
 async function finishWorkout(){
+  if(typeof kcalValiderChampsEnAttente==='function'&&!kcalValiderChampsEnAttente('#log-cardio'))return;   // la valeur de la montre tapée à l'instant (champ pas encore quitté) est lue AVANT d'enregistrer
   if(_finishing)return;
   _finishing=true;
   _stopWktChrono();
