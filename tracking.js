@@ -2354,7 +2354,7 @@ function renderCompareChart(pts,box){
 function computeRegistreFacts(){
   try{
     if(!S.registre)S.registre={facts:{},observations:[],updatedAt:''};
-    const sess=(S.sessions||[]).filter(s=>s&&(s.date||s.ts));
+    const sess=_seancesTrain().filter(s=>s&&(s.date||s.ts));   // 🚶 sans les activités (`_estAutre`, state.js)
     const F={};
     const now=new Date(), dayMs=864e5;
     const sdate=s=>new Date(s.date?s.date+'T12:00:00':new Date(s.ts).toISOString());
@@ -2423,7 +2423,7 @@ function computeRegistreFacts(){
 function _obsCandidates(){
   const out=[];
   try{
-    const sess=(S.sessions||[]).filter(s=>s&&(s.date||s.ts));
+    const sess=_seancesTrain().filter(s=>s&&(s.date||s.ts));   // 🚶 sans les activités (`_estAutre`, state.js)
     if(sess.length<4)return out; // le bon moment : pas avant 4 séances (baissé de 8 → 4 pour que Milo commence à apprendre plus tôt ; l'espacement entre deux questions + le seuil de confiance protègent la qualité)
     const now=new Date(), dayMs=864e5, N=sess.length;
     const sdate=s=>new Date(s.date?s.date+'T12:00:00':new Date(s.ts).toISOString());
@@ -2481,7 +2481,7 @@ function _plafondHebdoAtteint(){
    sa raison écrite à côté (« baissé de 8 → 4 »). *Deux seuils qui se ressemblent ne sont pas
    deux copies* — les fondre changerait le comportement d'une des quatre. */
 function _assezDeSeancesPourDemander(){
-  return (S.sessions||[]).filter(s=>s&&(s.date||s.ts)).length>=3;
+  return _seancesTrain().filter(s=>s&&(s.date||s.ts)).length>=3;   // 🚶 sans les activités (`_estAutre`)
 }
 // Décide s'il faut PROPOSER une nouvelle observation (le bon moment + une à la fois + seuil de confiance).
 function maybeProposeObservation(){
@@ -2490,7 +2490,7 @@ function maybeProposeObservation(){
     if(!Array.isArray(S.registre.observations))S.registre.observations=[];
     const obs=S.registre.observations;
     if(obs.some(o=>o&&o.status==='pending'))return;                 // une à la fois
-    if((S.sessions||[]).filter(s=>s&&(s.date||s.ts)).length<4)return; // le bon moment (baissé de 8 → 4)
+    if(_seancesTrain().filter(s=>s&&(s.date||s.ts)).length<4)return; // le bon moment (baissé de 8 → 4) — 🚶 sans les activités (`_estAutre`)
     if(_plafondHebdoAtteint())return;                                // PROACTIF : au plus 1 question/semaine
     const known=new Set(obs.map(o=>o&&o.key));                       // ne jamais re-proposer une clé déjà décidée
     const cands=_obsCandidates().filter(c=>c.confidence>=0.7&&!known.has(c.key));
@@ -2619,7 +2619,7 @@ function _freqBucketLabel(b){return{'1':'1 à 2 fois','3':'3 fois','4':'4 fois',
 function _weeklyCounts(nWeeks){
   const counts=new Array(nWeeks).fill(0);
   const now=new Date(today()+'T12:00:00');
-  (S.sessions||[]).forEach(s=>{
+  _seancesTrain().forEach(s=>{   // 🚶 sans les activités (`_estAutre`) : la fréquence d'entraînement ne compte que l'entraînement
     const ds=s&&(s.date||(s.ts?dayOfTs(s.ts):null)); // jour LOCAL du ts (une séance de 00 h 30 est d'aujourd'hui)
     if(!ds)return;
     const d=new Date(ds+'T12:00:00'); if(isNaN(d))return;
@@ -2648,7 +2648,7 @@ function _weeklyCounts(nWeeks){
    extrapolation* (R29). */
 function _semainesVecues(nWeeks){
   try{
-    const dates=(S.sessions||[]).map(s=>s&&(s.date||(s.ts?dayOfTs(s.ts):null))).filter(Boolean).sort();
+    const dates=_seancesTrain().map(s=>s&&(s.date||(s.ts?dayOfTs(s.ts):null))).filter(Boolean).sort();   // 🚶 sans les activités (`_estAutre`)
     if(!dates.length)return 0;
     const t=new Date(today()+'T12:00:00'), d0=new Date(dates[0]+'T12:00:00');
     if(isNaN(t)||isNaN(d0))return 0;
@@ -2715,7 +2715,7 @@ function dismissFreqContext(observed){
 // l'AUTRE (stable sur plusieurs séances). Anti-nag : une fois tranché pour un style, on ne redemande pas.
 function _sessionStyleStats(nSess){
   let force=0,hyp=0,endur=0,tot=0;
-  const sess=(S.sessions||[]).filter(s=>s&&(s.date||s.ts)).slice(0,nSess); // sessions récentes (unshift → les + récentes en tête)
+  const sess=_seancesTrain().filter(s=>s&&(s.date||s.ts)).slice(0,nSess); // sessions récentes (unshift → les + récentes en tête) — 🚶 sans les activités (`_estAutre`)
   sess.forEach(s=>{
     (s.exs||s.exercises||[]).forEach(ex=>{
       (ex.sets||[]).forEach(st=>{
@@ -3165,7 +3165,7 @@ function renderWeightCorrelations(el,pts){
         .replace(/\*\*(.+?)\*\*/g,'$1')});
   }
   // 2. Training days correlation
-  const sessDates=new Set(S.sessions.map(s=>s.date));
+  const sessDates=new Set(_seancesTrain().map(s=>s.date));   // 🚶 sans les activités (`_estAutre`) : « le lendemain d'une SÉANCE »
   const afterSess=pts.filter(w=>{const prev=new Date(w.date+'T12:00:00');prev.setDate(prev.getDate()-1);return sessDates.has(prev.toISOString().split('T')[0]);});
   const noSess=pts.filter(w=>{const prev=new Date(w.date+'T12:00:00');prev.setDate(prev.getDate()-1);return !sessDates.has(prev.toISOString().split('T')[0]);});
   if(afterSess.length>=2&&noSess.length>=2){
@@ -3842,7 +3842,7 @@ function _rhrAjust(e){
    MINUTE — c'est ce qui permet de rejouer une matinée avant la séance du soir. Une vieille
    séance sans heure n'a que sa DATE, on la compare donc au jour. */
 function _derniereSeanceAvant(refTs, auj){
-  const L=(typeof S!=='undefined'&&S.sessions)||[];
+  const L=(typeof S!=='undefined'&&S.sessions)?_seancesTrain():[];   // 🚶 sans les activités (`_estAutre`) : une marche ne remet pas le repos à zéro
   if(refTs==null) return L[0];
   for(let i=0;i<L.length;i++){
     const x=L[i]; if(!x||!x.date) continue;
@@ -4039,7 +4039,7 @@ function calcRecoveryDetail(refTs){
      plus juste ET plus douce — l'inverse de ce que le contre-audit prévoyait.*
      ⚠️ Seuls **7 jours sur 60** portent réellement 2 séances dans la fenêtre : sur les 53 autres,
      ce qui change est le RETRAIT du forfait, pas le cumul. */
-  const _sessFenetre=(S.sessions||[]).filter(s=>{
+  const _sessFenetre=_seancesTrain().filter(s=>{   // 🚶 sans les activités (`_estAutre`)
     const ts=s&&(s.ts||s.id); if(!ts||ts>_now) return false;
     return (_now-ts)/36e5 < RECUP_EFFACE_H;
   });
@@ -4262,7 +4262,7 @@ function projectionRecup(d){
     d = d || calcRecoveryDetail();
     const now=Date.now();
     let finFat=null;
-    const ls=S.sessions&&S.sessions[0];
+    const ls=(S.sessions&&S.sessions.length)?_seancesTrain()[0]:null;   // 🚶 la dernière SÉANCE, pas la dernière activité (`_estAutre`)
     if(ls&&ls.date){
       const ts=ls.ts||ls.id;
       const pen=_penaliteSeance(ls);
@@ -4342,7 +4342,7 @@ function recupHistorique(nbJours){
     /* Le 1ᵉʳ jour où l'app a quelque chose à dire = la plus ancienne nuit ou séance notée. */
     const dates=[]
       .concat(((S&&S.sleepLog)||[]).map(e=>e&&e.date))
-      .concat(((S&&S.sessions)||[]).map(e=>e&&e.date))
+      .concat((S&&S.sessions?_seancesTrain():[]).map(e=>e&&e.date))   // 🚶 sans les activités (`_estAutre`)
       .filter(Boolean).sort();
     const debut=dates[0]||null;
     for(let i=n-1;i>=0;i--){

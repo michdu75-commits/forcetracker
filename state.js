@@ -887,9 +887,35 @@ function _cmpSeances(a,b){
   return (+(b&&b.ts)||0)-(+(a&&a.ts)||0);
 }
 function _trierSeances(l){ if(Array.isArray(l)) l.sort(_cmpSeances); return l; }
-/* Les N plus récentes (copie, jamais le tableau lui-même), éventuellement filtrées. */
+
+/* 🚶 « AUTRE ACTIVITÉ » (05/11/2026, mission de Michel — `docs/AUTRE-ACTIVITE-CALORIES.md`) — LE PRÉDICAT EST ICI, ET IL N'Y EN A QU'UN (R2).
+   Une activité hors musculation (marche, randonnée, vélo…) vit DANS `S.sessions` (bloc `autre`), pas dans un tableau à part :
+   le Code.js déployé jette tout champ racine qu'il ne connaît pas (mesuré par exécution), alors qu'il garde tel quel ce qui est
+   DANS une séance — cloud, restauration, sauvegarde Drive et export suivent sans redéploiement.
+   ⛔ Conséquence à connaître : tout lecteur de `S.sessions` qui COMPTE « des séances » compterait une marche comme une séance
+   (mesuré : 9 marches font passer les glucides de 377 à 371 g, proposent « Passer en Actif » et fabriquent une question de Milo).
+   Les lecteurs « séance » passent donc par `_seancesTrain()` ; seuls l'historique, le calendrier, les bilans, Milo (bloc dédié)
+   et les exports lisent les activités, et ils le disent. */
+function _estAutre(s){ return !!(s && typeof s==='object' && s.autre && typeof s.autre==='object'); }
+/* Le GENRE d'un enregistrement — DÉRIVÉ de sa structure, jamais stocké pour l'ancien (aucune migration) :
+   'autre' (bloc `autre`) · 'cardio' (aucun exercice et au moins un bloc cardio de durée > 0 : le « cardio seul ») · 'muscu' (tout le reste,
+   y compris un ancien enregistrement vide : défaut conservateur, il se compte comme avant). */
+function _genreSeance(s){
+  if(!s || typeof s!=='object') return 'muscu';
+  if(_estAutre(s)) return 'autre';
+  if(!(s.exs||s.exercises||[]).length){
+    if((s.cardio && +s.cardio.duration>0) || (s.cardioAvant && +s.cardioAvant.duration>0)) return 'cardio';
+  }
+  return 'muscu';
+}
+/* Les séances d'ENTRAÎNEMENT (musculation + cardio) : la liste que lisent tous les compteurs et toutes les règles « séance ».
+   Copie — jamais le tableau lui-même. Sans activité enregistrée, le résultat est identique à `S.sessions` (même contenu, même ordre). */
+function _seancesTrain(){
+  return ((typeof S!=='undefined'&&Array.isArray(S.sessions))?S.sessions:[]).filter(s=>!_estAutre(s));
+}
+/* Les N plus récentes (copie, jamais le tableau lui-même), éventuellement filtrées. ⛔ Sans les activités (voir `_estAutre`). */
 function _seancesRecentes(n, filtre){
-  const l=((typeof S!=='undefined'&&Array.isArray(S.sessions))?S.sessions:[]).filter(x=>x&&(!filtre||filtre(x)));
+  const l=_seancesTrain().filter(x=>x&&(!filtre||filtre(x)));
   l.sort(_cmpSeances);
   return (n==null)?l:l.slice(0,n);
 }
@@ -1463,7 +1489,7 @@ function plannedSession(){
     const t=today();
     const days=Math.round((new Date(np.date+'T12:00:00')-new Date(t+'T12:00:00'))/864e5);
     if(isNaN(days)||days<0)return null;
-    const sess=(S.sessions||[]).filter(s=>s.date);
+    const sess=_seancesTrain().filter(s=>s.date);   // 🚶 sans les activités (`_estAutre`) : une marche n'honore pas une séance annoncée
     const lastDate=sess.length?sess.map(s=>s.date).sort().slice(-1)[0]:null;
     if(lastDate&&lastDate>=np.date)return null;   // annonce honorée : la séance a été faite
     return {date:np.date,label:String(np.label||''),days:days};
@@ -1499,7 +1525,7 @@ function seanceManquee(){
     /* ⛔ « MANQUÉE » VEUT DIRE : AUCUNE SÉANCE LE JOUR PRÉVU NI DEPUIS. Si la personne s'est
        entraînée ce jour-là ou après, l'annonce est honorée — c'est exactement la règle que
        `plannedSession()` applique déjà, et elle ne doit exister qu'à un seul endroit (R2). */
-    const sess=(S.sessions||[]).filter(s=>s&&s.date);
+    const sess=_seancesTrain().filter(s=>s&&s.date);   // 🚶 sans les activités (`_estAutre`)
     const lastDate=sess.length?sess.map(s=>s.date).sort().slice(-1)[0]:null;
     if(lastDate&&lastDate>=np.date)return null;
     /* ⛔ ON NE REDEMANDE JAMAIS DEUX FOIS POUR LA MÊME DATE. Une question qu'on ne peut pas
@@ -2229,7 +2255,7 @@ function cycleGlucides(m, kcal){
     /* r̄ = facteur de région MOYEN de SES séances récentes. C'est lui qui rend la neutralité
        exacte : les jours de repos rendent la moyenne de ce que les jours de séance ont pris. */
     const t=(typeof today==='function')?today():new Date().toISOString().slice(0,10);
-    const recentes=(S.sessions||[]).filter(s=>{
+    const recentes=_seancesTrain().filter(s=>{   // 🚶 sans les activités (`_estAutre`) : leur fréquence ne règle pas le cyclage
       if(!s||!s.date) return false;
       const d=Math.round((new Date(t+'T12:00:00')-new Date(s.date+'T12:00:00'))/864e5);
       return d>=0&&d<28;
@@ -2237,7 +2263,7 @@ function cycleGlucides(m, kcal){
     const facteurs=recentes.map(_facteurRegion);
     const rMoy=facteurs.length?facteurs.reduce((a,b)=>a+b,0)/facteurs.length:1;
     const rJour=js.seance
-      ? _facteurRegion((S.sessions||[]).find(s=>s&&s.date===t)||S.wkt||null)
+      ? _facteurRegion(_seancesTrain().find(s=>s&&s.date===t)||S.wkt||null)
       : rMoy;
     // Amplitude, rabotée si le plancher lipidique mord un jour de séance (les deux côtés).
     let D=m.fat_g*_CYCLE_AMPLI;
@@ -2913,7 +2939,7 @@ function _heureSeance(s){
 function jourSeance(){
   try{
     const t=(typeof today==='function')?today():new Date().toISOString().slice(0,10);
-    const faite=(S.sessions||[]).find(s=>s&&s.date===t);
+    const faite=_seancesTrain().find(s=>s&&s.date===t);   // 🚶 sans les activités (`_estAutre`) : une marche n'est pas un « jour de séance »
     if(faite) return {seance:true, heure:_heureSeance(faite), source:'faite'};
     if(S.wkt && S.wkt.date===t) return {seance:true, heure:_heureSeance(S.wkt), source:'encours'};
     const pl=(typeof plannedSession==='function')?plannedSession():null;

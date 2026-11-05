@@ -50,7 +50,7 @@ function _synthConstantes(refTs){
   const out={pret:false, nSeances:0, nJours:0, lignes:[]};
   try{
     const auj=(typeof today==='function')?today(refTs):null;
-    const sess=(S.sessions||[]).filter(s=>s&&s.date&&(!auj||s.date<=auj));
+    const sess=_seancesTrain().filter(s=>s&&s.date&&(!auj||s.date<=auj));   // 🚶 sans les activités (`_estAutre`) : « ce que ton histoire montre » parle d'entraînement
     out.nSeances=sess.length;
     if(!sess.length) return out;
     const dates=sess.map(s=>s.date).sort();
@@ -1568,14 +1568,17 @@ function _renderSessDetailContent(){
   // Cardio de la séance — DEUX moments depuis le 02/08 (« avant et après séance ce n'est pas
   // pareil »). `cardio` = APRÈS (champ historique) · `cardioAvant` = échauffement. Une séance
   // enregistrée avant ce jour n'a que `cardio` : elle s'affiche donc dans « Après », inchangée.
-  const ckTot=(typeof calcCardioKcal==='function')
-    ? calcCardioKcal(_sessEdits.cardioAvant||null)+calcCardioKcal(_sessEdits.cardio||null) : 0;
+  /* 🔥 Les calories RETENUES de chaque bloc (`kcalCardioAffichage`, app.js) : la part rangée à l'enregistrement pour un bloc ancien — plus le poids du jour (le défaut
+     d'affichage que `docs/AUTRE-ACTIVITE-CALORIES.md` F3 décrit) — ou l'estimation figée / la valeur saisie pour un bloc récent. */
+  const _aff=kcalCardioAffichage(_sessEdits,(S.sessions||[]).find(x=>(x.ts||x.id)===_sessId));
+  const ckTot=_aff.total;
   const selSty='padding:6px 8px;border-radius:8px;border:1px solid var(--bg3);background:var(--bg2);color:var(--t1);font-size:13px;font-family:var(--font)';
   const voletSess=(moment,titre)=>{
     const c=(moment==='avant'?_sessEdits.cardioAvant:_sessEdits.cardio)||null;
-    const k=(c&&c.duration&&typeof calcCardioKcal==='function')?calcCardioKcal(c):0;
+    const kb=(c&&c.duration)?(moment==='avant'?_aff.avant:_aff.apres):null;
+    const k=kb?kb.retenue:0;
     return `<div style="margin-top:7px;">
-      <div style="font-size:12px;font-weight:700;color:var(--t2);margin-bottom:5px;">${titre}${k?` <span style="font-weight:600;color:var(--green)">· ~${k} kcal</span>`:''}</div>
+      <div style="font-size:12px;font-weight:700;color:var(--t2);margin-bottom:5px;">${titre}${(k||(kb&&kb.remplacee))?` <span style="font-weight:600;color:var(--green)">· ${kb.remplacee?'':'~'}${k} kcal${kb.remplacee?' ✎':''}</span>`:''}</div>
       <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
         <select onchange="setSessCardio('type',this.value,'${moment}')" style="${selSty}">
           ${(c&&c.type&&!CARDIO_LABELS[c.type]&&CARDIO_NOMS_MONTRE[c.type])?`<option value="${c.type}" selected>${CARDIO_NOMS_MONTRE[c.type]} (calculé comme « Autre »)</option>`:''}
@@ -1588,6 +1591,7 @@ function _renderSessDetailContent(){
         <span style="font-size:12px;color:var(--t3)">min</span>
         ${c&&c.duration?`<button class="btn btn-bg2" style="padding:3px 9px;font-size:11px;color:var(--red)" onclick="setSessCardio('duration',0,'${moment}')">Retirer</button>`:''}
       </div>
+      ${kb?_kcalEditeurHtml({k:kb,onSaisie:"setSessCardioKcal(this.value,'"+moment+"')",onRetour:"setSessCardioKcal('','"+moment+"')"}):''}
     </div>`;
   };
   html+=`<div class="card" style="margin-bottom:8px;padding:10px 12px">
@@ -1620,9 +1624,29 @@ function _addSessExPick(name){
 function setSessCardio(field,val,moment){
   if(!_sessEdits)return;
   const k=(moment==='avant')?'cardioAvant':'cardio';
+  const figee=_kcalAvecSaisie(_sessEdits);   // l'enregistrement porte-t-il déjà des calories figées ou saisies ? (avant ce geste)
   if(!_sessEdits[k])_sessEdits[k]={type:'elliptique',intensity:'modere',duration:0};
   _sessEdits[k][field]=field==='duration'?Math.max(0,Math.min(300,parseInt(val)||0)):val;
   if(field==='duration'&&!_sessEdits[k].duration)delete _sessEdits[k]; // 0 → pas de cardio
+  /* 🔥 Un enregistrement « à valeurs figées » (mécanisme commun, app.js) : l'estimation du bloc touché suit son type / son intensité / sa durée, avec le poids RANGÉ
+     sur le bloc (celui d'un bloc voisin pour un bloc neuf, à défaut le poids actuel) — jamais le poids du jour pour un bloc qui a déjà le sien. Un enregistrement ANCIEN
+     reste dans l'ancienne règle F21 (`_kcalApresEdition`) tant qu'on n'y saisit rien. */
+  if(figee&&_sessEdits[k]){
+    const voisin=[_sessEdits.cardioAvant,_sessEdits.cardio].find(b=>b&&b!==_sessEdits[k]&&+b.kcalPoids>0);
+    kcalPoserEstimation(_sessEdits[k],'cardio',_sessEdits[k].kcalPoids?undefined:(voisin?voisin.kcalPoids:undefined));
+  }
+  _renderSessDetailContent();
+}
+/* 🔥 La valeur de la montre saisie sur un bloc cardio d'une séance PASSÉE. Un enregistrement ancien reçoit d'abord, sur tous ses blocs, leur estimation figée (ce que l'écran
+   montrait, part rangée à l'enregistrement — jamais le poids du jour) ; puis la valeur remplace celle du bloc. Vide = retour à l'estimation. Invalide = rien ne bouge. */
+function setSessCardioKcal(val,moment){
+  if(!_sessEdits)return;
+  const k=(moment==='avant')?'cardioAvant':'cardio';
+  const b=_sessEdits[k]; if(!b)return;
+  const v=kcalSaisieValide(val);
+  if(v.etat==='invalide'){ toast(v.raison,'error'); _renderSessDetailContent(); return; }
+  if(v.etat==='ok'){ const orig=(S.sessions||[]).find(x=>(x.ts||x.id)===_sessId); kcalNormaliserSeance(_sessEdits,orig); }
+  kcalPoserManuelle(b,val);
   _renderSessDetailContent();
 }
 
@@ -1817,6 +1841,28 @@ function deleteSessOrConfirm(){
    échelle : on prend le calcul du jour, comme avant. */
 function _kcalApresEdition(avant, apres){
   const ref=+(avant&&avant.calories)||0;
+  /* 🔥 UN BLOC PORTE DES CALORIES FIGÉES OU SAISIES (mécanisme commun cardio / activité, `app.js`) : ces calories-là sont ABSOLUES — la valeur de la montre ne se
+     met jamais à l'échelle d'un poids, et une estimation figée ne bouge que si le bloc change. Le total se reconstruit PAR PARTIES : la part du moteur (musculation
+     et forfaits), traitée comme F21 (seule la variation d'effort s'applique à SA part d'origine), plus la somme des blocs retenus. Sans aucun bloc de ce genre,
+     on tombe dans l'ancien chemin ci-dessous, identique à l'octet (banc F21 : `C-NUM-A`). */
+  if(_kcalAvecSaisie(avant)||_kcalAvecSaisie(apres)){
+    const cardioRef=+((avant&&avant.calData&&avant.calData.cardio)||0);          // la part cardio RETENUE d'origine
+    const moteurRef=Math.max(0, ref-cardioRef);                                   // le reste : musculation et forfaits du moteur
+    const mA=calcSessionCalories(avant), mN=calcSessionCalories(apres);           // le moteur gelé, APPELÉ seul, dans le même contexte
+    const seul=!(apres.exs||apres.exercises||[]).length;                          // cardio seul : valeur = somme de ses blocs (voir `_calDataSeance`)
+    let moteur;
+    if(seul) moteur=0;
+    else if(mA.total===mN.total) moteur=moteurRef;                                // l'effort du moteur n'a pas bougé : sa part d'origine reste telle quelle
+    else if(moteurRef>0&&mA.total>0) moteur=Math.round(mN.total*moteurRef/mA.total);   // seule la VARIATION d'effort
+    else moteur=mN.total;                                                         // pas de calories d'origine : le calcul du jour, comme F21
+    const cardio=kcalBloc(apres.cardioAvant||null).retenue+kcalBloc(apres.cardio||null).retenue;
+    const total=moteur+cardio;
+    const base=(mA.total===mN.total&&avant&&avant.calData)?avant.calData:mN;      // métadonnées du moteur : celles d'origine tant que l'effort n'a pas bougé
+    const calData=Object.assign({}, base, {total});
+    if(cardio>0) calData.cardio=cardio; else delete calData.cardio;
+    if(mA.total!==mN.total&&mN.breakdown&&mN.total>0){ const k2=moteur/mN.total; calData.breakdown={}; Object.keys(mN.breakdown).forEach(n=>{ calData.breakdown[n]=Math.round(mN.breakdown[n]*k2); }); }
+    return {calories:total, calData};
+  }
   const cA=_calDataSeance(avant), cN=_calDataSeance(apres);
   if(cA.total===cN.total) return {calories:avant.calories, calData:avant.calData};   // même effort : rien ne bouge
   if(!(ref>0) || !(cA.total>0)) return {calories:cN.total, calData:cN};
@@ -4542,6 +4588,7 @@ function _recalerAnciennesSeances(){
   let n=0, deja=0, avant=0, apres=0; const lignes=[];
   (S.sessions||[]).forEach(s=>{
     if(!s || !s.calories) return;
+    if(_estAutre(s)) return;                            // 🚶 jamais une activité : sa valeur est celle de la personne (retenue), pas un effort de moteur à recaler
     if(_seanceHorodatee(s)){ deja++; return; }          // durée déjà réelle
     if(s.caloriesAvant===undefined) s.caloriesAvant=s.calories;   // 🛟 une seule fois
     const car=(s.calData&&s.calData.cardio)||0;

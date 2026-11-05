@@ -899,7 +899,7 @@ function _renderHomeHero(){
   const _sansDonnee=((typeof _nuitsRecentes==='function')
       ? _nuitsRecentes(today(),3).length===0
       : !((S.sleepLog||[]).length))
-    && !((S.sessions||[]).length);
+    && !(_seancesTrain().length);   // 🚶 sans les activités (`_estAutre`) : une marche ne suffit pas à faire apparaître un score de récupération
   const detail=_sansDonnee
     ? {score:null,factors:[],tips:[],dayPains:_detail.dayPains}
     : _detail;
@@ -1265,7 +1265,7 @@ function _miloReturnHint(){
   return h[idx];
 }
 function _miloMessage(){
-  const sess=(S.sessions||[]).filter(s=>s.date);
+  const sess=_seancesTrain().filter(s=>s.date);   // 🚶 sans les activités (`_estAutre`) : la carte parle de SÉANCES
   const tStr=today();
   const lastDate=sess.length?sess.map(s=>s.date).sort().slice(-1)[0]:null;
   const daysSince=lastDate?Math.floor((new Date(tStr+'T12:00:00')-new Date(lastDate+'T12:00:00'))/864e5):null;
@@ -2113,7 +2113,9 @@ function renderHome(){try{
   _renderHomeHero();
   if(typeof renderLogSleep==='function')renderLogSleep(); // sommeil du jour, juste sous le score de récup (déplacé de Séance → Accueil)
   const now=new Date();
-  const mo=S.sessions.filter(s=>{const d=new Date(s.date+'T12:00:00');return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();});
+  const _memeMois=s=>{const d=new Date(s.date+'T12:00:00');return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();};
+  const mo=_seancesTrain().filter(_memeMois);   // 🚶 les SÉANCES du mois (sans les activités, `_estAutre`) — les activités sont dites à côté
+  const moAct=S.sessions.filter(s=>_estAutre(s)&&s.date&&_memeMois(s)).length;
   /* ⛔⛔ « Volume » ET « Force » ONT ÉTÉ RETIRÉS DE CE BLOC LE 05/09/2026 (ft-v1138) — RETRAIT
      VOLONTAIRE, PAS UN OUBLI (R30). Michel : « quand on clique sur les tuiles, c'est pas terrible
      où j'arrive » → « on le retire pour l'instant, tu le notes ».
@@ -2197,7 +2199,7 @@ function renderHome(){try{
   const _chev='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;transition:transform .18s;'+(_cmOpen?'transform:rotate(90deg);':'')+'"><polyline points="9 18 15 12 9 6"/></svg>';
   if(statsEl)statsEl.innerHTML='<div onclick="toggleCeMois()" style="cursor:pointer;-webkit-tap-highlight-color:transparent;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 3px '+(_cmOpen?'9px':'0')+';"><span style="font-family:var(--font-cond);font-size:11px;font-weight:700;letter-spacing:.16em;color:var(--t3);">CE MOIS</span><span style="margin-left:auto;font-size:12.5px;color:var(--t3);text-transform:capitalize;">'+_moName+'</span>'+_chev+'</div>'
     +(!_cmOpen?'':'<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:7px;">'
-    +_sc("goSessionsHistory()",'<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>','rgba(168,85,247,.14)','var(--purp)','<span id="h-sess" style="color:var(--t1)">'+mo.length+'</span>','Séances ce mois','Séances')
+    +_sc("goSessionsHistory()",'<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>','rgba(168,85,247,.14)','var(--purp)','<span id="h-sess" style="color:var(--t1)">'+mo.length+(moAct?' <span style="font-size:11px;font-weight:600;color:var(--t3);">+'+moAct+' act.</span>':'')+'</span>','Séances ce mois','Séances')
     +_sc("goWeightTab()",'<rect x="4" y="4" width="16" height="16" rx="3"/><path d="M9 9.5a3 3 0 0 1 6 0"/><line x1="12" y1="9.5" x2="13.8" y2="8"/>','rgba(91,168,255,.14)','#5BA8FF','<span id="h-bw" style="color:var(--t1)">'+bwTxt+'</span><span style="font-size:13px;color:var(--t2);font-weight:600;"> kg</span>','Poids de corps','Poids')
     +'</div>');
   // Calendrier mensuel (remplace cycle de force / niveau / records sur l'Accueil — chantier feat/accueil-calendrier)
@@ -3400,7 +3402,7 @@ function renderNutrition(){try{
   /* 🧮 F06 (mission Séance du 24/10/2026) — TOUTES les séances du jour, pas la première trouvée : mesuré le 23/10, deux
      séances de 250 et 350 kcal affichaient 350. La tuile additionne, et son libellé dit combien (« 2 séances ») — le
      libellé plutôt que la valeur, pour que « 600 kcal » tienne dans la tuile à 320 px. */
-  const _sessJour=(S.sessions||[]).filter(s=>s&&s.date===todayStr);
+  const _sessJour=_seancesTrain().filter(s=>s&&s.date===todayStr);   // 🚶 sans les activités (`_estAutre`) : cette tuile dit la SÉANCE ; les kcal d'une activité ne s'ajoutent pas à la dépense de Nutrition (`docs/AUTRE-ACTIVITE-CALORIES.md` §5)
   const sessCals=_sessJour.reduce((a,s)=>a+(+s.calories||0),0);
   {const _l=document.getElementById('nu-session-lbl'); if(_l)_l.textContent=_sessJour.length>1?_sessJour.length+' séances':'Séance';}
   /* ⚠️ « aucune » et plus « — (pas de séance) » (ft-v1025) : le libellé long ne tenait pas dans

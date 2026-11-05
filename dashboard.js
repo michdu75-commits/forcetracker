@@ -94,7 +94,7 @@ function _dTuile(o){
 // Séances triées de la plus ANCIENNE à la plus récente, sur N jours.
 function _dSess(jours){
   const lim=Date.now()-jours*864e5;
-  return (S.sessions||[]).filter(s=>s&&s.date&&Date.parse(s.date+'T12:00:00')>=lim)
+  return _seancesTrain().filter(s=>s&&s.date&&Date.parse(s.date+'T12:00:00')>=lim)   // 🚶 sans les activités (`_estAutre`, state.js) : ce tableau de bord parle d'entraînement
     .slice().sort((a,b)=>String(a.date).localeCompare(String(b.date)));
 }
 
@@ -159,7 +159,7 @@ function _dBarres(sess){
 function _dCal(){
   const now=new Date(), an=now.getFullYear(), mo=now.getMonth();
   const prem=new Date(an,mo,1), dec=(prem.getDay()+6)%7, nb=new Date(an,mo+1,0).getDate();
-  const faits=new Set((S.sessions||[]).map(s=>s&&s.date).filter(Boolean));
+  const faits=new Set(_seancesTrain().map(s=>s&&s.date).filter(Boolean));   // 🚶 sans les activités (`_estAutre`)
   const iso=d=>`${an}-${String(mo+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
   let h=['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'].map(j=>`<b>${j}</b>`).join('');
   for(let i=0;i<dec;i++)h+='<i class="off"></i>';
@@ -246,7 +246,7 @@ function _dBas(){
   // fonction que l'app, avec les MET par exercice. Si elle n'est pas disponible, la tuile
   // n'est pas affichée : on préfère 4 chiffres justes à 5 dont un inventé.
   const an=new Date().getFullYear();
-  const sa=(S.sessions||[]).filter(s=>s&&s.date&&+s.date.slice(0,4)===an);
+  const sa=_seancesTrain().filter(s=>s&&s.date&&+s.date.slice(0,4)===an);   // 🚶 sans les activités (`_estAutre`)
   const min=sa.reduce((a,s)=>a+(+s.duration||0),0);
   const volAn=sa.reduce((a,s)=>a+(typeof _volTravail==='function'?_volTravail(s):(+s.volume||+s.vol||0)),0);
   let cardio=0; sa.forEach(s=>['cardio','cardioPre','cardioPost'].forEach(k=>{const c=s[k];
@@ -315,7 +315,7 @@ function renderDashBlocs(){
     : '<div class="vide">Aucun record enregistré.</div>';
 
   // ── Dernières séances ────────────────────────────────────────────────────
-  const der=(S.sessions||[]).slice(0,6);
+  const der=_seancesTrain().slice(0,6);   // 🚶 sans les activités (`_estAutre`)
   const derHtml=der.length
     ? `<div class="lst">${der.map(s=>{
         const nEx=(s.exs||[]).length, nSets=(s.exs||[]).reduce((a,e)=>a+((e.sets||[]).filter(x=>x.done).length),0);

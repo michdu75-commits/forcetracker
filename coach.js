@@ -118,7 +118,7 @@ function _memoireLargeOn(){ return true; }
    mesurer le rythme reviendrait à mesurer le réglage de la personne avec ce même réglage. */
 function _rythmeSeance(){
   try{
-    const sess=(S.sessions||[]).slice(0,12);
+    const sess=_seancesTrain().slice(0,12);   // 🚶 sans les activités (`_estAutre`) : une marche ne doit pas pousser une vraie séance hors de la fenêtre
     const pts=[];
     for(const s of sess){
       const nSets=(s.exs||s.exercises||[]).reduce((a,e)=>a+((e.sets||[]).filter(x=>x&&x.done).length),0);
@@ -239,7 +239,7 @@ function _ctxReposRegles(){
     // Pertinence d'abord : ce qu'il/elle fait EN CE MOMENT. Un réglage posé sur un exercice
     // abandonné depuis six mois encombrerait le contexte sans rien changer à la réponse.
     const recents=new Set();
-    (S.sessions||[]).slice(0,15).forEach(s=>(s.exs||s.exercices||[]).forEach(e=>{ if(e&&e.name) recents.add(e.name); }));
+    _seancesTrain().slice(0,15).forEach(s=>(s.exs||s.exercices||[]).forEach(e=>{ if(e&&e.name) recents.add(e.name); }));   // 🚶 sans les activités (`_estAutre`)
     noms.sort((a,b)=>{
       const ra=recents.has(a)?0:1, rb=recents.has(b)?0:1;
       if(ra!==rb) return ra-rb;              // les exercices récents devant
@@ -273,7 +273,7 @@ function _ctxReposRegles(){
 // tendance : une séance courte n'est pas une habitude (R12 · Constitution P19).
 function _ctxDureeSeance(){
   try{
-    const sess=(S.sessions||[]).filter(s=>s&&+s.duration>0).slice(0,12);
+    const sess=_seancesTrain().filter(s=>s&&+s.duration>0).slice(0,12);   // 🚶 sans les activités (`_estAutre`) : la durée type d'une SÉANCE
     const mins=[];
     for(const s of sess){
       const m=+s.duration/60;
@@ -464,7 +464,7 @@ function _historiqueCompact(){
   try{
     if(!_memoireLargeOn())return '';
     const S_=(typeof S!=='undefined')?S:null; if(!S_)return '';
-    const sess=(S_.sessions||[]).filter(s=>s&&s.date);
+    const sess=(typeof _seancesTrain==='function'?_seancesTrain():(S_.sessions||[])).filter(s=>s&&s.date);   // 🚶 sans les activités (`_estAutre`)
     // Les 5 premières sont déjà envoyées EN DÉTAIL — on ne les répète pas (R2 : jamais deux fois
     // la même information, sinon les deux versions finissent par diverger).
     const reste=sess.slice(5);
@@ -504,7 +504,7 @@ function _historiqueCompact(){
 function _memoireLongue(){
   try{
     const S_ = (typeof S!=='undefined')?S:null; if(!S_)return '';
-    const sess=(S_.sessions||[]).filter(s=>s&&s.date);
+    const sess=(typeof _seancesTrain==='function'?_seancesTrain():(S_.sessions||[])).filter(s=>s&&s.date);   // 🚶 sans les activités (`_estAutre`) : la mémoire longue parle de séances
     if(sess.length<3)return '';   // en dessous, la « tendance » n'aurait aucun sens (R12)
     // les séances sont stockées les plus RÉCENTES en premier — on travaille sur une copie triée
     const parDate=sess.slice().sort((a,b)=>String(a.date).localeCompare(String(b.date)));
@@ -3574,7 +3574,7 @@ function buildCoachContext(msg, opts) {
      n'existe pas. C'est `_serieDeTravail()` qui décide, pas une liste recopiée ici. */
   let _rirNotes = 0, _rirTrav = 0, _rirEchec = 0;
   const _sessVues = _seancesRecentes(_NB_DETAIL);   // LOT 3 : les 5 plus récentes PAR DATE, pas les 5 premières du tableau
-  const _nbTotalSess = (S.sessions||[]).length;
+  const _nbTotalSess = _seancesTrain().length;   // 🚶 sans les activités (`_estAutre`) : « a fait N séances » ne compte que des séances
   const _depuisQuand = _sessVues.length ? _sessVues[_sessVues.length-1].date : '';
   const _ligneSeance = (s, _compter) => {
     const _exsS = (s.exs||s.exercises||[]);
@@ -3884,7 +3884,7 @@ ${(()=>{
   try{
     const e=(typeof _pasEcart==='function')?_pasEcart():null;
     if(!e||e.kcal<=0) return '';
-    const seanceAuj=(S.sessions||[]).some(x=>x&&x.date===today());
+    const seanceAuj=_seancesTrain().some(x=>x&&x.date===today());   // 🚶 sans les activités (`_estAutre`) : une marche enregistrée n'est pas une séance (elle est dite dans le bloc des activités)
     return `- 🚶 AUJOURD'HUI IL/ELLE A BEAUCOUP MARCHÉ : ${e.pas.toLocaleString('fr-FR')} pas, soit `
       + `${e.surplus.toLocaleString('fr-FR')} de plus que sa base habituelle (${e.base.toLocaleString('fr-FR')}/j sur ${e.n} jours). `
       + (tdee !== '—' ? `Ces ~${e.kcal} kcal sont DÉJÀ ajoutées à son TDEE ci-dessus — ne les recompte pas.` : `(Ses besoins caloriques ne sont pas calculés : n'en tire AUCUN chiffre de dépense.)`)
@@ -9019,7 +9019,8 @@ function _ecrireExport(avecConversations, seancesSeules){
     setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(url);},500);
     const nb=Object.keys(payload.donnees).length;
     toast(seancesSeules
-      ? ((S.sessions||[]).length)+' séances exportées · sans tes données de santé ✓'
+      ? (()=>{ const nA=(S.sessions||[]).filter(_estAutre).length, nT=(S.sessions||[]).length-nA;   // 🚶 identique à l'ancien texte tant qu'il n'y a aucune activité
+          return nT+' séances'+(nA?' et '+nA+' activité'+(nA>1?'s':''):'')+' exportées · sans tes données de santé ✓'; })()
       : nb+' catégories exportées'+(avecConversations?' · conversations comprises':'')+' ✓','success');
   }catch(e){toast('Erreur export : '+e.message,'error');}
 }
