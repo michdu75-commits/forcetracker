@@ -138,9 +138,15 @@ async function ecran(t, b, PORT) {
   const c = { t, b, PORT, ouvrir, sess, ag, toasts, txt, creer, ouvrirAutre, saisirMan, enregistrerForm, autres, stocke, fermer, W, MX, SC, jeuReference, marche, J, _det, BASE, T0, AG };
 
   /* ACT_BLOCS (ex. « A,B ») : ne jouer que certains blocs — boucle de mise au point seulement ; la passe et le banc jouent TOUT. */
-  const sel = process.env.ACT_BLOCS ? process.env.ACT_BLOCS.split(',') : ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'];
-  const BL = { A: () => blocA(c), B: () => blocB(c), C: () => blocC(c), D: () => blocD(c), E: () => blocE(c), F: () => blocF(c), G: () => blocG(c), H: () => blocH(c), I: () => blocI(c) };
-  for (const k of ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I']) if (sel.indexOf(k) >= 0) await BL[k]();
+  const sel = process.env.ACT_BLOCS ? process.env.ACT_BLOCS.split(',') : ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
+  const BL = { A: () => blocA(c), B: () => blocB(c), C: () => blocC(c), D: () => blocD(c), E: () => blocE(c), F: () => blocF(c), G: () => blocG(c), H: () => blocH(c), I: () => blocI(c), J: () => blocJ(c) };
+  /* ⛔ Un bloc qui LÈVE une exception ne doit pas faire planter tout le banc (code 2, plus de ligne de total) : sous mutation, le premier témoin rouge est souvent suivi d'un geste
+     impossible (le bouton « Supprimer » a déjà disparu…) — le banc doit alors dire ROUGE et continuer. L'arrêt du bloc est lui-même un rouge (`C-ACT-<bloc>X`) :
+     un bloc interrompu n'est jamais un bloc vert. */
+  for (const k of ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']) if (sel.indexOf(k) >= 0) {
+    try { await BL[k](); }
+    catch (e) { t('C-ACT-' + k + 'X ⛔ le bloc ' + k + ' s\'est ARRÊTÉ avant la fin (exception) — les témoins suivants de ce bloc n\'ont PAS été joués', false, String(e && e.message || e).split('\n')[0].slice(0, 200)); }
+  }
   /* A le parcours réel et la référence · B le mécanisme commun du cardio · C les bilans et les frontières de période · D les invariants (Nutrition, récupération,
      fréquence, badges, programmes) · E Milo · F Accueil · Agenda · Progrès · G persistance, hors ligne, reprise, conflits, identifiants · H exports et rapports · I valeur de la montre
      tapée mais champ pas encore quitté (iPhone). */
@@ -643,11 +649,11 @@ async function blocC(c) {
   {
     const LA = await ouvrir({ ls: { ft4_sessions: J([]) }, tz: 'America/Los_Angeles', now: '2026-11-05T23:30:00-08:00' });       // 06/11 07 h 30 en UTC
     await creer(LA, { type: 'marche', duree: 30, man: 100 });
-    const rLA = await LA.pg.evaluate(() => { const s = S.sessions.find(x => x.autre); return { date: s.date, h: s.startHour, heure: s.autre.heure, today: today() }; });
+    const rLA = await LA.pg.evaluate(() => { const s = S.sessions.find(x => x.autre) || { autre: {} }; return { date: s.date, h: s.startHour, heure: s.autre.heure, today: today(), enregistree: !!S.sessions.find(x => x.autre) }; });      // un refus (date « future ») rend un ROUGE, pas une exception
     await fermer(LA);
     const NZ = await ouvrir({ ls: { ft4_sessions: J([]) }, tz: 'Pacific/Auckland', now: '2026-11-06T00:30:00+13:00' });        // 05/11 11 h 30 en UTC
     await creer(NZ, { type: 'marche', duree: 30, man: 100 });
-    const rNZ = await NZ.pg.evaluate(() => { const s = S.sessions.find(x => x.autre); return { date: s.date, h: s.startHour, heure: s.autre.heure, today: today() }; });
+    const rNZ = await NZ.pg.evaluate(() => { const s = S.sessions.find(x => x.autre) || { autre: {} }; return { date: s.date, h: s.startHour, heure: s.autre.heure, today: today(), enregistree: !!S.sessions.find(x => x.autre) }; });
     await fermer(NZ);
     t(P + '16 ⭐ T32 : une activité créée à 23 h 30 à Los Angeles est du 05/11 (pas du 06, la date d\'UTC) ; à 00 h 30 à Auckland elle est du 06/11 (pas du 05)',
       W('T32', 'fuseaux', 'date locale', rLA.date === '2026-11-05' && rLA.heure === '23:30' && rNZ.date === '2026-11-06' && rNZ.heure === '00:30', { rLA, rNZ }, 'banc C-ACT-C16'), _det({ rLA, rNZ }));
@@ -699,7 +705,7 @@ async function blocD(c) {
       safe('derniereAvant', () => { const d = _derniereSeanceAvant(now, auj); return d && (d.ts || d.id); }); safe('progs', () => JSON.stringify(S.programmes));
       // statistiques, registre, badges, récupération
       safe('synth', () => _synthConstantes(now)); safe('volParMuscle', () => _volumeParMuscle(now, 30));
-      safe('registre', () => computeRegistreFacts());
+      safe('registre', () => { computeRegistreFacts(); return S.registre && S.registre.facts; });      // la fonction ÉCRIT les faits et ne rend rien : on lit ce qu'elle a écrit (sinon undefined = undefined, un vert qui ne peut pas rougir)
       safe('badgesCond', () => ['first_session', 'fire', 'regular_10', 'assidu_25', 'veteran_50', 'streak_7'].map(id => { try { return id + ':' + _checkBadgeCond(BADGES.find(b => b.id === id)); } catch (e) { return id + ':?'; } }));
       safe('recup', () => { const d = calcRecoveryDetail(); return { score: d.score }; }); safe('recupProj', () => projectionRecup()); safe('recupHisto', () => recupHistorique(14));
       return out;
@@ -712,15 +718,17 @@ async function blocD(c) {
     r.__err = X.errs; await fermer(X); return r;
   };
   const A = await lire(base), B = await lire(base.concat(marches));
+  if (process.env.ACT_SONDE) console.log('SONDE D (sorties sans activité, tronquées) :\n' + Object.keys(A).filter(k => !/^__/.test(k)).map(k => '   ' + k + ' = ' + String(J(A[k])).slice(0, 110)).join('\n'));    // mise au point : voir ce que les lecteurs répondent vraiment
   const egal = k => J(A[k]) === J(B[k]);
   const groupe = ks => ks.filter(k => !egal(k));
-  const erreur = v => typeof v === 'string' && /^ERR /.test(v);
-  const vide = ks => ks.filter(k => erreur(A[k]) || erreur(B[k]));      // une sortie qui a LEVÉ une erreur ne prouve rien (null ou undefined, eux, sont des réponses)
+  const erreur = v => v === undefined || (typeof v === 'string' && /^ERR /.test(v));
+  const vide = ks => ks.filter(k => erreur(A[k]) || erreur(B[k]));      // une sortie qui a LEVÉ une erreur, ou qui ne rend RIEN (undefined), ne prouve rien — `null`, lui, est une réponse
   const GN = ['calcTDEE', 'calcMacros', 'jourSeance', 'ecartNiveauActivite', 'pendingFreq', 'weeklyCounts4', 'semainesVecues'];
   const GS = ['planned', 'manquee', 'derniere', 'derniereAvant', 'progs'];
   const GT = ['synth', 'volParMuscle', 'registre', 'badgesCond', 'recup', 'recupProj', 'recupHisto'];
   t(P + '1 ⭐ non-vacuité : les lecteurs répondent VRAIMENT sur l\'historique de musculation (TDEE > 0, fréquences 3/semaine, une séance planifiée lisible, aucune erreur) — sinon l\'égalité plus bas ne prouverait rien',
-    (A.calcTDEE > 1500 && J(A.weeklyCounts4) !== '[0,0,0,0]' && A.derniere > 0 && vide(GN.concat(GS, GT)).length === 0 && !!A.__ecrans.nutri && !!A.__ecrans.nutri.tdee) || false, _det({ tdee: A.calcTDEE, wc: A.weeklyCounts4, vides: vide(GN.concat(GS, GT)), nutri: A.__ecrans.nutri }));
+    (A.calcTDEE > 1500 && J(A.weeklyCounts4) !== '[0,0,0,0]' && A.derniere > 0 && vide(GN.concat(GS, GT)).length === 0 && !!A.__ecrans.nutri && !!A.__ecrans.nutri.tdee
+      && !!A.registre && !!A.registre.seances && !!A.registre.regularite && !!A.registre.anciennete) || false, _det({ tdee: A.calcTDEE, wc: A.weeklyCounts4, vides: vide(GN.concat(GS, GT)), nutri: A.__ecrans.nutri, registre: A.registre && Object.keys(A.registre) }));
   const gN = groupe(GN), gS = groupe(GS), gT = groupe(GT);
   t(P + '2 ⭐ T22 / T24 : 9 marches de 255 kcal (dont une aujourd\'hui) ne changent NI la dépense (TDEE), NI les macros (calories, protéines, glucides, lipides, cycle), NI le jour de séance, NI le niveau d\'activité conseillé, NI les fréquences — la cible du jour n\'est PAS augmentée de 255',
     W('T22', 'nutrition', 'sorties identiques avec et sans activités', gN.length === 0, { differ: gN, tdee: [A.calcTDEE, B.calcTDEE], macros: [A.calcMacros, B.calcMacros] }, 'banc C-ACT-D2')
@@ -776,6 +784,20 @@ async function blocD(c) {
     t(P + '9 ⭐ I10 / D05 : un compte SANS nuit ni séance reste muet à l\'Accueil (« Enregistre ton sommeil », aucun score) avec une marche seule — comme sans rien — alors qu\'une vraie séance de musculation fait apparaître un score (la garde sait donc rougir)',
       W('D05', 'récupération, Accueil', 'muet avec une marche seule ; score avec une vraie séance', muet(rien) && muet(uneMarche) && !muet(uneSeance), { rien, uneMarche, uneSeance }, 'banc C-ACT-D9'), _det({ rien, uneMarche, uneSeance }));
   }
+  // ── D10 (T38) : une séance ANNONCÉE reste annoncée, une séance MANQUÉE reste manquée, même si une marche tombe le jour concerné ──
+  // `plannedSession` / `seanceManquee` disent « honorée » dès qu'une séance a eu lieu le jour prévu ou après : une marche n'est pas une séance. Le jeu de départ n'avait AUCUNE annonce
+  // (les deux fonctions rendaient `null`, avec et sans marche : un vert qui ne peut pas rougir, démasqué par la mutation M39) — ici l'annonce existe, et on vérifie qu'elle est lue.
+  {
+    const reel = base.filter(s => s.date <= '2026-11-02');                    // des séances réelles jusqu'au 02/11 seulement : rien le 03, le 04 ni le 05
+    const lirePlan = async (jeu, np) => { const X = await ouvrir({ ls: { ft4_sessions: J(jeu) } });
+      const r = await X.pg.evaluate(np => { S.nextPlanned = np; S.missedLog = []; return { planned: plannedSession(), manquee: seanceManquee() }; }, np); await fermer(X); return r; };
+    const annonce = { date: '2026-11-05', label: 'Push' }, passee = { date: '2026-11-03', label: 'Pull' };
+    const a1 = await lirePlan(reel, annonce), b1 = await lirePlan(reel.concat([marche('2026-11-05', '20:30', { man: 255 })]), annonce);
+    const a2 = await lirePlan(reel, passee), b2 = await lirePlan(reel.concat([marche('2026-11-03', '08:00', { man: 255 })]), passee);
+    const vivant = !!a1.planned && a1.planned.date === '2026-11-05' && !!a2.manquee && a2.manquee.date === '2026-11-03';
+    t(P + '10 ⭐ T38 : une séance ANNONCÉE pour aujourd\'hui reste annoncée avec une marche aujourd\'hui, une séance MANQUÉE du 03/11 reste manquée avec une marche le 03/11 — l\'annonce est bien lue sans la marche (la garde sait donc rougir)',
+      W('T38', 'séance annoncée / manquée', 'inchangées par une marche le jour concerné', vivant && J(a1) === J(b1) && J(a2) === J(b2), { sans: [a1, a2], avec: [b1, b2] }, 'banc C-ACT-D10'), _det({ vivant, sans: [a1, a2], avec: [b1, b2] }));
+  }
 }
 
 // ═════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
@@ -800,8 +822,15 @@ async function blocE(c) {
   const retire = B.full.split(B.bloc).join('');
   t(P + '3 ⭐ T23 / R34 : le contexte complet AVEC activité, une fois ce bloc retiré, est IDENTIQUE à l\'octet au contexte SANS activité (' + A.full.length + ' caractères) — rien d\'autre n\'a bougé dans ce que Milo reçoit',
     W('T23', 'différentiel de contexte', 'seul le bloc des activités diffère', B.bloc.length > 100 && retire === A.full, { sans: A.full.length, avec: B.full.length, bloc: B.bloc.length, egal: retire === A.full }, 'banc C-ACT-E3'), _det({ sans: A.full.length, avec: B.full.length, bloc: B.bloc.length, egal: retire === A.full }));
-  t(P + '4 T23 : l\'historique compact, la mémoire longue et la durée réelle des séances sont les MÊMES avec et sans activité (la marche n\'y est ni une séance, ni une durée de séance)',
-    W('T23', 'lecteurs de séances de Milo', 'identiques', A.hist === B.hist && A.memoire === B.memoire && A.duree === B.duree, { hist: A.hist === B.hist, memoire: A.memoire === B.memoire, duree: A.duree === B.duree }, 'banc C-ACT-E4'), _det({ hist: A.hist === B.hist, memoire: A.memoire === B.memoire, duree: A.duree === B.duree }));
+  /* E4 — avec le seul jeu de la mission (4 séances) l'« historique compact » est VIDE (il ne liste que les séances au-delà des 5 plus récentes) : l'égalité sans/avec ne prouvait rien et
+     la mutation M20 (le compact liste les activités) survivait. On lui donne huit séances plus anciennes, et on exige que les trois lecteurs répondent VRAIMENT. */
+  const anciennes = ['2026-10-30', '2026-10-27', '2026-10-24', '2026-10-21', '2026-10-18', '2026-10-15', '2026-10-12', '2026-10-09'].map((d, i) => { const ts = Date.parse(d + 'T18:00:00+01:00');
+    return { id: ts, ts, date: d, startHour: 18, exs: [{ name: 'Développé Couché Barre', sets: [{ kg: 80 + i, reps: 5, type: 'N', done: true, rm1: 93 }] }], volume: (80 + i) * 5, uniConv: 1, synced: false, duration: 3600 + i * 60, progLabel: '', calories: 300, calData: { total: 300 } }; });
+  const gros = sans.concat(anciennes);
+  const A4 = await lire(gros), B4 = await lire(gros.concat([hier]));
+  const vivants = A4.hist.length > 50 && A4.memoire.length > 50 && A4.duree.length > 20;
+  t(P + '4 T23 : l\'historique compact, la mémoire longue et la durée réelle des séances sont les MÊMES avec et sans activité (la marche n\'y est ni une séance, ni une durée de séance) — et ces trois lecteurs répondent VRAIMENT sur 12 séances (sinon l\'égalité ne prouverait rien)',
+    W('T23', 'lecteurs de séances de Milo', 'identiques', vivants && A4.hist === B4.hist && A4.memoire === B4.memoire && A4.duree === B4.duree, { vivants, hist: A4.hist === B4.hist, memoire: A4.memoire === B4.memoire, duree: A4.duree === B4.duree }, 'banc C-ACT-E4'), _det({ vivants, tailles: [A4.hist.length, A4.memoire.length, A4.duree.length], hist: A4.hist === B4.hist, memoire: A4.memoire === B4.memoire, duree: A4.duree === B4.duree }));
   // ── la seule activité du jour : Milo ne doit pas croire que la séance du jour est faite ──
   {
     const sansAuj = jeuReference().filter(s => s.date !== '2026-11-05');
@@ -910,6 +939,19 @@ async function blocF(c) {
   t(P + '10 ⭐ T48 / T08 : supprimer la randonnée du 01/11 (seule activité de ce jour) → sa carte disparaît sans rechargement, il reste 5 activités (1 680 kcal), le 01/11 n\'est plus un jour cliquable du calendrier, la tuile de l\'Accueil dit « +5 act. »',
     W('T48', 'suppression', 'carte, case, bilan et tuile suivent', !sup.carte && sup.nAutre === 5 && sup.kcal === 1680 && sup.nA === 5 && !caseSup && /^5\s*\+5 act\./.test(tuileC), { sup, caseSup, tuileC }, 'banc C-ACT-F10')
     && W('T08', 'depuis l\'historique', 'suppression répercutée partout', !sup.carte && sup.nA === 5, sup, 'banc C-ACT-F10'), _det({ sup, caseSup, tuileC }));
+  /* F13 — D04 sous un autre angle : le test F4 prenait une séance « haut du corps », dont la couleur (rouge) est AUSSI la couleur par défaut d'une activité sans région — une mutation qui
+     laisse l'activité choisir la couleur (M18) y survivait. Ici le jour est un jour de JAMBES (violet, « bas du corps ») suivi d'une balade à 20 h 30 : seule la bonne couleur est violette. */
+  {
+    const tsJ = Date.parse('2026-11-03T17:00:00+01:00');
+    const jambes = { id: tsJ, ts: tsJ, date: '2026-11-03', startHour: 17, exs: [{ name: 'Squat Barre', sets: [{ kg: 100, reps: 5, type: 'N', done: true, rm1: 117 }, { kg: 100, reps: 5, type: 'N', done: true, rm1: 117 }] }],
+      volume: 1000, uniConv: 1, synced: false, duration: 3600, progLabel: '', calories: 300, calData: { total: 300 } };
+    const Y = await ouvrir({ ls: { ft4_sessions: J([jambes, marche('2026-11-03', '20:30', { man: 255 })]) } });
+    await Y.pg.evaluate(() => goScreen('home', document.getElementById('nb-home'))); await Y.pg.waitForTimeout(400);
+    const c3 = await Y.pg.evaluate(() => { const e = [...document.querySelectorAll('#home-secondary [onclick^="_calSelect"]')].find(x => x.getAttribute('onclick').indexOf('2026-11-03') >= 0); return e ? e.outerHTML : null; });
+    await fermer(Y);
+    t(P + '13 ⭐ D04 : un jour de JAMBES (Squat) suivi d\'une balade à 20 h 30 garde la couleur violette (« bas du corps ») dans le calendrier — l\'activité n\'a aucune région et prendrait le rouge par défaut',
+      W('D04', 'couleur du calendrier (jambes)', 'violet conservé malgré une activité enregistrée après', !!c3 && /height:3px;border-radius:2px;background:var\(--purp\)/.test(c3), c3 ? c3.slice(-240) : null, 'banc C-ACT-F13'), _det(c3 ? c3.slice(-240) : null));
+  }
   /* F12 — la carte d'historique d'une SÉANCE (musculation, cardio seul, programme + cloud, longue durée) est IDENTIQUE À L'OCTET à celle de la version publiée.
      Les cinq cartes ci-dessous ont été rendues par `_sessCarteHtml` sur ft-v1263 (master e2b942f3), horloge figée, puis hachées (SHA-256 de leur tableau JSON).
      Elle protège l'enveloppe commune `_sessCarteEnveloppe` (un seul producteur de carte : PS-S3) : pour tout ce qui n'est pas une activité, rien ne bouge (invariant I13). */
@@ -1290,6 +1332,163 @@ async function blocI(c) {
       W('T05', 'détail, valeur tapée à l\'instant', 'enregistrée à 300', r.calories === 300 && r.cardio.kcalMan === 300 && r.cardio.kcalEst === 379, { cal: r.calories, bloc: r.cardio }, 'banc C-ACT-I4'), _det({ cal: r.calories, bloc: r.cardio }));
     await fermer(X);
   }
+}
+
+// ═════════════════════════════════════════════════════════════════════════════════════════════════════════════
+// BLOC J — LES GARDES QUE RIEN NE TESTAIT. Un balayage systématique (`outils_act/mut_sites.py`) a retiré la garde `_seancesTrain()` de chacun des 52 sites de lecture, UN à la fois :
+// 29 survivaient aux blocs D, E et F (badges, série, observations de Milo, niveau, écran Séance, message de l'Accueil, fenêtres de Milo…). Ici chacun a son lecteur, comparé SANS puis AVEC
+// des activités choisies pour tout faire basculer si on les comptait. Et un témoin de SOURCE recense toutes les lectures BRUTES de `S.sessions` : une nouvelle lecture non justifiée fait rougir.
+// ═════════════════════════════════════════════════════════════════════════════════════════════════════════════
+async function blocJ(c) {
+  const { t, ouvrir, fermer, W, jeuReference, marche, J, _det } = c;
+  const P = 'C-ACT-J';
+  const jour = n => new Date(Date.UTC(2026, 10, 5) - n * 864e5).toISOString().slice(0, 10);          // 2026-11-05 moins n jours
+  const dow = d => new Date(d + 'T12:00:00Z').getUTCDay();
+  /* 120 marches, une par jour, à 05 h 10 et à 23 h 20 : si on les comptait comme des séances → série de 90 jours, « lève-tôt », « noctambule », « 100 séances », « anniversaire » (le 05/11), niveau qui monte */
+  const serie = Array.from({ length: 120 }, (_, i) => marche(jour(i), i % 2 ? '05:10' : '23:20', { man: 100 + i, dts: i }));
+  /* 14 marches en semaine, le matin : si on les comptait → Milo croirait à un « matin », un « semaine seulement », un « très régulier », et proposerait de le mémoriser */
+  const semaine = []; for (let i = 0; i < 40 && semaine.length < 14; i++) if (dow(jour(i)) >= 1 && dow(jour(i)) <= 5) semaine.push(marche(jour(i), '07:30', { man: 150, dts: i }));
+  /* 28 vraies séances, une par jour (de il y a 3 à il y a 30 jours), 8 séries chronométrées chacune ; la 15ᵉ est la seule à contenir des fentes */
+  const reelle = (i, jours, nom) => { const d = jour(jours), ts = Date.parse(d + 'T18:00:00+01:00');
+    return { id: ts, ts, date: d, startHour: 18, exs: [{ name: nom || 'Squat Barre', sets: Array.from({ length: 8 }, (_, k) => ({ kg: 60 + k, reps: [3, 5, 8, 10, 12, 15][(i + k) % 6], type: 'N', done: true, rm1: 80 })) }],
+      volume: 4000, uniConv: 1, synced: true, duration: 3600, progLabel: '', calories: 300, calData: { total: 300 } }; };
+  const reels = Array.from({ length: 28 }, (_, i) => reelle(i, i + 3, i === 14 ? 'Fentes Marchées' : 'Squat Barre'));
+  const recentes = [marche(jour(0), '08:00', { man: 200 }), marche(jour(1), '08:00', { man: 200, dts: 1 }), marche(jour(2), '08:00', { man: 200, dts: 2 })];
+  const lire = async (jeu, lecteurs, arg) => { const X = await ouvrir({ ls: { ft4_sessions: J(jeu) } }); const r = await X.pg.evaluate(lecteurs, arg); r.__err = X.errs; await fermer(X); return r; };
+
+  // ── J1-J2 : un compte NEUF (aucune séance) à qui l'on ajoute des activités : TOUT ce que les séances déclenchent doit rester muet ──
+  const LECTEURS_NEUF = () => {
+    const o = {}, safe = (k, f) => { try { o[k] = f(); } catch (e) { o[k] = 'ERR ' + String(e.message).slice(0, 80); } };
+    S.bday = '05/11'; S.level = 'debutant'; S.programmes = []; S.sleepLog = []; S.nextPlanned = null;
+    safe('badges', () => BADGES.map(b => b.id + ':' + _checkBadgeCond(b)));
+    safe('progres', () => BADGES.map(b => b.id + ':' + JSON.stringify(_badgeProgress(b))));
+    safe('serie', () => _getMaxStreak());
+    safe('assez', () => _assezDeSeancesPourDemander());
+    safe('candidates', () => _obsCandidates().map(x => x.key));
+    safe('semaines', () => _semainesVecues(4));
+    safe('style', () => JSON.stringify(_sessionStyleStats(8)));
+    safe('histoRecup', () => JSON.stringify(recupHistorique(60)));
+    safe('milo', () => JSON.stringify(_miloMessage()));
+    safe('importToggle', () => { _renderImportRow(); return document.getElementById('log-import-toggle').style.display; });
+    safe('avantSeance', () => { _renderAvantSeance(); const e = document.getElementById('la-ctx'); return e ? e.innerText.replace(/\s+/g, ' ').trim() : null; });
+    safe('niveau', () => { _checkLevelUp(false); return S.level; });
+    safe('propose', () => { S.registre = { facts: {}, observations: [], updatedAt: '' }; maybeProposeObservation(); return S.registre.observations.map(x => x.key); });
+    return o;
+  };
+  const A0 = await lire([], LECTEURS_NEUF), B1 = await lire(serie, LECTEURS_NEUF), B2 = await lire(semaine, LECTEURS_NEUF), C0 = await lire(reels, LECTEURS_NEUF);
+  const cles = Object.keys(A0).filter(k => k !== '__err');
+  const diff = B => cles.filter(k => JSON.stringify(A0[k]) !== JSON.stringify(B[k]));
+  const erreurs = [A0, B1, B2, C0].map(r => cles.filter(k => r[k] === undefined || /^ERR /.test(String(r[k]))));
+  /* non-vacuité : sur un compte qui a VRAIMENT des séances, ces mêmes lecteurs répondent (badges, série, seuils, historique de récupération, écran Séance, carte de l'Accueil) */
+  const vivants = C0.badges.some(x => /^first_session:true/.test(x)) && C0.badges.some(x => /^regular_10:true/.test(x)) && C0.serie >= 7 && C0.assez === true && C0.semaines > 0
+    && String(C0.histoRecup).length > 20 && C0.importToggle === 'flex' && /\S/.test(C0.avantSeance || '') && String(C0.milo).length > 5 && A0.importToggle === 'none';
+  t(P + '1 ⭐ non-vacuité : sur 28 vraies séances les lecteurs (badges, série, seuils de Milo, historique de récupération, écran Séance, carte de l\'Accueil) répondent VRAIMENT ; sur un compte neuf ils sont muets — sans cela l\'égalité plus bas ne prouverait rien',
+    vivants && erreurs.every(e => e.length === 0), _det({ vivants, erreurs, C0: { serie: C0.serie, assez: C0.assez, semaines: C0.semaines, imp: C0.importToggle, avant: (C0.avantSeance || '').slice(0, 60) }, A0imp: A0.importToggle }));
+  const d1 = diff(B1);
+  t(P + '2 ⭐ D05 : un compte NEUF qui enregistre 120 marches (une par jour, à 05 h 10 et 23 h 20, dont le jour de son anniversaire) n\'obtient AUCUN badge, aucune série, aucun seuil franchi, aucune observation, ne monte pas de niveau, garde l\'écran Séance « vierge » et le message de l\'Accueil d\'un compte neuf',
+    W('D05', 'compte neuf + 120 marches', 'badges, série, niveau, écran Séance, Accueil inchangés', d1.length === 0, { differ: d1, badges: B1.badges.filter(x => /:true/.test(x)), serie: B1.serie, niveau: B1.niveau }, 'banc C-ACT-J2'), _det({ differ: d1, badges: B1.badges.filter(x => /:true/.test(x)), serie: B1.serie, niveau: B1.niveau }));
+  const d2 = diff(B2);
+  t(P + '3 ⭐ T23 : 14 marches « en semaine, le matin » ne fabriquent AUCUNE observation pour Milo (matin, semaine seulement, très régulier), n\'avancent aucun seuil, ne proposent rien à mémoriser',
+    W('T23', 'observations de Milo', 'aucune observation fabriquée par des activités', d2.length === 0 && B2.candidates.length === 0 && B2.propose.length === 0, { differ: d2, candidates: B2.candidates, propose: B2.propose }, 'banc C-ACT-J3'), _det({ differ: d2, candidates: B2.candidates, propose: B2.propose }));
+
+  // ── J4 : un compte établi — les FENÊTRES (12, 15, 25 enregistrements) ne se remplissent pas d'activités qui chasseraient de vraies séances ──
+  const LECTEURS_ETABLI = () => {
+    const o = {}, safe = (k, f) => { try { o[k] = f(); } catch (e) { o[k] = 'ERR ' + String(e.message).slice(0, 80); } };
+    S.exRestPref = { 'Squat Barre': 120, 'Fentes Marchées': 240 };
+    safe('rythme', () => JSON.stringify(_rythmeSeance()));
+    safe('reps', () => JSON.stringify(_repartitionReps()));
+    safe('repos', () => _ctxReposRegles());
+    return o;
+  };
+  const E0 = await lire(reels, LECTEURS_ETABLI), E1 = await lire(reels.concat(recentes), LECTEURS_ETABLI);
+  const dE = ['rythme', 'reps', 'repos'].filter(k => JSON.stringify(E0[k]) !== JSON.stringify(E1[k]));
+  const vivantsE = /"n":12/.test(E0.rythme) && /"tot":200/.test(E0.reps) && /Fentes/.test(E0.repos) && /Squat/.test(E0.repos);
+  t(P + '4 ⭐ T23 : trois marches récentes ne déplacent NI le rythme de Milo (12 séances mesurées), NI la répartition des répétitions (25 séances, 200 séries), NI l\'ordre de ses temps de repos réglés (les exercices « récents » : 15 séances) — et ces lecteurs répondent VRAIMENT',
+    W('T23', 'fenêtres de Milo', 'rythme, répétitions, repos inchangés', vivantsE && dE.length === 0, { vivantsE, differ: dE, sans: E0, avec: E1 }, 'banc C-ACT-J4'), _det({ vivantsE, differ: dE, sans: E0, avec: E1 }));
+
+  // ── J5 : la corrélation « poids le lendemain d'une séance » ne prend pas une marche pour une séance ──
+  const joursReels = [4, 6, 8, 10, 12, 14], joursActs = [5, 7, 9, 11, 13];
+  const poidsReels = joursReels.map((n, i) => reelle(i, n)), poidsActs = joursActs.map((n, i) => marche(jour(n), '08:00', { man: 100, dts: i }));
+  const pts = Array.from({ length: 12 }, (_, i) => { const k = 14 - i; return { date: jour(k), kg: joursReels.indexOf(k + 1) >= 0 ? 80.0 : 80.8 }; });
+  const LECT_POIDS = p => { const el = document.createElement('div'); document.body.appendChild(el); renderWeightCorrelations(el, p); const txt = el.textContent.replace(/\s+/g, ' '); el.remove(); return { txt }; };
+  const W0 = await lire(poidsReels, LECT_POIDS, pts), W1 = await lire(poidsReels.concat(poidsActs), LECT_POIDS, pts);
+  t(P + '5 ⭐ T41 : la carte « poids le lendemain d\'une séance » est la même avec et sans les 5 marches des jours intercalés (elle disparaîtrait si on les prenait pour des séances : plus de jour « sans séance »)',
+    W('T41', 'corrélation poids / séance', 'carte identique', /le lendemain d'une séance/.test(W0.txt) && W0.txt === W1.txt, { sans: W0.txt.slice(0, 160), avec: W1.txt.slice(0, 160) }, 'banc C-ACT-J5'), _det({ vivant: /le lendemain d'une séance/.test(W0.txt), egal: W0.txt === W1.txt }));
+
+  // ── J6 : Milo ne croit pas qu'une SÉANCE a eu lieu aujourd'hui parce qu'une marche l'a été (la ligne des pas) ──
+  const LECT_PAS = async jours => { S.healthDaily = jours; const x = await buildCoachContext('Comment va ma journée ?');
+    return { pas: /A BEAUCOUP MARCHÉ/.test(x), aucune: /AUCUNE séance n'est enregistrée aujourd'hui/.test(x), aussi: /AUSSI enregistré une séance aujourd'hui/.test(x) }; };
+  const pasJours = [{ date: jour(0), steps: 20000 }].concat(Array.from({ length: 10 }, (_, i) => ({ date: jour(i + 1), steps: 6000 + i * 50 })));
+  const S0 = await lire([], LECT_PAS, pasJours), S1 = await lire([marche(jour(0), '08:00', { man: 255 })], LECT_PAS, pasJours);
+  t(P + '6 ⭐ T23 : avec un surplus de pas aujourd\'hui, Milo reçoit « AUCUNE séance n\'est enregistrée aujourd\'hui » AUSSI quand une marche l\'est (une marche n\'est pas une séance) — la ligne des pas existe bien dans les deux cas',
+    W('T23', 'surplus de pas et séance du jour', 'une marche n\'est pas une séance', S0.pas && S1.pas && S0.aucune && S1.aucune && !S1.aussi, { sans: S0, avec: S1 }, 'banc C-ACT-J6'), _det({ sans: S0, avec: S1 }));
+
+  // ── J7 : le tableau de bord ORDINATEUR (`dashboard.html`) — une PAGE à part (les 4 sites de `dashboard.js`) qui lit les mêmes données : ses séances récentes, ses semaines, son calendrier ne comptent pas les marches ──
+  const lireDash = async jeu => { const X = await ouvrir({ ls: { ft4_sessions: J(jeu) } });
+    await X.pg.goto('http://localhost:' + c.PORT + '/dashboard.html'); await X.pg.waitForTimeout(1500);
+    const r = await X.pg.evaluate(() => ({ txt: document.body.innerText.replace(/\s+/g, ' ').trim() })); r.err = X.errs; await fermer(X); return r; };
+  const D0 = await lireDash(reels), D1 = await lireDash(reels.concat(recentes));
+  t(P + '7 ⭐ T41 : le tableau de bord ORDINATEUR (page `dashboard.html`) affiche le MÊME texte avec et sans trois marches récentes (dernières séances, semaines, calendrier) — et il répond VRAIMENT (plus de 300 caractères, « 28 séances lues depuis ce navigateur » : la page disait « 31 » avant le correctif)',
+    W('T41', 'tableau de bord ordinateur', 'texte identique', D0.txt.length > 300 && /28 séances lues depuis/.test(D0.txt) && D0.txt === D1.txt, { n: D0.txt.length, egal: D0.txt === D1.txt, erreurs: D0.err.concat(D1.err) }, 'banc C-ACT-J7'), _det({ n: D0.txt.length, egal: D0.txt === D1.txt, extrait: D0.txt.slice(0, 120), erreurs: D0.err.concat(D1.err) }));
+
+  // ── J30 : témoin de SOURCE — toute lecture BRUTE de `S.sessions` (une marche y est comptée comme une ligne) doit être CONNUE et justifiée ──
+  /* Le recensement du 05/11/2026 : 80 fonctions des fichiers servis lisent `S.sessions` sans passer par `_seancesTrain()`. Chacune est classée ci-dessous (4 familles), avec sa raison. Une 81ᵉ fait rougir :
+     son auteur doit soit passer par `_seancesTrain()`, soit l'inscrire ici en disant POURQUOI elle peut voir les activités. C'est la famille « comptage silencieux » de BUGS.md §140 : une ligne neuve posée
+     dans une liste dont les lecteurs comptent des lignes — et `_repartitionReps` (fenêtre de 25 enregistrements) en était un, trouvé par ce recensement et corrigé. */
+  const LISTE_BLANCHE = {
+    'persistance, synchronisation, fusion, restauration, import, outils d\'administration : elles déplacent des enregistrements ou lisent leur identité, elles n\'en comptent aucun': [
+    'app.js::_brouillonDejaEnregistre', 'app.js::_saveEmailRedundant', 'app.js::_ftBootstrapJeton',
+    'log.js::_empreinteDonnees', 'log.js::finalImportHist', 'log.js::finishWorkout',
+    'log.js::L', 'setup.js::_cloudSync', 'setup.js::_fus',
+    'setup.js::doRestoreAccount', 'setup.js::_annulerRecalageCalories', 'setup.js::_recalerAnciennesSeances',
+    'setup.js::_prsDepuisSeances', 'setup.js::_deplacerRecordsRenommes', 'setup.js::mergeExercises',
+    'setup.js::detectDuplicates', 'state.js::_ecrireSessionsLocal', 'state.js::_migSet',
+    'state.js::load', 'state.js::persist', 'state.js::renKeys',
+    'state.js::sigSess', 'tracking.js::_countUnsyncedSessions', 'tracking.js::_retrySheetQueue',
+    'tracking.js::_updateAdminSyncInfo', 'coach.js::_vcApplyPersona', 'coach.js::startPt001Test',
+    'coach.js::_sansSilent', 'log.js::_renameExEverywhere'
+    ],
+    'voient les activités PAR CONCEPTION : formulaire d\'activité, historique, détail et édition, calendrier, bilans de la semaine et du mois, bloc dédié de Milo, exports': [
+    'app.js::_auPersister', 'app.js::_auTsUnique', 'app.js::autreEnregistrer',
+    'app.js::autreSupprimerOuConfirmer', 'app.js::openAutreActivite', 'app.js::_bilanMois',
+    'app.js::_moisAvecSeances', 'app.js::_pKg', 'app.js::checkWeeklySummary',
+    'coach.js::_ctxAutresActivites', 'coach.js::_historiqueCompact', 'coach.js::_memoireLongue',
+    'screens.js::_calDayPanel', 'screens.js::_calPrDays', 'screens.js::_calVolByDay',
+    'screens.js::_memeMois', 'screens.js::_renderHomeCalendar', 'screens.js::navBtn',
+    'setup.js::_histoLignes', 'setup.js::_renderSessDetailContent', 'setup.js::_sessCarteHtml',
+    'setup.js::analyserSeanceMilo', 'setup.js::deleteSessOrConfirm', 'setup.js::editSessDuree',
+    'setup.js::exportHistoPdf', 'setup.js::goSessionsHistory', 'setup.js::openHistoExport',
+    'setup.js::openSessDetail', 'setup.js::renderSessions', 'setup.js::nomM',
+    'setup.js::saveSessEdits', 'setup.js::setSessCardioKcal', 'setup.js::showChartTooltip',
+    'setup.js::showSessMuscleMap', 'setup.js::_dbfFenetre'
+    ],
+    'parcourent des EXERCICES, des blocs cardio ou des check-ins (une activité n\'en a pas : ni série, ni charge, ni bloc `cardio`, ni check-in à lire)': [
+    'dashboard.js::renderDashboard', 'coach.js::ligneEvo', 'log.js::_chargesDejaFaites', 'log.js::_exUsageMap',
+    'log.js::_getExHistory', 'log.js::_histSeanceNonEnregistree', 'log.js::_repereDefauts',
+    'log.js::_seancesExercice', 'setup.js::_inRange', 'state.js::_volumeParMoitie',
+    'state.js::auJour', 'tracking.js::avg', 'tracking.js::ciPickEnergy'
+    ],
+    'simple test d\'existence ou définition de la vue `_seancesTrain()` elle-même : la lecture qui compte passe, juste à côté, par la vue': [
+    'state.js::_seancesTrain', 'tracking.js::_derniereSeanceAvant', 'tracking.js::projectionRecup',
+    'tracking.js::recupHistorique'
+    ]
+  };
+  const path = require('path'), RACINE = path.resolve(__dirname, '..', '..');
+  /* les scripts de l'application ET ceux du tableau de bord ordinateur (`dashboard.html` charge `dashboard.js`, que `index.html` ne charge pas) */
+  const fichiers = [...new Set(['index.html', 'dashboard.html'].flatMap(h => [...fs.readFileSync(path.join(RACINE, h), 'utf8').matchAll(/<script src="([^"?]+)/g)].map(m => m[1])))].filter(f => fs.existsSync(path.join(RACINE, f)) && !/^lib\//.test(f));
+  const sansCommentaires = x => x.replace(/\/\*[\s\S]*?\*\//g, m => m.replace(/[^\n]/g, ' ')).replace(/(^|[^:"'`\\])\/\/[^\n]*/g, (m, a) => a + ' '.repeat(m.length - a.length));
+  const trouvees = new Set();
+  for (const f of fichiers) { const L = sansCommentaires(fs.readFileSync(path.join(RACINE, f), 'utf8')).split('\n');
+    L.forEach((l, i) => { if (!/\bS_?\.sessions\b/.test(l)) return;
+      let nom = '(racine)';
+      for (let k = i; k >= 0; k--) { const m = L[k].match(/^\s*(?:async\s+)?function\s+([A-Za-z0-9_$]+)\s*\(/) || L[k].match(/^\s*(?:const|let|var)\s+([A-Za-z0-9_$]+)\s*=\s*(?:async\s*)?(?:function\b|\([^)]*\)\s*=>|[A-Za-z0-9_$]+\s*=>)/); if (m) { nom = m[1]; break; } }
+      trouvees.add(f + '::' + nom); }); }
+  const connues = new Set(Object.values(LISTE_BLANCHE).flat());
+  const inconnues = [...trouvees].filter(x => !connues.has(x)).sort(), perimees = [...connues].filter(x => !trouvees.has(x)).sort();
+  t(P + '30 ⛔ SOURCE : toute fonction qui lit `S.sessions` sans passer par `_seancesTrain()` est CONNUE et classée (' + connues.size + ' fonctions, 4 familles) — une nouvelle lecture brute (une marche y serait une ligne comme une autre) fait rougir',
+    inconnues.length === 0 && trouvees.size > 60, _det({ inconnues, nTrouvees: trouvees.size, fichiers: fichiers.length }));
+  t(P + '31 ⛔ SOURCE : la liste blanche n\'est pas PÉRIMÉE — chaque fonction qu\'elle nomme lit encore `S.sessions` (sinon une exception disparue masquerait la prochaine)',
+    perimees.length === 0, _det({ perimees }));
 }
 
 module.exports = { ecran };

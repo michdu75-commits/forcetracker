@@ -17,8 +17,8 @@ import os, re, shutil, subprocess, sys, tempfile
 from concurrent.futures import ThreadPoolExecutor
 
 SRC = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-AP, ST, LO, SE, SC, CO, TR, IX = 'app.js', 'state.js', 'log.js', 'setup.js', 'screens.js', 'coach.js', 'tracking.js', 'index.html'
-FICHIERS = (AP, ST, LO, SE, SC, CO, TR, IX)
+AP, ST, LO, SE, SC, CO, TR, IX, DB = 'app.js', 'state.js', 'log.js', 'setup.js', 'screens.js', 'coach.js', 'tracking.js', 'index.html', 'dashboard.js'
+FICHIERS = (AP, ST, LO, SE, SC, CO, TR, IX, DB)
 
 # (nom, [(fichier, ancien, nouveau)], attendu, temoin, blocs)
 MUT = [
@@ -83,7 +83,7 @@ MUT = [
     ('M38 le registre athlete (faits mesures) compte les activites comme des seances',
      [(TR, "if(!S.registre)S.registre={facts:{},observations:[],updatedAt:''};\n    const sess=_seancesTrain().filter(s=>s&&(s.date||s.ts));", "if(!S.registre)S.registre={facts:{},observations:[],updatedAt:''};\n    const sess=(S.sessions||[]).filter(s=>s&&(s.date||s.ts));")], 'GARDE', 'C-ACT-D5', 'D'),
     ('M39 [deguisee] une marche honore une seance ANNONCEE (`plannedSession`)',
-     [(ST, "const sess=_seancesTrain().filter(s=>s.date);   // 🚶 sans les activités (`_estAutre`) : une marche n'honore pas une séance annoncée", "const sess=(S.sessions||[]).filter(s=>s.date);")], 'GARDE', 'C-ACT-D4', 'D'),
+     [(ST, "const sess=_seancesTrain().filter(s=>s.date);   // 🚶 sans les activités (`_estAutre`) : une marche n'honore pas une séance annoncée", "const sess=(S.sessions||[]).filter(s=>s.date);")], 'GARDE', 'C-ACT-D10', 'D'),
     # ── E · Milo ───────────────────────────────────────────────────────────────────────────────────────────────────
     ('M19 Milo ne distingue plus une valeur de montre d\'une estimation',
      [(CO, """(kb.remplacee?'valeur saisie par la personne, relevée sur sa montre':"estimation de l'app")""", '''"estimation de l'app"''')], 'GARDE', 'C-ACT-E2', 'E'),
@@ -91,7 +91,7 @@ MUT = [
      [(CO, "const sess=(typeof _seancesTrain==='function'?_seancesTrain():(S_.sessions||[])).filter(s=>s&&s.date);   // 🚶 sans les activités (`_estAutre`)\n    // Les 5", "const sess=(S_.sessions||[]).filter(s=>s&&s.date);   // 🚶 sans les activités (`_estAutre`)\n    // Les 5")], 'GARDE', 'C-ACT-E4', 'E'),
     # ── F · Accueil · Agenda · Progres ─────────────────────────────────────────────────────────────────────────────
     ('M18 [deguisee] une activite enregistree APRES la seance masque la couleur de la region dans le calendrier (F11)',
-     [(SC, "const sess=jourSeance?_seancesTrain().find(s=>s.date===ymd):null;", "const sess=jourSeance?(S.sessions||[]).find(s=>s.date===ymd):null;")], 'GARDE', 'C-ACT-F4', 'F'),
+     [(SC, "const sess=jourSeance?_seancesTrain().find(s=>s.date===ymd):null;", "const sess=jourSeance?(S.sessions||[]).find(s=>s.date===ymd):null;")], 'GARDE', 'C-ACT-F13', 'F'),
     ('M32 le « Total du jour » du calendrier compte les activites DEUX fois',
      [(SC, "const total=tout.reduce((a,s)=>a+kc(s),0);", "const total=tout.reduce((a,s)=>a+kc(s),0)+acts.reduce((a,s)=>a+kc(s),0);")], 'GARDE', 'C-ACT-F1', 'F'),
     # ── G · persistance, import, admin ─────────────────────────────────────────────────────────────────────────────
@@ -138,6 +138,25 @@ MUT = [
      [(SE, "  return _sessCarteEnveloppe(s,true,\n    '<div style=\"display:flex;align-items:flex-start;gap:10px;\"><div style=\"flex:1;min-width:0;\"><div class=\"sess-title\">'",
            "  return '<div class=\"sess-card sess-card-autre\" data-genre=\"autre\" onclick=\"openSessDetail('+(s.ts||s.id||0)+')\">'+(\n    '<div style=\"display:flex;align-items:flex-start;gap:10px;\"><div style=\"flex:1;min-width:0;\"><div class=\"sess-title\">'"),
       (SE, "+note+'</div></div>');\n}", "+note+'</div></div>')+'</div>';\n}")], 'GARDE', 'PS-S3', 'SRC:progres_seances.js'),
+    # ── J · les gardes que rien ne testait (balayage des 52 sites de lecture `_seancesTrain()` : 29 survivaient aux blocs D, E, F) ───────────────────────────────────────
+    ('M54 [deguisee] la repartition des repetitions de Milo prend les 25 premiers ENREGISTREMENTS (des marches chassent de vraies seances de sa fenetre)',
+     [(CO, 'for(const se of _seancesTrain().slice(0,25))', 'for(const se of (S.sessions||[]).slice(0,25))')], 'GARDE', 'C-ACT-J4', 'J'),
+    ('M55 le tableau de bord ordinateur compte les marches dans « N seances lues depuis ce navigateur »',
+     [(DB, 'const nb=_seancesTrain().length;', 'const nb=(S_.sessions||[]).length;')], 'GARDE', 'C-ACT-J7', 'J'),
+    ('M56 [source] une NOUVELLE lecture brute de `S.sessions` apparait sans etre classee',
+     [(SE, 'function _sessCarteEnveloppe(s,autre,interieur){', 'function _fauxLecteur(){ return (S.sessions||[]).length; }\nfunction _sessCarteEnveloppe(s,autre,interieur){')], 'GARDE', 'C-ACT-J30', 'J'),
+    ('M57 [source] une fonction de la liste blanche cesse de lire `S.sessions` en brut (liste perimee)',
+     [(AP, "const av=(S.sessions||[]).filter(s=>s&&s.date&&String(s.date).slice(0,7)===_moisAvant(ym));", "const av=_seancesTrain().filter(s=>s&&s.date&&String(s.date).slice(0,7)===_moisAvant(ym));")], 'GARDE', 'C-ACT-J31', 'J'),
+    ('M58 la serie de jours d\'entrainement (badges « 7 / 30 / 90 jours ») compte les marches',
+     [(AP, 'const _tr=_seancesTrain();', 'const _tr=(S.sessions||[]);')], 'GARDE', 'C-ACT-J2', 'J'),
+    ('M59 [deguisee] les observations de Milo (matin, semaine seulement, tres regulier) se fabriquent avec des marches',
+     [(TR, "const out=[];\n  try{\n    const sess=_seancesTrain().filter(s=>s&&(s.date||s.ts));", "const out=[];\n  try{\n    const sess=(S.sessions||[]).filter(s=>s&&(s.date||s.ts));")], 'GARDE', 'C-ACT-J3', 'J'),
+    ('M60 le rythme de Milo (12 seances mesurees) prend les 12 premiers ENREGISTREMENTS',
+     [(CO, 'const sess=_seancesTrain().slice(0,12);', 'const sess=(S.sessions||[]).slice(0,12);')], 'GARDE', 'C-ACT-J4', 'J'),
+    ('M61 la correlation « poids le lendemain d\'une seance » prend une marche pour une seance',
+     [(TR, 'const sessDates=new Set(_seancesTrain().map(s=>s.date));', 'const sessDates=new Set((S.sessions||[]).map(s=>s.date));')], 'GARDE', 'C-ACT-J5', 'J'),
+    ('M62 [deguisee] Milo croit qu\'une SEANCE a eu lieu aujourd\'hui parce qu\'une marche l\'a ete (ligne des pas)',
+     [(CO, 'const seanceAuj=_seancesTrain().some(x=>x&&x.date===today());', 'const seanceAuj=(S.sessions||[]).some(x=>x&&x.date===today());')], 'GARDE', 'C-ACT-J6', 'J'),
     # ── equivalente ────────────────────────────────────────────────────────────────────────────────────────────────
     ('M37 [equivalente] l\'ordre de trois affectations independantes est inverse (meme resultat)',
      [(AP, 'a.kcalEst=_au.kcalEst; a.kcalPoids=_au.kcalPoids; a.kcalMode=_au.kcalMode;', 'a.kcalMode=_au.kcalMode; a.kcalPoids=_au.kcalPoids; a.kcalEst=_au.kcalEst;')], 'OK', None, 'A'),

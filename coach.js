@@ -344,10 +344,12 @@ function _ctxDureeSeance(){
    c'est la personne qui a le dernier mot (R29 : montrer ce qu'on voit, ne pas décider). */
 function _repartitionReps(){
   try{
-    const S_=(typeof S!=='undefined')?S:null; if(!S_||!S_.sessions) return null;
+    const S_=(typeof S!=='undefined')?S:null; if(!S_) return null;
     let force=0, moyen=0, hypertrophie=0, longues=0, tot=0, big3=0;
     const BIG3=/squat à la barre|développé couché|soulevé de terre/i;
-    for(const se of S_.sessions.slice(0,25))
+    /* 🚶 La fenêtre est de 25 SÉANCES, pas de 25 enregistrements : trois marches récentes en retireraient trois vraies séances et déplaceraient la répartition
+       (même famille que `_rythmeSeance` et `_ctxReposRegles`). Trouvé par le recensement des lectures brutes de `S.sessions` (témoin de source `C-ACT-J30`). */
+    for(const se of _seancesTrain().slice(0,25))
       for(const e of (se.exs||se.exercises||[]))
         for(const x of (e.sets||[])){
           if(!x||!x.done||x.type==='É'||x.type==='W'||x.type==='E') continue;

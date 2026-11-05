@@ -443,7 +443,7 @@ function renderDashboard(){
 
   try{ renderDashBlocs(); }catch(e){ console.warn('blocs',e); }
 
-  const nb=(S_.sessions||[]).length;
+  const nb=_seancesTrain().length;   // 🚶 sans les activités (`_estAutre`, state.js) : « N séances lues » ne compte que des SÉANCES (la page disait « 31 séances » pour 28 séances et 3 marches)
   document.getElementById('dash-note').innerHTML=
     `<b>Première brique.</b> La barre latérale et la bande du haut, avec <b>tes vraies données</b> `
     +`(${nb} séance${nb>1?'s':''} lue${nb>1?'s':''} depuis ce navigateur) et les couleurs de Force Tracker. `
