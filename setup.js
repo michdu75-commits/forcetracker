@@ -2077,8 +2077,13 @@ function _sessMoisEstOuvert(m){return Object.prototype.hasOwnProperty.call(_sess
 function _sessOuvrir(mois){(mois||[]).forEach(m=>{_sessMoisOuvert[m]=true;_sessAnOuvert[m==='?'?'?':m.slice(0,4)]=true;});}
 function basculerSessAnnee(an){_sessAnOuvert[an]=!_sessAnEstOuvert(an);renderSessions();}
 function basculerSessMois(m){_sessMoisOuvert[m]=!_sessMoisEstOuvert(m);renderSessions();}
-/* La carte d'UNE séance — l'unique producteur (inchangé : même contenu, même identité `ts||id`,
-   même bouton de débrief). Seule nouveauté : la marque `sess-cible` quand une porte d'entrée la vise. */
+/* ⭐ L'ENVELOPPE d'une carte d'historique — l'UNIQUE endroit qui écrit la balise de carte (classe `sess-card`) (témoin PS-S3 : « pas de 2ᵉ moteur de carte »).
+   Une séance et une activité n'ont pas le même INTÉRIEUR (figurine et série ici ; type, durée, distance là) mais la même identité (`ts||id`), le même geste
+   (`openSessDetail`) et la même marque `sess-cible` quand une porte d'entrée la vise. Pour une séance la chaîne produite est IDENTIQUE à l'octet à celle d'avant. */
+function _sessCarteEnveloppe(s,autre,interieur){
+  const _cible=_sessCibles.indexOf(s.ts||s.id||0)>=0;
+  return`<div class="sess-card${autre?' sess-card-autre':''}${_cible?' sess-cible':''}"${autre?' data-genre="autre"':''} onclick="openSessDetail(${s.ts||s.id||0})" style="cursor:pointer;padding:12px 14px;">${interieur}</div>`;
+}
 /* 🚶 La carte d'une AUTRE ACTIVITÉ (05/11/2026) : son type et son icône, sa date (et son heure), sa durée, sa distance, son intensité, ses calories RETENUES
    (« ✎ » quand c'est la valeur de la montre) et ses notes. Aucune ligne « kg de travail », aucune figurine : elle n'a ni série ni muscle. Même `onclick` que toute carte
    (`openSessDetail`, qui l'ouvre dans SON formulaire). */
@@ -2093,11 +2098,12 @@ function _autreCarteHtml(s){
   if(a.intensity)parts.push('<span class="sess-date2">'+_escNote(CARDIO_INTENSITES[a.intensity]||a.intensity)+'</span>');
   parts.push('<span class="sess-cal2">🔥'+kcal+' kcal'+(kb.remplacee?' ✎':'')+'</span>');
   const note=a.notes?'<div class="sess-exs2">'+_escNote(a.notes)+'</div>':'';
-  const _cible=_sessCibles.indexOf(s.ts||s.id||0)>=0;
-  return'<div class="sess-card sess-card-autre'+(_cible?' sess-cible':'')+'" data-genre="autre" onclick="openSessDetail('+(s.ts||s.id||0)+')" style="cursor:pointer;padding:12px 14px;">'
-    +'<div style="display:flex;align-items:flex-start;gap:10px;"><div style="flex:1;min-width:0;"><div class="sess-title">'+_escNote(autreIcone(a)+' '+autreLabel(a))+'</div>'
-    +'<div class="sess-meta">'+parts.join('<span style="opacity:.4">·</span>')+'</div>'+note+'</div></div></div>';
+  return _sessCarteEnveloppe(s,true,
+    '<div style="display:flex;align-items:flex-start;gap:10px;"><div style="flex:1;min-width:0;"><div class="sess-title">'+_escNote(autreIcone(a)+' '+autreLabel(a))+'</div>'
+    +'<div class="sess-meta">'+parts.join('<span style="opacity:.4">·</span>')+'</div>'+note+'</div></div>');
 }
+/* La carte d'UNE séance — l'unique producteur (inchangé : même contenu, même identité `ts||id`,
+   même bouton de débrief). Seule nouveauté : la marque `sess-cible` quand une porte d'entrée la vise (elle vit maintenant dans `_sessCarteEnveloppe`). */
 function _sessCarteHtml(s){
     if(_estAutre(s))return _autreCarteHtml(s);
     const i=S.sessions.indexOf(s);
@@ -2168,8 +2174,7 @@ function _sessCarteHtml(s){
       : _dbfEnVol(_dbfId) ? '<button class="sess-dbf-go" disabled>⏳ Milo analyse…</button>'
       : _dbfInterrompue(_dbfId) ? '<button class="sess-dbf-go" onclick="analyserSeanceMilo('+_dbfArg+',event)">⏸️ Analyse interrompue — relancer</button>'
       : '<button class="sess-dbf-go" onclick="analyserSeanceMilo('+_dbfArg+',event)">✨ Analyser avec Milo</button>';
-    const _cible=_sessCibles.indexOf(s.ts||s.id||0)>=0;
-    return`<div class="sess-card${_cible?' sess-cible':''}" onclick="openSessDetail(${s.ts||s.id||0})" style="cursor:pointer;padding:12px 14px;"><div style="display:flex;align-items:flex-start;gap:10px;"><div style="flex:1;min-width:0;"><div class="sess-title">${_escNote(headline)}</div><div class="sess-meta">${metaHtml}</div>${_exsHtml}${_dbfBtn}</div><div onclick="showSessMuscleMap(${i},event)" style="cursor:zoom-in;flex-shrink:0">${mini}</div></div></div>`;
+    return _sessCarteEnveloppe(s,false,`<div style="display:flex;align-items:flex-start;gap:10px;"><div style="flex:1;min-width:0;"><div class="sess-title">${_escNote(headline)}</div><div class="sess-meta">${metaHtml}</div>${_exsHtml}${_dbfBtn}</div><div onclick="showSessMuscleMap(${i},event)" style="cursor:zoom-in;flex-shrink:0">${mini}</div></div>`);
 }
 /* 💬 LA LECTURE D'UN DÉBRIEF — LOCALE, SANS APPEL, SANS TOUCHER À LA SÉANCE (D-043).
    ⛔ Elle ne relit aucune conversation et n'ouvre pas le Coach : elle lit le magasin canonique

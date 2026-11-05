@@ -9,6 +9,8 @@ Chaque mutation vise un INVARIANT precis et nomme SON temoin (4e champ) : « GAR
 Un PLANTAGE du banc (code hors 0/1, ligne PLANTAGE, pas de ligne de total) n'est jamais « garde » : il n'attrape rien.
 Pour aller vite, une mutation ne rejoue que les BLOCS qui peuvent la voir (5e champ, variable ACT_BLOCS du banc) ; l'arbre sain, lui, rejoue tout.
 Une ancre est exacte et UNIQUE (sinon INVALIDE) ; `re:` en tete = expression reguliere qui doit correspondre exactement une fois.
+Un 5e champ « SRC:module.js » joue, au lieu du banc, la fonction `source` d'un module voisin de tests/parcours (aucun navigateur) : c'est ainsi que sont eprouves les temoins de SOURCE re-vises par ce chantier
+(B-CCCXIX ⑥ dans accueil_mini.js, PS-S3 dans progres_seances.js) — un temoin re-ecrit doit rougir sous mutation volontaire (R17).
 Usage : python3 tools/mut_autre_activite.py [PREFIXE[,PREFIXE...]]   (MUT_DETAIL=1 : tous les rouges · MUT_J=2 par defaut · MUT_SAIN=0 : saute l'arbre sain)
 """
 import os, re, shutil, subprocess, sys, tempfile
@@ -121,14 +123,53 @@ MUT = [
      [(AP, "if(i.value.trim()===String(i.getAttribute('data-kcal-man')||'').trim())return;", "if(i.value===i.defaultValue)return;")], 'GARDE', 'C-ACT-I1', 'I'),
     ('M47 une valeur INVALIDE tapee a l\'instant est ignoree en silence (l\'assistant ne rend plus « faux »)',
      [(AP, "if(kcalSaisieValide(i.value).etat==='invalide')ok=false;", "")], 'GARDE', 'C-ACT-I2', 'I'),
+    # ── re-vises apres la 1re passe repartie (3 rouges reels causes par ce chantier : champ entier, 2e producteur de carte, garde de silence) ───────────────────────────
+    ('M48 le champ « Duree » redevient un champ texte (`type="text"`) : un champ entier hors liste blanche',
+     [(IX, '<input type="number" inputmode="numeric" min="1" max="1440" step="1" autocomplete="off" id="au-duree"', '<input type="text" inputmode="numeric" autocomplete="off" id="au-duree"')], 'GARDE', 'C-ACT-A31', 'A'),
+    ('M49 [deguisee] l\'enveloppe commune d\'une carte perd un point-virgule dans son style (la carte d\'une SEANCE change d\'un octet)',
+     [(SE, 'style="cursor:pointer;padding:12px 14px;">${interieur}</div>', 'style="cursor:pointer;padding:12px 14px">${interieur}</div>')], 'GARDE', 'C-ACT-F12', 'F'),
+    ('M50 [deguisee] l\'Accueil decide son silence sur `S.sessions` (une marche seule fait apparaitre un score de recuperation)',
+     [(SC, '    && !(_seancesTrain().length);', '    && !((S.sessions||[]).length);')], 'GARDE', 'C-ACT-D9', 'D'),
+    ('M51 [source] la clause « aucune seance » disparait de l\'instruction `_sansDonnee` (le silence ne dit plus que « aucune nuit »)',
+     [(SC, '    && !(_seancesTrain().length);', ';')], 'GARDE', 'B-CCCXIX ⑥', 'SRC:accueil_mini.js'),
+    ('M52 [source] la clause « aucune seance » est remplacee par une forme etrangere (`S.sessions.length>5`)',
+     [(SC, '    && !(_seancesTrain().length);', '    && !(S.sessions.length>5);')], 'GARDE', 'B-CCCXIX ⑥', 'SRC:accueil_mini.js'),
+    ('M53 [source] la carte d\'une activite ecrit sa PROPRE balise de carte (un 2e producteur de carte d\'historique)',
+     [(SE, "  return _sessCarteEnveloppe(s,true,\n    '<div style=\"display:flex;align-items:flex-start;gap:10px;\"><div style=\"flex:1;min-width:0;\"><div class=\"sess-title\">'",
+           "  return '<div class=\"sess-card sess-card-autre\" data-genre=\"autre\" onclick=\"openSessDetail('+(s.ts||s.id||0)+')\">'+(\n    '<div style=\"display:flex;align-items:flex-start;gap:10px;\"><div style=\"flex:1;min-width:0;\"><div class=\"sess-title\">'"),
+      (SE, "+note+'</div></div>');\n}", "+note+'</div></div>')+'</div>';\n}")], 'GARDE', 'PS-S3', 'SRC:progres_seances.js'),
     # ── equivalente ────────────────────────────────────────────────────────────────────────────────────────────────
     ('M37 [equivalente] l\'ordre de trois affectations independantes est inverse (meme resultat)',
      [(AP, 'a.kcalEst=_au.kcalEst; a.kcalPoids=_au.kcalPoids; a.kcalMode=_au.kcalMode;', 'a.kcalMode=_au.kcalMode; a.kcalPoids=_au.kcalPoids; a.kcalEst=_au.kcalEst;')], 'OK', None, 'A'),
 ]
 
 
+def banc_source(arbre, module):
+    """Joue la fonction `source` d'un module de tests/parcours dans l'arbre (aucun navigateur) ; meme sortie que le banc : lignes ROUGE + ligne de total.
+    Les dossiers lourds que `cloner()` n'a pas copies (guide, anatomy) sont relies en LECTURE au depot : certains temoins de source y lisent une image."""
+    for d in ('guide', 'anatomy'):
+        if os.path.isdir(os.path.join(SRC, d)) and not os.path.exists(os.path.join(arbre, d)):
+            os.symlink(os.path.join(SRC, d), os.path.join(arbre, d))
+    js = ("require('./tests/_garde_reseau.js');const fs=require('fs'),path=require('path');let ok=0,ko=0;"
+          "const t=(n,c,d)=>{if(c)ok++;else{ko++;console.log('ROUGE '+n+(d?'  >> '+String(d).slice(0,200):''));}};"
+          "(async()=>{await require('./tests/parcours/%s').source(t,process.cwd(),fs,path);console.log('──── '+ok+' OK / '+ko+' rouge ────');process.exit(ko?1:0);})()"
+          ".catch(e=>{console.error('PLANTAGE : '+(e&&e.stack||e));process.exit(2);});" % module)
+    try:
+        r = subprocess.run(['node', '-e', js], cwd=arbre, capture_output=True, text=True, timeout=300, env=dict(os.environ, TZ='Europe/Paris'))
+    except subprocess.TimeoutExpired:
+        return [], 'PLANTAGE (delai depasse)'
+    out = r.stdout + r.stderr
+    rouges = [l.strip()[:170] for l in out.split('\n') if 'ROUGE' in l]
+    plantage = None
+    if r.returncode not in (0, 1): plantage = 'PLANTAGE (code %d)' % r.returncode
+    elif 'PLANTAGE' in out: plantage = 'PLANTAGE (' + next(l.strip()[:120] for l in out.split('\n') if 'PLANTAGE' in l) + ')'
+    elif not any(l.startswith('────') and 'OK /' in l for l in out.split('\n')): plantage = 'PLANTAGE (aucune ligne de total)'
+    return rouges, plantage
+
+
 def banc(arbre, blocs=None):
     """Rend (rouges, plantage). Un plantage n'est jamais un rouge : il n'attrape rien."""
+    if blocs and blocs.startswith('SRC:'): return banc_source(arbre, blocs[4:])
     env = dict(os.environ, TZ='Europe/Paris')
     env.pop('ACT_BLOCS', None)
     if blocs: env['ACT_BLOCS'] = blocs
@@ -205,6 +246,8 @@ def main():
     if os.environ.get('MUT_SAIN', '1') != '0':
         tmp0, a0 = cloner()
         rouges, plantage = banc(a0)
+        for mod in sorted({m[4] for m in MUT if str(m[4]).startswith('SRC:')}):      # les temoins de source voisins : eux aussi doivent etre verts sur l'arbre sain
+            r2, p2 = banc(a0, mod); rouges, plantage = rouges + r2, plantage or p2
         shutil.rmtree(tmp0, ignore_errors=True)
         if rouges or plantage:
             print('  !! ARBRE SAIN DEJA ROUGE OU EN PLANTAGE — controle refuse :', ([plantage] if plantage else []) + rouges[:3]); return 1

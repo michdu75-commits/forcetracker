@@ -317,6 +317,11 @@ async function blocA(c) {
   const rl = (await autres(X))[0];
   t(P + '27 D08 : les bornes ACCEPTÉES (1440 min, 1000 km) passent ; les notes sont coupées à 500 caractères',
     W('D08', 'bornes', '1440 min · 1000 km acceptés ; notes ≤ 500', !!rl && rl.autre.duration === 1440 && rl.autre.distance === 1000 && rl.autre.notes.length === 500, rl && rl.autre.notes && rl.autre.notes.length, 'banc C-ACT-A27'), '');
+  /* A31 — le champ « Durée » est un champ ENTIER : `type="number"` (jamais « text »), pavé numérique, bornes 1 à AU_DUREE_MAX, pas de 1. Né d'un rouge RÉEL de la passe (05/11 : le témoin de base
+     « ft-v1057 ne convertit AUCUN champ entier » refuse tout champ numérique hors liste blanche) — la liste blanche de la base n'est pas élargie. */
+  const champD = await pg.evaluate(() => { const e = document.getElementById('au-duree'); return e ? { type: e.type, im: e.getAttribute('inputmode'), min: e.min, max: e.max, step: e.step, borne: String(AU_DUREE_MAX) } : null; });
+  t(P + '31 ⛔ le champ « Durée » est un champ ENTIER : type="number", inputmode="numeric", min 1, max = AU_DUREE_MAX (1440), pas de 1',
+    !!champD && champD.type === 'number' && champD.im === 'numeric' && champD.min === '1' && champD.max === champD.borne && champD.borne === '1440' && champD.step === '1', _det(champD));
   await ouvrirAutre(X, rl.ts); await pg.click('#au-del-btn'); await pg.click('#au-del-btn'); await pg.waitForTimeout(100);
 
   // ── T43 : créations, modifications, suppressions RÉPÉTÉES — un modèle tenu dans le test, comparé à l'app ──
@@ -758,6 +763,19 @@ async function blocD(c) {
       W('T39', 'programmes', 'programmes inchangés ; séance libre normale', apres === avant && wkt.ouvert && wkt.exs === 0, { programmes: apres === avant, wkt }, 'banc C-ACT-D8'), _det({ programmes: apres === avant, wkt }));
     await fermer(X);
   }
+
+  // ── D9 (I10) : l'Accueil reste MUET pour un compte qui n'a ni nuit enregistrée ni séance — une marche n'est pas un signal de récupération ──
+  // La garde est dans `_renderHomeHero` (`_sansDonnee`) ; le moteur `calcRecoveryDetail` n'est pas touché (D5 le prouve). Le témoin de contraste est une VRAIE séance de musculation : elle,
+  // fait apparaître un score — sans lui, un Accueil muet pour tout le monde passerait pour un succès.
+  {
+    const lireHero = async ls => { const X = await ouvrir({ ls }); const r = await X.pg.evaluate(() => { renderHome(); const h = document.getElementById('home-hero'); return h ? h.innerText.replace(/\s+/g, ' ').trim() : null; }); await fermer(X); return r; };
+    const rien = await lireHero({ ft4_sessions: '[]' });
+    const uneMarche = await lireHero({ ft4_sessions: J([marche('2026-11-05', '17:00', { man: 255 })]) });
+    const uneSeance = await lireHero({ ft4_sessions: J([jeuReference()[0]]) });
+    const muet = x => !!x && /Enregistre ton sommeil/.test(x);
+    t(P + '9 ⭐ I10 / D05 : un compte SANS nuit ni séance reste muet à l\'Accueil (« Enregistre ton sommeil », aucun score) avec une marche seule — comme sans rien — alors qu\'une vraie séance de musculation fait apparaître un score (la garde sait donc rougir)',
+      W('D05', 'récupération, Accueil', 'muet avec une marche seule ; score avec une vraie séance', muet(rien) && muet(uneMarche) && !muet(uneSeance), { rien, uneMarche, uneSeance }, 'banc C-ACT-D9'), _det({ rien, uneMarche, uneSeance }));
+  }
 }
 
 // ═════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
@@ -892,6 +910,28 @@ async function blocF(c) {
   t(P + '10 ⭐ T48 / T08 : supprimer la randonnée du 01/11 (seule activité de ce jour) → sa carte disparaît sans rechargement, il reste 5 activités (1 680 kcal), le 01/11 n\'est plus un jour cliquable du calendrier, la tuile de l\'Accueil dit « +5 act. »',
     W('T48', 'suppression', 'carte, case, bilan et tuile suivent', !sup.carte && sup.nAutre === 5 && sup.kcal === 1680 && sup.nA === 5 && !caseSup && /^5\s*\+5 act\./.test(tuileC), { sup, caseSup, tuileC }, 'banc C-ACT-F10')
     && W('T08', 'depuis l\'historique', 'suppression répercutée partout', !sup.carte && sup.nA === 5, sup, 'banc C-ACT-F10'), _det({ sup, caseSup, tuileC }));
+  /* F12 — la carte d'historique d'une SÉANCE (musculation, cardio seul, programme + cloud, longue durée) est IDENTIQUE À L'OCTET à celle de la version publiée.
+     Les cinq cartes ci-dessous ont été rendues par `_sessCarteHtml` sur ft-v1263 (master e2b942f3), horloge figée, puis hachées (SHA-256 de leur tableau JSON).
+     Elle protège l'enveloppe commune `_sessCarteEnveloppe` (un seul producteur de carte : PS-S3) : pour tout ce qui n'est pas une activité, rien ne bouge (invariant I13). */
+  const CARTES_PUBLIE = 'd5595888187707ffea130d85ecf841e39e7ab4a5fc115c7cc0630a805dd0d9b6';
+  const cartesSeance = await pg.evaluate(() => {
+    const sauve = S.sessions, T = (d, hh) => Date.parse(d + 'T' + hh + ':00:00+01:00');
+    const mk = (d, hh, exs, extra) => Object.assign({ id: T(d, hh), ts: T(d, hh), date: d, startHour: +hh, exs, volume: 0, uniConv: 1, synced: false, duration: 3600, progLabel: '', calories: 300, calData: { total: 300 } }, extra || {});
+    const set = (kg, reps) => ({ kg, reps, type: 'N', done: true, rm1: Math.round(kg * (1 + reps / 30)) });
+    try {
+      S.sessions = [
+        mk('2026-11-05', '17', [{ name: 'Développé Couché Barre', sets: [set(100, 5), set(100, 5), set(100, 5)] }], { volume: 1500, calories: 303 }),
+        mk('2026-11-04', '19', [], { duration: 2700, calories: 379, cardio: { type: 'tapis', intensity: 'modere', duration: 45 }, calData: { total: 379, cardio: 379 } }),
+        mk('2026-11-04', '18', [{ name: 'Squat', sets: [set(120, 5), set(120, 5)] }, { name: 'Tractions', sets: [set(0, 8)] }], { volume: 1200, synced: true, progLabel: 'Jour A', calories: 365 }),
+        mk('2026-11-02', '18', [{ name: 'Développé Couché Barre', sets: Array.from({ length: 17 }, () => set(100, 5)) }, { name: 'Rowing Barre', sets: [set(80, 8)] }, { name: 'Curl Barre', sets: [set(30, 10)] }, { name: 'Squat', sets: [set(100, 5)] }, { name: 'Élévations Latérales', sets: [set(10, 12)] }], { volume: 9000, calories: 410, duration: 5400 }),
+        mk('2026-10-30', '08', [{ name: 'Développé Couché Barre', sets: [set(90, 5)] }], { volume: 450, duration: 7 * 3600, calories: 150 })
+      ];
+      return S.sessions.map(s => _sessCarteHtml(s));
+    } finally { S.sessions = sauve; }
+  });
+  const shaCartes = require('crypto').createHash('sha256').update(J(cartesSeance), 'utf8').digest('hex');
+  t(P + '12 ⛔ I13 : la carte d\'historique d\'une SÉANCE (5 cas : musculation, cardio seul, programme + cloud, longue durée) est IDENTIQUE à l\'octet à celle de la version publiée ft-v1263 (SHA-256 mesuré)',
+    shaCartes === CARTES_PUBLIE && cartesSeance.length === 5 && cartesSeance.every(c => !/sess-card-autre|data-genre/.test(c)), J({ sha: shaCartes, attendu: CARTES_PUBLIE, n: cartesSeance.length }));
   t(P + '11 aucune erreur de page pendant tout le bloc', X.errs.length === 0, J(X.errs));
   await fermer(X);
 }

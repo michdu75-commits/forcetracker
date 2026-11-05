@@ -2609,7 +2609,7 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
       </div>
       <div style="display:flex;gap:10px;margin-top:12px;">
         <label style="flex:1;font-size:12px;font-weight:700;color:var(--t2);">Durée (min)
-          <input type="text" inputmode="numeric" autocomplete="off" id="au-duree" placeholder="60" oninput="_auSurDuree(this.value)" aria-label="Durée en minutes" style="display:block;width:100%;box-sizing:border-box;margin-top:5px;padding:9px 10px;border-radius:10px;border:1px solid var(--sep);background:var(--bg2);color:var(--t1);font-size:15px;font-weight:700;font-family:var(--font);"></label>
+          <input type="number" inputmode="numeric" min="1" max="1440" step="1" autocomplete="off" id="au-duree" placeholder="60" oninput="_auSurDuree(this.value)" aria-label="Durée en minutes" style="display:block;width:100%;box-sizing:border-box;margin-top:5px;padding:9px 10px;border-radius:10px;border:1px solid var(--sep);background:var(--bg2);color:var(--t1);font-size:15px;font-weight:700;font-family:var(--font);"></label>
         <label style="flex:1;font-size:12px;font-weight:700;color:var(--t2);">Distance (km) <span style="font-weight:500;color:var(--t3);">(facultatif)</span>
           <input type="text" inputmode="decimal" autocomplete="off" id="au-dist" placeholder="5,2" aria-label="Distance en kilomètres" style="display:block;width:100%;box-sizing:border-box;margin-top:5px;padding:9px 10px;border-radius:10px;border:1px solid var(--sep);background:var(--bg2);color:var(--t1);font-size:15px;font-family:var(--font);"></label>
       </div>
