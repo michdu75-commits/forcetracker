@@ -257,7 +257,7 @@ Statuts : PASS / FAIL / BLOCKED / NOT RUN seulement. « (simulé) » = ne rempla
 | T37 | Conservation des anciennes données | anciennes données conservées | anciens enregistrements identiques à l'octet (disque + mémoire) ; brouillon ancien = même total | PASS | banc C9 G13 B15 |
 | T38 | Absence de régression des séances existantes | pas de régression séances | lecteurs de séances identiques (différentiel) ; séance annoncée / manquée inchangée par une marche ; modules séance de la passe | PASS | banc D4 D10 + passe |
 | T39 | Absence de régression des programmes | pas de régression programmes | programmes et planification identiques ; séance libre normale | PASS | banc D4 D8 + passe |
-| T40 | Absence de régression Nutrition | pas de régression Nutrition | différentiel Nutrition + `nut_punch01` 36/0 + modules Nutrition de la passe (aucun des 7 rouges ne les touche) | PASS | banc D2 D3 + passe |
+| T40 | Absence de régression Nutrition | pas de régression Nutrition | différentiel Nutrition + `nut_punch01` 36/0 + modules Nutrition de la passe (aucun des 8 rouges ne les touche) | PASS | banc D2 D3 + passe |
 | T41 | Absence de régression des statistiques | pas de régression statistiques | constantes, volume, registre (enfin LU), badges, récupération, poids / séance et tableau de bord ordinateur identiques | PASS | banc D5 D7 J5 J7 + passe |
 | T42 | Cohérence des exports et rapports concernés | exports et rapports | CSV sans activité = octet pour octet (SHA-256) ; ligne ACTIVITE ; PDF et JSON ; message PDF corrigé | PASS | banc H1-H6 |
 | T43 | Création, modification et suppression répétées | créer / modifier / supprimer en boucle | 9 + 3 + 2 gestes : état = modèle, aucun doublon | PASS | banc A28 |
@@ -278,8 +278,8 @@ Statuts : PASS / FAIL / BLOCKED / NOT RUN seulement. « (simulé) » = ne rempla
 | D07 | découvert : un bloc cardio ANCIEN reste affiché à sa valeur rangée, jamais au poids du jour (F3) | ancien bloc au poids rangé | détail ancien cardio : 379 rangé, pas 338 | PASS | banc B10 |
 | D08 | découvert : limites de saisie : durée 1-1440, distance, date non future, heure valide | limites de saisie | durée 0/1 441, date future, distance 0/1 000,5/« abc » refusées ; 1 440 min et 1 000 km passent | PASS | banc A4 A26 A27 |
 | D09 | découvert : la valeur « 0 kcal » saisie est une valeur (≠ champ vide) | 0 kcal est une valeur | retenu 0, kcalMan 0 ≠ vide | PASS | banc A25 |
-| D10 | découvert : l'historique : filtre « Activités », compteurs, aucune ligne « 0 kg de travail », aucun bouton d | cartes d'historique | ni « kg de travail » ni bouton d'analyse ; la carte d'une séance reste identique à l'octet | PASS | banc F7 F12 |
-| D11 | découvert : un enregistrement d'activité venu d'ailleurs, sans estimation figée, garde sa valeur rangée quan | enregistrement étranger sans estimation figée | valeur rangée 250 conservée à la réouverture | PASS | banc G18 |
+| D10 | découvert : l'historique : filtre « Activités », compteurs, aucune ligne « 0 kg de travail », aucun bouton d'analyse muscu | cartes d'historique | ni « kg de travail » ni bouton d'analyse ; la carte d'une séance reste identique à l'octet | PASS | banc F7 F12 |
+| D11 | découvert : un enregistrement d'activité venu d'ailleurs, sans estimation figée, garde sa valeur rangée quand on le rouvre puis l'enregistre | enregistrement étranger sans estimation figée | valeur rangée 250 conservée à la réouverture | PASS | banc G18 |
 
 
 ## 7. Compteurs R17 (code applicatif seulement ; base = master `e2b942f3`)
@@ -308,7 +308,7 @@ Garde-fous du dépôt : `tests/donnees/runner.js` (R4a) non déclenché (aucun c
 
 ## 9. État final
 
-**✅ LIVRÉ SUR BRANCHE `claude/dreamy-bell-pu88ia` (11 commits depuis master `e2b942f3`, tête `d168d8a5`), NON FUSIONNÉ, NON PUBLIÉ, AUCUN DÉPLOIEMENT, aucun numéro de version, `Code.js` non touché, `clone/` non touché.** (dernier commit de CODE validé ; un seul commit documentaire le suit.)
+**✅ LIVRÉ SUR BRANCHE `claude/dreamy-bell-pu88ia` (11 commits depuis master `e2b942f3`, tête `d168d8a5`), NON FUSIONNÉ, NON PUBLIÉ, AUCUN DÉPLOIEMENT, aucun numéro de version, `Code.js` non touché, `clone/` non touché.** (dernier commit de CODE validé par la passe ; seuls des commits de documentation le suivent.)
 
 - **Corrigé sur branche** (branche · commits · tests) : chantier A (tuile, formulaire, historique, calendrier, bilans, Milo, exports) et chantier B (mécanisme commun de calories) ; banc `C-ACT` 131 OK / 0 rouge, contrôle négatif 62/62, passe D-031 répartie 8 363 ✅ / 8 ❌ (tous déjà rouges sur la version publiée).
 - **Intégré** : non. **Publié** : non. **Vérifié sur iPhone** : non (le conteneur ne joint pas le site) — à faire par Michel.
