@@ -36,8 +36,8 @@ jobs:
           set -euo pipefail
           echo "=== ESSAI P1 — workflow D'ESSAI (ce n'est PAS le workflow de production) · ref ${GITHUB_REF} · étape ${ETAPE} ==="
           [ "${GITHUB_REF}" != "refs/heads/master" ] || { echo "::error::refus : ce workflow d'essai ne tourne pas sur master"; exit 1; }
-          case "$ETAPE" in deployer|essais|suspension|sonde|diag|deploiements|c1|c5) ;; *) echo "::error::etape inconnue : $ETAPE"; exit 1;; esac
-          if [ "$ETAPE" = "deployer" ]; then
+          case "$ETAPE" in deployer|pousser|essais|suspension|sonde|diag|deploiements|c1|c5) ;; *) echo "::error::etape inconnue : $ETAPE"; exit 1;; esac
+          if [ "$ETAPE" = "deployer" ] || [ "$ETAPE" = "pousser" ]; then
             # (le .clasp.json de CETTE branche pointe lui-même vers le projet de TEST — ceinture : si GitHub exécutait par erreur le workflow de PRODUCTION sur cette branche, il pousserait dans le projet de TEST et échouerait au redéploiement)
             [ -n "$SCRIPT_ID" ] || { echo "::error::script_id vide"; exit 1; }
             [ "$SCRIPT_ID" != "1RwE46heNmZrykInYcrMgm1OZWt4NmS6NjTqttvAevZLuqo2v6EEb1Drw" ] || { echo "::error::REFUS : Script ID de production"; exit 1; }
@@ -53,7 +53,7 @@ jobs:
           node-version: '20'
 
       - name: "Préparer le dossier poussé (Code.js du candidat, Sheet de production NEUTRALISÉE, + TestP1.js)"
-        if: ${{ inputs.etape == 'deployer' }}
+        if: ${{ inputs.etape == 'deployer' || inputs.etape == 'pousser' }}
         env:
           SCRIPT_ID: ${{ inputs.script_id }}
         run: |
@@ -73,17 +73,17 @@ jobs:
           echo "✅ dossier prêt : Code.js (1 ligne neutralisée) + appsscript.json + TestP1.js"
 
       - name: "Installer clasp"
-        if: ${{ inputs.etape == 'deployer' }}
+        if: ${{ inputs.etape == 'deployer' || inputs.etape == 'pousser' }}
         run: npm install -g @google/clasp@3.3.0
 
       - name: "Restaurer l'authentification clasp (depuis le secret)"
-        if: ${{ inputs.etape == 'deployer' }}
+        if: ${{ inputs.etape == 'deployer' || inputs.etape == 'pousser' }}
         env:
           CLASPRC_JSON: ${{ secrets.CLASPRC_JSON }}
         run: printf '%s' "$CLASPRC_JSON" > "$HOME/.clasprc.json"
 
       - name: "Pousser dans le projet de TEST"
-        if: ${{ inputs.etape == 'deployer' }}
+        if: ${{ inputs.etape == 'deployer' || inputs.etape == 'pousser' }}
         working-directory: stage
         run: |
           set -euo pipefail

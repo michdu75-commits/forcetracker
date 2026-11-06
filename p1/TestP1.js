@@ -32,4 +32,20 @@ function preparerEssaiP1() {
 }
 /* Suspension : poser / retirer NUT_SUSPENDU (ce que Michel fera en production dans « Propriétés du script ») — pour le scénario P1-09. */
 function suspendreEssaiP1() { PropertiesService.getScriptProperties().setProperty('NUT_SUSPENDU', '1'); Logger.log('NUT_SUSPENDU = 1'); }
-function reprendreEssaiP1() { PropertiesService.getScriptProperties().deleteProperty('NUT_SUSPENDU'); Logger.log('NUT_SUSPENDU retirée'); }
+function reprendreEssaiP1() {
+  PropertiesService.getScriptProperties().deleteProperty('NUT_SUSPENDU'); Logger.log('NUT_SUSPENDU retirée');
+  /* ménage : les programmations d'essai ne servent qu'une fois */
+  ScriptApp.getProjectTriggers().forEach(function (t) { var h = t.getHandlerFunction(); if (h === 'suspendreEssaiP1' || h === 'reprendreEssaiP1') ScriptApp.deleteTrigger(t); });
+}
+/* ESSAI C5 — UNE SEULE ACTION DE L'OPÉRATEUR : lancer cette fonction (éditeur du projet de TEST → Exécuter, accepter les autorisations si Google les demande).
+   Elle (1) remet l'état de départ « actif » (retire NUT_SUSPENDU), (2) programme la SUSPENSION dans 8 minutes et la REPRISE dans 18 minutes (déclencheurs uniques, exécutés par Google tout seuls).
+   Le banc `p1/c1_reel.js --c5` détecte chaque bascule par un envoi-sonde (compte fictif) : il n'a besoin d'aucune horloge ni de la présence de l'opérateur. */
+function programmerSuspensionEssaiP1() {
+  var sp = PropertiesService.getScriptProperties();
+  if (sp.getProperty('FT_P1_TEST') !== '1') throw new Error('⛔ Ce projet n\'est pas le projet de TEST préparé (FT_P1_TEST absent) : on s\'arrête, rien n\'a été programmé.');
+  sp.deleteProperty('NUT_SUSPENDU');
+  ScriptApp.getProjectTriggers().forEach(function (t) { var h = t.getHandlerFunction(); if (h === 'suspendreEssaiP1' || h === 'reprendreEssaiP1') ScriptApp.deleteTrigger(t); });
+  ScriptApp.newTrigger('suspendreEssaiP1').timeBased().after(8 * 60 * 1000).create();
+  ScriptApp.newTrigger('reprendreEssaiP1').timeBased().after(18 * 60 * 1000).create();
+  Logger.log('PROGRAMMÉ à ' + new Date().toISOString() + ' : suspension dans 8 min, reprise dans 18 min. NUT_SUSPENDU actuellement : ' + (sp.getProperty('NUT_SUSPENDU') || '(absente)'));
+}
