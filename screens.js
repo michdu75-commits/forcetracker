@@ -352,7 +352,7 @@ const _HELP_DATA={
       /* 🚶 EN TÊTE parce que c'est la question qu'on se pose en voyant le chiffre bouger :
          « pourquoi mon TDEE a changé aujourd'hui ? ». La pop-up ANNONCE, l'aide EXPLIQUE (R25) :
          ici vivent les garde-fous que la pop-up ne dit pas (les 7 jours, la borne, le jour creux). */
-      {i:'🚶',t:'<b>Tes grosses journées de marche comptent dans ta dépense</b> — si ta montre envoie tes pas à Santé. ⭐ <b>Mais seulement ce qui DÉPASSE ta journée habituelle</b>, jamais le total : ton niveau d\'activité (« Modéré 3-4j »…) contient <b>déjà</b> la marche d\'une journée normale. Te compter les pas bruts te facturerait deux fois la même marche, tous les jours. <b>Exemple</b> : 6 000 pas d\'habitude, 15 000 aujourd\'hui → les <b>9 000 en plus</b> valent ~290 kcal, affichées sous ton TDEE. Un tapis que tu fais chaque semaine est <b>dans</b> ton habitude, donc rien n\'est compté deux fois. ⛔ L\'app <b>se tait</b> tant qu\'elle n\'a pas <b>7 jours</b> de mesures, une journée calme ne <b>retire</b> rien (on ne punit pas un jour de repos), et le bonus est <b>borné à 500 kcal</b> — un capteur qui déraille ne doit pas faire exploser tes macros. ⚠️ C\'est une <b>estimation</b> (~1 300 pas au kilomètre), pas une mesure.'},
+      {i:'🚶',t:'<b>Tes grosses journées de marche comptent dans ta dépense ESTIMÉE du jour — jamais dans ton objectif</b> (depuis le 06/11/2026). Si ta montre envoie tes pas à Santé, une randonnée ou une longue journée debout apparaît dans la carte <b>« Dépense et objectif »</b> : ta dépense estimée du jour, avec sa fourchette. '+'⭐ <b>Mais seulement ce qui DÉPASSE ta journée habituelle</b>, jamais le total : ton niveau d\'activité (« Modéré 3-4j »…) contient <b>déjà</b> la marche d\'une journée normale, et te compter les pas bruts te facturerait deux fois la même marche, tous les jours. '+'⛔ <b>Ton objectif ne bouge pas avec tes pas</b> (ni avec une séance, ni avec une activité enregistrée) : ce sont des calories <b>dépensées</b>, pas des calories en plus à manger. L\'app <b>se tait</b> tant qu\'elle n\'a pas <b>7 jours</b> de mesures, et une journée calme ne <b>retire</b> rien. '+'⚠️ C\'est une <b>estimation</b> (~1 300 pas au kilomètre), pas une mesure.'},
       /* 🍽️ ORDRE DE L'ONGLET MACROS (ft-v1025) — en PREMIER dans l'aide, parce que c'est la
          première question qu'on se pose en arrivant : « où est passé mon TDEE ? ». R25 : la
          pop-up ANNONCE (une fois), l'aide EXPLIQUE (à chaque fois qu'on la rouvre). */
@@ -403,7 +403,7 @@ const _HELP_DATA={
       /* 🚶 EN TÊTE de l'aide Progrès : c'est une carte NEUVE, donc la première question est
          « c'est quoi ce truc ? ». La pop-up de ft-v1070 a annoncé que les pas comptent ;
          ici on dit seulement OÙ les voir et comment lire la courbe (R25). */
-      {i:'🚶',t:'<b>« Tes pas »</b> (sous-onglet <b>Corps &amp; santé</b>) : tes pas du jour, et dépliée, ta <b>courbe sur 7 ou 30 jours</b>. ⭐ Le <b>trait vert</b> est <b>ton habitude</b> — <b>pas</b> un objectif de 10 000 pas que tu n\'as pas choisi. Les <b>barres vertes</b> sont les journées qui la dépassent : ce sont exactement celles qui s\'ajoutent à ta dépense (onglet Nutrition). ⛔ Sans pas envoyés depuis Santé, la carte <b>ne s\'affiche pas</b>. ⚠️ Des pas ne disent pas <b>ce que</b> tu as fait — seulement que tu as bougé plus que d\'ordinaire.'},
+      {i:'🚶',t:'<b>« Tes pas »</b> (sous-onglet <b>Corps &amp; santé</b>) : tes pas du jour, et dépliée, ta <b>courbe sur 7 ou 30 jours</b>. ⭐ Le <b>trait vert</b> est <b>ton habitude</b> — <b>pas</b> un objectif de 10 000 pas que tu n\'as pas choisi. Les <b>barres vertes</b> sont les journées qui la dépassent : elles comptent dans ta dépense <b>estimée</b> du jour (onglet Nutrition), jamais dans ton objectif alimentaire. ⛔ Sans pas envoyés depuis Santé, la carte <b>ne s\'affiche pas</b>. ⚠️ Des pas ne disent pas <b>ce que</b> tu as fait — seulement que tu as bougé plus que d\'ordinaire.'},
       /* 🛡️ SESSION-INTEGRITY-01 — règle d'or #11, point 3 : l'aide dit OÙ et ce que ça fait (R25). */
       /* 🎯 DEBRIEF-ON-DEMAND-01 — règle d'or #11, point 3 : les DEUX états du bouton, jamais ensemble. */
       {i:'💬',t:'<b>Sous chaque séance de ton historique</b> (onglet <b>Séances</b>), <b>UN bouton</b> : <b>« ✨ Analyser avec Milo »</b> si elle n\'a pas de débrief rangé ici — c\'est toi qui décides, rien ne part sans ce geste ; <b>« 💬 Voir le débrief Milo »</b> si elle a déjà son débrief — il s\'ouvre sans appel à l\'IA, même hors ligne. « Analyse interrompue » veut dire que l\'app s\'est fermée pendant l\'analyse : un tap la relance. Les débriefs d\'avant le 04/10/2026 restent dans tes discussions. À l\'export (📤), tu choisis <b>avec</b> ou <b>sans</b> les débriefs : par défaut, sans.'},
@@ -3378,7 +3378,7 @@ function modifierActivite(){
    TROIS VALEURS, TROIS RÔLES — jamais l'une déduite de l'autre sans que ce soit dit :
      · RÉFÉRENCE         = ton niveau d'activité, SANS les pas du jour (`depenseReference`) ;
      · ESTIMÉE aujourd'hui = référence + ce que ta journée a fait de plus que d'habitude, avec FOURCHETTE et PROVENANCE (`depenseEstimeeDuJour`) — une INFORMATION ;
-     · OBJECTIF alimentaire = ta cible du jour (`calcMacros`) — ⛔ INCHANGÉ : ce bloc ne l'appelle que pour l'AFFICHER, il n'y écrit rien, et il dit la part des pas que la règle actuelle y met encore.
+     · OBJECTIF alimentaire = ta cible du jour (`calcMacros`) — ⛔ ce bloc ne l'appelle que pour l'AFFICHER, il n'y écrit rien ; depuis l'étape 2 (06/11/2026) il ne dépend plus des pas, et la carte NOMME prudemment un écart exceptionnel avec la dépense estimée (`djEcartObjectif`) sans jamais le relever.
    ⛔ Décision de Michel (05/11) : « l'affichage informatif ne doit pas laisser croire qu'il s'agit de calories supplémentaires autorisées à consommer » — la note du bas le dit, et un témoin
    (C-TDEE-U*) refuse tout mot qui inviterait à manger plus. Rien d'absent n'est comblé : une valeur qu'on n'a pas s'écrit « — » et dit pourquoi (R29).
    LA DÉPENSE ENREGISTRÉE (musculation · cardio · autres) lit `_agregatPeriode`, la MÊME définition que les bilans de la semaine et du mois (R2) : ce qu'on a ENREGISTRÉ (estimation de l'app
@@ -3411,8 +3411,8 @@ function _renderDepenseJour() {
   let h = '<div class="nu-stat" style="display:block;">'
     + '<div class="nu-stat-lbl" style="text-transform:uppercase;letter-spacing:.06em;font-size:11.5px;font-weight:700;color:var(--t3);">🔥 Dépense et objectif <span style="text-transform:none;letter-spacing:0;font-weight:500;">· information</span></div>';
   if (r) {
-    const m = calcMacros(S.nutritionPhase), pasLegacy = (typeof calcPasExtra === 'function') ? (calcPasExtra() || 0) : 0;
-    h += _djRangee('Référence', k(r.ref), 'ton niveau d\'activité · sans les pas du jour');
+    const m = calcMacros(S.nutritionPhase);
+    h += _djRangee('Référence', k(r.ref), 'ton niveau d\'activité · elle ne bouge pas avec ta journée');
     if (r.connu) {
       const extra = r.extra > 0;
       h += _djRangee('Estimée aujourd\'hui', (extra ? '≈ ' : '') + k(r.estime),
@@ -3432,7 +3432,14 @@ function _renderDepenseJour() {
     if (r.manques.indexOf('habitude_pas') >= 0) manques.push('Habitude de pas pas encore connue (moins de 7 jours) : les pas ne comptent pas encore.');
     if (manques.length) h += '<div style="margin-top:3px;font-size:11px;color:var(--t3);line-height:1.4;">' + manques.join('<br>') + '</div>';
     h += _djRangee('Objectif alimentaire', (m && m.calories != null) ? k(m.calories) : '—',
-      'ta cible du jour · ne dépend pas de l\'estimée ci-dessus' + (pasLegacy > 0 ? ' · inclut +' + _fmtKcal(pasLegacy) + ' kcal de pas (règle actuelle)' : ''));
+      'ta cible du jour · ne dépend ni de l\'estimée ci-dessus ni de tes pas');
+    /* 🛟 INFORMATION PRUDENTE (étape 2, 06/11/2026) : une journée d'effort EXCEPTIONNEL peut dépasser l'objectif de beaucoup. On le NOMME — neutre, sans chiffre à manger,
+       sans consigne — et on redit que l'objectif ne change pas. `djEcartObjectif` (tracking.js, pur) décide ; ici on n'écrit que le texte. ⛔ Aucun mot qui invite à manger plus. */
+    const ec = (typeof djEcartObjectif === 'function' && m && m.calories != null) ? djEcartObjectif(r, m.calories) : null;
+    if (ec && ec.alerte) h += '<div id="nu-dj-alerte" style="margin-top:8px;padding:7px 9px;border-left:3px solid var(--orange);background:rgba(255,255,255,.03);border-radius:6px;font-size:11.5px;color:var(--t2);line-height:1.45;">'
+      + '<b>Journée d\'effort exceptionnel</b> : ta dépense estimée dépasse ton objectif d\'environ ' + _fmtKcal(Math.round(ec.ecart / 100) * 100) + ' kcal (estimation, pas une mesure). '
+      + '<b>Ton objectif ne change pas.</b> Un écart aussi marqué, s\'il se répète, peut peser sur ta récupération et ton énergie : c\'est une information, pas une consigne. '
+      + 'Au moindre doute (fatigue inhabituelle, vertiges), parles-en à un professionnel de santé.</div>';
   }
   if (enreg) {
     h += '<div style="margin-top:11px;padding-top:8px;border-top:1px solid var(--sep);"><div class="nu-stat-lbl" style="font-size:11.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;">Dépense enregistrée <span style="text-transform:none;letter-spacing:0;font-weight:500;">· musculation, cardio, autres</span></div>'
@@ -3496,17 +3503,9 @@ function renderNutrition(){try{
     srcEl.style.color = bd.methode==='katch' ? 'var(--green)' : 'var(--gold)';
   }
   document.getElementById('nu-tdee').textContent=_nbAff(tdee);
-  /* 🚶 ON DIT D'OÙ VIENT LE SURPLUS — sinon le TDEE change d'un jour à l'autre sans explication,
-     et un chiffre qui bouge tout seul se lit comme un bug (la leçon du sommeil, ft-v1069).
-     ⛔ La ligne ne s'affiche QUE s'il y a un surplus : afficher « +0 kcal » tous les jours serait
-     du bruit permanent pour l'immense majorité des journées (R24, informer sans encombrer). */
-  const pasEl=document.getElementById('nu-tdee-pas');
-  if(pasEl){
-    const pe=(typeof _pasEcart==='function')?_pasEcart():null;
-    pasEl.textContent = (pe&&pe.kcal>0)
-      ? ('🚶 +'+pe.kcal+' kcal · '+pe.surplus.toLocaleString('fr-FR')+' pas de plus que d\'habitude')
-      : '';
-  }
+  /* 🚶 RETRAIT (06/11/2026, NUT-TDEE-02) — il y avait ici une ligne « 🚶 +K kcal · N pas de plus que d'habitude » SOUS le TDEE : elle expliquait d'où venait
+     le surplus que le TDEE contenait. Le TDEE ne contient plus aucun pas (décision de Michel) : la ligne dirait quelque chose de faux, elle n'existe plus — et son
+     emplacement (`#nu-tdee-pas`) non plus. Les pas se lisent dans la carte « Dépense et objectif » (dépense estimée du jour) et dans « Tes pas » (Progrès). */
   const todayStr=today();
   /* 🧮 F06 (mission Séance du 24/10/2026) — TOUTES les séances du jour, pas la première trouvée : mesuré le 23/10, deux
      séances de 250 et 350 kcal affichaient 350. La tuile additionne, et son libellé dit combien (« 2 séances ») — le

@@ -3324,7 +3324,7 @@ function _cibleDetailTxt(){
   const act=String(d.act).replace('.',',');
   return '- 🧮 CALCUL DE LA CIBLE PAR L\'APP (explique CE détail tel quel, ne le recalcule pas) : '
     +'TDEE '+d.tdee+' = BMR '+d.bmr+' × '+act+' « '+(typeof ACT_LABELS!=='undefined'&&ACT_LABELS[d.act]||'niveau choisi')+' » ≈ '+d.base
-    +' '+n(d.travail)+' travail '+n(d.sport)+' autre sport '+n(d.pas)+' pas'
+    +' '+n(d.travail)+' travail '+n(d.sport)+' autre sport'      // ⛔ plus de terme « pas » depuis le 06/11/2026 (NUT-TDEE-02) : la cible ne bouge pas avec les pas
     +' ; puis objectif « '+lbl+' » '+n(d.goalDelta)+' ; phase '+(d.phase==='charge'?'Charge':'Décharge')+' '+n(d.phaseAdj)
     +(d.lutealBonus?' ; phase lutéale '+n(d.lutealBonus):'')
     +' = '+d.brut+' kcal'+(d.plancher?' → relevée au plancher de sécurité : '+d.plancher+' kcal':'')
@@ -3909,13 +3909,19 @@ ${(()=>{
      (Constitution : ne jamais faire semblant de savoir). */
   try{
     const e=(typeof _pasEcart==='function')?_pasEcart():null;
-    if(!e||e.kcal<=0) return '';
+    /* ⛔ SEULEMENT LES PAS D'AUJOURD'HUI (06/11/2026) : `_pasEcart` accepte aussi la veille, et à 8 h du matin le texte disait « AUJOURD'HUI IL/ELLE A BEAUCOUP
+       MARCHÉ » pour des pas d'HIER — un fait faux dans le contexte de Milo (R8). On vérifie la date, on ne la suppose pas. */
+    if(!e||!e.depasse||e.date!==today()) return '';
     const seanceAuj=_seancesTrain().some(x=>x&&x.date===today());   // 🚶 sans les activités (`_estAutre`) : une marche enregistrée n'est pas une séance (elle est dite dans le bloc des activités)
     return `- 🚶 AUJOURD'HUI IL/ELLE A BEAUCOUP MARCHÉ : ${e.pas.toLocaleString('fr-FR')} pas, soit `
       + `${e.surplus.toLocaleString('fr-FR')} de plus que sa base habituelle (${e.base.toLocaleString('fr-FR')}/j sur ${e.n} jours). `
-      + (tdee !== '—' ? `Ces ~${e.kcal} kcal sont DÉJÀ ajoutées à son TDEE ci-dessus — ne les recompte pas.` : `(Ses besoins caloriques ne sont pas calculés : n'en tire AUCUN chiffre de dépense.)`)
-      + (seanceAuj ? ` Il/elle a AUSSI enregistré une séance aujourd'hui.`
-                   : ` ⚠️ AUCUNE séance n'est enregistrée aujourd'hui : cette dépense vient d'autre chose (marche, randonnée, une journée debout). `
+      /* ⛔ DEPUIS LE 06/11/2026 (NUT-TDEE-02, décision de Michel) LES PAS NE SONT PLUS DANS SON TDEE NI DANS SA CIBLE : la phrase « DÉJÀ ajoutées à son TDEE — ne les recompte
+         pas » est devenue FAUSSE le jour du découplage (R8 : le fait dit à Milo doit être celui du code). On lui dit ce que c'est — une information sur la journée, qui sert à
+         estimer la dépense — et ce que ça n'est PAS : des calories en plus à manger. */
+      + `⛔ Ces pas ne changent PAS son objectif calorique ni son TDEE : ils servent seulement à estimer sa dépense du jour, à titre d'information. Ne dis JAMAIS qu'ils lui donnent des calories en plus à manger. `
+      + (tdee !== '—' ? '' : `(Ses besoins caloriques ne sont pas calculés : n'en tire AUCUN chiffre de dépense.) `)
+      + (seanceAuj ? `Il/elle a AUSSI enregistré une séance aujourd'hui.`
+                   : `⚠️ AUCUNE séance n'est enregistrée aujourd'hui : cette dépense vient d'autre chose (marche, randonnée, une journée debout). `
                      + `⛔ Tu ne sais PAS de quoi il s'agit — des pas ne disent pas ce qui a été fait. Ne l'affirme jamais ; tu peux le lui DEMANDER une fois si c'est utile, `
                      + `et en tenir compte pour sa récupération (une grosse journée de marche n'est pas un jour de repos).`);
   }catch(e){ return ''; }
@@ -4696,7 +4702,9 @@ ${(()=>{
                   (c'est le double comptage de ft-v949, sur une autre grandeur). Le surplus,
                   lui, est une dépense RÉELLEMENT non comptée — et c'est aussi le seul signe
                   d'une journée d'effort que l'app n'a pas vue. Propriétaire : `_pasEcart`
-                  (tracking.js), lu par le TDEE, l'écran Nutrition et ce bloc (R2). */
+                  (tracking.js), lu par la carte « Tes pas » de Progrès et par ce bloc (R2) —
+                  et PLUS par le TDEE ni par l'écran Nutrition depuis le 06/11/2026 : les pas
+                  n'élèvent plus l'objectif (NUT-TDEE-02), ils servent à estimer la dépense du jour. */
   const ts=(typeof _nuit==='function')?_nuit(todayStr):null;
   const qLabels={1:'Mauvais',2:'Moyen',3:'Bon',4:'Excellent'};
   const last3=(typeof _nuitsRecentes==='function')?_nuitsRecentes(todayStr,3):[];

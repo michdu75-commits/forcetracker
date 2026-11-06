@@ -156,9 +156,10 @@ module.exports.sourceContrat = function (t, ROOT, fs, path) {
   console.log('\n═══ B-NP01-A. NUT-PUNCH-01 — contrat Séance → Nutrition (source) ═══');
   const ST = _sansCommentaires(fs.readFileSync(path.join(ROOT, 'state.js'), 'utf8')).replace(/\s+/g, '');
   const tdee = _corps(ST, 'calcTDEE');
-  t('B-NP01-A source ① la dépense du jour a QUATRE termes, aucun ne lit une séance (BMR × activité + travail + autre sport + surplus de pas)',
-    tdee.includes('returnMath.round(calcBMR()*S.activityLevel+calcWorkExtra()+calcSportExtra()+calcPasExtra(refTs));')
-    && !/sessions|wkt|duration|volume/.test(tdee), tdee.slice(0, 160));
+  /* ⛔ ÉTAPE 2 (06/11/2026, NUT-TDEE-02) — le témoin disait « QUATRE termes (… + surplus de pas) » : il IMPOSAIT l'ancienne règle. REMPLACÉ, pas assoupli : TROIS termes, et il refuse en plus tout pas. */
+  t('B-NP01-A source ① la dépense du jour a TROIS termes, aucun ne lit une séance NI un pas (BMR × activité + travail + autre sport) — les pas ont quitté la formule le 06/11/2026 (NUT-TDEE-02)',
+    tdee.includes('returnMath.round(calcBMR()*S.activityLevel+calcWorkExtra()+calcSportExtra());')
+    && !/sessions|wkt|duration|volume|calcPasExtra|_pasEcart|healthDaily|steps/.test(tdee), tdee.slice(0, 160));
   const brut = _corps(ST, '_autoKcalBrut');
   t('B-NP01-A source ② la cible automatique ne lit ni la durée, ni le volume, ni la méthode, ni la discipline, ni le niveau',
     brut.length > 0 && !/\.duration|\.volume|groupType|dropset|S\.discipline|S\.level/.test(brut), 'terme de séance dans _autoKcalBrut');

@@ -93,7 +93,7 @@ const SC = [
       const kMac = calculable ? m.prot_g * 4 + m.fat_g * 9 + m.carbs_g * 4 : null;
       return { id: c.id, origine: c.origine, lu,
         provenanceAct: c.act == null ? 'jamais choisie (absente du stockage)' : 'choisie (écrite dans le stockage par le scénario)',
-        methode: d.methode, bmr: d.kcal || null, bonusMetier: calcWorkExtra(), bonusSport: calcSportExtra(), pas: calcPasExtra(),
+        methode: d.methode, bmr: d.kcal || null, bonusMetier: calcWorkExtra(), bonusSport: calcSportExtra(), pas: (typeof calcPasExtra === 'function') ? calcPasExtra() : 0,   /* 06/11/2026 (NUT-TDEE-02) : le terme « pas » a quitte le TDEE — 0, pas une erreur */
         tdee: t, cible: m.calories, auto: m.autoCalories, manuelle: m.isManual, plancher: (typeof plancherKcalActif === 'function') ? plancherKcalActif(S.nutritionPhase) : null,
         P: m.prot_g, L: m.fat_g, G: m.carbs_g, kMac, ecart: kMac != null ? kMac - m.calories : null,
         pourquoi: calculable ? null : ('non calculable — il manque : ' + ((m.manquants || []).join(', ') || '?')) };

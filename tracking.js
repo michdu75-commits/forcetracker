@@ -3266,6 +3266,15 @@ function _pasDaysArr(){
   }
   return arr;
 }
+/* LA RÉFÉRENCE DE LA CARTE (06/11/2026) : le DERNIER jour avec des pas, évalué À SA PROPRE DATE. Avant, la carte demandait `_pasEcart()`
+   (« aujourd'hui ») : à 8 h, avec les seuls pas d'hier, elle disait « habitude pas encore connue » (faux : l'habitude se connaît, c'est le
+   jour qui est hier) ou prenait la veille pour le jour. Le résumé et la ligne repère lisent la MÊME référence (R2). */
+function _pasDernier(){
+  const j=((typeof S!=='undefined'&&S.healthDaily)||[]).filter(x=>x&&x.date&&x.steps>0);
+  if(!j.length) return null;
+  const d=j.slice().sort((a,b)=>b.date.localeCompare(a.date))[0];
+  return {jour:d, ecart:(typeof _pasEcart==='function')?_pasEcart(Date.parse(d.date+'T12:00:00')):null};
+}
 function _pasChartHtml(){
   const arr=_pasDaysArr();
   const avec=arr.filter(a=>a.pas);
@@ -3273,8 +3282,8 @@ function _pasChartHtml(){
   /* ⛔ LA LIGNE REPÈRE EST SA BASE, PAS UN OBJECTIF. On ne dessine JAMAIS un « 10 000 pas »
      ici : ce serait une cible que personne n'a choisie, sur un écran qui ne fait que décrire
      (R29, et la Vision — l'app ne dit pas qui tu dois devenir). La base vient de `_pasEcart`,
-     donc c'est EXACTEMENT le chiffre qui sert au calcul des calories. */
-  const e=(typeof _pasEcart==='function')?_pasEcart():null;
+     donc c'est la MÊME habitude que celle du résumé et de la ligne de Milo (R2). */
+  const _dr=_pasDernier(), e=_dr?_dr.ecart:null;
   const base=e?e.base:null;
   const maxP=Math.max(...avec.map(a=>a.pas), base||0);
   const W=320,H=120,pad={t:10,r:6,b:18,l:30},iW=W-pad.l-pad.r,iH=H-pad.t-pad.b;
@@ -3285,8 +3294,8 @@ function _pasChartHtml(){
   const bars=arr.map((a,i)=>{
     if(!a.pas) return '';
     const x=pad.l+i*step+(step-bw)/2, y=toY(a.pas), bh=pad.t+iH-y;
-    /* ⭐ VERT quand la journée dépasse la base : c'est ce qui a compté dans ses calories. On ne
-       colorie PAS en rouge une journée calme — un jour de repos n'est pas un échec (R24). */
+    /* ⭐ VERT quand la journée dépasse la base : c'est ce qui entre dans sa dépense ESTIMÉE du jour (jamais dans son objectif, depuis le
+       06/11/2026). On ne colorie PAS en rouge une journée calme — un jour de repos n'est pas un échec (R24). */
     const col=(base!=null && a.pas>base) ? 'var(--green)' : 'var(--t3)';
     return `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(2,bh).toFixed(1)}" rx="2" fill="${col}" opacity=".85"><title>${fmtD(a.date)} · ${nb(a.pas)} pas</title></rect>`;
   }).join('');
@@ -3311,16 +3320,20 @@ function renderPasCard(){
      bruit permanent : elle lui parle d'une chose qu'il n'a pas (R24). */
   if(!j.length){ el.style.display='none'; el.innerHTML=''; return; }
   el.style.display='block';
-  const e=(typeof _pasEcart==='function')?_pasEcart():null;
+  const _dr=_pasDernier();
+  if(!_dr){ el.style.display='none'; el.innerHTML=''; return; }   // des pas sans date ne se montrent pas
+  const e=_dr.ecart, dernier=_dr.jour;
   const nb=n=>n.toLocaleString('fr-FR');
-  /* ⭐ LE RÉSUMÉ REPLIÉ DIT L'ESSENTIEL : les pas du jour, et ce qu'ils ont ajouté. ⛔ Et quand
-     l'app n'a pas encore 7 jours, elle le DIT au lieu d'afficher un surplus qu'elle ne sait pas
-     calculer (R29) — sinon la personne croirait que sa journée n'a rien valu. */
-  const dernier=j.slice().sort((a,b)=>b.date.localeCompare(a.date))[0];
+  /* ⭐ LE RÉSUMÉ REPLIÉ DIT L'ESSENTIEL : les pas du dernier jour — NOMMÉ (aujourd'hui, hier, ou sa date) — et leur place par rapport à SON
+     habitude, EN PAS (06/11/2026 : plus de kcal ici, la dépense estimée vit à un seul endroit, l'onglet Nutrition). ⛔ Et quand l'app n'a
+     pas encore 7 jours, elle le DIT au lieu d'afficher un surplus qu'elle ne sait pas calculer (R29) — sinon la personne croirait que
+     sa journée n'a rien valu. */
+  const _veille=new Date(Date.parse(today()+'T12:00:00')-864e5).toISOString().slice(0,10);
+  const quand=dernier.date===today()?'aujourd\'hui':(dernier.date===_veille?'hier':new Date(dernier.date+'T12:00:00').toLocaleDateString('fr-FR',{day:'numeric',month:'short'}));
   const resume = e
-    ? (e.kcal>0 ? `${nb(e.pas)} pas · <span style="color:var(--green);font-weight:700">+${e.kcal} kcal</span>`
-                : `${nb(e.pas)} pas · journée ordinaire`)
-    : `${nb(dernier.steps)} pas · <span style="color:var(--t3)">habitude pas encore connue</span>`;
+    ? (e.depasse ? `${nb(e.pas)} pas · ${quand} · <span style="color:var(--green);font-weight:700">${nb(e.surplus)} de plus que ton habitude</span>`
+                 : `${nb(e.pas)} pas · ${quand} · journée ordinaire`)
+    : `${nb(dernier.steps)} pas · ${quand} · <span style="color:var(--t3)">habitude pas encore connue</span>`;
   el.innerHTML =
     `<div style="background:var(--bg2);border-radius:16px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);overflow:hidden;">`
     + `<button id="pas-hist-toggle" onclick="togglePasHist()" style="width:100%;display:flex;justify-content:space-between;align-items:center;background:none;border:none;cursor:pointer;padding:13px 16px;font-family:var(--font);touch-action:manipulation;">`
@@ -3339,7 +3352,7 @@ function renderPasCard(){
              La même honnêteté que dans le contexte de Milo — l'app ne doit pas affirmer plus
              que ce qu'elle sait, même en vert et même joliment dessiné. */
           + `<div style="font-size:11.5px;color:var(--t3);line-height:1.5;margin-top:10px;">`
-          +   `Les jours <span style="color:var(--green);font-weight:700">en vert</span> dépassent ton habitude : c'est ce qui s'ajoute à ta dépense (onglet Nutrition). `
+          +   `Les jours <span style="color:var(--green);font-weight:700">en vert</span> dépassent ton habitude : ils comptent dans ta dépense estimée du jour (onglet Nutrition), pas dans ton objectif alimentaire. `
           +   `⚠️ Des pas ne disent pas <b>ce que</b> tu as fait — ils disent seulement que tu as bougé plus que d'ordinaire.`
           + `</div></div>`
         : '')
@@ -3708,7 +3721,17 @@ function _nuitsRecentes(auj, n){
    cardiaque pendant la séance c'est utile pour rajouter à nos affinages de calculs, je ne suis
    pas d'accord »*. C'est la position du projet depuis le début, et elle est mesurée : r = 0,10
    à 0,34 entre les calories d'un bracelet et la calorimétrie indirecte en résistance. */
-/* 🚶 LES PAS — LE SURPLUS SUR SA PROPRE BASE, JAMAIS LE TOTAL (30/08/2026)
+/* 🚶 LES PAS, EN PAS — ET PLUS JAMAIS EN KCAL DE CIBLE (06/11/2026 · NUT-TDEE-02, décision explicite de Michel).
+   `_pasEcart` dit où en est une journée de marche par rapport à SON habitude : les pas, la base (médiane de 30 jours), le surplus, le
+   nombre de jours de la base, la date. C'est une information d'AFFICHAGE (la carte « Tes pas » de Progrès, la ligne de Milo).
+   ⛔ Il ne rend PLUS de calories : le surplus ne s'ajoute ni à la dépense ni à la cible (`calcPasExtra` est RETIRÉE, voir state.js) ;
+   la conversion pas → kcal n'existe qu'à UN endroit, le moteur de la dépense estimée du jour (`depenseDuJour`, plus bas), qui retire
+   d'abord les pas déjà payés par un entraînement et dit sa fourchette (R2 : un seul propriétaire de cette conversion).
+   ⛔ Une journée n'a que SES pas : `_pasEcart(refTs)` ne regarde jamais plus loin que le jour demandé, et n'accepte que celui-ci ou la
+   veille ; qui en tire un « aujourd'hui » doit vérifier `date` (la ligne de Milo le fait, la carte de Progrès nomme le jour). */
+/* 🚶 HISTOIRE (30/08/2026, ft-v1070) — ce qui suit décrit l'ANCIEN rôle (des kcal de pas dans la cible), RETIRÉ le 06/11/2026. On le
+   garde parce que la base, la médiane, le seuil et les 7 jours viennent de là, et que le pourquoi de ces choix vaut toujours.
+   LES PAS — LE SURPLUS SUR SA PROPRE BASE, JAMAIS LE TOTAL (30/08/2026)
    Michel : *« si on rajoute les pas ça rajoute forcément des calories dépensées dans la journée,
    et ça montre aussi l'activité en l'absence de données rentrées dans l'application. Exemple :
    on a marché 15 000 pas parce qu'on a fait une randonnée — à l'heure actuelle on ne peut pas
@@ -3743,8 +3766,6 @@ function _nuitsRecentes(auj, n){
 const PAS_JOURS_BASE = 30;   // fenêtre de référence, comme la FC au repos
 const PAS_MIN_JOURS  = 7;    // en dessous, on ne se prononce pas
 const PAS_SEUIL      = 1500; // en deçà, c'est la variation d'une journée ordinaire
-const PAS_MAX_KCAL   = 500;  // borne dure : une cible calorique ne s'envole pas sur un capteur
-const PAS_PAR_KM     = 1300;
 function _pasEcart(refTs){
   try{
     const j=(typeof S!=='undefined'&&S.healthDaily)||[];
@@ -3767,22 +3788,17 @@ function _pasEcart(refTs){
     const med=t.length%2 ? t[m] : Math.round((t[m-1]+t[m])/2);
     const surplus=jour.steps-med;
     return {pas:jour.steps, base:med, surplus:surplus, n:base.length, date:jour.date,
-            /* ⛔ SEULEMENT LE SURPLUS POSITIF entre dans les calories. Une journée SOUS sa base
-               ne se DÉFALQUE pas : le multiplicateur est une moyenne, il absorbe déjà les jours
-               creux — retrancher reviendrait à punir un jour de repos, et à faire baisser une
-               cible alimentaire un jour de fatigue. */
-            kcal: surplus>=PAS_SEUIL
-                  ? Math.min(PAS_MAX_KCAL,
-                      Math.round((surplus/PAS_PAR_KM)*((typeof S!=='undefined'&&S.bw)||80)*0.5))
-                  : 0};
+            /* ⛔ `depasse` dit « NOTABLE » (au moins 1 500 pas au-dessus de la base), PAS « des calories ». Une journée SOUS sa base ne
+               se défalque de rien : le niveau d'activité est une moyenne, il absorbe déjà les jours creux. */
+            depasse: surplus>=PAS_SEUIL};
   }catch(e){ return null; }
 }
 // ⟦DJ:BLOC-DEBUT⟧
 /* ═══ 🔥 LA DÉPENSE DU JOUR — MOTEUR PUR (TDEE V2, étape 1 · GO de Michel du 06/11/2026, développement ISOLÉ — audit `FORCE-TRACKER-AUDIT-TDEE-V2-2026-11-06.pdf`) ═══════════════════
    TROIS GRANDEURS, JAMAIS MÉLANGÉES — et celle-ci n'en est qu'UNE :
-     · la dépense de RÉFÉRENCE   = BMR × niveau d'activité + travail + sport déclaré (`depenseReference`, SANS le surplus de pas) ;
+     · la dépense de RÉFÉRENCE   = `calcTDEE()` : BMR × niveau d'activité + travail + sport déclaré (`depenseReference`) — AUCUN pas dedans, depuis le 06/11/2026 (étape 2) ;
      · la dépense ESTIMÉE du jour = référence + ce que la journée a fait de PLUS que d'habitude, avec FOURCHETTE et PROVENANCE (`depenseEstimeeDuJour`, ce bloc) ;
-     · l'OBJECTIF alimentaire     = `calcMacros(...)` — ⛔ INCHANGÉ à cette étape : ni sa formule, ni son lien historique avec les pas (`calcPasExtra` reste dans `calcTDEE`).
+     · l'OBJECTIF alimentaire     = `calcMacros(...)` — ⛔ NE DÉPEND NI DE CE BLOC NI DES PAS (étape 2, NUT-TDEE-02 : `calcPasExtra` est retirée de `calcTDEE`, un témoin le fige).
    ⛔ LE MOTEUR (entre les repères DJ) n'écrit rien et ne lit ni `S` ni le DOM ni le stockage ni l'horloge ; les ADAPTATEURS en dessous LISENT `S` et n'écrivent jamais ; AUCUNE fonction de l'objectif
    n'appelle ni l'un ni les autres (témoins C-TDEE-*). L'estimé du jour est une INFORMATION :
    il ne dit jamais « tu peux manger plus » (décision de Michel du 05/11 : ne pas laisser croire que ce sont des calories supplémentaires autorisées).
@@ -3815,6 +3831,8 @@ const DJ_PARAMS = Object.freeze({
   COULOIR: Object.freeze([0.5, 2.0]),
   PLAFOND_X_BMR: 2.0,
   TOL_DOUBLON_MIN: 10, TOL_DOUBLON_DUREE: 0.25,
+  ALERTE_EFFORT_KCAL: 800,      // « effort exceptionnel » : ce que la journée a fait de PLUS que d'habitude (l'habitude est déjà déduite) atteint ce seuil — hypothèse de conception
+  ALERTE_ECART_KCAL: 1000,      // …ET la dépense estimée dépasse l'objectif d'au moins ce seuil : la carte le dit alors PRUDEMMENT, jamais comme un ordre — hypothèse de conception
 });
 const DJ_LABELS = Object.freeze({ marche: 'Marche', marche_sportive: 'Marche sportive', randonnee: 'Randonnée', balade: 'Balade', velo_loisir: 'Vélo loisir', velo_sportif: 'Vélo sportif', course: 'Course',
   tapis: 'Tapis', elliptique: 'Elliptique', velo: 'Vélo', rameur: 'Rameur', corde: 'Corde', natation: 'Natation', muscu: 'Musculation', autre: 'Autre activité' });
@@ -3858,6 +3876,21 @@ function djNetEntrainement(w, kg) {
 /* ③ — les pas qu'un entraînement a déjà fait payer. La musculation n'en retire aucun (ses pas restent dans l'habitude). */
 function djCadence(w) { const c = DJ_PARAMS.CADENCE[w.famille]; if (c == null) return 0; if (typeof c === 'object') return c[w.intensite || 'modere'] || c.modere || 0; return c; }
 function djPasEntrainement(w) { return w.famille === 'muscu' ? 0 : (typeof w.pas === 'number' ? w.pas : Math.round(djCadence(w) * w.dureeMin)); }
+
+/* 🛟 L'ÉCART ENTRE LA DÉPENSE ESTIMÉE ET L'OBJECTIF — une INFORMATION PRUDENTE, jamais un ordre (étape 2, 06/11/2026).
+   Une journée d'effort exceptionnel (une randonnée de 8 h, une course de 4 h) peut dépasser l'objectif de plusieurs centaines de kcal : manger
+   exactement l'objectif ce jour-là creuserait un déficit marqué. ⛔ L'objectif NE CHANGE PAS pour autant (décision de Michel : les pas et les
+   activités n'élèvent jamais l'objectif automatiquement) et rien ici ne dit combien manger : on NOMME l'écart, avec sa fourchette, c'est tout.
+   ⛔ DEUX CONDITIONS, PAS UNE : l'alerte exige un effort réellement EXCEPTIONNEL (`extra` ≥ `ALERTE_EFFORT_KCAL`, l'habitude étant déjà déduite) ET un
+   écart d'au moins `ALERTE_ECART_KCAL`. Sans la première, une cible BASSE (un objectif de perte, un plancher) ferait annoncer une « journée
+   exceptionnelle » à quelqu'un qui a juste marché deux heures — un faux positif qui apprendrait à ignorer l'information quand elle compte.
+   `r` = la sortie de `depenseDuJour` ; `objectif` = la cible du jour en kcal. Rend `null` quand l'un manque ou que la journée n'est pas connue
+   (R29 : on ne commente pas un écart qu'on ne sait pas calculer). */
+function djEcartObjectif(r, objectif) {
+  if (!r || !r.connu || !r.bande || !(objectif > 0)) return null;
+  const P = DJ_PARAMS, ecart = Math.round(r.estime - objectif), lo = Math.round(r.bande.lo - objectif), hi = Math.round(r.bande.hi - objectif);
+  return { ecart, lo, hi, effort: r.extra, alerte: r.extra >= P.ALERTE_EFFORT_KCAL && ecart >= P.ALERTE_ECART_KCAL };
+}
 
 /* ENTRÉE (tout est un nombre, une liste ou null — jamais un objet de l'app) :
      profil : { kg, bmr, tdeeRef, sportExtra } — null si le profil ne permet pas de calcul (D-016 : aucun chiffre fabriqué)
@@ -3947,14 +3980,14 @@ function _djHistorique(date, kg) {
   }
   return out;
 }
-/* LA RÉFÉRENCE : `calcTDEE()` SANS le surplus de pas — dérivée du propriétaire unique de la formule (R2), jamais recopiée. ⚠️ Quand l'étape 2 (découplage des pas, décision à Michel) retirera
-   `calcPasExtra` de `calcTDEE`, cette soustraction DEVRA disparaître avec elle : le témoin C-TDEE-REF la recalcule à part et rougira. */
-function depenseReference(refTs) { try { const t = calcTDEE(refTs); if (t == null) return null; return t - calcPasExtra(refTs); } catch (e) { return null; } }
+/* LA RÉFÉRENCE : `calcTDEE()` — le propriétaire unique de la formule (R2), jamais recopiée. Depuis le 06/11/2026 (étape 2) le TDEE ne contient plus aucun
+   surplus de pas : la référence EST le TDEE (avant, elle le recalculait SANS le terme de pas, et un témoin devait rougir le jour du découplage — il l'a fait). */
+function depenseReference() { try { return calcTDEE(); } catch (e) { return null; } }
 /* LA FAÇADE : l'estimé d'un jour (aujourd'hui par défaut). Un jour passé se rejoue avec ses seules données et celles d'AVANT lui : rien de ce qui s'est passé depuis ne le touche. */
 function depenseEstimeeDuJour(date) {
   try {
-    const d = date || today(), auj = (d === today());
-    const ref = depenseReference(auj ? undefined : Date.parse(d + 'T12:00:00'));
+    const d = date || today();
+    const ref = depenseReference();      // la référence ne dépend que du profil : un jour passé a la même (les pas d'aujourd'hui ne la touchent jamais)
     const kg = _nbUtil(S.bw), bmr = calcBMR();
     if (ref == null || kg == null || !(bmr > 0)) return null;
     const lignePas = ((S.healthDaily || []).find(x => x && x.date === d && x.steps > 0)) || null;                 // ⑦ le MÊME jour, jamais hier

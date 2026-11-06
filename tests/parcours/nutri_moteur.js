@@ -50,9 +50,12 @@ module.exports.source = function (t, ROOT, fs, path) {
   t('B-CCCLX ④ écart calorique par objectif inchangé',
     ST.includes('_GOAL_DELTA_KCAL={muscle:350,perte:-450,recomp:-250,force:200,equilibre:0,endurance:100}'),
     'table des objectifs modifiée');
-  t('B-CCCLX ⑤ TDEE = BMR × activité + métier + sport + pas (aucun terme ajouté ni retiré)',
-    ST.includes('returnMath.round(calcBMR()*S.activityLevel+calcWorkExtra()+calcSportExtra()+calcPasExtra(refTs));'),
-    'formule du TDEE modifiée');
+  /* ⛔ ÉTAPE 2 (06/11/2026, NUT-TDEE-02, décision explicite de Michel) — CE TÉMOIN IMPOSAIT L'ANCIENNE RÈGLE (« … + pas : aucun terme ajouté ni retiré »). Il est REMPLACÉ, pas assoupli :
+     les pas ont QUITTÉ la formule, il PROTÈGE maintenant leur absence (un terme de pas qui reviendrait le ferait rougir) ; l'invariant de comportement — la cible est identique avec ou sans pas —
+     est porté par `tests/parcours/tdee_v2.js` (C-TDEE-N01) et prouvé par mutation (`tools/mut_tdee_v2.py`). */
+  t('B-CCCLX ⑤ TDEE = BMR × activité + métier + sport (TROIS termes — plus aucun pas depuis le 06/11/2026, NUT-TDEE-02 : un terme de pas qui reviendrait ferait rougir ce témoin)',
+    ST.includes('returnMath.round(calcBMR()*S.activityLevel+calcWorkExtra()+calcSportExtra());') && !/calcPasExtra/.test(ST),
+    'formule du TDEE modifiée, ou un terme de pas est revenu');
   t('B-CCCLX ⑥ plancher calorique inchangé (H 1500 / F 1200)',
     ST.includes('constPLANCHER_KCAL={H:1500,F:1200};'), 'plancher modifié');
   t('B-CCCLX ⑦ les 5 niveaux d\'activité de l\'écran Profil sont inchangés',

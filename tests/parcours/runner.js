@@ -19913,21 +19913,26 @@ console.log('\n-- CLXXIV. Le sommeil mesuré atteint le score et Milo (ft-v1069)
   }
 }
 
-/* == BLOC CLXXV - LES PAS COMPTENT, SANS JAMAIS COMPTER DEUX FOIS (ft-v1070) ==
-   Michel : « si on rajoute les pas ça rajoute forcement des calories depensees dans la journee,
+/* == BLOC CLXXV - LES PAS NE TOUCHENT PLUS L'OBJECTIF ALIMENTAIRE (ft-v1070 → RÉVISÉ LE 06/11/2026, NUT-TDEE-02) ==
+   Michel, en ft-v1070 : « si on rajoute les pas ça rajoute forcement des calories depensees dans la journee,
    et ca montre aussi l'activite en l'absence de donnees rentrees dans l'application. Exemple :
    on a marche 15 000 pas parce qu'on a fait une randonnee. **Attention il faut que ca soit
    coherent** : la montre prend en compte aussi le nombre de pas si on fait du tapis a la salle,
    ou de la course, ou du velo elliptique. »
 
-   ⛔⛔ IL A NOMME LE PIEGE DE ft-v949 AVANT QU'ON LE TROUVE, et il est plus large que le tapis :
-   `activityLevel` (« Modere 3-4j ») contient deja la marche d'une journee ORDINAIRE. Ajouter les
-   pas BRUTS la facturerait deux fois.
-   ⭐⭐ D'OU LE SURPLUS SUR SA PROPRE BASE — et il repond aux DEUX cas d'un coup : la randonnee
-   ressort (9 000 pas au-dessus de sa base), le tapis habituel EST dans la base donc surplus nul.
+   ⛔⛔ IL AVAIT NOMMÉ LE PIÈGE DE ft-v949 AVANT QU'ON LE TROUVE : `activityLevel` (« Modéré 3-4j ») contient déjà la marche d'une
+   journée ORDINAIRE ; ajouter les pas BRUTS la facturerait deux fois. D'où « le surplus sur SA PROPRE base » (médiane de 30 jours),
+   qui répond aux deux cas à la fois : la randonnée ressort, le tapis habituel est dans la base donc ne compte pas.
+   ✅ CETTE PARTIE-LÀ N'A PAS CHANGÉ : la donnée « combien de pas de plus que d'habitude » existe toujours, avec les mêmes règles.
 
-   ⛔ LE TEMOIN ② EST CELUI QUI PORTE SA CONTRAINTE : une journee ordinaire n'ajoute RIEN. */
-console.log('\n-- CLXXV. Les pas comptent, sans jamais compter deux fois (ft-v1070) --');
+   ⚠️⚠️ RÉVISÉ LE 06/11/2026 — DÉCISION EXPLICITE DE MICHEL (TDEE V2, étape 2) : « supprimer l'augmentation automatique de l'objectif alimentaire
+   liée aux pas ». Ce bloc figeait l'inverse (« le TDEE monte exactement du surplus, jusqu'à +500 kcal ») : ces témoins imposaient donc la règle
+   que Michel vient de retirer, et ils ont été RÉÉCRITS — pas supprimés, pas assouplis : ils verrouillent maintenant l'invariant qui REMPLACE
+   (R17 : un test protège un invariant, pas une implémentation ; chacun rougit sous mutation volontaire — `tools/mut_tdee_v2.py`).
+   ⭐ L'INVARIANT : AUCUN pas, de quelque quantité que ce soit, ne déplace le TDEE, la cible, ni les macros. Les pas restent une DONNÉE
+   (affichée dans Progrès, transmise à Milo, utilisée par la dépense ESTIMÉE du jour — voir le banc `tests/parcours/tdee_v2.js`).
+   ⛔ LE TÉMOIN ① EST CELUI QUI NE DOIT JAMAIS ÊTRE VACUEUX : la cible « sans aucun pas » est mesurée, et c'est un VRAI nombre (jamais `null === null`). */
+console.log('\n-- CLXXV. Les pas ne touchent plus l\'objectif alimentaire (ft-v1070 → NUT-TDEE-02, 06/11/2026) --');
 {
   const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
   const pg=await cx.newPage();
@@ -19945,55 +19950,73 @@ console.log('\n-- CLXXV. Les pas comptent, sans jamais compter deux fois (ft-v10
     const base=(pasAuj)=>{ const L=[{date:J(0),steps:pasAuj}];
       for(let d=1;d<=14;d++) L.push({date:J(d),steps:6000+((d%3)-1)*200});   // 5800..6200
       S.healthDaily=L; persist(); };
+    /* LA CIBLE TELLE QUE L'APP LA CALCULE : TDEE, calories, macros — le tout, jamais un seul chiffre. */
+    const cible=()=>{ const m=calcMacros(S.nutritionPhase)||{};
+      return {tdee:calcTDEE(), cal:m.calories, p:m.prot_g, l:m.fat_g, g:m.carbs_g}; };
+    const ecart=()=>{ const e=_pasEcart(); return e?{pas:e.pas,base:e.base,surplus:e.surplus,depasse:e.depasse,cleKcal:('kcal' in e)}:null; };
 
-    /* ① UNE JOURNEE ORDINAIRE N'AJOUTE RIEN — c'est la contrainte de Michel. */
-    base(6100); o.ordinaire={ecart:_pasEcart(), tdee:calcTDEE(), extra:calcPasExtra()};
+    /* ① LA RÉFÉRENCE : AUCUN pas reçu. C'est la cible du profil, la seule. */
+    S.healthDaily=[]; persist(); o.sansPas=cible();
 
-    /* ② LA RANDONNEE RESSORT : 15 000 pas contre une base de 6 000. */
-    base(15000); const e=_pasEcart();
-    o.rando={pas:e.pas, base:e.base, surplus:e.surplus, kcal:e.kcal, extra:calcPasExtra()};
-    o.tdeeRando=calcTDEE();
+    /* ② UNE JOURNEE ORDINAIRE NE BOUGE RIEN. */
+    base(6100); o.ordinaire={ecart:ecart(), cible:cible()};
 
-    /* ③ LE TDEE MONTE EXACTEMENT DU SURPLUS, PAS D'AUTRE CHOSE (R2 : un seul proprietaire). */
-    o.deltaTdee=o.tdeeRando-o.ordinaire.tdee;
+    /* ③ LA RANDONNEE RESSORT COMME DONNEE (15 000 pas contre une base de 6 000)… */
+    base(15000); o.rando={ecart:ecart(), cible:cible()};
 
-    /* ④ SANS BASE (moins de 7 jours), ON SE TAIT — pas de surplus invente (R29). */
+    /* ④ … ET LA DECOMPOSITION DE LA CIBLE N'A PLUS DE LIGNE « PAS » : la somme tient avec trois termes. */
+    const dc=cibleDecomposition(S.nutritionPhase);
+    o.decomp=dc?{aPas:('pas' in dc), somme:dc.base+dc.travail+dc.sport, tdee:dc.tdee}:null;
+    /* ⛔ R30 — L'ANCIEN CHEMIN EST RETIRÉ, PAS SEULEMENT DÉBRANCHÉ : une fonction morte se rebranche en un mot. */
+    o.fonctionRetiree=(typeof calcPasExtra==='undefined');
+
+    /* ⑤ SANS BASE (moins de 7 jours), ON SE TAIT — pas de surplus invente (R29). */
     S.healthDaily=[{date:J(0),steps:15000},{date:J(1),steps:6000},{date:J(2),steps:6000}];
-    persist(); o.sansBase={ecart:_pasEcart(), extra:calcPasExtra(), tdee:calcTDEE()};
+    persist(); o.sansBase={ecart:_pasEcart(), cible:cible()};
 
-    /* ⑤ UNE JOURNEE SOUS SA BASE NE SE DEFALQUE PAS (on ne punit pas un jour de repos). */
-    base(2000); o.jourCreux={surplus:_pasEcart().surplus, extra:calcPasExtra()};
+    /* ⑥ UNE JOURNEE SOUS SA BASE (on ne punit pas un jour de repos). */
+    base(2000); o.jourCreux={ecart:ecart(), cible:cible()};
 
-    /* ⑥ BORNE DURE : un capteur qui deraille ne fait pas exploser une cible calorique. */
-    base(200000); o.aberrant={extra:calcPasExtra(), surplus:_pasEcart().surplus};
+    /* ⑦ UN CAPTEUR QUI DERAILLE : la donnee est signalee, la cible n'a de toute façon plus rien à plafonner. */
+    base(200000); o.aberrant={ecart:ecart(), cible:cible()};
 
-    /* ⑦ L'ECRAN DIT D'OU VIENT LE SURPLUS (sinon le TDEE bouge sans explication). */
-    base(15000); goScreen('nutrition');
-    o.ecran=String((document.getElementById('nu-tdee-pas')||{}).textContent||'');
-    base(6100); goScreen('nutrition');
-    o.ecranOrdinaire=String((document.getElementById('nu-tdee-pas')||{}).textContent||'');
+    /* ⑧ L'ECRAN : la ligne « 🚶 +K kcal » sous le TDEE n'existe plus, et la carte « Dépense et objectif » affiche LE MÊME objectif. */
+    const lireCarte=()=>{ const el=document.getElementById('nu-dj'); const t=String((el||{}).textContent||'').replace(/\s+/g,' ');
+      const m=t.match(/Objectif alimentaire\s*([\d   ]+)\s*kcal/), r=t.match(/R[ée]f[ée]rence\s*([\d   ]+)\s*kcal/);
+      return {presente:!!el&&el.style.display!=='none', objectif:m?m[1].replace(/[  \s]/g,''):null, reference:r?r[1].replace(/[  \s]/g,''):null, txt:t}; };
+    base(6100); goScreen('nutrition'); o.ecranOrdinaire=lireCarte();
+    base(15000); goScreen('nutrition'); o.ecranRando=lireCarte();
+    o.ligneRetiree=(document.getElementById('nu-tdee-pas')===null);
+    o.ligneKcalAbsente=!/🚶\s*\+\d+\s*kcal/.test(String((document.getElementById('s-nutrition')||{}).textContent||''));
 
-    /* ⑧ MILO recoit le SURPLUS, jamais le total, et le cadre qui va avec. */
+    /* ⑨ MILO recoit le SURPLUS (jamais le total), le cadre, et la phrase qui dit la NOUVELLE règle. */
+    base(6100); S.sessions=[];
+    const ctxOrd=String(buildCoachContext()||'');
     base(15000); S.sessions=[];
     const ctx=String(buildCoachContext()||'');
     const i=ctx.indexOf('BEAUCOUP MARCHÉ');
-    o.milo=i>=0?ctx.slice(i-40,i+700):'(absent)';
-    o.miloTotalBrut=/15\s?000 pas, soit 9\s?000/.test(o.milo.replace(/ | /g,' '));
+    o.milo=i>=0?ctx.slice(i-40,i+900):'(absent)';
+    o.miloTdee=(ctx.match(/TDEE: (\d+) kcal/)||[])[1]||null;
+    o.miloTdeeOrdinaire=(ctxOrd.match(/TDEE: (\d+) kcal/)||[])[1]||null;
+    o.miloOrdinaireSansLigne=ctxOrd.indexOf('BEAUCOUP MARCHÉ')<0;
 
-    /* 📣 les 5 points de la regle d'or #11, MESURES et pas affirmes (lecon de ft-v1060 :
-       un journal qui affirme une surface d'aide inexistante est pire qu'un journal muet). */
+    /* 📣 les surfaces d'annonce, MESUREES et pas affirmees (lecon de ft-v1060). Les annonces DATEES (pop-up v65, point rouge) restent telles quelles ;
+       l'aide « ? » et la diapo du Guide, elles, disent la regle d'AUJOURD'HUI. */
     o.regle11=(function(){ try{
       const nf=(typeof NEW_FEATURES!=='undefined'?NEW_FEATURES:[]).find(f=>f&&f.id==='pas-surplus');
       const wn=(typeof WHATS_NEW!=='undefined'?WHATS_NEW:[]).find(w=>w&&w.v===65);
-      const aide=((typeof _HELP_DATA!=='undefined'&&_HELP_DATA.nutrition&&_HELP_DATA.nutrition.tips)||[])
-                   .some(x=>x&&/\bpas\b/i.test(x.t||'')&&/habitu/i.test(x.t||'')
-                            &&/(D[ÉE]PASSE|surplus|de plus)/i.test(x.t||''));
+      const tips=((typeof _HELP_DATA!=='undefined'&&_HELP_DATA.nutrition&&_HELP_DATA.nutrition.tips)||[]);
+      const tip=tips.find(x=>x&&/\bpas\b/i.test(x.t||'')&&/habitu/i.test(x.t||'')&&/(D[ÉE]PASSE|surplus|de plus)/i.test(x.t||''));
       const slides=(typeof APP_GUIDE_SLIDES!=='undefined'?APP_GUIDE_SLIDES:[]);
       const dia=slides.filter(d=>d&&/pas comptent/i.test(d.t||''));
       return {pointRouge:!!nf && nf.screen==='nutrition',
               aideDetaillee:!!nf && (nf.desc||'').length>300,
               popup:!!wn && /passe ton habitude/i.test(wn.d||''),
-              aideEcran:aide, diapo:dia.length===1,
+              aideEcran:!!tip,
+              aideDitLaRegle:!!tip && /ne bouge pas avec tes pas/i.test(tip.t||'') && /pas des calories en plus/i.test(tip.t||'')
+                              && !/borné à 500|affichées sous ton TDEE|valent ~290/i.test(tip.t||''),
+              diapo:dia.length===1,
+              diapoDitLaRegle:dia.length===1 && /ne change pas ton objectif/i.test(dia[0].cap||'') && /pas des calories en plus/i.test(dia[0].cap||''),
               /* ⛔ sans image, expres : une capture montrerait les pas de quelqu'un d'autre */
               diapoSansImage:dia.every(d=>!d.img)};
     }catch(e){ return {err:String(e)}; } })();
@@ -20004,39 +20027,50 @@ console.log('\n-- CLXXV. Les pas comptent, sans jamais compter deux fois (ft-v10
 
   if(P.err) t('CLXXV n\'a pas pu tourner', false, JSON.stringify(P));
   else{
-    /* ⛔⛔ LE TEMOIN QUI PORTE SA CONTRAINTE — sans lui, on aurait recompte la marche ordinaire. */
-    t('⛔⛔ ① une journée ORDINAIRE n\'ajoute RIEN au TDEE (pas de double comptage)',
-      P.ordinaire.extra===0 && P.ordinaire.ecart && P.ordinaire.ecart.kcal===0,
-      JSON.stringify(P.ordinaire));
-    /* ⭐⭐ ET CELUI QUI L'EMPECHE D'ETRE VERT EN NE COMPTANT JAMAIS RIEN. */
-    t('⭐⭐ ② la RANDONNÉE ressort : 15 000 pas sur une base de 6 000 → +9 000, ~290 kcal',
-      P.rando.base>=5900 && P.rando.base<=6100 && P.rando.surplus>8900
-      && P.rando.kcal>250 && P.rando.kcal<330 && P.rando.extra===P.rando.kcal,
-      JSON.stringify(P.rando));
-    /* ⛔ R2 : le TDEE monte du surplus, et de rien d'autre. */
-    t('⛔ ③ le TDEE monte EXACTEMENT du surplus (un seul propriétaire)',
-      P.deltaTdee===P.rando.kcal, 'delta TDEE = '+P.deltaTdee+' · surplus kcal = '+P.rando.kcal);
+    const egal=(a,c)=>!!a&&!!c&&a.tdee===c.tdee&&a.cal===c.cal&&a.p===c.p&&a.l===c.l&&a.g===c.g;
+    const vrai=(c)=>!!c&&typeof c.tdee==='number'&&c.tdee>1200&&typeof c.cal==='number'&&c.cal>1000&&typeof c.p==='number'&&typeof c.l==='number'&&typeof c.g==='number';
+    /* ⛔⛔ LE TEMOIN QUI NE DOIT JAMAIS ETRE VACUEUX : la cible « sans aucun pas » est un vrai nombre, et une journée ORDINAIRE ne la déplace pas. */
+    t('⛔⛔ ① une journée ORDINAIRE ne bouge RIEN : TDEE, calories et macros identiques à « aucun pas reçu » (et c\'est un vrai nombre)',
+      vrai(P.sansPas) && egal(P.ordinaire.cible,P.sansPas) && P.ordinaire.ecart && P.ordinaire.ecart.depasse===false,
+      JSON.stringify({sans:P.sansPas,ord:P.ordinaire}));
+    /* ⭐⭐ LE TEMOIN DECISIF : la randonnée est une DONNÉE (surplus mesuré), et la cible ne bouge PAS d'une kcal, ni d'un gramme de macro. */
+    t('⭐⭐ ② la RANDONNÉE ressort comme donnée (15 000 pas sur une base de 6 000 → +9 000) mais la CIBLE ne bouge pas : TDEE, calories, protéines, lipides, glucides',
+      P.rando.ecart && P.rando.ecart.base>=5900 && P.rando.ecart.base<=6100 && P.rando.ecart.surplus>8900 && P.rando.ecart.depasse===true
+      && egal(P.rando.cible,P.sansPas),
+      JSON.stringify({sans:P.sansPas,rando:P.rando}));
+    /* ⛔ R2 : la conversion pas → kcal n'a plus qu'UN propriétaire (le moteur de la dépense ESTIMÉE) ; `_pasEcart` ne dit que des pas. */
+    t('⛔ ③ `_pasEcart` ne porte plus de kcal (un seul propriétaire de la conversion) · la fonction `calcPasExtra` n\'existe plus (R30) · la décomposition n\'a plus de ligne « pas » et sa somme tient',
+      P.rando.ecart.cleKcal===false && P.fonctionRetiree===true && P.decomp && P.decomp.aPas===false && P.decomp.somme===P.decomp.tdee,
+      JSON.stringify({cleKcal:P.rando.ecart.cleKcal, retiree:P.fonctionRetiree, decomp:P.decomp}));
     /* ⛔ R29 : sans base, on ne devine pas. */
-    t('⛔ ④ moins de 7 jours de mesures → aucun surplus, l\'app se tait',
-      P.sansBase.ecart===null && P.sansBase.extra===0, JSON.stringify(P.sansBase));
+    t('⛔ ④ moins de 7 jours de mesures → aucun écart annoncé, l\'app se tait, et la cible est la même',
+      P.sansBase.ecart===null && egal(P.sansBase.cible,P.sansPas), JSON.stringify(P.sansBase));
     /* ⛔ ON NE PUNIT PAS UN JOUR DE REPOS. */
-    t('⛔ ⑤ une journée SOUS sa base ne se défalque pas (surplus négatif → 0 kcal)',
-      P.jourCreux.surplus<0 && P.jourCreux.extra===0, JSON.stringify(P.jourCreux));
-    /* ⛔ LE COUT DE L'ERREUR PORTE SUR CE QU'ELLE MANGE (R29). */
-    t('⛔ ⑥ un capteur qui déraille est BORNÉ (200 000 pas ne donnent pas 12 000 kcal)',
-      P.aberrant.surplus>190000 && P.aberrant.extra===500, JSON.stringify(P.aberrant));
-    /* ⭐ UN CHIFFRE QUI BOUGE SANS EXPLICATION SE LIT COMME UN BUG (leçon de ft-v1069). */
-    t('⭐ ⑦ l\'écran NOMME le surplus, et se tait les jours ordinaires',
-      /\+\d+ kcal/.test(P.ecran) && P.ecran.indexOf('de plus que d')>=0 && P.ecranOrdinaire==='',
-      JSON.stringify({rando:P.ecran, ordinaire:P.ecranOrdinaire}));
-    /* ⭐⭐ R4 : l'information doit atteindre celui qui decide. */
-    t('📣 ⑨ règle #11 : point rouge, aide détaillée, pop-up v65, aide ? et diapo existent',
+    t('⛔ ⑤ une journée SOUS sa base : surplus négatif, rien n\'est signalé, et la cible ne descend pas non plus',
+      P.jourCreux.ecart && P.jourCreux.ecart.surplus<0 && P.jourCreux.ecart.depasse===false && egal(P.jourCreux.cible,P.sansPas),
+      JSON.stringify(P.jourCreux));
+    /* ⛔ LE COUT DE L'ERREUR PORTAIT SUR CE QU'ELLE MANGE (R29) : il n'y a plus rien à plafonner, et on le VÉRIFIE au lieu de le supposer. */
+    t('⛔ ⑥ un capteur qui déraille (200 000 pas) est signalé comme donnée, et la cible ne bouge toujours pas',
+      P.aberrant.ecart && P.aberrant.ecart.surplus>190000 && P.aberrant.ecart.depasse===true && egal(P.aberrant.cible,P.sansPas),
+      JSON.stringify(P.aberrant));
+    /* ⭐ UN CHIFFRE QUI BOUGE SANS EXPLICATION SE LIT COMME UN BUG (leçon de ft-v1069) — ici c'est l'inverse : il ne bouge pas, et l'écran ne prétend pas le contraire. */
+    t('⭐ ⑦ l\'écran : la ligne « 🚶 +K kcal » sous le TDEE n\'existe plus, et la carte « Dépense et objectif » affiche LE MÊME objectif et LA MÊME référence un jour de randonnée et un jour ordinaire',
+      P.ligneRetiree===true && P.ligneKcalAbsente===true && P.ecranOrdinaire.presente && P.ecranRando.presente
+      && !!P.ecranOrdinaire.objectif && P.ecranRando.objectif===P.ecranOrdinaire.objectif && P.ecranRando.objectif===String(P.sansPas.cal)
+      && !!P.ecranOrdinaire.reference && P.ecranRando.reference===P.ecranOrdinaire.reference && P.ecranRando.reference===String(P.sansPas.tdee),
+      JSON.stringify({ligneRetiree:P.ligneRetiree, ligneKcalAbsente:P.ligneKcalAbsente, ord:{o:P.ecranOrdinaire.objectif,r:P.ecranOrdinaire.reference}, rando:{o:P.ecranRando.objectif,r:P.ecranRando.reference}, cible:P.sansPas.cal}));
+    t('⭐⭐ ⑧ Milo reçoit le SURPLUS (pas le total) avec l\'interdiction d\'inventer l\'activité, la phrase « ne changent PAS son objectif calorique » — et plus l\'ancienne « déjà ajoutées à son TDEE »',
+      /soit 9/.test(P.milo) && /Tu ne sais PAS de quoi il s'agit/.test(P.milo)
+      && /ne changent PAS son objectif calorique ni son TDEE/.test(P.milo) && /pas des calories en plus à manger|calories en plus à manger/.test(P.milo)
+      && !/ne les recompte pas|D[ÉE]J[ÀA] ajout[ée]es/.test(P.milo), P.milo.slice(0,360));
+    t('⛔ ⑧b … et le TDEE que Milo reçoit est le MÊME un jour de randonnée et un jour ordinaire (sans la ligne « beaucoup marché » les jours ordinaires)',
+      !!P.miloTdee && P.miloTdee===P.miloTdeeOrdinaire && P.miloTdee===String(P.sansPas.tdee) && P.miloOrdinaireSansLigne===true,
+      JSON.stringify({rando:P.miloTdee, ord:P.miloTdeeOrdinaire, cible:P.sansPas.tdee, sansLigne:P.miloOrdinaireSansLigne}));
+    /* ⭐⭐ R4 : l'information doit atteindre celui qui decide — et elle doit dire la règle d'AUJOURD'HUI. */
+    t('📣 ⑨ règle #11 : l\'annonce DATÉE (point rouge, aide détaillée, pop-up v65) existe toujours telle quelle ; l\'aide « ? » et la diapo du Guide disent la règle d\'AUJOURD\'HUI (« ne bouge pas avec tes pas », « pas des calories en plus »)',
       P.regle11 && P.regle11.pointRouge && P.regle11.aideDetaillee && P.regle11.popup
-      && P.regle11.aideEcran && P.regle11.diapo && P.regle11.diapoSansImage,
+      && P.regle11.aideEcran && P.regle11.aideDitLaRegle && P.regle11.diapo && P.regle11.diapoDitLaRegle && P.regle11.diapoSansImage,
       JSON.stringify(P.regle11));
-    t('⭐⭐ ⑧ Milo reçoit le SURPLUS (pas le total), avec l\'interdiction d\'inventer l\'activité',
-      /soit 9/.test(P.milo) && /ne les recompte pas/.test(P.milo)
-      && /Tu ne sais PAS de quoi il s'agit/.test(P.milo), P.milo.slice(0,260));
   }
 }
 
@@ -20049,8 +20083,14 @@ console.log('\n-- CLXXV. Les pas comptent, sans jamais compter deux fois (ft-v10
    ⛔⛔ LE TEMOIN ③ EST CELUI QUI COMPTE LE PLUS, et il vient d'un piege trouve en lisant le code
    AVANT d'accrocher la carte : `renderWeightTab` sort par un `return` quand il y a moins de
    2 pesees. Accrochee en bas, la carte des pas n'apparaitrait JAMAIS chez quelqu'un qui ne se
-   pese pas — une dependance invisible entre deux donnees qui n'ont rien a voir. */
-console.log('\n-- CLXXVI. La courbe des pas dans Progrès (ft-v1071) --');
+   pese pas — une dependance invisible entre deux donnees qui n'ont rien a voir.
+
+   ⚠️⚠️ RÉVISÉ LE 06/11/2026 (NUT-TDEE-02, décision de Michel : les pas ne modifient plus l'objectif alimentaire). Ce bloc figeait que la carte
+   dit « +K kcal » à côté des pas (②) : les pas ne se convertissent plus en kcal ICI — la conversion n'a plus qu'un propriétaire, le moteur de la
+   dépense ESTIMÉE du jour (R2), et l'objectif n'en dépend plus. ② dit donc maintenant le contraire exact (les pas, l'écart à l'habitude, AUCUN kcal),
+   ⑥ cherche un objectif de PAS (« 10 000 pas ») et non plus le mot « objectif » — la carte a désormais le droit de dire qu'elle n'est PAS dans l'objectif
+   ALIMENTAIRE — et ⑩ fige cette phrase. ⛔ Les barres vertes, la base, le trait, le repli sans 7 jours, l'affichage sans pesée : inchangés, et leurs témoins aussi. */
+console.log('\n-- CLXXVI. La courbe des pas dans Progrès (ft-v1071, révisé 06/11/2026) --');
 {
   const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
   const pg=await cx.newPage();
@@ -20081,7 +20121,7 @@ console.log('\n-- CLXXVI. La courbe des pas dans Progrès (ft-v1071) --');
 
     /* ② LA CARTE MONTRE LES PAS DU JOUR ET LE SURPLUS */
     S.weightLog=[{date:J(0),kg:84},{date:J(3),kg:84.4}]; persist(); ouvrir();
-    o.replie=txt().slice(0,120);
+    o.replie=txt().slice(0,120); o.replieTout=txt();
 
     /* ④⑤⑥ LA COURBE : depliee, elle porte la base et distingue les jours au-dessus */
     if(!_pasHistOpen) togglePasHist();
@@ -20095,8 +20135,11 @@ console.log('\n-- CLXXVI. La courbe des pas dans Progrès (ft-v1071) --');
       baseAffichee:(txt().match(/ton habitude, ([\d   ]+) pas\/jour/)||[])[1]||'',
       baseCalcul:e?e.base:null,
       /* ⛔ AUCUN OBJECTIF DE 10 000 PAS : l'ecran DECRIT, il ne prescrit pas */
-      pasDObjectif:!/10\s?000 pas|objectif/i.test(txt()),
-      ditCeQuIlIgnore:/ne disent pas/.test(txt())
+      pasDObjectif:!/10\s?000 pas|objectif (?:de|d')\s*(?:pas|\d)/i.test(txt()),
+      ditCeQuIlIgnore:/ne disent pas/.test(txt()),
+      /* ⭐ 06/11/2026 : la carte dit où comptent ces pas (la dépense ESTIMÉE) et où ils ne comptent pas (l'objectif ALIMENTAIRE) — et ne chiffre plus aucun kcal */
+      ditOuIlsComptent:/d[ée]pense estim[ée]e du jour/.test(txt()) && /pas dans ton objectif alimentaire/.test(txt()),
+      sansKcal:!/\bkcal\b/i.test(txt())
     };
 
     /* ⑦ SANS 7 JOURS, la carte le DIT au lieu d'afficher un surplus qu'elle ignore */
@@ -20142,23 +20185,26 @@ console.log('\n-- CLXXVI. La courbe des pas dans Progrès (ft-v1071) --');
     /* ⛔ UNE CARTE VIDE CHEZ QUI N'A PAS DE MONTRE EST DU BRUIT PERMANENT (R24). */
     t('⛔ ① aucun pas reçu → la carte ne s\'affiche PAS du tout',
       C.sansMontre.affichee===false && C.sansMontre.html==='', JSON.stringify(C.sansMontre).slice(0,120));
-    t('⭐⭐ ② replié, elle dit les pas du jour ET ce qu\'ils ont ajouté',
-      /15\s?000 pas/.test(C.replie.replace(/ | /g,' ')) && /\+\d+ kcal/.test(C.replie), C.replie);
+    t('⭐⭐ ② replié, elle dit les pas du jour ET de combien ils dépassent SON habitude — en PAS, jamais en kcal (la conversion n\'est plus ici)',
+      /15[\u00a0\u202f ]?000 pas/.test(C.replie) && /de plus que ton habitude/.test(C.replie) && !/kcal/i.test(C.replieTout), C.replieTout);
     /* ⛔⛔ LE TEMOIN LE PLUS IMPORTANT : la dependance invisible au poids. */
     t('⛔⛔ ③ elle s\'affiche MÊME SANS AUCUNE PESÉE (renderWeightTab sort tôt sinon)',
       C.sansPesee.affichee===true && /pas/.test(C.sansPesee.txt), JSON.stringify(C.sansPesee));
     t('⭐ ④ la courbe distingue les jours AU-DESSUS de l\'habitude (vert) des autres (gris)',
       C.depliee.barresVertes>=1 && C.depliee.barresGrises>=1 && C.depliee.traitRepere===true,
       JSON.stringify({v:C.depliee.barresVertes,g:C.depliee.barresGrises,trait:C.depliee.traitRepere}));
-    /* ⛔ R2 : le chiffre affiché EST celui qui sert aux calories, pas un 2e calcul. */
+    /* ⛔ R2 : le chiffre affiché EST celui qui sert à l'écart et à la dépense estimée du jour, pas un 2e calcul. */
     t('⛔ ⑤ la base affichée est EXACTEMENT celle de `_pasEcart` (un seul propriétaire)',
-      C.depliee.baseAffichee.replace(/[  \s]/g,'')===String(C.depliee.baseCalcul),
+      C.depliee.baseAffichee.replace(/[\u00a0\u202f\s]/g,'')===String(C.depliee.baseCalcul),
       'affichée="'+C.depliee.baseAffichee+'" · calcul='+C.depliee.baseCalcul);
     /* ⛔ L'ECRAN DECRIT, IL NE PRESCRIT PAS (Vision : il ne dit pas qui tu dois devenir). */
     t('⛔ ⑥ aucun objectif de 10 000 pas : le repère est SON habitude, pas une cible',
       C.depliee.pasDObjectif===true, 'aucun objectif imposé');
     t('⛔ ⑦ la carte dit ce que les pas NE prouvent pas',
       C.depliee.ditCeQuIlIgnore===true, 'mention « ne disent pas » présente');
+    /* ⭐ 06/11/2026 (NUT-TDEE-02) — la carte ne doit pas se taire sur la règle : une personne qui voit « 9 000 de plus que ton habitude » se demande ce que ça change. */
+    t('⭐⭐ ⑩ dépliée, la carte dit où ces pas comptent (la dépense ESTIMÉE du jour) et où ils ne comptent pas (l\'objectif ALIMENTAIRE) — et ne chiffre aucun kcal',
+      C.depliee.ditOuIlsComptent===true && C.depliee.sansKcal===true, JSON.stringify({ou:C.depliee.ditOuIlsComptent, sansKcal:C.depliee.sansKcal}));
     /* 📣 RÈGLE #11 MESURÉE, pas affirmée (leçon de ft-v1060). ⛔ Et l'ABSENCE de 2ᵉ pop-up est
        une décision, donc elle se fige aussi : ft-v1070 vient d'annoncer la feature. */
     t('📣 ⑨ règle #11 : point rouge, aide détaillée, aide ? — et PAS de 2ᵉ pop-up',

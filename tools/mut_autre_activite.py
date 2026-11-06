@@ -73,7 +73,7 @@ MUT = [
     ('M10 [deguisee] une marche aujourd\'hui fait du jour un « jour de seance » (cycle des glucides)',
      [(ST, "const faite=_seancesTrain().find(s=>s&&s.date===t);", "const faite=(S.sessions||[]).find(s=>s&&s.date===t);")], 'GARDE', 'C-ACT-D2', 'D'),
     ('M11 la CIBLE alimentaire est augmentee des calories de l\'activite du jour (+255)',
-     [(ST, "return Math.round(calcBMR()*S.activityLevel+calcWorkExtra()+calcSportExtra()+calcPasExtra(refTs));", "return Math.round(calcBMR()*S.activityLevel+calcWorkExtra()+calcSportExtra()+calcPasExtra(refTs)+(S.sessions||[]).filter(s=>s&&s.autre&&s.date===today()).reduce((a,s)=>a+(+s.calories||0),0));")], 'GARDE', 'C-ACT-D2', 'D'),
+     [(ST, "return Math.round(calcBMR()*S.activityLevel+calcWorkExtra()+calcSportExtra());", "return Math.round(calcBMR()*S.activityLevel+calcWorkExtra()+calcSportExtra()+(S.sessions||[]).filter(s=>s&&s.autre&&s.date===today()).reduce((a,s)=>a+(+s.calories||0),0));")], 'GARDE', 'C-ACT-D2', 'D'),
     ('M40 la tuile « Seance » de Nutrition additionne les calories d\'une activite du jour',
      [(SC, "const _sessJour=_seancesTrain().filter(s=>s&&s.date===todayStr);", "const _sessJour=(S.sessions||[]).filter(s=>s&&s.date===todayStr);")], 'GARDE', 'C-ACT-D3', 'D'),
     ('M12 une marche compte pour le badge « 10 seances »',

@@ -1755,21 +1755,16 @@ function calcSportExtra(){
   if(a==null) return 0;
   return a>=1.725?0:150;
 }
-/* 🚶 LE 4ᵉ TERME : LE SURPLUS DE PAS (30/08/2026, ft-v1070).
-   ⛔⛔ CE N'EST PAS « LES PAS DU JOUR », ET LA DISTINCTION EST TOUTE LA DÉCISION. Le
-   multiplicateur `activityLevel` contient déjà la marche d'une journée ORDINAIRE — y ajouter le
-   total des pas la facturerait deux fois, exactement comme la séance avant ft-v949. Seul entre
-   ici ce qui DÉPASSE sa propre base : une randonnée, un déménagement, une journée de visite.
-   ⛔ Et ça vaut 0 tant que l'app n'a pas 7 jours de mesures — pas de base, pas de surplus (R29).
-   Le calcul, les bornes et le pourquoi vivent dans `_pasEcart` (tracking.js), propriétaire
-   unique : le TDEE, l'écran et Milo lisent tous cette fonction (R2). */
-function calcPasExtra(refTs){
-  try{
-    if(typeof _pasEcart!=='function')return 0;    // tracking.js pas encore chargé
-    const e=_pasEcart(refTs);
-    return (e&&e.kcal>0)?e.kcal:0;
-  }catch(e){ return 0; }
-}
+/* 🚶 LES PAS NE SONT PLUS UN TERME DE LA DÉPENSE NI DE LA CIBLE (06/11/2026 — NUT-TDEE-02, décision EXPLICITE de Michel).
+   ⛔ RETRAIT VOLONTAIRE, ÉCRIT POUR NE PAS REDEVENIR UN « BUG À RÉPARER » (R30). Du 30/08 (ft-v1070) au 06/11, `calcPasExtra`
+   ajoutait à `calcTDEE` le surplus de pas sur sa propre base (jusqu'à +500 kcal) : la cible alimentaire MONTAIT quand la personne
+   marchait. L'audit TDEE V2 du 06/11 l'a MESURÉ : un seuil en marche d'escalier (7 699 pas → +0, 7 700 → +47), un plafond qui
+   traite 15 000 et 40 000 pas de la même façon, les pas d'HIER lus comme ceux d'aujourd'hui (+435 à 8 h du matin), et le « reste »
+   d'hier recalculé avec la cible d'aujourd'hui. Michel a tranché : *les pas et les activités informent la dépense ESTIMÉE du jour
+   (`depenseEstimeeDuJour`, tracking.js), jamais automatiquement l'objectif alimentaire ni les macros.*
+   ⭐ Les DONNÉES de pas (`S.healthDaily`) et leur usage pour ESTIMER la dépense du jour restent ; seule la liaison avec la cible est
+   coupée. Un témoin vérifie que cette fonction N'EXISTE PLUS et que `calcTDEE` ne lit aucune donnée de pas ; un autre, que la cible
+   d'un jour passé ne bouge pas quand les pas d'aujourd'hui arrivent. Le pourquoi complet : `docs/TDEE-V2.md`. */
 /* ═══ 📏 LE JOURNAL DES MENSURATIONS — un seul propriétaire de l'écriture (ft-v1129) ═══════
    ⛔⛔ CE QUI L'A DÉCLENCHÉ EST UNE PERTE DE DONNÉES, REPRODUITE AVANT D'ÊTRE CORRIGÉE.
    Michel : *« je viens de rentrer une valeur et juste après ma pesée, ma mesure n'a pas été
@@ -1816,14 +1811,14 @@ function mensDerniere(k){
   return l.length?l[0].v:null;
 }
 /* ⛔⛔ `null`, JAMAIS UN NOMBRE, QUAND ON NE SAIT PAS — et la mesure dit pourquoi ça compte.
-   L'addition ci-dessous a **quatre** termes, et trois d'entre eux ne dépendent pas du
-   métabolisme de base. Mesuré sur un profil parfaitement vide avec un métier « physique » :
-   `0 × 1.55 + 450 + 0 + 0` = ***TDEE 450***. 👉 *C'est pire qu'un zéro : un zéro a l'air
+   L'addition ci-dessous a **trois** termes (quatre jusqu'au 06/11/2026 : le surplus de pas en est
+   sorti, voir plus haut), et deux d'entre eux ne dépendent pas du métabolisme de base. Mesuré sur
+   un profil parfaitement vide avec un métier « physique » : `0 × 1.55 + 450 + 0` = ***TDEE 450***. 👉 *C'est pire qu'un zéro : un zéro a l'air
    cassé, 450 a l'air d'une dépense.* La maison écrit déjà `null` et jamais `0` partout où la
    réponse est « je ne sais pas » (`mensDerniere`, `bfDerniere`) — **R29**. */
-function calcTDEE(refTs){
+function calcTDEE(){
   if(profilCaloriqueManquants().length) return null;
-  return Math.round(calcBMR()*S.activityLevel+calcWorkExtra()+calcSportExtra()+calcPasExtra(refTs));
+  return Math.round(calcBMR()*S.activityLevel+calcWorkExtra()+calcSportExtra());
 }
 
 /* 🏋️ LE NIVEAU D'ACTIVITÉ CONTIENT DÉJÀ L'ENTRAÎNEMENT — et il ne se mettait JAMAIS à jour
@@ -2149,7 +2144,7 @@ function _autoKcalBrut(phase,detail){
    Rend `null` quand il n'y a PAS de cible — et alors aucune composante n'est exposée (invariant :
    on n'envoie jamais de quoi reconstruire une valeur indisponible).
    ⛔ Rien n'est recalculé ici : tout vient de `_autoKcalBrut`, `_plancherKcal`, `calcMacros`,
-   `calcBMR`, `calcWorkExtra`, `calcSportExtra`, `calcPasExtra` — et la somme est VÉRIFIÉE contre
+   `calcBMR`, `calcWorkExtra`, `calcSportExtra` — et la somme est VÉRIFIÉE contre
    `calcMacros(phase).calories` : si elles divergent, on rend `null` plutôt qu'une fausse explication. */
 function cibleDecomposition(phase){
   try{
@@ -2160,9 +2155,9 @@ function cibleDecomposition(phase){
     if(brut==null||d.tdee==null) return null;
     const cible=_plancherKcal(brut);
     if(cible!==m.calories) return null;
-    const travail=calcWorkExtra(), sport=calcSportExtra(), pas=(typeof calcPasExtra==='function')?(calcPasExtra()||0):0;
+    const travail=calcWorkExtra(), sport=calcSportExtra();      // ⛔ plus de terme « pas » depuis le 06/11/2026 (NUT-TDEE-02) : la somme tient avec trois termes
     return {manuelle:false,cible,brut:Math.round(brut),plancher:cible>Math.round(brut)?cible:null,
-            tdee:d.tdee,bmr:calcBMR(),act:S.activityLevel,base:d.tdee-travail-sport-pas,travail,sport,pas,
+            tdee:d.tdee,bmr:calcBMR(),act:S.activityLevel,base:d.tdee-travail-sport,travail,sport,
             goal:d.goal,goalDelta:d.goalDelta,phase:d.phase,phaseAdj:d.phaseAdj,lutealBonus:d.lutealBonus};
   }catch(e){ return null; }
 }

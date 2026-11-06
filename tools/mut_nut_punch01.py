@@ -25,7 +25,7 @@ SRC = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ST, LO, SC, AP, TR, IX = 'state.js', 'log.js', 'screens.js', 'app.js', 'tracking.js', 'index.html'
 FICHIERS = (ST, LO, SC, AP, TR, IX)
 
-TDEE = "  return Math.round(calcBMR()*S.activityLevel+calcWorkExtra()+calcSportExtra()+calcPasExtra(refTs));\n"
+TDEE = "  return Math.round(calcBMR()*S.activityLevel+calcWorkExtra()+calcSportExtra());\n"   # 06/11/2026 (NUT-TDEE-02) : trois termes, plus de surplus de pas
 _DU_JOUR = "(S.sessions||[]).filter(s=>s&&s.date===today())"
 START = "  if(!ouverte) S.wkt={date:today(),exs:[],startHour:new Date().getHours()};\n"
 ENCOURS = "    if(S.wkt && S.wkt.date===t) return {seance:true, heure:_heureSeance(S.wkt), source:'encours'};\n"
@@ -57,15 +57,15 @@ FETCH = "try{fetch('https://example.invalid/lot0').catch(()=>{});}catch(e){}"
 # (nom, remplacements, attendu, partie du banc)
 MUT = [
     ('MA1 la DUREE de la seance du jour entre dans la depense',
-     [(ST, TDEE, TDEE.replace("calcPasExtra(refTs));", "calcPasExtra(refTs)+" + _DU_JOUR + ".reduce((a,s)=>a+Math.round((s.duration||0)/60),0));"))], 'GARDE', 'contrat'),
+     [(ST, TDEE, TDEE.replace("calcSportExtra());", "calcSportExtra()+" + _DU_JOUR + ".reduce((a,s)=>a+Math.round((s.duration||0)/60),0));"))], 'GARDE', 'contrat'),
     ('MA2 la METHODE (superset) entre dans la depense',
-     [(ST, TDEE, TDEE.replace("calcPasExtra(refTs));", "calcPasExtra(refTs)+(" + _DU_JOUR + ".some(s=>(s.exs||[]).some(e=>e&&e.group))?50:0));"))], 'GARDE', 'contrat'),
+     [(ST, TDEE, TDEE.replace("calcSportExtra());", "calcSportExtra()+(" + _DU_JOUR + ".some(s=>(s.exs||[]).some(e=>e&&e.group))?50:0));"))], 'GARDE', 'contrat'),
     ('MA3 le VOLUME de la seance du jour entre dans la depense',
-     [(ST, TDEE, TDEE.replace("calcPasExtra(refTs));", "calcPasExtra(refTs)+" + _DU_JOUR + ".reduce((a,s)=>a+Math.round((s.volume||0)/500),0));"))], 'GARDE', 'contrat'),
+     [(ST, TDEE, TDEE.replace("calcSportExtra());", "calcSportExtra()+" + _DU_JOUR + ".reduce((a,s)=>a+Math.round((s.volume||0)/500),0));"))], 'GARDE', 'contrat'),
     ('MA4 la DISCIPLINE entre dans la depense',
-     [(ST, TDEE, TDEE.replace("calcPasExtra(refTs));", "calcPasExtra(refTs)+(S.discipline==='powerlifting'?100:0));"))], 'GARDE', 'contrat'),
+     [(ST, TDEE, TDEE.replace("calcSportExtra());", "calcSportExtra()+(S.discipline==='powerlifting'?100:0));"))], 'GARDE', 'contrat'),
     ('MA5 le NIVEAU entre dans la depense',
-     [(ST, TDEE, TDEE.replace("calcPasExtra(refTs));", "calcPasExtra(refTs)+(S.level==='confirme'?80:0));"))], 'GARDE', 'contrat'),
+     [(ST, TDEE, TDEE.replace("calcSportExtra());", "calcSportExtra()+(S.level==='confirme'?80:0));"))], 'GARDE', 'contrat'),
     ('MA6 la seance est datee en UTC au lieu du jour local',
      [(LO, START, START.replace("date:today()", "date:new Date().toISOString().slice(0,10)"))], 'GARDE', 'contrat'),
     ('MA7 la fin de seance efface les codes de serie (tout devient N)',

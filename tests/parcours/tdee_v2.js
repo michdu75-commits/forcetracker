@@ -28,14 +28,22 @@ const Th = hh => Date.parse(`${AUJ}T${String(hh).padStart(2, '0')}:00:00+01:00`)
 const SC = {
   S1: 'Journée de repos', S2: 'Musculation 1 h', S3: '2 h de marche', S4: 'Randonnée 8 h', S5: '40 000 pas', S6: 'Course 4 h', S7: 'Activités combinées (muscu 1 h + marche 2 h + course 1 h)',
   AD: 'Anti-doublons : pas, marche, randonnée, course, cardio, musculation, montre, saisie + import', HI: 'Historique : un jour ne reçoit que ses données, un jour passé se rejoue seul',
-  AB: 'Absence de données : valeurs absentes signalées, jamais inventées', NR: 'Non-régression : objectif, TDEE, macros et lien historique avec les pas inchangés',
+  AB: 'Absence de données : valeurs absentes signalées, jamais inventées', NR: 'Étape 2 · l\'objectif, le TDEE et les macros ne dépendent plus des pas ni des activités ; la référence EST le TDEE',
   ES: 'Aucun effet de bord : ni écriture, ni réseau, ni synchronisation', AF: 'Affichage Nutrition : trois valeurs distinctes + dépenses enregistrées, sans inciter à manger plus',
   CA: 'Calibrage : sensibilité des hypothèses, couloir de la montre, fourchettes contre la référence', AR: 'Architecture : moteur pur, objectif jamais lié au moteur',
+  PD: 'Étape 2 · dates passées : les pas d\'aujourd\'hui ne touchent ni la cible ni le « reste » d\'hier (TD-C03, TD-C04)',
+  TX: 'Étape 2 · textes cohérents : aucune phrase ne dit que les pas s\'ajoutent à l\'objectif (Nutrition, Accueil, Progrès, Milo)',
+  AL: 'Étape 2 · information prudente : un effort exceptionnel est NOMMÉ, jamais compensé dans l\'objectif',
 };
 const MX = {};
 /* À quels scénarios / familles de la matrice appartient un témoin (par son identifiant) : P01-P07 → S1-S7, S101-S111 → S1-S7, le reste par bloc. */
 function groupes(id) {
   if (/^P0[1-7]/.test(id)) return ['S' + id[2]];
+  if (id === 'P33') return ['AL'];
+  if (id === 'P35') return ['AB'];
+  if (/^H1[4-9]$/.test(id)) return ['PD'];
+  if (/^N1[1-6]$/.test(id)) return ['TX'];
+  if (/^U2[0-3]$/.test(id)) return ['AL'];
   if (/^P(1\d|2\d)/.test(id)) return ['AD'];
   if (/^P3/.test(id)) return ['AR'];
   if (/^K/.test(id)) return ['CA'];
@@ -61,7 +69,7 @@ function extraire(src) {
   const a = src.indexOf('// ⟦DJ:DEBUT⟧'), b = src.indexOf('// ⟦DJ:FIN⟧');
   if (a < 0 || b < a) throw new Error('repères ⟦DJ:DEBUT⟧ / ⟦DJ:FIN⟧ absents de tracking.js');
   const bloc = src.slice(a, b);
-  const M = new Function(bloc + '\nreturn { DJ_PARAMS, DJ_LABELS, djMediane, djDedoublonner, djNetEntrainement, djCadence, djPasEntrainement, depenseDuJour };')();
+  const M = new Function(bloc + '\nreturn { DJ_PARAMS, DJ_LABELS, djMediane, djDedoublonner, djNetEntrainement, djCadence, djPasEntrainement, djEcartObjectif, depenseDuJour };')();
   return { M, bloc };
 }
 const sansCom = s => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:'"`])\/\/[^\n]*/g, '$1');
@@ -131,7 +139,7 @@ async function ecran(t, b, PORT) {
 // BLOC P — le moteur PUR, extrait de la source : les sept scénarios, les propriétés, la pureté
 // ═════════════════════════════════════════════════════════════════════════════════
 async function blocP(c) {
-  const { T, M, bloc } = c;
+  const { T, M, bloc, srcTrk } = c;
   const ex = (j, pr, h) => { const o = M.depenseDuJour(pr || PR, j, h || H30); return o ? o.extra : null; };
   const run = (pas, ws, pr, h) => M.depenseDuJour(pr || PR, { pas, entrainements: ws }, h || H30);
   // ── les scénarios de l'audit : les MÊMES chiffres que le prototype, maintenant sur le code livré ──
@@ -220,6 +228,27 @@ async function blocP(c) {
   T('P30', '⛔ PURETÉ (source) : le moteur ne contient AUCUNE référence à S, au DOM, au stockage, au réseau, à l\'horloge, au hasard ni à la persistance', trouves.length === 0, trouves);
   T('P31', '⛔ PURETÉ (source) : les paramètres sont GELÉS (aucun témoin ni code ne peut les changer en route)', /DJ_PARAMS\s*=\s*Object\.freeze\(/.test(code) && Object.isFrozen(M.DJ_PARAMS) && Object.isFrozen(M.DJ_PARAMS.CADENCE) && Object.isFrozen(M.DJ_PARAMS.INCERT));
   T('P32', 'le moteur n\'a AUCUN barème MET à lui : l\'estimation brute lui est fournie par le propriétaire (`kcalBloc`), R2', !/\bMET\b\s*[:=]\s*\{/.test(code) && !/\b(3\.8|8\.5|6\.0)\b/.test(code));
+  // ── l'information prudente : `djEcartObjectif` (étape 2, 06/11/2026) ──
+  const E1 = (r, o) => M.djEcartObjectif(r, o);
+  const rando = M.depenseDuJour(PR, { pas: null, entrainements: [W('randonnee', 480, 8, { kcalMontreActive: 2700 })] }, H30);             // estimée 5 386, en plus 2 700
+  const marche = M.depenseDuJour(PR, { pas: null, entrainements: [W('marche', 120, 9)] }, H30);                                         // estimée 3 145, en plus 459
+  const seuilE = M.depenseDuJour(PR, { pas: null, entrainements: [W('marche', 120, 9, { kcalMontreActive: 800 })] }, H30);              // en plus 800 pile
+  const sousE = M.depenseDuJour(PR, { pas: null, entrainements: [W('marche', 120, 9, { kcalMontreActive: 799 })] }, H30);               // en plus 799
+  const e1 = E1(rando, 2786), e2 = E1(rando, 4500), e3 = E1(rando, rando.estime - 1000), e4 = E1(rando, rando.estime - 999), e5 = E1(marche, 1500), e6 = E1(seuilE, seuilE.estime - 1000), e7 = E1(sousE, sousE.estime - 1000);
+  T('P33', '⭐ L\'ÉCART AVEC L\'OBJECTIF (information prudente) : randonnée de 8 h (estimée 5 386) face à 2 786 → +2 600, ALERTE · face à 4 500 → +886, non · écart de 1 000 pile → oui, 999 → non · une cible BASSE (1 500) avec 2 h de marche (+459, écart 1 645) → NON (l\'effort n\'est pas exceptionnel) · effort de 800 pile → oui, 799 → non · sans objectif, sans journée connue ou sans fourchette → null',
+    e1 && e1.ecart === 2600 && e1.alerte === true && e1.lo === 2060 && e1.hi === 3140 && e2 && e2.ecart === 886 && e2.alerte === false && e3 && e3.alerte === true && e4 && e4.alerte === false
+    && e5 && e5.ecart === 1645 && e5.alerte === false && e6 && e6.alerte === true && e7 && e7.alerte === false
+    && E1(null, 2786) === null && E1(rando, null) === null && E1(rando, 0) === null && E1({ connu: false, estime: 2686, extra: 0, bande: { lo: 2686, hi: 2686 } }, 1000) === null && E1({ connu: true, estime: 5000, extra: 2000 }, 2000) === null,
+    { e1, e2, e3, e4, e5, e6, e7 });
+  // ── TD-C08 : brut → actif converti à UN seul endroit (source, bloc du moteur et adaptateurs) ──
+  const blocTrk = srcTrk.slice(srcTrk.indexOf('// ⟦DJ:BLOC-DEBUT⟧'), srcTrk.indexOf('// ⟦DJ:BLOC-FIN⟧')), codeBloc = sansCom(blocTrk);
+  const nbRepos = (codeBloc.match(/\bkg\s*\*\s*h\b/g) || []).length;
+  T('P34', '⛔ TD-C08 · brut → actif : la soustraction du repos (`kg × h`) n\'existe qu\'à UN endroit (`djNetEntrainement`) dans le moteur ET ses adaptateurs, et les calories enregistrées n\'y entrent que sous le nom `kcalEstBrute` (jamais ajoutées telles quelles à la référence)',
+    nbRepos === 1 && /function djNetEntrainement\b[\s\S]{0,700}brut - kg \* h/.test(codeBloc) && /kcalEstBrute: k\.estimee/.test(codeBloc) && !/\bextra\s*\+=\s*[\w.]*\.(calories|kcal)\b/.test(codeBloc) && !/\.calories\b/.test(codeBloc.replace(/\+s\.calories\s*\|\|\s*0/g, '')), { nbRepos });
+  // ── TD-C02 : la dépense estimée n'est JAMAIS sous la référence, et vaut la référence quand rien n'est connu ──
+  prop('P35', '⭐ TD-C02 · l\'estimée du jour est ≥ la référence (jamais en dessous) sur 300 jours tirés au hasard, et = la référence, extra 0, `connu:false` quand AUCUNE donnée n\'existe', () => {
+    const r = rng(35); for (let i = 0; i < 300; i++) { const j = genJour(r), o = M.depenseDuJour(PR, j, H30); if (o.estime < o.ref || o.bande.lo < o.ref || (!o.connu && (o.estime !== o.ref || o.extra !== 0))) return 'cas ' + i + ' : ' + _det(o); }
+    const vide = M.depenseDuJour(PR, { pas: null, entrainements: [] }, H30); return (vide.connu === false && vide.estime === vide.ref && vide.extra === 0) ? null : _det(vide); });
 }
 
 // ═════════════════════════════════════════════════════════════════════════════════
@@ -349,9 +378,9 @@ async function blocH(c) {
   // ⭐ H1 — AUCUN REPORT : les pas d'HIER ne servent pas à AUJOURD'HUI (le moteur actuel les reprenait : +435 à 8 h du matin)
   const hdHier = [{ date: hier, steps: 20000 }].concat(base30().slice(1));
   const r1 = await evalFac(hdHier, []);
-  const legacy = await X.pg.evaluate(hd => { S.healthDaily = hd; return { pas: calcPasExtra(), tdee: calcTDEE() }; }, hdHier);
+  const legacy = await X.pg.evaluate(hd => { S.healthDaily = hd; const m = calcMacros(S.nutritionPhase); return { fonction: typeof calcPasExtra, tdee: calcTDEE(), cible: m.calories }; }, hdHier);
   T('H01', '⭐ AUCUN REPORT DES PAS D\'HIER : avec 20 000 pas hier et RIEN aujourd\'hui, l\'estimé d\'aujourd\'hui vaut sa référence, sans source « pas », et dit « pas du jour non reçus »', r1 && r1.extra === 0 && r1.sources.indexOf('pas') < 0 && r1.manques.indexOf('pas_du_jour') >= 0 && r1.estime === r1.ref, r1 && { extra: r1.extra, manques: r1.manques });
-  T('H02', '⛔ ET le lien HISTORIQUE de l\'objectif avec les pas n\'est PAS touché : `calcPasExtra()` continue de reprendre les pas d\'hier (+435 dans le TDEE), exactement comme avant — c\'est l\'étape 2, à décider par Michel', legacy.pas === 435 && legacy.tdee === 3121, legacy);
+  T('H02', '⭐ TD-C03 · LE LIEN HISTORIQUE AVEC LES PAS EST COUPÉ (NUT-TDEE-02, décision de Michel) : avec 20 000 pas HIER et rien aujourd\'hui, le TDEE vaut 2 686 et la cible 2 786 — l\'ancien calcul reprenait les pas d\'hier comme ceux d\'aujourd\'hui (+435 : 3 121 et 3 221) ; `calcPasExtra` n\'existe plus', legacy.fonction === 'undefined' && legacy.tdee === 2686 && legacy.cible === 2786, legacy);
   // ⭐ H3 — UN JOUR PASSÉ SE REJOUE SEUL : ce qui s'est passé depuis ne le change pas
   const ssAvantHier = [act('marche', 60, 312, '07:30', { date: avantHier })];
   const hdA = [{ date: avantHier, steps: 12200 }].concat(base30().slice(2));
@@ -383,6 +412,17 @@ async function blocH(c) {
     { date: AUJ, hd: [{ date: AUJ, steps: 40000 }].concat(Array.from({ length: 6 }, (_, i) => ({ date: c.jourISO(i + 1), steps: 6200 }))), ss: [act('marche', 60, 312, '07:00')] });
   T('H13', '⭐ LE JOUR NE FAIT PAS SA PROPRE HABITUDE : avec 6 jours d\'historique + aujourd\'hui (40 000 pas, une marche), l\'habitude de pas et d\'entraînement ne compte QUE les 6 jours d\'AVANT — donc « habitude de pas inconnue », pas de ligne « pas »',
     h6.hi.pasHors.length === 6 && h6.hi.pasHors.every(v => v === 6200) && h6.hi.entrainementsNet.length === 6 && h6.r && h6.r.manques.indexOf('habitude_pas') >= 0 && h6.r.sources.indexOf('pas') < 0, h6);
+  // ⭐ H14 · TD-C04 — LES PAS D'AUJOURD'HUI NE BOUGENT NI LA CIBLE NI LE « RESTE » D'HIER (mesuré avant : 786 sans pas, 1 221 avec 20 000 pas aujourd'hui)
+  const resteHier = async (pasAuj) => X.pg.evaluate(p => { S.sessions = []; S.healthDaily = p.hd; S.foodLog = [{ id: 'dj-h14', date: p.hier, name: 'Repas test', kcal: 2000, prot: 150, carbs: 220, fat: 70 }];
+    const r = _resteDuJour(p.hier), t = tendance14j(); return { reste: r && { kcal: r.kcal, prot: r.prot, carbs: r.carbs, fat: r.fat, cible: r.cible && r.cible.calories }, tendance: JSON.stringify(t) }; },
+    { hier, hd: (pasAuj == null ? [] : [{ date: AUJ, steps: pasAuj }]).concat(base30()) });
+  const rh0 = await resteHier(null), rh1 = await resteHier(20000), rh2 = await resteHier(40000);
+  T('H14', '⭐ TD-C04 · LE « RESTE » D\'HIER EST IDENTIQUE avec 0, 20 000 ou 40 000 pas aujourd\'hui (2 000 mangés hier → il reste 786 sur la cible de 2 786), et la carte « tendance 14 jours » aussi — avant : 786 → 1 221', rh0.reste && rh0.reste.kcal === 786 && J(rh0) === J(rh1) && J(rh0) === J(rh2), { rh0: rh0.reste, rh1: rh1.reste, rh2: rh2.reste, tendance: rh0.tendance === rh1.tendance && rh0.tendance === rh2.tendance });
+  // ⭐ H15 · TD-C03 — LE MAUVAIS JOUR DE L'AUDIT (08 h, 09 h, minuit, J+2) : la cible et le TDEE ne sautent plus (avant : 3 121 · 2 686 · 3 121 · 2 686)
+  const instants = [['2026-11-06T08:00:00+01:00', [{ date: hier, steps: 20000 }]], ['2026-11-06T09:00:00+01:00', [{ date: AUJ, steps: 5000 }, { date: hier, steps: 20000 }]], ['2026-11-07T00:01:00+01:00', [{ date: hier, steps: 20000 }, { date: AUJ, steps: 22000 }]], ['2026-11-08T00:01:00+01:00', [{ date: hier, steps: 20000 }, { date: AUJ, steps: 22000 }]]];
+  const saut = [];
+  for (const [quand, jours] of instants) { await X.pg.clock.setFixedTime(new Date(quand)); const r = await X.pg.evaluate(p => { S.sessions = []; S.healthDaily = p.jours.concat(p.base); const m = calcMacros(S.nutritionPhase); return { tdee: calcTDEE(), cible: m.calories }; }, { jours, base: base30().slice(2) }); saut.push(quand.slice(5, 16) + ' → ' + r.tdee + ' / ' + r.cible); }
+  T('H15', '⭐ TD-C03 · LE MAUVAIS JOUR : à 08 h (les seuls pas d\'hier), 09 h (un premier partiel), à minuit et à J+2, le TDEE reste 2 686 et la cible 2 786 — plus aucun saut de ±435 kcal sans que la personne ait rien fait', saut.every(x => /→ 2686 \/ 2786$/.test(x)), saut);
   T('H12', 'aucune erreur de page', X.errs.length === 0, X.errs);
   await fermer(X);
 }
@@ -423,41 +463,81 @@ async function blocA(c) {
 // BLOC N — non-régression : l'objectif, le TDEE, les macros et le lien HISTORIQUE avec les pas, À L'OCTET
 // ═════════════════════════════════════════════════════════════════════════════════
 async function blocN(c) {
-  const { T, ouvrir, fermer, act, muscu, srcSta, srcTrk, M } = c;
+  const { T, ouvrir, fermer, act, muscu, cardioSeul, srcSta, srcTrk, srcScr, M } = c;
+  const lireSrc = f => fs.readFileSync(path.join(ROOT, f), 'utf8');
   const X = await ouvrir({});
   const lire = (pas, ss) => X.pg.evaluate(p => { S.healthDaily = (p.pas == null ? [] : [{ date: '2026-11-06', steps: p.pas }]).concat(p.base); S.sessions = p.ss; const m = calcMacros(S.nutritionPhase), d = cibleDecomposition(S.nutritionPhase);
-    return { tdee: calcTDEE(), cible: m.calories, prot: m.prot_g, glu: m.carbs_g, lip: m.fat_g, pas: calcPasExtra(), deco: d && { tdee: d.tdee, pas: d.pas, cible: d.cible, base: d.base } }; }, { pas, ss, base: c.base30() });
-  /* ⭐ LES VALEURS DE LA VERSION PUBLIÉE (master e2b942f3), MESURÉES le 06/11/2026 avant tout développement (audit TDEE V2, `sonde_scenarios_moteur.js`) : le moteur V2 ne doit en changer AUCUNE. */
-  const PUBLIE = { S1: [2686, 2786, 0], S2: [2686, 2786, 0], S3: [3064, 3164, 378], S4: [3186, 3286, 500], S5: [3186, 3286, 500], S6: [3186, 3286, 500], S7: [3186, 3286, 500] };
+    return { tdee: calcTDEE(), cible: m.calories, prot: m.prot_g, glu: m.carbs_g, lip: m.fat_g, deco: d && { tdee: d.tdee, cible: d.cible, base: d.base, bmr: d.bmr, act: d.act, pas: d.pas } }; }, { pas, ss, base: c.base30() });
   const jeux = { S1: [5000, []], S2: [6500, [muscu(60, 330, '18:00')]], S3: [18200, [act('marche', 120, 623, '09:00')]], S4: [36600, [act('randonnee', 480, 3936, '08:00')]], S5: [40000, []], S6: [44600, [act('course', 240, 2788, '08:00')]],
     S7: [26900, [muscu(60, 330, '07:00'), act('marche', 120, 623, '10:00'), act('course', 60, 697, '17:00')]] };
+  /* ⭐ ÉTAPE 2 (06/11/2026, NUT-TDEE-02, décision explicite de Michel). Ce bloc disait, jusqu'ici, « l'objectif est à l'octet celui de la version publiée » et épinglait +378 à +500 kcal de pas
+     dans le TDEE. ⛔ Ces témoins IMPOSAIENT l'ancienne règle : ils sont REMPLACÉS (pas assouplis) par l'invariant inverse, prouvé par mutation (`tools/mut_tdee_v2.py`). */
+  const ref0 = await lire(null, []);
   const diffs = [];
-  for (const k of Object.keys(jeux)) { const r = await lire(...jeux[k]); if (r.tdee !== PUBLIE[k][0] || r.cible !== PUBLIE[k][1] || r.pas !== PUBLIE[k][2]) diffs.push(k + ' : ' + J([r.tdee, r.cible, r.pas]) + ' ≠ ' + J(PUBLIE[k])); }
-  T('N01', '⭐ L\'OBJECTIF EST À L\'OCTET CELUI DE LA VERSION PUBLIÉE : TDEE, cible et part des pas des sept scénarios (avec Apple Santé) sont exactement ceux mesurés sur master e2b942f3', diffs.length === 0, diffs);
-  const sans = []; for (const k of Object.keys(jeux)) { const r = await lire(null, jeux[k][1]); if (r.tdee !== 2686 || r.cible !== 2786 || r.pas !== 0) sans.push(k + ' : ' + J([r.tdee, r.cible, r.pas])); }
-  T('N02', '⭐ SANS APPLE SANTÉ : TDEE 2 686 et cible 2 786 quelle que soit l\'activité enregistrée (règle du 05/11 : une activité n\'augmente automatiquement ni le TDEE ni la cible)', sans.length === 0, sans);
-  const r4 = await lire(...jeux.S4);
-  T('N03', '⭐ LE LIEN HISTORIQUE AVEC LES PAS EST INTACT : la randonnée de 36 600 pas ajoute toujours +500 au TDEE (le plafond de l\'ancien moteur) pendant que l\'estimé du jour dit +3 280 — deux chiffres distincts, l\'objectif ne reçoit que l\'ancien', r4.pas === 500 && r4.tdee === 3186 && r4.cible === 3286 && r4.deco && r4.deco.pas === 500 && r4.deco.base === 2686, r4);
-  const courbe = await X.pg.evaluate(() => [7699, 7700, 12000, 18200, 22054, 30000, 40000].map(p => { S.healthDaily = [{ date: '2026-11-06', steps: p }].concat(Array.from({ length: 30 }, (_, i) => ({ date: new Date(Date.UTC(2026, 10, 6) - (i + 1) * 864e5).toISOString().slice(0, 10), steps: 6200 }))); return calcPasExtra(); }));
-  T('N04', '⭐ `_pasEcart` INCHANGÉ, falaise et plafond COMPRIS (ce sont des constats de l\'audit, pas des correctifs de cette étape) : 7 699 → 0 · 7 700 → 47 · 12 000 → 183 · 18 200 → 378 · 22 054 → 500 · 30 000 → 500 · 40 000 → 500', J(courbe) === J([0, 47, 183, 378, 500, 500, 500]), courbe);
+  for (const k of Object.keys(jeux)) { const r = await lire(...jeux[k]); if (J([r.tdee, r.cible, r.prot, r.glu, r.lip]) !== J([ref0.tdee, ref0.cible, ref0.prot, ref0.glu, ref0.lip])) diffs.push(k + ' : ' + J([r.tdee, r.cible, r.prot, r.glu, r.lip])); }
+  T('N01', '⭐ TD-C01 · LA CIBLE NE DÉPEND PLUS DES PAS : TDEE, cible ET macros des sept scénarios (de 5 000 à 44 600 pas, avec leurs activités) sont IDENTIQUES à ceux d\'un profil sans aucun pas — 2 686 · 2 786 (avant : +378 à +500 kcal, 3 164 à 3 286)', diffs.length === 0 && ref0.tdee === 2686 && ref0.cible === 2786 && ref0.glu > 0, { ref0, diffs });
+  const riche = [muscu(60, 330, '07:00'), act('marche', 120, 623, '09:00', { man: 340 }), act('randonnee', 480, 3936, '08:00', { date: c.jourISO(1) }), act('course', 240, 2788, '08:00'), cardioSeul('tapis', 'modere', 45, 338, '19:00', { man: 250 })];
+  const a0 = await lire(null, []), a1 = await lire(null, riche), a2 = await lire(40000, riche);
+  T('N02', '⭐ ITEM 3 · UNE ACTIVITÉ ENREGISTRÉE (musculation, marche avec valeur de montre, randonnée, course, cardio autonome), avec ou sans 40 000 pas, ne change NI le TDEE, NI la cible, NI les macros (règle du 05/11, désormais vraie pour les pas aussi)', J(a0) === J(a1) && J(a0) === J(a2) && a0.cible === 2786, { a0: [a0.tdee, a0.cible], a1: [a1.tdee, a1.cible], a2: [a2.tdee, a2.cible] });
+  // le chemin est FERMÉ et le reste fermé (R30 : un retrait écrit se fige, une absence aussi)
+  const tdeeSrc = sansCom(corps('calcTDEE', srcSta)).replace(/\s+/g, '');
+  const ferme = await X.pg.evaluate(() => ({ calcPasExtra: typeof calcPasExtra, ligneSousTdee: !!document.getElementById('nu-tdee-pas') }));
+  T('N03', '⛔ R30 · LE LIEN AVEC LES PAS EST COUPÉ ET FIGÉ : `calcPasExtra` n\'EXISTE PLUS ; le corps de `calcTDEE` ne lit ni `_pasEcart`, ni `healthDaily`, ni `steps` et garde ses TROIS termes (BMR × niveau + travail + sport) ; la ligne « +K kcal de pas » sous le TDEE n\'existe plus', ferme.calcPasExtra === 'undefined' && !ferme.ligneSousTdee && /calcBMR\(\)\*S\.activityLevel\+calcWorkExtra\(\)\+calcSportExtra\(\)/.test(tdeeSrc) && !/_pasEcart|calcPasExtra|healthDaily|steps/.test(tdeeSrc), { ferme, tdeeSrc: tdeeSrc.slice(0, 160) });
+  const courbe = await X.pg.evaluate(() => [7699, 7700, 12000, 40000].map(p => { S.healthDaily = [{ date: '2026-11-06', steps: p }].concat(Array.from({ length: 30 }, (_, i) => ({ date: new Date(Date.UTC(2026, 10, 6) - (i + 1) * 864e5).toISOString().slice(0, 10), steps: 6200 }))); const e = _pasEcart(); return e && { surplus: e.surplus, depasse: e.depasse, kcal: e.kcal }; }));
+  T('N04', '`_pasEcart` dit des PAS et plus jamais des calories : 7 699 pas → surplus 1 499 (non notable) · 7 700 → 1 500 (notable) · 12 000 → 5 800 · 40 000 → 33 800 ; aucune clé `kcal` (la conversion pas → kcal n\'a qu\'un propriétaire : le moteur de la dépense estimée, R2)', J(courbe.map(x => x && [x.surplus, x.depasse, x.kcal === undefined])) === J([[1499, false, true], [1500, true, true], [5800, true, true], [33800, true, true]]), courbe);
   // l'objectif ne connaît pas le moteur : par la source…
-  const objectif = ['calcTDEE', 'calcPasExtra', 'calcBMR', 'calcWorkExtra', 'calcSportExtra', '_autoKcalBrut', 'autoKcal', '_plancherKcal', 'calcMacros', 'cibleDecomposition'].map(n => [n, corps(n, srcSta)]);
+  const objectif = ['calcTDEE', 'calcBMR', 'calcWorkExtra', 'calcSportExtra', '_autoKcalBrut', 'autoKcal', '_plancherKcal', 'calcMacros', 'cibleDecomposition'].map(n => [n, corps(n, srcSta)]);
   const manquants = objectif.filter(([, s]) => !s).map(([n]) => n);
-  const touches = objectif.filter(([, s]) => /depenseDuJour|depenseEstimeeDuJour|depenseReference|_dj[A-Z]|\bdj[A-Z]|DJ_/.test(sansCom(s))).map(([n]) => n);
+  const touches = objectif.filter(([, s]) => /depenseDuJour|depenseEstimeeDuJour|depenseReference|djEcartObjectif|_dj[A-Z]|\bdj[A-Z]|DJ_|_pasEcart/.test(sansCom(s))).map(([n]) => n);
   const pas = corps('_pasEcart', srcTrk);
-  T('N05', '⭐⛔ L\'OBJECTIF NE CONNAÎT PAS LE MOTEUR (source) : aucune des fonctions du TDEE, de la cible et des macros ne cite la dépense du jour — ni `_pasEcart`', manquants.length === 0 && touches.length === 0 && pas && !/depenseDuJour|depenseEstimeeDuJour|depenseReference|_dj[A-Z]|DJ_/.test(sansCom(pas)), { manquants, touches });
+  T('N05', '⭐⛔ L\'OBJECTIF NE CONNAÎT NI LE MOTEUR NI LES PAS (source) : aucune des fonctions du TDEE, de la cible et des macros ne cite la dépense du jour ni `_pasEcart` ; et `_pasEcart` ne cite pas le moteur', manquants.length === 0 && touches.length === 0 && pas && !/depenseDuJour|depenseEstimeeDuJour|depenseReference|_dj[A-Z]|DJ_/.test(sansCom(pas)), { manquants, touches });
   // …et par le comportement : si le moteur plante, l'objectif ne bouge pas ; s'il est appelé pendant l'objectif, on le saurait
-  const piege = await X.pg.evaluate(p => { S.healthDaily = [{ date: '2026-11-06', steps: 36600 }].concat(p.base); S.sessions = p.ss; let appels = 0; const sauve = { a: window.depenseEstimeeDuJour, b: window.depenseDuJour, c: window.depenseReference };
-    window.depenseEstimeeDuJour = function () { appels++; throw new Error('piège'); }; window.depenseDuJour = window.depenseEstimeeDuJour; window.depenseReference = window.depenseEstimeeDuJour;
+  const piege = await X.pg.evaluate(p => { S.healthDaily = [{ date: '2026-11-06', steps: 36600 }].concat(p.base); S.sessions = p.ss; let appels = 0; const sauve = { a: window.depenseEstimeeDuJour, b: window.depenseDuJour, c: window.depenseReference, d: window._pasEcart };
+    window.depenseEstimeeDuJour = function () { appels++; throw new Error('piège'); }; window.depenseDuJour = window.depenseEstimeeDuJour; window.depenseReference = window.depenseEstimeeDuJour; window._pasEcart = window.depenseEstimeeDuJour;
     try { const m = calcMacros(S.nutritionPhase); const d = cibleDecomposition(S.nutritionPhase); const t = calcTDEE(); return { appels, cible: m.calories, tdee: t, deco: !!d }; } catch (e) { return { appels, err: String(e) }; }
-    finally { window.depenseEstimeeDuJour = sauve.a; window.depenseDuJour = sauve.b; window.depenseReference = sauve.c; } }, { base: c.base30(), ss: jeux.S4[1] });
-  T('N06', '⭐⛔ L\'OBJECTIF NE CONNAÎT PAS LE MOTEUR (comportement) : avec le moteur remplacé par un piège qui plante, la cible, le TDEE et la décomposition se calculent sans l\'appeler (0 appel)', piege.appels === 0 && piege.cible === 3286 && piege.tdee === 3186 && piege.deco === true, piege);
-  // la référence : recalculée À PART, sans copier la formule du moteur
+    finally { window.depenseEstimeeDuJour = sauve.a; window.depenseDuJour = sauve.b; window.depenseReference = sauve.c; window._pasEcart = sauve.d; } }, { base: c.base30(), ss: jeux.S4[1] });
+  T('N06', '⭐⛔ L\'OBJECTIF NE CONNAÎT NI LE MOTEUR NI LES PAS (comportement) : avec le moteur ET `_pasEcart` remplacés par un piège qui plante, la cible, le TDEE et la décomposition se calculent sans les appeler (0 appel) — 2 786 · 2 686', piege.appels === 0 && piege.cible === 2786 && piege.tdee === 2686 && piege.deco === true, piege);
+  // la référence : recalculée À PART, sans copier la formule du moteur — et elle EST le TDEE
   const refs = await X.pg.evaluate(() => { const rs = []; for (const w of ['bureau', 'debout', 'actif', 'physique']) for (const pal of [1.2, 1.55, 1.9]) for (const os of [null, 'velo']) { S.workType = w; S.activityLevel = pal; S.coachQuiz = os ? { answers: { othersport: os } } : null; S.healthDaily = []; const att = Math.round(calcBMR() * pal + { bureau: 0, debout: 200, actif: 325, physique: 450 }[w] + (os && pal < 1.725 ? 150 : 0)); rs.push([depenseReference(), att, calcTDEE()]); } return rs; });
-  T('N07', '⭐ LA RÉFÉRENCE = BMR × niveau + travail + sport, recalculée À PART sur 24 profils (4 métiers × 3 niveaux × avec/sans autre sport) : `depenseReference()` la retrouve à l\'unité près', refs.every(r => r[0] === r[1]), refs.filter(r => r[0] !== r[1]).slice(0, 3));
+  T('N07', '⭐ LA RÉFÉRENCE = BMR × niveau + travail + sport, recalculée À PART sur 24 profils (4 métiers × 3 niveaux × avec/sans autre sport) : `depenseReference()` la retrouve à l\'unité près, et vaut le TDEE (qui n\'a plus de terme de pas)', refs.every(r => r[0] === r[1] && r[2] === r[1]), refs.filter(r => r[0] !== r[1] || r[2] !== r[1]).slice(0, 3));
   const refPas = await X.pg.evaluate(() => { S.workType = 'bureau'; S.activityLevel = 1.55; S.coachQuiz = null; S.healthDaily = [{ date: '2026-11-06', steps: 40000 }].concat(Array.from({ length: 30 }, (_, i) => ({ date: new Date(Date.UTC(2026, 10, 6) - (i + 1) * 864e5).toISOString().slice(0, 10), steps: 6200 }))); return { ref: depenseReference(), tdee: calcTDEE() }; });
-  T('N08', 'la référence N\'INCLUT JAMAIS les pas (40 000 pas : TDEE 3 186, référence 2 686) — et c\'est le propriétaire unique de la formule qui la donne, pas une copie', refPas.ref === 2686 && refPas.tdee === 3186, refPas);
+  T('N08', 'LE TDEE ET LA RÉFÉRENCE N\'INCLUENT AUCUN PAS : avec 40 000 pas, TDEE 2 686 = référence 2 686 (avant : TDEE 3 186, référence 2 686 obtenue en retirant le terme de pas)', refPas.ref === 2686 && refPas.tdee === 2686, refPas);
   T('N09', 'aucune erreur de page', X.errs.length === 0, X.errs);
+  // ⭐ TD-C05 — la décomposition envoyée à Milo : trois termes, la somme tient
+  const deco = await X.pg.evaluate(() => { const out = []; for (const phase of ['charge', 'decharge']) for (const w of ['bureau', 'physique']) for (const avecPas of [false, true]) {
+      S.workType = w; S.activityLevel = 1.55; S.coachQuiz = { answers: { othersport: 'velo' } };
+      S.healthDaily = avecPas ? [{ date: '2026-11-06', steps: 40000 }].concat(Array.from({ length: 30 }, (_, i) => ({ date: new Date(Date.UTC(2026, 10, 6) - (i + 1) * 864e5).toISOString().slice(0, 10), steps: 6200 }))) : [];
+      const d = cibleDecomposition(phase), m = calcMacros(phase); out.push({ phase, w, avecPas, d, cible: m.calories }); } return out; });
+  const okDeco = deco.every(o => o.d && o.d.pas === undefined && o.d.cible === o.cible && o.d.base === Math.round(o.d.bmr * o.d.act) && o.d.base + o.d.travail + o.d.sport === o.d.tdee && Math.round(o.d.tdee + o.d.goalDelta + o.d.phaseAdj + o.d.lutealBonus) === o.d.brut);
+  T('N10', '⭐ TD-C05 · LA DÉCOMPOSITION DE LA CIBLE SANS TERME « pas » : sur 2 phases × 2 métiers × avec/sans 40 000 pas, `base` = BMR × niveau à l\'unité près, base + travail + sport = TDEE, TDEE + objectif + phase + bonus = brut, et la cible décomposée est celle de `calcMacros`', okDeco && deco.length === 8, deco.filter(o => !(o.d && o.d.pas === undefined && o.d.cible === o.cible)).slice(0, 2));
+  await X.pg.evaluate(() => { S.workType = 'bureau'; S.activityLevel = 1.55; S.coachQuiz = null; });   // le bloc a fait varier le profil (N07, N10) : on repart du profil de référence
+  // ⭐ ITEM 4 · MILO — la ligne des pas dit la vérité du code (et seulement pour AUJOURD'HUI)
+  const hierJ = c.jourISO(1);
+  const ctxMilo = async (hd, ss) => X.pg.evaluate(p => { S.sessions = p.ss; S.healthDaily = p.hd; const ctx = String(buildCoachContext() || ''), i = ctx.indexOf('BEAUCOUP MARCHÉ'); return { present: i >= 0, ligne: i >= 0 ? ctx.slice(i - 40, i + 1100) : '', detail: typeof _cibleDetailTxt === 'function' ? _cibleDetailTxt() : '' }; }, { hd, ss });
+  const mAuj = await ctxMilo([{ date: AUJ, steps: 15000 }].concat(c.base30()), []), mHier = await ctxMilo([{ date: hierJ, steps: 15000 }].concat(c.base30().slice(1)), []), mCalme = await ctxMilo([{ date: AUJ, steps: 6100 }].concat(c.base30()), []);
+  const mSans = await ctxMilo(c.base30(), []);
+  T('N11', '⭐ ITEM 4 · MILO : le surplus de pas d\'AUJOURD\'HUI est dit en pas (« 15 000 pas, soit 8 800 de plus »), avec « ne changent PAS son objectif calorique ni son TDEE » et l\'interdit d\'inventer l\'activité — la phrase « DÉJÀ ajoutées à son TDEE » a disparu ; les pas d\'HIER, une journée ordinaire ou aucun pas ne produisent AUCUNE ligne',
+    mAuj.present && /15[\s  ]000 pas, soit 8[\s  ]800 de plus/.test(mAuj.ligne) && /ne changent PAS son objectif calorique ni son TDEE/.test(mAuj.ligne) && /Tu ne sais PAS de quoi il s'agit/.test(mAuj.ligne) && !/DÉJÀ ajoutées/.test(mAuj.ligne) && !/kcal sont/.test(mAuj.ligne)
+    && !mHier.present && !mCalme.present && !mSans.present, { auj: mAuj.ligne.slice(0, 420), hier: mHier.present, calme: mCalme.present, sans: mSans.present });
+  const dSansPas = (await ctxMilo(c.base30().slice(0, 0), [])).detail;
+  T('N12', '⭐ ITEM 4 · MILO : le calcul de la cible qu\'il reçoit n\'a plus de terme « pas » (« … travail … autre sport ; puis objectif … ») et il est IDENTIQUE avec ou sans 40 000 pas', mAuj.detail === dSansPas && mAuj.detail.length > 50 && /autre sport ; puis objectif/.test(mAuj.detail) && !/[+−]\d+ pas\b/.test(mAuj.detail), { avec: mAuj.detail.slice(0, 260), sans: dSansPas.slice(0, 260) });
+  // ⭐ ITEM 4 · PROGRÈS — la carte « Tes pas » parle en PAS, nomme son jour, ne parle plus de calories de cible
+  const carte = async (hd, deplier) => X.pg.evaluate(p => { S.healthDaily = p.hd; if (p.deplier && !_pasHistOpen) togglePasHist(); else if (!p.deplier && _pasHistOpen) togglePasHist(); renderPasCard(); const el = document.getElementById('pas-card'); return { visible: !!el && el.style.display !== 'none', txt: el ? el.textContent.replace(/\s+/g, ' ') : '' }; }, { hd, deplier });
+  const cAuj = await carte([{ date: AUJ, steps: 15000 }].concat(c.base30()), false), cDepl = await carte([{ date: AUJ, steps: 15000 }].concat(c.base30()), true), cHier = await carte([{ date: hierJ, steps: 15000 }].concat(c.base30().slice(1)), false), cSansBase = await carte([{ date: AUJ, steps: 15000 }, { date: hierJ, steps: 6000 }], false);
+  const sp = t => t.replace(/[  ]/g, ' ');
+  T('N13', '⭐ ITEM 4 · PROGRÈS : la carte « Tes pas » dit « 15 000 pas · aujourd\'hui · 8 800 de plus que ton habitude » (jamais de kcal), nomme « hier » quand ce sont les pas d\'hier (au lieu de les prendre pour ceux d\'aujourd\'hui), dit « habitude pas encore connue » sous 7 jours — et, dépliée, que les jours en vert comptent dans la dépense ESTIMÉE, « pas dans ton objectif alimentaire »',
+    cAuj.visible && /15 000 pas · aujourd'hui · 8 800 de plus que ton habitude/.test(sp(cAuj.txt)) && !/kcal/i.test(cAuj.txt) && /15 000 pas · hier · 8 800 de plus/.test(sp(cHier.txt)) && !/aujourd'hui/.test(cHier.txt.split('Moyenne')[0]) && /habitude pas encore connue/.test(cSansBase.txt) && /ta dépense estimée du jour \(onglet Nutrition\), pas dans ton objectif alimentaire/.test(cDepl.txt) && !/s'ajoute/.test(cDepl.txt),
+    { auj: sp(cAuj.txt).slice(0, 120), hier: sp(cHier.txt).slice(0, 120), sansBase: cSansBase.txt.slice(0, 120), depl: cDepl.txt.slice(-330) });
+  // ⭐ ITEM 4 · ACCUEIL — « ce qu'il te reste » et le reste du jour ne bougent pas avec les pas (TD-U03)
+  const accueil = async (pasAuj) => X.pg.evaluate(p => { S.sessions = []; S.healthDaily = p.pas == null ? p.base : [{ date: p.auj, steps: p.pas }].concat(p.base); S.foodLog = [{ id: 'dj-n14', date: p.auj, name: 'Repas test', kcal: 1200, prot: 80, carbs: 120, fat: 40 }]; const r = _resteDuJour(p.auj); return { reste: r && { kcal: r.kcal, prot: r.prot, carbs: r.carbs, fat: r.fat }, bloc: typeof _blocResteHTML === 'function' ? _blocResteHTML(p.auj) : null }; }, { pas: pasAuj, base: c.base30(), auj: AUJ });
+  const ac0 = await accueil(null), ac1 = await accueil(20000), ac2 = await accueil(40000);
+  T('N14', '⭐ ITEM 4 · ACCUEIL (TD-U03) : « ce qu\'il te reste » est IDENTIQUE avec 0, 20 000 ou 40 000 pas aujourd\'hui (1 200 mangés → il reste 1 586 sur la cible de 2 786) — le reste du jour ne bouge plus avec les pas', ac0.reste && ac0.reste.kcal === 1586 && J(ac0) === J(ac1) && J(ac0) === J(ac2), { ac0: ac0.reste, ac1: ac1.reste, ac2: ac2.reste });
+  // ⭐ ITEM 4 · NUTRITION — le TDEE n'affiche plus de ligne de pas, et AUCUN texte vivant ne dit que les pas s'ajoutent à la dépense ou à l'objectif
+  const nutri = await X.pg.evaluate(p => { S.sessions = []; S.healthDaily = [{ date: p.auj, steps: 15000 }].concat(p.base); goScreen('nutrition', document.getElementById('nb-nutrition')); renderNutrition(); return { ligne: !!document.getElementById('nu-tdee-pas'), tdee: (document.getElementById('nu-tdee') || {}).textContent }; }, { base: c.base30(), auj: AUJ });
+  const vivants = { 'coach.js': lireSrc('coach.js'), 'screens.js': srcScr, 'tracking.js': srcTrk, 'app.js': lireSrc('app.js'), 'index.html': lireSrc('index.html') };
+  const interdits = [/DÉJÀ ajoutées à son TDEE/, /s\\?'ajoute(?:nt)? (?:enfin )?à ta dépense/, /affichées sous ton TDEE/, /borné à 500 kcal/, /ajoutées à ta dépense du jour/, /getElementById\('nu-tdee-pas'\)/];
+  const trouves = []; for (const [f, src] of Object.entries(vivants)) for (const re of interdits) if (re.test(f === 'index.html' ? src : sansCom(src))) trouves.push(f + ' : ' + re);
+  T('N15', '⭐ ITEM 4 · NUTRITION et textes VIVANTS : le TDEE n\'a plus de ligne « 🚶 +K kcal », et ni l\'aide « ? », ni la diapo du Guide, ni la carte de Progrès, ni Milo ne contiennent plus « s\'ajoute à ta dépense », « DÉJÀ ajoutées à son TDEE », « affichées sous ton TDEE » ou « borné à 500 kcal » (les annonces DATÉES — pop-up v65, point rouge — ne sont pas réécrites : on ne falsifie pas ce qui a été annoncé ce jour-là)', !nutri.ligne && trouves.length === 0, { nutri, trouves });
   await fermer(X);
 }
 
@@ -466,7 +546,7 @@ async function blocN(c) {
 // ═════════════════════════════════════════════════════════════════════════════════
 async function blocE(c) {
   const { T, ouvrir, fermer, act, muscu } = c;
-  const X = await ouvrir({ sessions: [muscu(60, 330, '07:00'), act('marche', 120, 623, '09:00'), act('randonnee', 480, 3936, '08:00', { date: c.jourISO(2) })], hd: [{ date: AUJ, steps: 18200 }].concat(c.base30()) });
+  const X = await ouvrir({ sessions: [muscu(60, 330, '07:00'), act('marche', 120, 623, '09:00'), act('course', 240, 2788, '12:00'), act('randonnee', 480, 3936, '08:00', { date: c.jourISO(2) })], hd: [{ date: AUJ, steps: 18200 }].concat(c.base30()) });
   const externes = []; X.pg.on('request', rq => { if (!/^http:\/\/localhost:/.test(rq.url())) externes.push(rq.url().slice(0, 90)); });
   /* ⭐ ON OBSERVE LES DEUX POINTS D'ENTRÉE DE LA V2 DÈS LE TOUT PREMIER APPEL — avant même d'ouvrir Nutrition (campagne de mutations du 06/11 : une clé écrite « une seule fois », au premier calcul, passait entre
      les mailles d'un instantané pris après la navigation — mutation M54). Les compteurs ne comptent que ce qui se passe PENDANT un appel de la V2 : l'écran Nutrition, lui, a ses propres écritures légitimes. */
@@ -505,9 +585,10 @@ async function blocU(c) {
   let X = await ouvrir({ sessions: [act('randonnee', 480, 3936, '08:00', { man: 2700 })], hd: [{ date: AUJ, steps: 36600 }].concat(c.base30()) });
   let k = await carte(X);
   const mk = await X.pg.evaluate(() => document.getElementById('m-kcal').textContent.replace(/\s/g, ''));
-  T('U01', '⭐ TROIS VALEURS DISTINCTES : « Référence », « Estimée aujourd\'hui » et « Objectif alimentaire » ont chacune leur ligne, avec leur propre chiffre (2 686 · ≈ 5 386 · 3 286)', k && /Référence\s*2\s?686 kcal/.test(k.txt.replace(/[  ]/g, ' ')) && /Estimée aujourd'hui\s*≈\s*5\s?386 kcal/.test(k.txt.replace(/[  ]/g, ' ')) && /Objectif alimentaire\s*3\s?286 kcal/.test(k.txt.replace(/[  ]/g, ' ')), k && k.txt.slice(0, 300));
+  T('U01', '⭐ TROIS VALEURS DISTINCTES : « Référence », « Estimée aujourd\'hui » et « Objectif alimentaire » ont chacune leur ligne, avec leur propre chiffre (2 686 · ≈ 5 386 · 2 786)', k && /Référence\s*2\s?686 kcal/.test(k.txt.replace(/[  ]/g, ' ')) && /Estimée aujourd'hui\s*≈\s*5\s?386 kcal/.test(k.txt.replace(/[  ]/g, ' ')) && /Objectif alimentaire\s*2\s?786 kcal/.test(k.txt.replace(/[  ]/g, ' ')), k && k.txt.slice(0, 300));
   T('U02', '⭐ la FOURCHETTE et la PROVENANCE sont à l\'écran : « de 4 846 à 5 926 », « Randonnée · 8 h : +2 700 valeur saisie (montre), activité seule · ± 20 % »', k && /de 4\s?846 à 5\s?926/.test(k.txt.replace(/[  ]/g, ' ')) && /Randonnée · 8 h : \+2\s?700 valeur saisie \(montre\), activité seule/.test(k.txt.replace(/[  ]/g, ' ')), k && k.txt.slice(60, 420));
-  T('U03', '⭐ L\'OBJECTIF AFFICHÉ EST LE VRAI (celui de `m-kcal`, 3 286) et la part des pas de la règle actuelle est DITE (« inclut +500 kcal de pas ») — rien n\'est caché de l\'ancien lien', mk === '3286' && ((k.txt.replace(/[\u00a0\u202f]/g, ' ').match(/Objectif alimentaire\s*(\d[\d ]*) kcal/) || [])[1] || '').replace(/\s/g, '') === mk && /inclut \+500 kcal de pas \(règle actuelle\)/.test(k.txt.replace(/[  ]/g, ' ')) && /ne dépend pas de l'estimée ci-dessus/.test(k.txt), { mk });
+  const objCarte = ((k && k.txt.replace(/[\u00a0\u202f]/g, ' ').match(/Objectif alimentaire\s*(\d[\d ]*) kcal/)) || [])[1];
+  T('U03', '⭐ L\'OBJECTIF AFFICHÉ EST LE VRAI (celui de `m-kcal`, 2 786) : la carte le lit, ne le recalcule pas ; il ne dépend NI de l\'estimée NI des pas, et la carte ne parle plus d\'une « règle actuelle » de pas (retirée le 06/11, NUT-TDEE-02)', mk === '2786' && objCarte && objCarte.replace(/\s/g, '') === mk && /ne dépend ni de l'estimée ci-dessus ni de tes pas/.test(k.txt) && !/inclut|règle actuelle|de pas \(/.test(k.txt), { mk, objCarte });
   T('U04', '⭐ LA NOTE D\'INFORMATION est là, mot pour mot, et AUCUN mot du reste de la carte n\'invite à manger plus (« tu peux », « autorisé », « budget », « rattraper », « compenser », « bonus »)', k && k.txt.indexOf(NOTE) >= 0 && !/peux manger|autoris|budget|rattrap|compens|bonus|tu as le droit|en plus à manger/i.test(k.txt.replace(NOTE, '')), k && k.txt.replace(NOTE, '').slice(0, 200));
   const w = await X.pg.evaluate(() => { const e = document.getElementById('nu-dj'); const r = e.getBoundingClientRect(); return { carteDroite: Math.round(r.right), vue: window.innerWidth, debordeDoc: document.documentElement.scrollWidth > window.innerWidth + 1 }; });
   T('U05', 'à 390 px la carte tient dans l\'écran, sans débordement horizontal', w.carteDroite <= w.vue && !w.debordeDoc, w);
@@ -561,11 +642,40 @@ async function blocU(c) {
   k = await carte(X);
   T('U19', '⭐ FENÊTRE : « 7 derniers jours » compte la marche d\'il y a 6 jours (100) et PAS celle d\'il y a 7 jours (400) — 100 kcal, jamais 500', k && /7 derniers jours\s*100 kcal/.test(txtN(k)) && !/500 kcal/.test(txtN(k)) && !/Aujourd'hui\s*\d/.test(sectionEnreg(txtN(k))), k && sectionEnreg(txtN(k)).slice(0, 220));
   await fermer(X);
+  // ── ITEM 6 · L'INFORMATION PRUDENTE : un effort EXCEPTIONNEL est nommé, jamais compensé dans l'objectif ──
+  const alerte = async X => X.pg.evaluate(() => { const e = document.getElementById('nu-dj-alerte'); return e && e.style.display !== 'none' ? e.textContent.replace(/\s+/g, ' ').trim() : null; });
+  X = await ouvrir({ sessions: [act('randonnee', 480, 3936, '08:00', { man: 2700 })], hd: [{ date: AUJ, steps: 36600 }].concat(c.base30()) });
+  k = await carte(X);
+  const alR = await alerte(X), mkR = await X.pg.evaluate(() => document.getElementById('m-kcal').textContent.replace(/\s/g, ''));
+  T('U20', '⭐ ITEM 6 · UNE RANDONNÉE DE 8 H (estimée ≈ 5 386, objectif 2 786) fait apparaître l\'information prudente — « Journée d\'effort exceptionnel : ta dépense estimée dépasse ton objectif d\'environ 2 600 kcal (estimation, pas une mesure). Ton objectif ne change pas. » — et l\'objectif reste 2 786',
+    !!alR && /Journée d'effort exceptionnel/.test(alR) && /dépasse ton objectif d'environ 2[\s\u202f\u00a0]600 kcal \(estimation, pas une mesure\)/.test(alR) && /Ton objectif ne change pas/.test(alR) && mkR === '2786', { alR, mkR });
+  T('U22', '⭐ ITEM 6 · LE TON : neutre et prudent — « c\'est une information, pas une consigne », « s\'il se répète », « professionnel de santé » ; AUCUN mot qui dise quoi manger (« manger », « mange », « rattraper », « compenser », « autoriser », « budget », « bonus », « tu peux »)',
+    !!alR && /information, pas une consigne/.test(alR) && /s'il se répète/.test(alR) && /professionnel de santé/.test(alR) && !/manger|mange|rattrap|compens|autoris|budget|bonus|tu peux|il faut|tu dois/i.test(alR), { alR });
+  await fermer(X);
+  X = await ouvrir({ sessions: [act('marche', 120, 623, '09:00')], hd: c.base30() });
+  k = await carte(X);
+  const alM = await alerte(X);
+  await X.pg.evaluate(() => { S.manualKcal = 1500; renderNutrition(); }); await X.pg.waitForTimeout(250);
+  const alBas = await alerte(X), objBas = ((await carte(X)).txt.replace(/[\u00a0\u202f]/g, ' ').match(/Objectif alimentaire\s*(\d[\d ]*) kcal/) || [])[1];
+  T('U21', '⭐ ITEM 6 · PAS DE FAUX POSITIF : 2 h de marche (+459, estimée ≈ 3 145) ne déclenchent rien ; et avec une CIBLE BASSE choisie à la main (1 500, écart de 1 645 avec la dépense) rien non plus — l\'effort n\'est pas exceptionnel, c\'est la cible qui est basse',
+    alM === null && alBas === null && objBas && objBas.replace(/\s/g, '') === '1500', { alM, alBas, objBas });
+  // le seuil, vu à l'écran : écart de 1 000 pile → oui ; 999 → non (objectif fixé à la main, estimée de 5 386)
+  await fermer(X);
+  X = await ouvrir({ sessions: [act('randonnee', 480, 3936, '08:00', { man: 2700 })], hd: [{ date: AUJ, steps: 36600 }].concat(c.base30()) });
+  await carte(X);
+  const seuil = []; for (const obj of [4386, 4387]) { await X.pg.evaluate(o => { S.manualKcal = o; renderNutrition(); }, obj); await X.pg.waitForTimeout(200); seuil.push(await alerte(X)); }
+  T('U23', '⭐ ITEM 6 · LE SEUIL, VU À L\'ÉCRAN : objectif fixé à 4 386 (écart de 1 000 pile avec l\'estimée 5 386) → l\'information apparaît ; à 4 387 (999) → elle disparaît', seuil[0] !== null && /d'environ 1[\s\u202f\u00a0]000 kcal/.test(seuil[0]) && seuil[1] === null, seuil);
+  await fermer(X);
   // ── la source de l'écran ──
   T('U17', '⛔ SOURCE : `_renderDepenseJour` n\'ÉCRIT rien et n\'appelle ni `persist` ni une synchronisation, et son appel dans `renderNutrition` ne bloque jamais l\'écran (try/catch)',
     (s => !/persist\s*\(|_cloudSync|localStorage|fetch\s*\(|S\.\w+\s*=[^=]/.test(sansCom(s)))(corps('_renderDepenseJour', srcScr)) && /try\{\s*_renderDepenseJour\(\);\s*\}catch\(e\)/.test(srcScr), '');
+  /* ⭐ ÉTAPE 2 : l'étape 1 GELAIT `_HELP_DATA` (zone de Claude Principal) ; la décision de Michel du 06/11 demande EXPRESSÉMENT de corriger les textes qui présentent les pas comme des calories ajoutées à l'objectif
+     — dont les deux conseils d'aide « ? » (Nutrition, Progrès). Le témoin ne gèle donc plus la zone : il vérifie que ces deux conseils disent la NOUVELLE règle, et rien d'autre n'est exigé de `_HELP_DATA`. */
   const aide = (srcScr.match(/const _HELP_DATA\s*=\s*\{[\s\S]*?\n\};/) || [''])[0];
-  T('U18', '⛔ SOURCE : l\'aide « ? » de Nutrition (`_HELP_DATA`, zone de Claude Principal) n\'est PAS modifiée par cette étape — la zone est bien trouvée (plus de 5 000 caractères) et ne cite pas la nouvelle carte', aide.length > 5000 && !/nu-dj|Dépense et objectif|depenseDuJour/.test(aide), aide.length);
+  const tipN = (aide.match(/\{i:'🚶',t:'<b>Tes grosses journées de marche comptent[^\n]*/) || [''])[0], tipP = (aide.match(/\{i:'🚶',t:'<b>« Tes pas »<\/b>[^\n]*/) || [''])[0];
+  T('U18', '⭐ ITEM 4 · L\'AIDE « ? » de Nutrition et de Progrès dit la NOUVELLE règle : les pas comptent dans la dépense ESTIMÉE du jour, « jamais dans ton objectif » (Nutrition : « Ton objectif ne bouge pas avec tes pas », « pas des calories en plus à manger » ; Progrès : « jamais dans ton objectif alimentaire ») — et ne contient plus « ~290 kcal », « borné à 500 kcal », « affichées sous ton TDEE » ni « s\'ajoutent à ta dépense »',
+    aide.length > 5000 && /dépense ESTIMÉE du jour — jamais dans ton objectif/.test(tipN) && /Ton objectif ne bouge pas avec tes pas/.test(tipN) && /pas des calories en plus à manger/.test(tipN) && !/290 kcal|borné à 500|affichées sous ton TDEE/.test(tipN)
+    && /dépense <b>estimée<\/b> du jour/.test(tipP) && /jamais dans ton objectif alimentaire/.test(tipP) && !/s\\'ajoutent à ta dépense/.test(tipP), { nutrition: tipN.slice(0, 200), progres: tipP.slice(0, 200) });
 }
 
 module.exports = { ecran };

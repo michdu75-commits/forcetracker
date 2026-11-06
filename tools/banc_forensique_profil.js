@@ -78,7 +78,7 @@ const LIRE = `(() => {
   let workExtra=null, sportExtra=null, pasExtra=null;
   try { workExtra = calcWorkExtra(); } catch(e) { workExtra='ERR'; }
   try { sportExtra = calcSportExtra(); } catch(e) { sportExtra='ERR'; }
-  try { pasExtra = calcPasExtra(); } catch(e) { pasExtra='ERR'; }
+  try { pasExtra = (typeof calcPasExtra==='function') ? calcPasExtra() : 0; } catch(e) { pasExtra='ERR'; }   // 06/11/2026 (NUT-TDEE-02) : terme retire du TDEE → 0
   return {
     S: { age:n(S.age), height:n(S.height), bw:n(S.bw), gender:n(S.gender),
          activityLevel:n(S.activityLevel), workType:n(S.workType), smoker:n(S.smoker),
@@ -269,7 +269,7 @@ let PORT = 0;
         __note: 'si un nombre sort alors que le poids est absent, un defaut silencieux est applique' };
       // ces calories entrent-elles dans le TDEE ?
       out.dans_le_tdee = { sportExtra: (()=>{try{return calcSportExtra();}catch(e){return 'ERR';}})(),
-        pasExtra: (()=>{try{return calcPasExtra();}catch(e){return 'ERR';}})(),
+        pasExtra: (()=>{try{return (typeof calcPasExtra==='function') ? calcPasExtra() : 0;}catch(e){return 'ERR';}})(),
         tdee: (()=>{try{return calcTDEE();}catch(e){return 'ERR';}})() };
       return out;
     }, { A: SYNTH_A });

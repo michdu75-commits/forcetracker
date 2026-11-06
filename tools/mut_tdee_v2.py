@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""CONTROLE NEGATIF — TDEE V2, ETAPE 1 « DEPENSE DU JOUR » (06/11/2026, session-C, Claude N°2 Seance) : les temoins C-TDEE-* savent-ils ROUGIR ?
+"""CONTROLE NEGATIF — TDEE V2, ETAPES 1 « DEPENSE DU JOUR » ET 2 « LES PAS NE MODIFIENT PLUS L'OBJECTIF » (06/11/2026, session-C, Claude N°2 Seance) : les temoins C-TDEE-* savent-ils ROUGIR ?
 
 [!!] DANS LA COPIE MUTEE : chaque mutation est appliquee a un ARBRE COPIE, jamais au depot (BUGS.md §60).
 Point de depart : 0 rouge sur l'arbre sain (TOUS les blocs), mesure d'abord ; l'arbre sain est REJOUE a la fin (banc stable).
@@ -21,7 +21,7 @@ _ICI = os.path.dirname(os.path.abspath(__file__))
 _spec = importlib.util.spec_from_file_location('mut_autre_activite', os.path.join(_ICI, 'mut_autre_activite.py'))
 m = importlib.util.module_from_spec(_spec); _spec.loader.exec_module(m)
 SRC, FICHIERS = m.SRC, m.FICHIERS
-ST, SC, TR, IX = m.ST, m.SC, m.TR, m.IX
+ST, SC, TR, IX, CO, AP = m.ST, m.SC, m.TR, m.IX, m.CO, m.AP
 T = 'C-TDEE-'
 
 # (nom, [(fichier, ancien, nouveau)], attendu, temoin, blocs)
@@ -112,23 +112,23 @@ MUT = [
     # ── non-negatif · les adaptateurs ─────────────────────────────────────────────────────────────────────────────
     ('M39 la cle « jamais negatif » disparait (un jour calme avec un sport declare retranche de la reference)',
      [(TR, "const netEntr = Math.max(0, netTot - alloc), kf", "const netEntr = netTot - alloc, kf"), (TR, "extra = Math.max(0, extra); lo = Math.max(0, lo); hi = Math.max(0, hi);", "")], 'GARDE', T + 'P25', 'P,A,S'),
-    ('M40 la reference garde le surplus de pas (elle ne vaut plus BMR × niveau + travail + sport)',
-     [(TR, "return t - calcPasExtra(refTs); }", "return t; }")], 'GARDE', T + 'N08', 'N,S'),
+    ('M40 la reference redevient fonction des pas : un ecart de pas notable s\'ajoute a la reference (elle ne vaut plus le TDEE du profil)',
+     [(TR, "function depenseReference() { try { return calcTDEE(); } catch (e) { return null; } }", "function depenseReference() { try { const t = calcTDEE(), e = (typeof _pasEcart === 'function') ? _pasEcart() : null; return (t != null && e && e.depasse) ? t + 100 : t; } catch (e) { return null; } }")], 'GARDE', T + 'N08', 'N,S'),
     ('M41 l\'adaptateur ne transmet plus la valeur de montre saisie (elle est perdue, l\'estimation reprend)',
      [(TR, "kcalMontreActive: k.manuelle,", "kcalMontreActive: undefined,")], 'GARDE', T + 'S114', 'S,D'),
     ('M42 l\'adaptateur ignore le cardio fait AVANT la seance de musculation',
      [(TR, "[s.cardioAvant, s.cardio].forEach(b => {", "[s.cardio].forEach(b => {")], 'GARDE', T + 'S118', 'S'),
-    # ── L'OBJECTIF EST INTACT — rien ne le couple au moteur, et son lien historique avec les pas reste ───────────────
+    # ── L'OBJECTIF NE DEPEND PLUS DES PAS (etape 2) — la reference est le TDEE du profil, le « reste » ne bouge pas, l'estimee n'est jamais une consigne ─────────────────────
     ('M43 ⛔ la CIBLE alimentaire est augmentee du « en plus » du jour (l\'estimee redevient une consigne)',
      [(ST, "  return tdee+goalDelta+phaseAdj+lutealBonus;\n}", "  return tdee+goalDelta+phaseAdj+lutealBonus+(typeof depenseEstimeeDuJour==='function'?((depenseEstimeeDuJour()||{}).extra||0):0);\n}")], 'GARDE', T + 'N01', 'N'),
-    ('M44 ⛔ l\'etape 2 est faite en cachette : `calcTDEE` ne contient plus le surplus de pas (l\'objectif change)',
-     [(ST, "return Math.round(calcBMR()*S.activityLevel+calcWorkExtra()+calcSportExtra()+calcPasExtra(refTs));", "return Math.round(calcBMR()*S.activityLevel+calcWorkExtra()+calcSportExtra());")], 'GARDE', T + 'N03', 'N'),
-    ('M45 ⛔ la falaise de 1 500 pas de la regle ACTUELLE est « reparee » (l\'objectif change)',
-     [(TR, "Math.round((surplus/PAS_PAR_KM)*((typeof S!=='undefined'&&S.bw)||80)*0.5))", "Math.round(((surplus-PAS_SEUIL)/PAS_PAR_KM)*((typeof S!=='undefined'&&S.bw)||80)*0.5))")], 'GARDE', T + 'N04', 'N'),
-    ('M46 ⛔ le plafond de 500 kcal de la regle ACTUELLE est retire (l\'objectif change)',
-     [(TR, "? Math.min(PAS_MAX_KCAL,", "? Math.min(PAS_MAX_KCAL*100,")], 'GARDE', T + 'N04', 'N'),
-    ('M47 ⛔ [deguisee] les pas d\'HIER n\'entrent plus dans l\'objectif d\'aujourd\'hui (le report de la regle ACTUELLE est corrige)',
-     [(TR, "if(!(age>=0)||age>1) return null;", "if(!(age>=0)||age>0) return null;")], 'GARDE', T + 'H02', 'H'),
+    ('M44 ⛔ l\'etape 2 est DEFAITE en cachette : `calcTDEE` reprend le surplus de pas, plafonne a 500 (la cible monte de nouveau avec les pas)',
+     [(ST, "return Math.round(calcBMR()*S.activityLevel+calcWorkExtra()+calcSportExtra());", "return Math.round(calcBMR()*S.activityLevel+calcWorkExtra()+calcSportExtra()+(()=>{const e=(typeof _pasEcart==='function')?_pasEcart():null;return (e&&e.depasse)?Math.min(500,Math.round((e.surplus/1300)*(S.bw||80)*0.5)):0;})());")], 'GARDE', T + 'N01', 'N,H,S'),
+    ('M45 ⛔ le seuil « notable » de `_pasEcart` passe de 1 500 a 150 pas (tout ecart ordinaire devient un « effort »)',
+     [(TR, "const PAS_SEUIL      = 1500;", "const PAS_SEUIL      = 150; ")], 'GARDE', T + 'N04', 'N'),
+    ('M46 ⛔ [deguisee] le « reste » du jour (Accueil) ajoute le « en plus » estime : l\'estimee redevient une consigne (le reste monte avec les pas)',
+     [(AP, "kcal:  r(cible.calories - tot.kcal),", "kcal:  r(cible.calories - tot.kcal + ((typeof depenseEstimeeDuJour === 'function') ? ((depenseEstimeeDuJour() || {}).extra || 0) : 0)),")], 'GARDE', T + 'N14', 'N,H'),
+    ('M47 [deguisee] la carte « Tes pas » (Progres) ignore la veille : les pas d\'hier ne sont plus nommes « hier »',
+     [(TR, "if(!(age>=0)||age>1) return null;", "if(!(age>=0)||age>0) return null;")], 'GARDE', T + 'N13', 'N'),
     # ── AUCUN EFFET DE BORD ───────────────────────────────────────────────────────────────────────────────────────
     ('M48 ⛔ le moteur lit l\'horloge (`Date.now`)',
      [(TR, "const P = DJ_PARAMS, U = P.INCERT;\n  if (!profil", "const P = DJ_PARAMS, U = P.INCERT; const _t0 = Date.now();\n  if (!profil")], 'GARDE', T + 'P30', 'P'),
@@ -163,8 +163,6 @@ MUT = [
      [(SC, "(extra ? '≈ ' : '') + k(r.estime)", "k(r.estime)")], 'GARDE', T + 'U01', 'U'),
     ('M63 ⛔ l\'objectif affiche est l\'ESTIMEE (la cible reelle `calcMacros` n\'est plus montree)',
      [(SC, "(m && m.calories != null) ? k(m.calories) : '—'", "k(r.estime)")], 'GARDE', T + 'U03', 'U'),
-    ('M64 ⛔ la part des pas que la regle actuelle met encore dans l\'objectif n\'est plus dite',
-     [(SC, "(pasLegacy > 0 ? ' · inclut +' + _fmtKcal(pasLegacy) + ' kcal de pas (règle actuelle)' : '')", "''")], 'GARDE', T + 'U03', 'U'),
     ('M65 la fenetre « 7 derniers jours » de la depense enregistree passe a 8 jours',
      [(SC, "d0.setDate(d0.getDate() - 6);\n  const d7", "d0.setDate(d0.getDate() - 7);\n  const d7")], 'GARDE', T + 'U19', 'U'),
     ('M66 ⛔ l\'affichage ECRIT (appel de `persist` dans la carte)',
@@ -179,11 +177,62 @@ MUT = [
      [(TR, "if (r) { r.date = d;", "if (r) { if (!S._dj) S._dj = 1; r.date = d;")], 'GARDE', T + 'E04', 'E'),
     ('M74 ⛔ la carte ecrit dans le stockage local au premier affichage',
      [(SC, "const k = n => _fmtKcal(n) + ' kcal';", "try { localStorage.setItem('ft4_dj_vu', '1'); } catch (e) {} const k = n => _fmtKcal(n) + ' kcal';")], 'GARDE', T + 'E01', 'E,U'),
+    # ── ETAPE 2 (NUT-TDEE-02) · LES PAS ET LES ACTIVITES NE TOUCHENT PLUS L'OBJECTIF · LES TEXTES VIVANTS DISENT LA NOUVELLE REGLE ───────────────────────
+    ('M75 ⛔ `calcTDEE` ajoute les calories de l\'activite enregistree du jour (la cible monte avec une marche ou une seance)',
+     [(ST, "return Math.round(calcBMR()*S.activityLevel+calcWorkExtra()+calcSportExtra());", "return Math.round(calcBMR()*S.activityLevel+calcWorkExtra()+calcSportExtra()+(S.sessions||[]).filter(s=>s&&s.date===today()).reduce((a,s)=>a+(+s.calories||0),0));")], 'GARDE', T + 'N02', 'N'),
+    ('M76 ⛔ R30 · l\'ancienne fonction `calcPasExtra` est RESSUSCITEE (code mort, mais rebranchable en un mot)',
+     [(ST, "function calcTDEE(){\n  if(profilCaloriqueManquants().length) return null;", "function calcPasExtra(){ return 0; }\nfunction calcTDEE(){\n  if(profilCaloriqueManquants().length) return null;")], 'GARDE', T + 'N03', 'N'),
+    ('M77 ⛔ `_pasEcart` redit des calories : une cle `kcal` reapparait (deuxieme proprietaire de la conversion pas → kcal)',
+     [(TR, "depasse: surplus>=PAS_SEUIL};", "depasse: surplus>=PAS_SEUIL, kcal: 0};")], 'GARDE', T + 'N04', 'N'),
+    ('M78 ⛔ la decomposition de la cible retrouve un terme « pas »',
+     [(ST, "base:d.tdee-travail-sport,travail,sport,", "base:d.tdee-travail-sport,travail,sport,pas:0,")], 'GARDE', T + 'N10', 'N'),
+    ('M79 [deguisee] la « base » de la decomposition oublie le sport (la somme des trois termes ne retombe plus sur le TDEE)',
+     [(ST, "base:d.tdee-travail-sport,travail,sport,", "base:d.tdee-travail,travail,sport,")], 'GARDE', T + 'N10', 'N'),
+    ('M80 ⛔ [deguisee] `calcTDEE` lit les pas du DERNIER jour connu (couplage cache : la cible d\'un jour passe bouge avec les pas d\'aujourd\'hui)',
+     [(ST, "return Math.round(calcBMR()*S.activityLevel+calcWorkExtra()+calcSportExtra());", "return Math.round(calcBMR()*S.activityLevel+calcWorkExtra()+calcSportExtra()+(((S.healthDaily||[]).slice().sort((a,b)=>String(b.date).localeCompare(String(a.date)))[0]||{}).steps>20000?300:0));")], 'GARDE', T + 'H14', 'N,H'),
+    ('M81 ⛔ Milo : les pas d\'HIER sont racontes comme ceux d\'AUJOURD\'HUI (la date n\'est plus verifiee)',
+     [(CO, "if(!e||!e.depasse||e.date!==today()) return '';", "if(!e||!e.depasse) return '';")], 'GARDE', T + 'N11', 'N'),
+    ('M82 ⛔ Milo reprend l\'ancienne phrase « DEJA ajoutees a son TDEE — ne les recompte pas » (un fait faux dit a Milo, R8)',
+     [(CO, "⛔ Ces pas ne changent PAS son objectif calorique ni son TDEE : ils servent seulement à estimer sa dépense du jour, à titre d'information. Ne dis JAMAIS qu'ils lui donnent des calories en plus à manger. ", "DÉJÀ ajoutées à son TDEE — ne les recompte pas. ")], 'GARDE', T + 'N11', 'N'),
+    ('M83 Milo : le detail du calcul de la cible cite de nouveau un terme « pas »',
+     [(CO, "+' '+n(d.travail)+' travail '+n(d.sport)+' autre sport'", "+' '+n(d.travail)+' travail '+n(d.sport)+' autre sport '+n(0)+' pas'")], 'GARDE', T + 'N12', 'N'),
+    ('M84 ⛔ Progres : la carte nomme les pas d\'hier « aujourd\'hui » (la veille est prise pour le jour)',
+     [(TR, "(dernier.date===_veille?'hier':", "(dernier.date===_veille?'aujourd\\'hui':")], 'GARDE', T + 'N13', 'N'),
+    ('M85 ⛔ Progres : la carte rechiffre des kcal a cote des pas',
+     [(TR, "${nb(e.surplus)} de plus que ton habitude</span>", "${nb(e.surplus)} de plus que ton habitude · +290 kcal</span>")], 'GARDE', T + 'N13', 'N'),
+    ('M86 ⛔ Progres : la carte depliee redit que les jours en vert s\'ajoutent a l\'objectif',
+     [(TR, "ils comptent dans ta dépense estimée du jour (onglet Nutrition), pas dans ton objectif alimentaire. ", "ils s'ajoutent à ta dépense et à ton objectif. ")], 'GARDE', T + 'N13', 'N'),
+    ('M87 ⛔ la ligne « 🚶 +K kcal » sous le TDEE revient dans la page Nutrition (son conteneur reapparait)',
+     [(IX, "<!-- 🚶 RETRAIT (06/11/2026, NUT-TDEE-02) : la ligne `nu-tdee-pas` (provenance du surplus de pas sous le TDEE) n'existe plus — le TDEE ne contient plus de pas -->", '<div id="nu-tdee-pas"></div>')], 'GARDE', T + 'N15', 'N'),
+    ('M88 ⛔ l\'aide « ? » de Nutrition redit que l\'objectif suit les pas (bonus borne a 500 kcal)',
+     [(SC, "⛔ <b>Ton objectif ne bouge pas avec tes pas</b>", "⛔ <b>Ton objectif suit tes pas</b> (bonus borné à 500 kcal)")], 'GARDE', T + 'U18', 'U,N'),
+    ('M89 ⛔ la diapo du Guide redit que les pas s\'ajoutent a la depense ET a l\'objectif',
+     [(AP, "⛔ <b>Ça ne change pas ton objectif</b>", "⭐ <b>Ça s\\'ajoute à ta dépense et à ton objectif</b>")], 'GARDE', T + 'N15', 'N'),
+    # ── ITEM 6 · L'INFORMATION PRUDENTE : ni faux positif, ni consigne, ni objectif releve ──────────────────────────────────────────
+    ('M90 ⛔ l\'alerte se declenche SANS effort exceptionnel (la condition sur l\'effort disparait : une cible basse suffit)',
+     [(TR, "alerte: r.extra >= P.ALERTE_EFFORT_KCAL && ecart >= P.ALERTE_ECART_KCAL }", "alerte: ecart >= P.ALERTE_ECART_KCAL }")], 'GARDE', T + 'P33', 'P,U'),
+    ('M91 ⛔ l\'alerte se declenche pour un effort exceptionnel meme quand l\'ecart avec l\'objectif est faible (la condition sur l\'ecart disparait)',
+     [(TR, "alerte: r.extra >= P.ALERTE_EFFORT_KCAL && ecart >= P.ALERTE_ECART_KCAL }", "alerte: r.extra >= P.ALERTE_EFFORT_KCAL }")], 'GARDE', T + 'P33', 'P,U'),
+    ('M92 le seuil d\'effort exceptionnel est divise par dix (800 → 80 kcal)',
+     [(TR, "ALERTE_EFFORT_KCAL: 800,", "ALERTE_EFFORT_KCAL: 80,")], 'GARDE', T + 'P33', 'P,U'),
+    ('M93 le seuil d\'ecart avec l\'objectif est divise par dix (1 000 → 100 kcal)',
+     [(TR, "ALERTE_ECART_KCAL: 1000,", "ALERTE_ECART_KCAL: 100,")], 'GARDE', T + 'P33', 'P,U'),
+    ('M94 [deguisee] l\'ecart se calcule a l\'envers (objectif − estimee) : l\'alerte se declenche pour une journee CALME',
+     [(TR, "ecart = Math.round(r.estime - objectif)", "ecart = Math.round(objectif - r.estime)")], 'GARDE', T + 'P33', 'P,U'),
+    ('M95 ⛔ le texte de l\'alerte devient une consigne qui invite a manger plus',
+     [(SC, "c\\'est une information, pas une consigne.", "tu peux donc manger davantage.")], 'GARDE', T + 'U22', 'U'),
+    ('M96 ⛔ le texte de l\'alerte annonce que l\'objectif va changer',
+     [(SC, "<b>Ton objectif ne change pas.</b>", "<b>Ton objectif va augmenter.</b>")], 'GARDE', T + 'U20', 'U'),
+    ('M97 ⛔ [deguisee] l\'alerte RELEVE reellement l\'objectif affiche (+200 kcal quand elle se declenche)',
+     [(SC, "(m && m.calories != null) ? k(m.calories) : '—',", "(m && m.calories != null) ? k(m.calories + ((djEcartObjectif(r, m.calories) || {}).alerte ? 200 : 0)) : '—',")], 'GARDE', T + 'U20', 'U'),
+    # ── TD-C08 · une seule conversion brut → actif ─────────────────────────────────────────────────────────────────────────────────────
+    ('M98 ⛔ la soustraction du repos (`kg × h`) est ECRITE UNE DEUXIEME FOIS dans le moteur (deux conversions brut → actif qui divergeront)',
+     [(TR, "function djCadence(w) {", "const _djRepos2 = (brut, kg, h) => brut - kg * h;\nfunction djCadence(w) {")], 'GARDE', T + 'P34', 'P'),
     # ── equivalentes : le banc ne doit PAS rougir pour ce qui ne change rien ──────────────────────────────────────────
     ('M70 [equivalente] deux affectations independantes de la fusion sont inversees (meme resultat)',
      [(TR, "    if (meilleure) d.origine = w.origine;\n    d.fusion = (d.fusion || 1) + 1;", "    d.fusion = (d.fusion || 1) + 1;\n    if (meilleure) d.origine = w.origine;")], 'OK', None, 'P,S,D,H,A'),
-    ('M71 [equivalente] la reference d\'un jour passe se calcule avec la date du jour (elle ne depend que du profil, pas de la date)',
-     [(TR, "const ref = depenseReference(auj ? undefined : Date.parse(d + 'T12:00:00'));", "const ref = depenseReference();")], 'OK', None, 'S,H,N'),
+    ('M71 [equivalente] `depenseReference` normalise un `undefined` eventuel en `null` (`calcTDEE` ne rend qu\'un nombre ou `null` : meme resultat)',
+     [(TR, "function depenseReference() { try { return calcTDEE(); } catch (e) { return null; } }", "function depenseReference() { try { return calcTDEE() ?? null; } catch (e) { return null; } }")], 'OK', None, 'S,H,N'),
     ('M72 [equivalente] le texte de l\'avertissement du plafond change de forme (aucun calcul touche)',
      [(TR, "avert.push('plafond de plausibilité atteint (' + Math.round(plafond) + ' kcal)');", "avert.push('plafond de plausibilité (' + Math.round(plafond) + ' kcal) atteint');")], 'OK', None, 'P,S'),
 ]
