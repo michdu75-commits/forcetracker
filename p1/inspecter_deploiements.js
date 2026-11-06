@@ -24,7 +24,10 @@ if (SID === '1RwE46heNmZrykInYcrMgm1OZWt4NmS6NjTqttvAevZLuqo2v6EEb1Drw') { conso
   }
   const v = await get('/versions?pageSize=50');
   console.log('versions.list : HTTP ' + v.s + ' · ' + (v.j.versions || []).length + ' version(s) : ' + (v.j.versions || []).map((x) => '@' + x.versionNumber).join(' '));
+  const pj = await get('');
+  console.log('projet : HTTP ' + pj.s + ' · titre « ' + String(pj.j.title || '?').slice(0, 60) + ' » · créé ' + pj.j.createTime + ' · mis à jour ' + pj.j.updateTime + ' · scriptId …' + String(pj.j.scriptId || '').slice(-8));
   const c = await get('/content');
+  (c.j.files || []).filter((f) => f.type === 'SERVER_JS').forEach((f) => { const fn = (String(f.source || '').match(/^function\s+([A-Za-z0-9_$]+)/gm) || []).map((x) => x.replace(/^function\s+/, '')); console.log('fichier ' + f.name + ' : ' + fn.length + ' fonction(s) de premier niveau' + (f.name === 'TestP1' ? ' → ' + fn.join(', ') : '')); });
   const man = (c.j.files || []).find((f) => f.name === 'appsscript');
   if (man) { try { const m = JSON.parse(man.source); console.log('manifeste du projet (HEAD) : webapp=' + JSON.stringify(m.webapp) + ' · scopes=' + (m.oauthScopes || []).length); } catch (e) { console.log('manifeste illisible'); } }
   console.log('fichiers du projet : ' + (c.j.files || []).map((f) => f.name + '(' + f.type + ')').join(', '));
