@@ -36,7 +36,7 @@ jobs:
           set -euo pipefail
           echo "=== ESSAI P1 — workflow D'ESSAI (ce n'est PAS le workflow de production) · ref ${GITHUB_REF} · étape ${ETAPE} ==="
           [ "${GITHUB_REF}" != "refs/heads/master" ] || { echo "::error::refus : ce workflow d'essai ne tourne pas sur master"; exit 1; }
-          case "$ETAPE" in deployer|pousser|essais|suspension|sonde|diag|deploiements|c1|c5) ;; *) echo "::error::etape inconnue : $ETAPE"; exit 1;; esac
+          case "$ETAPE" in deployer|pousser|essais|suspension|sonde|diag|ping-prod|deploiements|c1|c5) ;; *) echo "::error::etape inconnue : $ETAPE"; exit 1;; esac
           if [ "$ETAPE" = "deployer" ] || [ "$ETAPE" = "pousser" ]; then
             # (le .clasp.json de CETTE branche pointe lui-même vers le projet de TEST — ceinture : si GitHub exécutait par erreur le workflow de PRODUCTION sur cette branche, il pousserait dans le projet de TEST et échouerait au redéploiement)
             [ -n "$SCRIPT_ID" ] || { echo "::error::script_id vide"; exit 1; }
@@ -132,6 +132,10 @@ jobs:
           set -euo pipefail
           [ -n "$URL_EXEC" ] || { echo "::error::url_exec vide"; exit 1; }
           node p1/diag_url.js "$URL_EXEC"
+
+      - name: "Ping de LECTURE SEULE de la production (un GET test=1, aucune écriture) — sert à savoir si Google répond aux serveurs GitHub"
+        if: ${{ inputs.etape == 'ping-prod' }}
+        run: node p1/diag_url.js "https://script.google.com/macros/s/AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNqCztZNDMD9N4qbA/exec" --ping-prod-lecture-seule
 
       - name: "Inspecter les déploiements du projet de TEST (lecture seule : API Apps Script, aucun secret affiché)"
         if: ${{ inputs.etape == 'deploiements' }}

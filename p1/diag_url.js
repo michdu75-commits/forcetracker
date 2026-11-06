@@ -6,7 +6,7 @@
 'use strict';
 const url = process.argv[2] || '';
 if (!/^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec$/.test(url)) { console.error('Usage : node p1/diag_url.js https://script.google.com/macros/s/…/exec'); process.exit(64); }
-if (/AKfycbxWUsEFIlmx/.test(url)) { console.error('⛔ adresse de PRODUCTION : refus'); process.exit(3); }
+if (/AKfycbxWUsEFIlmx/.test(url) && !process.argv.includes('--ping-prod-lecture-seule')) { console.error('⛔ adresse de PRODUCTION : refus'); process.exit(3); }   // seule exception : UN GET `?test=1` (réponse constante, aucune écriture) pour savoir si Google répond aux serveurs GitHub
 (async () => {
   const t0 = Date.now();
   const r = await fetch(url + '?test=1', { redirect: 'follow' });
