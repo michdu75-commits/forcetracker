@@ -26,6 +26,12 @@ if (SID === '1RwE46heNmZrykInYcrMgm1OZWt4NmS6NjTqttvAevZLuqo2v6EEb1Drw') { conso
   console.log('versions.list : HTTP ' + v.s + ' · ' + (v.j.versions || []).length + ' version(s) : ' + (v.j.versions || []).map((x) => '@' + x.versionNumber).join(' '));
   const pj = await get('');
   console.log('projet : HTTP ' + pj.s + ' · titre « ' + String(pj.j.title || '?').slice(0, 60) + ' » · créé ' + pj.j.createTime + ' · mis à jour ' + pj.j.updateTime + ' · scriptId …' + String(pj.j.scriptId || '').slice(-8));
+  /* le compte qui exécute la web app (celui de clasp) est-il le CRÉATEUR du projet ? (booléen seulement : aucune adresse n'est affichée — les journaux d'un dépôt public sont publics) */
+  try {
+    const ti = await (await fetch('https://oauth2.googleapis.com/tokeninfo?access_token=' + tj.access_token)).json();
+    const cr = pj.j.creator || {};
+    console.log('compte de clasp = créateur du projet : ' + (ti.email && cr.email ? String(ti.email).toLowerCase() === String(cr.email).toLowerCase() : 'inconnu (adresse non fournie par l\'API)') + ' · domaines : ' + String(ti.email || '?').split('@')[1] + ' / ' + String(cr.email || cr.domain || '?').split('@').pop());
+  } catch (e) { console.log('comparaison des comptes impossible : ' + String(e.message || e).slice(0, 80)); }
   const c = await get('/content');
   (c.j.files || []).filter((f) => f.type === 'SERVER_JS').forEach((f) => { const fn = (String(f.source || '').match(/^function\s+([A-Za-z0-9_$]+)/gm) || []).map((x) => x.replace(/^function\s+/, '')); console.log('fichier ' + f.name + ' : ' + fn.length + ' fonction(s) de premier niveau' + (f.name === 'TestP1' ? ' → ' + fn.join(', ') : '')); });
   const man = (c.j.files || []).find((f) => f.name === 'appsscript');

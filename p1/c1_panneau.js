@@ -3,6 +3,7 @@
    et la comparaison téléphone ↔ serveur (doublons / divergence). Rien n'est envoyé ailleurs que vers l'adresse de TEST (la CSP posée par le serveur l'interdit). Compte fictif @example.invalid. */
 (function () {
   var CFG = window.__C1_CFG || {}; var EXEC = CFG.exec || '';
+  if (!CFG.email) { try { CFG.email = localStorage.getItem('__c1_email'); if (!CFG.email) { CFG.email = 'c1-iphone-' + Math.random().toString(16).slice(2, 8) + '@example.invalid'; localStorage.setItem('__c1_email', CFG.email); } } catch (e) { CFG.email = 'c1-iphone-' + Math.random().toString(16).slice(2, 8) + '@example.invalid'; } }
   try {
     if (!localStorage.getItem('__c1_seed')) {
       var st = { ft4_ob2: '1', ft4_guide_shown: '1', ft4_wn_seen: '99', ft4_email: CFG.email, ft4_ok: '1', ft4_authcode: '4242' };
