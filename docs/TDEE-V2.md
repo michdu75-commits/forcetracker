@@ -1,7 +1,8 @@
-# 🔥 TDEE V2 — étape 1 : la dépense du jour, séparée de l'objectif (une INFORMATION, rien d'autre)
+# 🔥 TDEE V2 — étape 1 : la dépense du jour, séparée de l'objectif (une INFORMATION) · étape 2 : les pas ne modifient plus l'objectif (§12)
 
 > **GO de Michel du 06/11/2026** (« GO DÉVELOPPEMENT TDEE V2 », sur la base de l'audit du même jour) — session-C (Claude N°2, Séance). Branche `claude/dreamy-bell-pu88ia`, repartie de master `e2b942f3` (`ft-v1263`).
 > ⛔ **NON FUSIONNÉ · NON PUBLIÉ · AUCUN DÉPLOIEMENT · `Code.js`, `setup.js` et la synchronisation NON TOUCHÉS · aucune donnée persistée · aucune route serveur · aucune intégration Apple Santé · aucun numéro de version** (`sw.js` reste `ft-v1263`). **État : voir §11.**
+> ⚠️ **ÉTAPE 2 FAITE LE 06/11/2026 (NUT-TDEE-02, voir §12).** Les §1 à §11 décrivent l'étape 1 telle que livrée ; **là où ils disent « l'objectif est inchangé », « le lien historique avec les pas reste » ou « l'étape 2 n'est pas autorisée », le §12 fait foi** — ces passages sont annotés, jamais effacés.
 > Ce document est la **mémoire** du chantier : ce qui est construit (§2-§5), ce qui ne l'est PAS et pourquoi (§6), les tests (§7), les compteurs R17 (§8), les limites (§9), les dépendances avec Claude Principal (§10), l'état final (§11).
 > L'**audit** qui a conduit à ce GO est un PDF **hors du dépôt** (le dépôt est public) : `FORCE-TRACKER-AUDIT-TDEE-V2-2026-11-06.pdf`. Ses faits établis ne sont pas refaits ici ; ils sont **épinglés par des témoins** (§7).
 
@@ -13,15 +14,15 @@
 4. **Préserver l'existant** : pas de changement du calcul actuel de l'objectif ni de son lien historique avec les pas · rien chez Claude Principal (`setup.js`, `Code.js`, synchronisation) · pas de donnée persistée, de route serveur, d'Apple Santé · pas de fusion, déploiement ou production · pas de refonte du chantier « Autre activité ».
 5. **Valider** : repos · musculation · marche · randonnée 8 h · 40 000 pas · course 4 h · activités combinées, plus des tests **anti-doublons, d'historique, d'absence de données et de non-régression**.
 
-⛔ **L'étape 2 (découpler les pas de l'objectif) N'EST PAS autorisée** — décision de Michel du 06/11 : elle reste à lui. Cette étape l'**explique**, elle ne la **fait pas** (§6).
+~~⛔ **L'étape 2 (découpler les pas de l'objectif) N'EST PAS autorisée** — décision de Michel du 06/11 : elle reste à lui. Cette étape l'**explique**, elle ne la **fait pas** (§6).~~ ✅ **Mise à jour : Michel a ensuite autorisé l'étape 2 (« GO TDEE V2 ÉTAPE 2 », 06/11/2026) — elle est faite, voir §12.**
 
 ## 2. Les trois valeurs — trois rôles, jamais l'une déduite de l'autre sans que ce soit dit
 
 | Valeur | Ce qu'elle est | Qui la calcule | Ce qu'elle n'est PAS |
 |---|---|---|---|
-| **Référence** | ton niveau d'activité, **sans** le surplus de pas du jour : `BMR × niveau + travail + sport déclaré` | `depenseReference()` = `calcTDEE()` − `calcPasExtra()` (dérivée du propriétaire de la formule, **jamais recopiée**, R2) | pas une mesure ; elle ne bouge pas avec la journée |
+| **Référence** | ton niveau d'activité, **sans** le surplus de pas du jour : `BMR × niveau + travail + sport déclaré` | `depenseReference()` = `calcTDEE()` (dérivée du propriétaire de la formule, **jamais recopiée**, R2) — *étape 1 : `calcTDEE()` − `calcPasExtra()`, avant que le TDEE ne perde son terme de pas (§12)* | pas une mesure ; elle ne bouge pas avec la journée |
 | **Estimée aujourd'hui** | référence + ce que la journée a fait **de plus que d'habitude**, avec **fourchette** et **provenance** | `depenseEstimeeDuJour()` (façade) → `depenseDuJour()` (moteur pur) | **pas** une cible, **pas** « tu peux manger plus » ; une **information** |
-| **Objectif alimentaire** | ta cible du jour | `calcMacros()` — ⛔ **INCHANGÉ** | n'en dépend pas ; la carte dit seulement la part des pas que **la règle actuelle** y met encore |
+| **Objectif alimentaire** | ta cible du jour | `calcMacros()` — *étape 1 : ⛔ inchangé ; **étape 2 : ne dépend plus ni des pas ni des activités** (§12)* | n'en dépend pas ; *(étape 1 : la carte disait la part des pas que la règle d'alors y mettait encore — ligne supprimée à l'étape 2)* |
 
 Rien d'absent n'est comblé : une valeur qu'on n'a pas s'écrit « — » **et dit pourquoi** (R29). Un jour sans aucune donnée **n'est pas « +0 »** : c'est « je ne sais pas » (`connu:false`).
 
@@ -63,7 +64,7 @@ Rien d'absent n'est comblé : une valeur qu'on n'a pas s'écrit « — » **et d
 - **Les adaptateurs** (impurs, ils **lisent** `S`, n'écrivent jamais) — `_djEntrainementsDe`, `_djHistorique`, `_djIndexSessions` : `S.sessions` (activités, cardio autonome ; la musculation est transmise pour être **dite**) et `S.healthDaily` (pas, du **même jour**). Une 3ᵉ source (énergie active de la montre) sera un 3ᵉ adaptateur : **le moteur ne bouge pas**.
 - **La façade** `depenseEstimeeDuJour(date)` — un jour passé se rejoue avec ses seules données et celles d'**avant** lui.
 - **L'affichage** `_renderDepenseJour()` — `screens.js`, la carte `#nu-dj` (`index.html`) juste sous les tuiles de séance de l'onglet Nutrition. Appelée par `renderNutrition` **dans un `try/catch`** : une erreur de la carte ne bloque jamais l'écran.
-- **Aucun ancien chemin n'est touché** : `calcTDEE`, `calcMacros`, `_pasEcart`, `calcPasExtra`, `autoKcal` sont **identiques à l'octet** à la version publiée (témoins N01-N06).
+- **Aucun ancien chemin n'est touché** *(étape 1 seulement)* : `calcTDEE`, `calcMacros`, `_pasEcart`, `calcPasExtra`, `autoKcal` étaient **identiques à l'octet** à la version publiée (témoins N01-N06). ⚠️ **L'étape 2 les modifie volontairement** (§12) : `calcPasExtra` est retirée, `calcTDEE` perd son terme de pas, `_pasEcart` ne rend plus de kcal ; N01-N06 ont été réécrits en invariants.
 
 ### Sortie du moteur
 
@@ -73,11 +74,11 @@ Rien d'absent n'est comblé : une valeur qu'on n'a pas s'écrit « — » **et d
 
 | Non fait | Pourquoi |
 |---|---|
-| **Découpler les pas de l'objectif** (étape 2) | **Pas autorisé** (décision de Michel, 06/11). La carte dit seulement la part des pas que la règle actuelle y met encore. Quand l'étape 2 viendra, `depenseReference` devra perdre sa soustraction — le témoin `C-TDEE-N05` la recalcule à part et rougira exprès. |
-| Plafond de 500 kcal, falaise de 1 500 pas, report des pas d'hier **dans l'objectif** | Constats de l'audit sur la règle **actuelle**, **pinglés tels quels** (N03, N04) : les corriger changerait l'objectif. |
+| **Découpler les pas de l'objectif** (étape 2) | ~~**Pas autorisé** (décision de Michel, 06/11). La carte dit seulement la part des pas que la règle actuelle y met encore. Quand l'étape 2 viendra, `depenseReference` devra perdre sa soustraction — le témoin `C-TDEE-N05` la recalcule à part et rougira exprès.~~ ✅ **FAIT à l'étape 2 (§12)** : Michel l'a autorisée le 06/11. Les témoins N05/N08 ont rougi exprès, comme annoncé, et ont été réécrits. |
+| Plafond de 500 kcal, falaise de 1 500 pas, report des pas d'hier **dans l'objectif** | ~~Constats de l'audit sur la règle actuelle, pinglés tels quels (N03, N04) : les corriger changerait l'objectif.~~ ✅ **Disparus à l'étape 2** avec le lien lui-même : il n'y a plus rien à plafonner, ni de falaise sur l'objectif, ni de report (§12). |
 | Lire `S.healthInbox` (calories actives de la montre) | Les calories de la montre reçues restent « jamais reprises dans un calcul » (décision à Michel, commentaire de `setup.js`). Le moteur a la **place** de la connexion future (`energieJour`) mais **elle n'est pas branchée** (P23 la prouve sur le moteur seul). |
 | Intégration Apple Santé, route serveur, donnée persistée | Hors périmètre. **Aucune** n'est ajoutée. |
-| Aide « ? » de Nutrition (`_HELP_DATA`), Guide, point rouge, pop-up | Zone de Claude Principal (`screens.js`, 3 lignes de son côté) ; la règle d'or n°11 se fait **à la publication**, après sa fusion. Le témoin `C-TDEE-U18` interdit à cette branche d'y toucher. |
+| Aide « ? » de Nutrition (`_HELP_DATA`), Guide, point rouge, pop-up | *Étape 1 : zone de Claude Principal ; la règle d'or n°11 se fait **à la publication**.* **Étape 2 : l'aide « ? » (Nutrition, Progrès) et la diapo du Guide sont CORRIGÉES** (elles disaient que les pas s'ajoutent à l'objectif, c'était devenu faux) ; le témoin U18 pinne maintenant la nouvelle règle. **Point rouge et pop-up v65 : volontairement NON réécrits** (annonces datées) — annonce corrective à la publication (§12.5). |
 | Lignes `CLAUDE.md` / `BUGS.md` | Reportées à l'intégration (conflits connus sur ces deux fichiers, §10). |
 
 ## 7. Tests
@@ -179,3 +180,83 @@ Hors compteurs (tests et outils) : `tests/parcours/tdee_v2.js` (571 lignes), `to
 - **Attend** : Michel (étape 2 ; position de la carte et vocabulaire ; un export réel ; calendrier) · Claude Principal (fusion **en premier** ; une ligne de liste blanche J30 ; fusion à blanc à refaire quand sa tête `881a952c` sera poussée) · la **recette iPhone** · la règle d'or n°11 (annonce, aide « ? », Guide, point rouge) **à la publication** · les lignes `CLAUDE.md` / `BUGS.md` / `docs/INVENTAIRE.md` **à l'intégration** (conflits connus sur les deux premiers ; l'inventaire généré passerait de 646 à 673 fonctions).
 - **Retour arrière** : sans objet (rien n'est fusionné) ; `git revert 9b1b7094` retirerait le chantier d'un seul geste.
 
+## 12. ÉTAPE 2 (NUT-TDEE-02) — les pas ne modifient plus l'objectif alimentaire
+
+> **GO de Michel du 06/11/2026** (« GO TDEE V2 ÉTAPE 2 ») : *supprimer l'augmentation automatique de l'objectif alimentaire liée aux pas.* Développé et testé sur la **même branche isolée**, à partir de l'étape 1 (`7f2caa0b`). ⛔ **NON fusionné · NON publié · aucun déploiement · aucun GO production · aucune version** (`sw.js` reste `ft-v1263`). `setup.js`, `Code.js`, `supabase.js`, la synchronisation, `load()`/`persist()` : **non touchés**. Aucune donnée persistée, aucune route serveur.
+
+### 12.1 Ce qui change — avant / après
+
+| | Avant (ft-v1070 → étape 1) | Après (étape 2) |
+|---|---|---|
+| `calcTDEE()` | BMR × niveau + travail + sport **+ surplus de pas** (`calcPasExtra`, jusqu'à +500 kcal) | BMR × niveau + travail + sport — `calcPasExtra` **n'existe plus** (R30 : pourquoi écrit dans `state.js`, figé par N03) |
+| Objectif et macros (`calcMacros`) | montaient avec les pas (+378 à +500 kcal sur les 7 scénarios de l'audit) | **identiques** quels que soient les pas et les activités (N01, N02, N06) |
+| `depenseReference()` | `calcTDEE() − calcPasExtra()` | `calcTDEE()` |
+| « Reste » d'hier · tendance 14 jours | recalculés avec la cible d'**aujourd'hui** (pas d'aujourd'hui compris : 786 → 1 221) | identiques (H14, H15) |
+| `_pasEcart()` | pas + surplus + **kcal** (plafond 500, falaise à 1 500) | pas + surplus + `depasse` ; **aucun kcal** — la conversion pas → kcal n'a plus qu'**un** propriétaire, le moteur de la dépense estimée (R2, N04) |
+| Ligne « 🚶 +K kcal » sous le TDEE | oui (`#nu-tdee-pas`) | supprimée, conteneur compris (N15) |
+| Carte « Dépense et objectif » | « inclut +K kcal de pas (règle actuelle) » | Objectif : « ne dépend ni de l'estimée ni de tes pas » ; information prudente si effort exceptionnel (12.4) |
+| Milo | « Ces ~K kcal sont DÉJÀ ajoutées à son TDEE — ne les recompte pas » ; les pas d'**hier** dits « aujourd'hui » | « Ces pas ne changent PAS son objectif calorique ni son TDEE… Ne dis JAMAIS qu'ils lui donnent des calories en plus à manger » ; seulement les pas d'**aujourd'hui** (N11, N12) |
+| Progrès → « Tes pas » | « N pas · +K kcal » ; prenait la veille pour le jour | « N pas · aujourd'hui / hier / date · X de plus que ton habitude » ; jamais de kcal (N13) |
+
+### 12.2 Ce qui ne change pas
+
+Les **données** de pas (`S.healthDaily`) et leur usage pour **estimer** la dépense du jour (les sept règles de l'étape 1, §3) ; les **trois valeurs distinctes** de Nutrition (référence · estimée du jour · objectif) ; le moteur pur, ses adaptateurs et sa façade ; les activités enregistrées (elles informent la dépense **estimée**, jamais l'objectif — N02, banc « Autre activité » 131 ✅).
+
+### 12.3 Les tests de l'audit repris (TD-C01 → TD-C08)
+
+| ID | Ce qui est vérifié | Témoin(s) | Résultat |
+|---|---|---|---|
+| TD-C01 | cible (TDEE, calories, P/L/G) identique avec ou sans les pas, sur les 7 scénarios avec leurs activités — **remplace les deux verrous de source** de l'ancienne règle | N01 (+ N02, N05, N06) | PASS |
+| TD-C02 | estimée ≥ référence ; = référence sans aucune source ; `connu:false` sans donnée (300 jours aléatoires) | P35 | PASS |
+| TD-C03 | un jour ne reçoit que ses données : 08 h avec les seuls pas d'hier, 09 h avec un partiel, minuit, J+2 — aucun saut de ±435 kcal | H02, H15 (+ H01, H03-H07) | PASS |
+| TD-C04 | rejeu : le « reste » d'hier identique avec 0, 20 000 ou 40 000 pas aujourd'hui ; tendance 14 j aussi | H14 | PASS |
+| TD-C05 | `cibleDecomposition` : sans terme « pas », base + travail + sport = TDEE, somme = cible | N10 | PASS |
+| TD-C06 | un rendu n'écrit aucune clé, n'appelle ni `persist` ni synchronisation, aucun réseau — dès le premier appel | E01-E04, U17 | PASS |
+| TD-C07 | aucune lecture brute de `S.sessions` hors liste blanche (les deux lecteurs V2 y sont classés) | J30 / J31 (banc « Autre activité ») | PASS |
+| TD-C08 | brut → actif converti à **un seul** endroit (`kg × h` une fois) ; les calories enregistrées n'entrent que sous le nom `kcalEstBrute` | P34 (+ D04, P17) | PASS |
+
+### 12.4 L'information prudente — « journée d'effort exceptionnel »
+
+`djEcartObjectif(r, objectif)` (**pure**, `tracking.js`) : l'alerte s'affiche **si et seulement si** (1) la journée a fait **au moins 800 kcal de plus que d'habitude** (`ALERTE_EFFORT_KCAL`, l'habitude étant déjà déduite) **ET** (2) la dépense estimée dépasse l'objectif d'**au moins 1000 kcal** (`ALERTE_ECART_KCAL`). ⛔ **Deux conditions, pas une** : avec une cible BASSE choisie à la main (1 500), deux heures de marche écartent déjà de 1 645 kcal — un faux positif qui apprendrait à ignorer l'information quand elle compte (U21). **Les deux seuils sont des hypothèses de conception, pas des valeurs médicales** : à valider par Michel.
+
+Texte (neutre, aucun mot qui dise quoi manger — U22) : « *Journée d'effort exceptionnel : ta dépense estimée dépasse ton objectif d'environ N kcal (estimation, pas une mesure). Ton objectif ne change pas. Un écart aussi marqué, s'il se répète, peut peser sur ta récupération et ton énergie : c'est une information, pas une consigne. Au moindre doute (fatigue inhabituelle, vertiges), parles-en à un professionnel de santé.* » ; l'objectif affiché reste identique (U20) ; seuil à la kcal près (P33, U23).
+
+### 12.5 Textes corrigés — et textes volontairement conservés
+
+Corrigés : aide « ? » de **Nutrition** et de **Progrès** (`_HELP_DATA`), **suppression** de la ligne sous le TDEE, carte « Tes pas » (**Progrès**), ligne des pas et détail du calcul de la cible de **Milo**, diapo du **Guide**. **Accueil** : aucun texte ne parlait des pas ; « ce qu'il te reste » est identique avec 0, 20 000 ou 40 000 pas (N14).
+
+⛔ **Volontairement NON réécrits : les annonces DATÉES** — pop-up v65 et descriptions du point rouge `pas-surplus` / `pas-courbe` (`constants.js`). Elles disent ce qui a été annoncé le jour de ft-v1070 ; les réécrire falsifierait l'histoire (« on ne RÉÉCRIT pas la v65 »). Seul le raccourci iOS de Michel les rend visibles (`si:'montrePas'`). **À la publication**, la règle d'or n°11 appelle une **annonce corrective** (point rouge, aide « ? » — déjà faite —, aide détaillée, diapo — déjà faite ; pop-up seulement si un repère a bougé) : décision de Michel, ticket proposé **NUT-TDEE-05**. Le témoin N15 interdit les anciennes phrases dans tout texte vivant ; les annonces datées en sont exemptées exprès.
+
+### 12.6 Tests
+
+| Contrôle | Résultat |
+|---|---|
+| Banc `node tools/banc_tdee_v2.js` | **161 OK / 0 rouge** · matrice **18 PASS** (étape 1 : 145 / 15 ; +16 témoins : TD-C01…C08, l'information prudente, les textes) |
+| Contrôle négatif `python3 tools/mut_tdee_v2.py` | **98/98 conformes** : 95 attrapées par **le témoin nommé** · 3 équivalentes · arbre sain à **0 rouge avant et après** (dont **26 mutations nouvelles** : le TDEE reprend les pas, un terme « pas » dans la décomposition, la ligne de Milo, les textes, chaque seuil et chaque phrase de l'alerte, l'objectif affiché relevé, une 2ᵉ conversion brut → actif, une 3ᵉ lecture brute de `S.sessions`… ; **2 retirées** parce que leur prémisse est devenue fausse : M64 « la part de pas de la règle actuelle est dite » et M68 « l'aide ? est gelée ». Le premier passage donnait 94/97 : les 3 écarts étaient de vrais trous de témoins — l'objectif **affiché** par la carte (U20), la fenêtre de `_pasEcart` (N04) — comblés avant ce résultat) |
+| Verrous de l'ancienne règle, **réécrits** (R17 : un test protège un invariant, pas une implémentation) | `runner.js` CLXXV et CLXXVI · B-CCCLX ⑤ (`nutri_moteur.js`) · B-NP01-A ① (`nut_punch01.js`) · N01-N06 et H02 de `tdee_v2.js` · **CTX-02** (`contrat_milo.js`, la ligne de calcul de la cible que reçoit Milo : 4 témoins **que ma cartographie avait manqués et que la 1ʳᵉ passe a démasqués**) : chacun **rougit sous mutation** |
+| Mutations des chantiers voisins dont l'ancre dépendait de l'ancienne formule | `mut_nut_punch01` MA1-MA5 et `mut_autre_activite` M11 : ancres mises à jour, toutes attrapées ; `mut_contrat_milo` : M-CTX-11 (la ligne redit un terme « pas ») et M-CTX-12 (un sport faux de 40 kcal) ajoutées, **14/14 conformes** |
+| Banc « Autre activité » | **131 OK / 0 rouge** |
+| Passe D-031 répartie `python3 tools/passe_repartie.py 3` sur `5d59fedf` | **8 527 ✅ / 7 ❌** (équivalent séquentiel 8 489 ✅ / 7 ❌). **Aucun rouge nouveau** : les 7 rouges sont tous déjà rouges sur la version publiée (`differentiel_passe.py` rejoue les preuves : PS-E29 piégé par la date, le module `seance_ux.js` qui plante au même clic « Reprendre », B-UXI-G2/G3/G5/G7, B-FFD-⑧e). ⚠️ La 1ʳᵉ passe (sur `1ea5c0e4`) donnait 8 523 ✅ / 11 ❌ : **4 rouges nouveaux** — les CTX-02 du contrat FT → Milo, qui exigeaient encore le terme « pas » — réécrits, prouvés sous mutation (14/14), puis la passe a été **rejouée en entier**. La passe n'est **pas « valide »** au sens de ses 8 conditions (rouges préexistants, un module planté) : aucun feu vert de publication. |
+| Fusion à blanc avec la dernière tête de Claude Principal (`866846b0`) | conflits **de documentation seulement** (`BUGS.md`, `docs/JOURNAL-DE-PARTAGE.md`) ; sur l'arbre fusionné : banc TDEE V2 **161 ✅ / 0 ❌**, contrat FT → Milo 23/0, nutri_moteur 28/0, et **les bancs de synchronisation de Claude Principal intacts** (NUT-SYNC 01 : 49/0 · 02 : 73/0 · envois A/A2 : 124/0) ; banc « Autre activité » 130 ✅ / **1 ❌ attendu** : `C-ACT-J30`, `state.js::_persistRepli` (sa fonction) à classer dans la liste blanche à l'intégration. |
+
+### 12.7 Compteurs R17 de l'étape 2 (code applicatif seulement ; base = `7f2caa0b`)
+
+| Compteur | Valeur |
+|---|---|
+| Données persistées ajoutées | **0** |
+| Fichiers applicatifs touchés | **6** (app.js, coach.js, index.html, screens.js, state.js, tracking.js) · aucun créé |
+| Lignes ajoutées − retirées | **+114 − 80 = +34** (app.js +1 −1 · coach.js +14 −6 · index.html +1 −2 · screens.js +16 −17 · state.js +18 −23 · tracking.js +64 −31) |
+| Anciens chemins supprimés / fusionnés | **5** : `calcPasExtra` · la conversion pas → kcal de `_pasEcart` (fusionnée dans le moteur de la dépense estimée) · la ligne `#nu-tdee-pas` et son conteneur · la branche `pasLegacy` de la carte · le terme « pas » de `cibleDecomposition` et du détail de Milo |
+
+### 12.8 Limites et risques résiduels
+
+1. **Les deux seuils de l'information prudente (800 / 1 000 kcal) sont des hypothèses de conception**, pas un avis médical ; le texte ne donne aucune consigne et renvoie à un professionnel de santé.
+2. **Annonces datées non corrigées** (pop-up v65, point rouge) : elles décrivent l'ancien comportement ; seul le raccourci iOS de Michel les montre. À traiter à la publication (NUT-TDEE-05).
+3. **Changement visible** : une personne habituée à voir son objectif monter les jours de marche le verra fixe — c'est la décision de Michel, à annoncer à la publication.
+4. **Les pas seuls sous-estiment la course et la randonnée** : sans activité enregistrée, une grosse journée de sport peut ne pas déclencher l'information prudente.
+5. Toutes les limites de l'étape 1 (§9) restent : aucune donnée réelle, hypothèses non calibrées, **vérifié en Chromium émulé, jamais sur iPhone réel**.
+6. À l'intégration : `state.js::_persistRepli` (Claude Principal) est une nouvelle lecture brute de `S.sessions` à classer dans la liste blanche J30 ; U18 pinne l'aide « ? » de Nutrition et de Progrès (la nouvelle règle) — si l'autre branche la retouche, il rougit exprès.
+
+### 12.9 État de l'étape 2
+
+**✅ LIVRÉE SUR BRANCHE, NON FUSIONNÉE, NON PUBLIÉE, AUCUN DÉPLOIEMENT, AUCUNE VERSION.** Dernier commit de **code** validé par la passe : **`5d59fedf`** (les commits qui le suivent ne changent que de la documentation). **Attend** : Michel (les deux seuils ; l'annonce corrective ; la fusion, qui exige une nouvelle validation) · Claude Principal (fusion en premier ; ligne J30) · la recette iPhone. **Retour arrière** : sans objet (rien n'est fusionné) ; `git revert 5d59fedf` rétablirait l'étape 1.
