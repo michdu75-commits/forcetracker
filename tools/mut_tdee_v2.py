@@ -127,8 +127,10 @@ MUT = [
      [(TR, "const PAS_SEUIL      = 1500;", "const PAS_SEUIL      = 150; ")], 'GARDE', T + 'N04', 'N'),
     ('M46 ⛔ [deguisee] le « reste » du jour (Accueil) ajoute le « en plus » estime : l\'estimee redevient une consigne (le reste monte avec les pas)',
      [(AP, "kcal:  r(cible.calories - tot.kcal),", "kcal:  r(cible.calories - tot.kcal + ((typeof depenseEstimeeDuJour === 'function') ? ((depenseEstimeeDuJour() || {}).extra || 0) : 0)),")], 'GARDE', T + 'N14', 'N,H'),
-    ('M47 [deguisee] la carte « Tes pas » (Progres) ignore la veille : les pas d\'hier ne sont plus nommes « hier »',
-     [(TR, "if(!(age>=0)||age>1) return null;", "if(!(age>=0)||age>0) return null;")], 'GARDE', T + 'N13', 'N'),
+    ('M47 [deguisee] la fenetre de `_pasEcart` perd la veille (age maximal 1 → 0 jour) : une lecture directe ne rend plus les pas d\'hier avec leur date',
+     [(TR, "if(!(age>=0)||age>1) return null;", "if(!(age>=0)||age>0) return null;")], 'GARDE', T + 'N04', 'N'),
+    ('M47b [deguisee] la fenetre de `_pasEcart` accepte l\'avant-veille (age maximal 1 → 2 jours) : des pas de 2 jours pourraient etre pris pour recents',
+     [(TR, "if(!(age>=0)||age>1) return null;", "if(!(age>=0)||age>2) return null;")], 'GARDE', T + 'N04', 'N'),
     # ── AUCUN EFFET DE BORD ───────────────────────────────────────────────────────────────────────────────────────
     ('M48 ⛔ le moteur lit l\'horloge (`Date.now`)',
      [(TR, "const P = DJ_PARAMS, U = P.INCERT;\n  if (!profil", "const P = DJ_PARAMS, U = P.INCERT; const _t0 = Date.now();\n  if (!profil")], 'GARDE', T + 'P30', 'P'),
@@ -169,8 +171,6 @@ MUT = [
      [(SC, "const k = n => _fmtKcal(n) + ' kcal';", "persist(); const k = n => _fmtKcal(n) + ' kcal';")], 'GARDE', T + 'U17', 'U'),
     ('M67 ⛔ l\'appel de la carte n\'est plus protege : une erreur de la carte bloquerait l\'ecran Nutrition',
      [(SC, "try{ _renderDepenseJour(); }catch(e){ /* jamais bloquant : le bloc est un ajout d'AFFICHAGE (TDEE V2, étape 1) */ }", "_renderDepenseJour();")], 'GARDE', T + 'U17', 'U'),
-    ('M68 ⛔ l\'aide « ? » de Nutrition (zone de Claude Principal) est modifiee par cette etape',
-     [(SC, "const _HELP_DATA={\n  home:{\n    title:'🏠 Accueil',", "const _HELP_DATA={\n  home:{\n    title:'🏠 Accueil · Dépense et objectif',")], 'GARDE', T + 'U18', 'U'),
     ('M69 le conteneur de la carte disparait de la page Nutrition (la carte n\'existe plus)',
      [(IX, '<div id="nu-dj" style="display:none;margin-top:8px;"></div>', '')], 'GARDE', T + 'U01', 'U'),
     ('M73 ⛔ [deguisee] la facade cree une cle dans l\'etat UNE SEULE FOIS (au premier calcul seulement)',
@@ -228,6 +228,8 @@ MUT = [
     # ── TD-C08 · une seule conversion brut → actif ─────────────────────────────────────────────────────────────────────────────────────
     ('M98 ⛔ la soustraction du repos (`kg × h`) est ECRITE UNE DEUXIEME FOIS dans le moteur (deux conversions brut → actif qui divergeront)',
      [(TR, "function djCadence(w) {", "const _djRepos2 = (brut, kg, h) => brut - kg * h;\nfunction djCadence(w) {")], 'GARDE', T + 'P34', 'P'),
+    ('M99 ⛔ TD-C07 · une TROISIEME lecture brute de `S.sessions` apparait dans le code de la V2 (la facade compte les lignes de l\'historique sans passer par la vue des seances)',
+     [(TR, "const kg = _nbUtil(S.bw), bmr = calcBMR();", "const kg = _nbUtil(S.bw), bmr = calcBMR(); const _nbrut = (S.sessions || []).length;")], 'GARDE', T + 'U24', 'U'),
     # ── equivalentes : le banc ne doit PAS rougir pour ce qui ne change rien ──────────────────────────────────────────
     ('M70 [equivalente] deux affectations independantes de la fusion sont inversees (meme resultat)',
      [(TR, "    if (meilleure) d.origine = w.origine;\n    d.fusion = (d.fusion || 1) + 1;", "    d.fusion = (d.fusion || 1) + 1;\n    if (meilleure) d.origine = w.origine;")], 'OK', None, 'P,S,D,H,A'),

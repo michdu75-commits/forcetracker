@@ -484,7 +484,12 @@ async function blocN(c) {
   const ferme = await X.pg.evaluate(() => ({ calcPasExtra: typeof calcPasExtra, ligneSousTdee: !!document.getElementById('nu-tdee-pas') }));
   T('N03', '⛔ R30 · LE LIEN AVEC LES PAS EST COUPÉ ET FIGÉ : `calcPasExtra` n\'EXISTE PLUS ; le corps de `calcTDEE` ne lit ni `_pasEcart`, ni `healthDaily`, ni `steps` et garde ses TROIS termes (BMR × niveau + travail + sport) ; la ligne « +K kcal de pas » sous le TDEE n\'existe plus', ferme.calcPasExtra === 'undefined' && !ferme.ligneSousTdee && /calcBMR\(\)\*S\.activityLevel\+calcWorkExtra\(\)\+calcSportExtra\(\)/.test(tdeeSrc) && !/_pasEcart|calcPasExtra|healthDaily|steps/.test(tdeeSrc), { ferme, tdeeSrc: tdeeSrc.slice(0, 160) });
   const courbe = await X.pg.evaluate(() => [7699, 7700, 12000, 40000].map(p => { S.healthDaily = [{ date: '2026-11-06', steps: p }].concat(Array.from({ length: 30 }, (_, i) => ({ date: new Date(Date.UTC(2026, 10, 6) - (i + 1) * 864e5).toISOString().slice(0, 10), steps: 6200 }))); const e = _pasEcart(); return e && { surplus: e.surplus, depasse: e.depasse, kcal: e.kcal }; }));
-  T('N04', '`_pasEcart` dit des PAS et plus jamais des calories : 7 699 pas → surplus 1 499 (non notable) · 7 700 → 1 500 (notable) · 12 000 → 5 800 · 40 000 → 33 800 ; aucune clé `kcal` (la conversion pas → kcal n\'a qu\'un propriétaire : le moteur de la dépense estimée, R2)', J(courbe.map(x => x && [x.surplus, x.depasse, x.kcal === undefined])) === J([[1499, false, true], [1500, true, true], [5800, true, true], [33800, true, true]]), courbe);
+  // le CONTRAT de fenêtre : `_pasEcart()` n'accepte que le jour même ou la veille (qui en tire « aujourd'hui » doit vérifier `date`) — la carte de Progrès évalue chaque jour à SA PROPRE date, donc seule une lecture directe voit ce garde
+  const fenetre = await X.pg.evaluate(() => { const Jr = n => new Date(Date.UTC(2026, 10, 6) - n * 864e5).toISOString().slice(0, 10), base = d0 => Array.from({ length: 30 }, (_, i) => ({ date: Jr(i + d0 + 1), steps: 6200 }));
+    S.healthDaily = [{ date: Jr(1), steps: 16000 }].concat(base(1)); const hier = _pasEcart();
+    S.healthDaily = [{ date: Jr(2), steps: 16000 }].concat(base(2)); const avantHier = _pasEcart();
+    return { hier: hier && [hier.date, hier.depasse], avantHier }; });
+  T('N04', '`_pasEcart` dit des PAS et plus jamais des calories : 7 699 pas → surplus 1 499 (non notable) · 7 700 → 1 500 (notable) · 12 000 → 5 800 · 40 000 → 33 800 ; aucune clé `kcal` (la conversion pas → kcal n\'a qu\'un propriétaire : le moteur de la dépense estimée, R2) ; et sa fenêtre : les pas d\'HIER sont rendus avec leur date (2026-11-05), ceux d\'avant-hier ne le sont plus (null)', J(courbe.map(x => x && [x.surplus, x.depasse, x.kcal === undefined])) === J([[1499, false, true], [1500, true, true], [5800, true, true], [33800, true, true]]) && J(fenetre) === J({ hier: ['2026-11-05', true], avantHier: null }), { courbe, fenetre });
   // l'objectif ne connaît pas le moteur : par la source…
   const objectif = ['calcTDEE', 'calcBMR', 'calcWorkExtra', 'calcSportExtra', '_autoKcalBrut', 'autoKcal', '_plancherKcal', 'calcMacros', 'cibleDecomposition'].map(n => [n, corps(n, srcSta)]);
   const manquants = objectif.filter(([, s]) => !s).map(([n]) => n);
@@ -565,10 +570,10 @@ async function blocE(c) {
   const ok = await X.pg.evaluate(() => { const r1 = depenseEstimeeDuJour(), r2 = depenseEstimeeDuJour(r1 && r1.date), r3 = depenseEstimeeDuJour('2026-11-04'); renderNutrition(); renderNutrition(); return !!(r1 && r2 && r3); });
   await X.pg.waitForTimeout(1200);
   const cnt = await X.pg.evaluate(() => window.__cnt), etat = await X.pg.evaluate(() => window.__etat), appels = await X.pg.evaluate(() => window.__appels);
-  T('E01', '⭐ AUCUNE ÉCRITURE : pendant les appels de la V2 (la façade, la carte), DÈS LE PREMIER, aucune clé de stockage n\'est écrite, retirée ni effacée', ok && appels >= 5 && !cnt.setItem && !cnt.removeItem && !cnt.clear, { appels, cnt });
-  T('E02', '⭐ AUCUN RÉSEAU : pendant les appels de la V2 ni fetch, ni XMLHttpRequest, ni balise ; et aucune requête vers l\'extérieur de toute la séance', ok && appels >= 5 && !cnt.fetch && !cnt.xhr && !cnt.beacon && externes.length === 0, { cnt, externes });
-  T('E03', '⭐ AUCUNE SYNCHRONISATION NI PERSISTANCE : pendant les appels de la V2 ni `persist`, ni `_cloudSync`, ni `_cloudSyncDebounced`, ni `syncSheets` (le protocole de Claude Principal n\'est pas sollicité)', ok && appels >= 5 && !cnt.persist && !cnt._cloudSync && !cnt._cloudSyncDebounced && !cnt.syncSheets, { appels, cnt });
-  T('E04', '⭐ L\'ÉTAT N\'A PAS BOUGÉ : `S` et le stockage local sont octet pour octet les mêmes avant et après CHAQUE appel de la V2 — y compris le premier (une clé créée une seule fois est vue)', ok && appels >= 5 && etat.length === 0, { appels, etat });
+  T('E01', '⭐ TD-C06 · AUCUNE ÉCRITURE : pendant les appels de la V2 (la façade, la carte), DÈS LE PREMIER, aucune clé de stockage n\'est écrite, retirée ni effacée', ok && appels >= 5 && !cnt.setItem && !cnt.removeItem && !cnt.clear, { appels, cnt });
+  T('E02', '⭐ TD-C06 · AUCUN RÉSEAU : pendant les appels de la V2 ni fetch, ni XMLHttpRequest, ni balise ; et aucune requête vers l\'extérieur de toute la séance', ok && appels >= 5 && !cnt.fetch && !cnt.xhr && !cnt.beacon && externes.length === 0, { cnt, externes });
+  T('E03', '⭐ TD-C06 · AUCUNE SYNCHRONISATION NI PERSISTANCE : pendant les appels de la V2 ni `persist`, ni `_cloudSync`, ni `_cloudSyncDebounced`, ni `syncSheets` (le protocole de Claude Principal n\'est pas sollicité)', ok && appels >= 5 && !cnt.persist && !cnt._cloudSync && !cnt._cloudSyncDebounced && !cnt.syncSheets, { appels, cnt });
+  T('E04', '⭐ TD-C06 · L\'ÉTAT N\'A PAS BOUGÉ : `S` et le stockage local sont octet pour octet les mêmes avant et après CHAQUE appel de la V2 — y compris le premier (une clé créée une seule fois est vue)', ok && appels >= 5 && etat.length === 0, { appels, etat });
   T('E05', 'aucune erreur de page', X.errs.length === 0, X.errs);
   await fermer(X);
 }
@@ -647,8 +652,9 @@ async function blocU(c) {
   X = await ouvrir({ sessions: [act('randonnee', 480, 3936, '08:00', { man: 2700 })], hd: [{ date: AUJ, steps: 36600 }].concat(c.base30()) });
   k = await carte(X);
   const alR = await alerte(X), mkR = await X.pg.evaluate(() => document.getElementById('m-kcal').textContent.replace(/\s/g, ''));
-  T('U20', '⭐ ITEM 6 · UNE RANDONNÉE DE 8 H (estimée ≈ 5 386, objectif 2 786) fait apparaître l\'information prudente — « Journée d\'effort exceptionnel : ta dépense estimée dépasse ton objectif d\'environ 2 600 kcal (estimation, pas une mesure). Ton objectif ne change pas. » — et l\'objectif reste 2 786',
-    !!alR && /Journée d'effort exceptionnel/.test(alR) && /dépasse ton objectif d'environ 2[\s\u202f\u00a0]600 kcal \(estimation, pas une mesure\)/.test(alR) && /Ton objectif ne change pas/.test(alR) && mkR === '2786', { alR, mkR });
+  const objCarteR = (((k && k.txt || '').replace(/[\u00a0\u202f]/g, ' ').match(/Objectif alimentaire\s*(\d[\d ]*) kcal/) || [])[1] || '').replace(/\s/g, ''); // ⛔ l'objectif tel que la CARTE l'AFFICHE, pas seulement le widget des macros (M97)
+  T('U20', '⭐ ITEM 6 · UNE RANDONNÉE DE 8 H (estimée ≈ 5 386, objectif 2 786) fait apparaître l\'information prudente — « Journée d\'effort exceptionnel : ta dépense estimée dépasse ton objectif d\'environ 2 600 kcal (estimation, pas une mesure). Ton objectif ne change pas. » — et l\'objectif reste 2 786 — dans le widget des macros ET dans la carte elle-même',
+    !!alR && /Journée d'effort exceptionnel/.test(alR) && /dépasse ton objectif d'environ 2[\s\u202f\u00a0]600 kcal \(estimation, pas une mesure\)/.test(alR) && /Ton objectif ne change pas/.test(alR) && mkR === '2786' && objCarteR === '2786', { alR, mkR, objCarteR });
   T('U22', '⭐ ITEM 6 · LE TON : neutre et prudent — « c\'est une information, pas une consigne », « s\'il se répète », « professionnel de santé » ; AUCUN mot qui dise quoi manger (« manger », « mange », « rattraper », « compenser », « autoriser », « budget », « bonus », « tu peux »)',
     !!alR && /information, pas une consigne/.test(alR) && /s'il se répète/.test(alR) && /professionnel de santé/.test(alR) && !/manger|mange|rattrap|compens|autoris|budget|bonus|tu peux|il faut|tu dois/i.test(alR), { alR });
   await fermer(X);
@@ -667,8 +673,15 @@ async function blocU(c) {
   T('U23', '⭐ ITEM 6 · LE SEUIL, VU À L\'ÉCRAN : objectif fixé à 4 386 (écart de 1 000 pile avec l\'estimée 5 386) → l\'information apparaît ; à 4 387 (999) → elle disparaît', seuil[0] !== null && /d'environ 1[\s\u202f\u00a0]000 kcal/.test(seuil[0]) && seuil[1] === null, seuil);
   await fermer(X);
   // ── la source de l'écran ──
-  T('U17', '⛔ SOURCE : `_renderDepenseJour` n\'ÉCRIT rien et n\'appelle ni `persist` ni une synchronisation, et son appel dans `renderNutrition` ne bloque jamais l\'écran (try/catch)',
+  T('U17', '⛔ TD-C06 · SOURCE : `_renderDepenseJour` n\'ÉCRIT rien et n\'appelle ni `persist` ni une synchronisation, et son appel dans `renderNutrition` ne bloque jamais l\'écran (try/catch)',
     (s => !/persist\s*\(|_cloudSync|localStorage|fetch\s*\(|S\.\w+\s*=[^=]/.test(sansCom(s)))(corps('_renderDepenseJour', srcScr)) && /try\{\s*_renderDepenseJour\(\);\s*\}catch\(e\)/.test(srcScr), '');
+  // ── TD-C07 : aucune lecture BRUTE de `S.sessions` hors liste blanche — la V2 en a exactement deux, classées dans J30 (banc « Autre activité ») ──
+  const srcTrkU = fs.readFileSync(path.join(ROOT, 'tracking.js'), 'utf8'), blocV2 = srcTrkU.slice(srcTrkU.indexOf('// ⟦DJ:BLOC-DEBUT⟧'), srcTrkU.indexOf('// ⟦DJ:BLOC-FIN⟧'));
+  const brutsV2 = [...new Set([...blocV2.matchAll(/function\s+(\w+)\s*\(/g)].map(m => m[1]))].filter(n => /\bS\.sessions\b/.test(sansCom(corps(n, blocV2)))).map(n => 'tracking.js::' + n)
+    .concat(/\bS\.sessions\b/.test(sansCom(corps('_renderDepenseJour', srcScr))) ? ['screens.js::_renderDepenseJour'] : []).sort();
+  const listeBlanche = fs.readFileSync(path.join(ROOT, 'tests/parcours/autre_activite.js'), 'utf8');
+  T('U24', '⛔ TD-C07 · LECTURES BRUTES DE `S.sessions` : la V2 en a exactement deux (`tracking.js::_djIndexSessions`, `screens.js::_renderDepenseJour`) et toutes deux sont CLASSÉES dans la liste blanche J30 du banc « Autre activité » — une troisième fait rougir ce témoin ET J30',
+    J(brutsV2) === J(['screens.js::_renderDepenseJour', 'tracking.js::_djIndexSessions']) && brutsV2.every(n => listeBlanche.includes("'" + n + "'")), { brutsV2 });
   /* ⭐ ÉTAPE 2 : l'étape 1 GELAIT `_HELP_DATA` (zone de Claude Principal) ; la décision de Michel du 06/11 demande EXPRESSÉMENT de corriger les textes qui présentent les pas comme des calories ajoutées à l'objectif
      — dont les deux conseils d'aide « ? » (Nutrition, Progrès). Le témoin ne gèle donc plus la zone : il vérifie que ces deux conseils disent la NOUVELLE règle, et rien d'autre n'est exigé de `_HELP_DATA`. */
   const aide = (srcScr.match(/const _HELP_DATA\s*=\s*\{[\s\S]*?\n\};/) || [''])[0];
