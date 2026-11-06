@@ -20,7 +20,7 @@ function csp(exec, extra) {
 }
 
 function demarrer(o) {
-  const exec = o.exec, port = o.port || 8080, email = o.email || ('c1-iphone-' + crypto.randomBytes(3).toString('hex') + '@example.invalid');
+  const exec = o.exec, port = (o.port === undefined ? 8080 : o.port), email = o.email || ('c1-iphone-' + crypto.randomBytes(3).toString('hex') + '@example.invalid');
   if (!/^https?:\/\//.test(exec)) throw new Error('adresse /exec invalide');
   if (/AKfycbxWUsEFIlmx/.test(exec)) throw new Error('⛔ adresse de PRODUCTION : refus');
   if (!o.local && !/^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec$/.test(exec)) throw new Error('adresse /exec invalide (https://script.google.com/macros/s/…/exec attendue)');

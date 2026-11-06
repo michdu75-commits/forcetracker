@@ -44,6 +44,20 @@ let ok = 0, rouge = 0; const t = (n, c, d) => { c ? ok++ : rouge++; console.log(
   const txt = await pg.locator('#c1-rap').inputValue();
   t('(5) « Comparer avec le serveur » : un seul « Pates » des deux côtés, aucun doublon', /Pates : téléphone 1 \/ serveur 1/.test(txt) && /aucun doublon/.test(txt) && /identique/.test(txt), txt.split('\n').find((l) => /Serveur ↔/.test(l)));
   t('(6) le rapport est complet (compte, réseau, envois lisibles, journal)', /^FT-C1 iPhone — /.test(txt) && /Envois saveProfile : \d+ · réponses LISIBLES : \d+/.test(txt) && /--- journal ---/.test(txt) && /saveProfile \d+Ko réponse reçue HTTP 200\/cors/.test(txt), txt.split('\n').slice(0, 2).join(' ¶ ').slice(0, 220));
+  /* (8)(9) ISOLEMENT DE LA PRODUCTION, en vrai Chromium : la CSP posée pour une VRAIE adresse de TEST refuse l'Apps Script de PRODUCTION (même hôte, autre chemin) et laisse passer celui de TEST */
+  const TEST = 'https://script.google.com/macros/s/AKfycbxdlCZcqOeKymoP5FDxMF9KdeWbNvqWI9h2vX0QCCMIJwSO3HYujOUdOR4KJ-x2qdMr/exec';
+  const PROD = 'https://script.google.com/macros/s/AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNqCztZNDMD9N4qbA/exec';
+  const web2 = await demarrer({ exec: TEST, port: 0, hote: '127.0.0.1' });
+  const pg2 = await cx.newPage();
+  await pg2.addInitScript(() => { window.__viol = []; document.addEventListener('securitypolicyviolation', (e) => window.__viol.push(e.blockedURI)); });
+  await pg2.goto('http://127.0.0.1:' + web2.port + '/index.html'); await new Promise((r) => setTimeout(r, 3000));
+  const iso = await pg2.evaluate(async ([P, T]) => {
+    const essai = async (u) => { const av = window.__viol.length; try { await fetch(u + '?test=1'); } catch (e) {} await new Promise((r) => setTimeout(r, 300)); return window.__viol.slice(av).some((b) => String(b).startsWith(u.replace(/\/exec$/, ''))); };
+    return { prodBloquee: await essai(P), testBloquee: await essai(T), defaut: DEFAULT_URL, email: localStorage.getItem('ft4_email') };
+  }, [PROD, TEST]);
+  t('(8) la CSP refuse l\'Apps Script de PRODUCTION (même hôte, autre chemin) et ne refuse PAS celui de TEST', iso.prodBloquee === true && iso.testBloquee === false, iso);
+  t('(9) en vrai : DEFAULT_URL = TEST (jamais la production) et compte fictif', iso.defaut === TEST && /@example\.invalid$/.test(iso.email), { defaut: iso.defaut.slice(-12), email: iso.email });
+  web2.s.close();
   let refus = ''; try { await demarrer({ exec: 'https://script.google.com/macros/s/AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNqCztZNDMD9N4qbA/exec', port: 0 }); refus = 'ACCEPTÉE'; } catch (e) { refus = String(e.message); }
   t('(7) l\'adresse de PRODUCTION est refusée', /PRODUCTION/.test(refus), refus);
   await b.close(); web.s.close(); faux.fermer();
