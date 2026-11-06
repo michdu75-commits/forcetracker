@@ -78,9 +78,11 @@ module.exports.ecran = async function (t, b, PORT) {
     out.hist = ligne(c, /SON OBJECTIF A CHANGÉ/);
     return out;
   });
-  const somme = (l) => { const m = /TDEE (\d+) = BMR (\d+) × [\d,]+ « [^»]* » ≈ (\d+) ([+−]\d+) travail ([+−]\d+) autre sport ([+−]\d+) pas ; puis objectif « [^»]+» ([+−]\d+) ; phase \S+ ([+−]\d+)(?: ; phase lutéale ([+−]\d+))? = (\d+) kcal(?: → relevée au plancher de sécurité : (\d+) kcal)? → CIBLE (\d+) kcal/.exec(l);
+  /* ⭐ 06/11/2026 (NUT-TDEE-02, décision de Michel : les pas ne modifient plus l'objectif) : la ligne de calcul que Milo reçoit n'a PLUS de terme « pas » — le TDEE est BMR × niveau + travail + autre sport.
+     Ce parseur n'accepte donc plus que cette forme : une ligne qui REPREND un terme « pas » ne se lit plus (null) et fait rougir tous les CTX-02 — c'est voulu, c'est l'invariant. */
+  const somme = (l) => { const m = /TDEE (\d+) = BMR (\d+) × [\d,]+ « [^»]* » ≈ (\d+) ([+−]\d+) travail ([+−]\d+) autre sport ; puis objectif « [^»]+» ([+−]\d+) ; phase \S+ ([+−]\d+)(?: ; phase lutéale ([+−]\d+))? = (\d+) kcal(?: → relevée au plancher de sécurité : (\d+) kcal)? → CIBLE (\d+) kcal/.exec(l);
     if (!m) return null; const v = s => s == null ? 0 : +String(s).replace('−', '-');
-    return { tdee: +m[1], base: +m[3], travail: v(m[4]), sport: v(m[5]), pas: v(m[6]), goal: v(m[7]), phase: v(m[8]), lut: v(m[9]), brut: +m[10], plancher: m[11] ? +m[11] : null, cible: +m[12] }; };
+    return { tdee: +m[1], base: +m[3], travail: v(m[4]), sport: v(m[5]), goal: v(m[6]), phase: v(m[7]), lut: v(m[8]), brut: +m[9], plancher: m[10] ? +m[10] : null, cible: +m[11] }; };
 
   console.log('\n═══ B-CCCLXXIV. CONTRAT FT → MILO — ce que Milo reçoit (0 appel) ═══');
   t('CTX-01 activité absente → BMR PRÉSENT (donnée indépendante de l\'activité)', /BMR: 1718 kcal/.test(R.abs.bmr), R.abs.bmr.slice(0, 80));
@@ -93,8 +95,8 @@ module.exports.ecran = async function (t, b, PORT) {
   t('CTX-02 … R8 : TDEE + objectif + phase (+ lutéal) = brut, et la CIBLE est celle de l\'app',
     !!s1 && s1.tdee + s1.goal + s1.phase + s1.lut === s1.brut && s1.cible === R.val.vrai && s1.tdee === R.val.tdee && s1.goal === 200 && s1.phase === 100,
     JSON.stringify(s1) + ' vrai=' + R.val.vrai);
-  t('CTX-02 … le TDEE lui-même se décompose (BMR × niveau + travail + autre sport + pas = TDEE)',
-    !!s1 && s1.base + s1.travail + s1.sport + s1.pas === s1.tdee, JSON.stringify(s1));
+  t('CTX-02 … le TDEE lui-même se décompose (BMR × niveau + travail + autre sport = TDEE) — SANS terme « pas » : les pas ne sont plus dans la cible (NUT-TDEE-02)',
+    !!s1 && s1.base + s1.travail + s1.sport === s1.tdee && !/[+−]\d+ pas\b/.test(R.val.calc) && !/[+−]\d+ pas\b/.test(R.val2.calc), JSON.stringify(s1));
   const s2 = somme(R.val2.calc);
   t('CTX-02 … vrai aussi sur un autre profil (Actif, debout, perte, décharge)',
     !!s2 && s2.tdee + s2.goal + s2.phase + s2.lut === s2.brut && s2.cible === R.val2.vrai && s2.travail === 200 && s2.phase === -100, R.val2.calc + ' vrai=' + R.val2.vrai);

@@ -18,7 +18,7 @@
      · SYNTH-B = 41 ans, 179 cm, 85,8 kg, « Actif (5-6j) », métier physique, objectif muscle —
        profil RECONSTRUIT le 22/09 pour reproduire une sortie, ⛔ jamais observé chez Michel.
 
-   ⭐ La chaîne mesurée : BMR (Mifflin) × activité + métier + sport + pas = TDEE → + objectif
+   ⭐ La chaîne mesurée : BMR (Mifflin) × activité + métier + sport = TDEE (« + pas » jusqu'au 06/11/2026 : retiré, NUT-TDEE-02) → + objectif
    ± phase = cible (plancher 1500/1200) → protéines et lipides en g/kg du poids TOTAL →
    **glucides = (cible − 4P − 9L) / 4, bornés à 0, SANS plafond** → cycle séance/repos.
    ══════════════════════════════════════════════════════════════════════════════════════ */
