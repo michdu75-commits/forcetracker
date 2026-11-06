@@ -3373,6 +3373,77 @@ function modifierActivite(){
     setTimeout(()=>{ const s=document.getElementById('act-sel'); if(s){ s.scrollIntoView({block:'center'}); s.focus(); } },250);
   }catch(e){}
 }
+// ⟦DJ:AFFICHAGE-DEBUT⟧
+/* 🔥 DÉPENSE ET OBJECTIF — TROIS VALEURS DISTINCTES + LA DÉPENSE ENREGISTRÉE (TDEE V2, étape 1 · GO de Michel du 06/11/2026, développement isolé — AFFICHAGE SEULEMENT).
+   TROIS VALEURS, TROIS RÔLES — jamais l'une déduite de l'autre sans que ce soit dit :
+     · RÉFÉRENCE         = ton niveau d'activité, SANS les pas du jour (`depenseReference`) ;
+     · ESTIMÉE aujourd'hui = référence + ce que ta journée a fait de plus que d'habitude, avec FOURCHETTE et PROVENANCE (`depenseEstimeeDuJour`) — une INFORMATION ;
+     · OBJECTIF alimentaire = ta cible du jour (`calcMacros`) — ⛔ INCHANGÉ : ce bloc ne l'appelle que pour l'AFFICHER, il n'y écrit rien, et il dit la part des pas que la règle actuelle y met encore.
+   ⛔ Décision de Michel (05/11) : « l'affichage informatif ne doit pas laisser croire qu'il s'agit de calories supplémentaires autorisées à consommer » — la note du bas le dit, et un témoin
+   (C-TDEE-U*) refuse tout mot qui inviterait à manger plus. Rien d'absent n'est comblé : une valeur qu'on n'a pas s'écrit « — » et dit pourquoi (R29).
+   LA DÉPENSE ENREGISTRÉE (musculation · cardio · autres) lit `_agregatPeriode`, la MÊME définition que les bilans de la semaine et du mois (R2) : ce qu'on a ENREGISTRÉ (estimation de l'app
+   ou valeur saisie), pas ce que le moteur en retient pour l'estimé. Aujourd'hui + les 7 derniers jours (la fenêtre de la tuile « Cette semaine » juste au-dessus). Rien à dire → le bloc n'existe pas (R24). */
+function _djDuree(min) { min = Math.round(min); if (min < 90) return min + ' min'; const h = Math.floor(min / 60), m = min % 60; return h + ' h' + (m ? ' ' + String(m).padStart(2, '0') : ''); }
+const _DJ_SOURCES = { montre: 'valeur saisie (montre), activité seule', estimation: 'estimation de l\'app, repos déduit', pas: 'pas reçus de Santé', dans_ton_niveau: 'déjà dans ton niveau d\'activité', aucune: 'sans estimation' };
+function _djLigneEnregistree(titre, a) {
+  const p = _bilanKcalDetail(a);   // « musculation 1 078 · cardio 379 · autres 255 » — seulement les catégories non vides
+  return '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-top:7px;">'
+    + '<span style="font-size:12.5px;color:var(--t2);font-weight:600;">' + titre + '</span>'
+    + '<span style="text-align:right;"><span class="nu-stat-val" style="color:var(--t1);">' + _fmtKcal(a.kcal.total) + ' kcal</span>'
+    + (p.length ? '<br><span style="font-size:11px;color:var(--t3);">' + p.join(' · ') + '</span>' : '') + '</span></div>';
+}
+function _djRangee(titre, valeur, sub, couleur) {
+  return '<div style="margin-top:9px;"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;">'
+    + '<span style="font-size:12.5px;color:var(--t2);font-weight:600;">' + titre + '</span>'
+    + '<span class="nu-stat-val" style="color:' + (couleur || 'var(--t1)') + ';text-align:right;">' + valeur + '</span></div>'
+    + (sub ? '<div style="font-size:11px;color:var(--t3);line-height:1.4;margin-top:1px;">' + sub + '</div>' : '') + '</div>';
+}
+function _renderDepenseJour() {
+  const el = document.getElementById('nu-dj'); if (!el) return;
+  const auj = today(), d0 = new Date(auj + 'T12:00:00'); d0.setDate(d0.getDate() - 6);
+  const d7 = d0.toISOString().slice(0, 10);
+  const liste = (S.sessions || []).filter(s => s && s.date);
+  const a1 = _agregatPeriode(liste.filter(s => s.date === auj)), a7 = _agregatPeriode(liste.filter(s => s.date >= d7 && s.date <= auj));
+  const enreg = a1.kcal.total > 0 || a7.kcal.total > 0;
+  const r = (typeof depenseEstimeeDuJour === 'function') ? depenseEstimeeDuJour() : null;
+  if (!r && !enreg) { el.style.display = 'none'; el.innerHTML = ''; return; }
+  const k = n => _fmtKcal(n) + ' kcal';
+  let h = '<div class="nu-stat" style="display:block;">'
+    + '<div class="nu-stat-lbl" style="text-transform:uppercase;letter-spacing:.06em;font-size:11.5px;font-weight:700;color:var(--t3);">🔥 Dépense et objectif <span style="text-transform:none;letter-spacing:0;font-weight:500;">· information</span></div>';
+  if (r) {
+    const m = calcMacros(S.nutritionPhase), pasLegacy = (typeof calcPasExtra === 'function') ? (calcPasExtra() || 0) : 0;
+    h += _djRangee('Référence', k(r.ref), 'ton niveau d\'activité · sans les pas du jour');
+    if (r.connu) {
+      const extra = r.extra > 0;
+      h += _djRangee('Estimée aujourd\'hui', (extra ? '≈ ' : '') + k(r.estime),
+        extra ? ('de ' + _fmtKcal(r.bande.lo) + ' à ' + _fmtKcal(r.bande.hi) + ' · estimation, pas une mesure') : 'rien de plus que d\'habitude', 'var(--orange)');
+      const L = r.lignes.slice(0, 5).map(l => {
+        const nom = l.famille ? (DJ_LABELS[l.famille] || 'Activité') + ' · ' + _djDuree(l.dureeMin) : l.label;
+        const val = l.source === 'dans_ton_niveau' ? '' : ' +' + _fmtKcal(l.kcal);
+        const src = _DJ_SOURCES[l.source] || l.source, u = (l.u > 0) ? ' · ±\u00a0' + Math.round(l.u * 100) + '\u00a0%' : '';
+        return '<div>' + nom + ' :' + val + ' <span style="color:var(--t3);">' + (val ? src + u : src) + '</span>' + (l.alerte && l.alerte.indexOf('montre_') === 0 ? ' <span style="color:var(--orange);">· ta valeur est très éloignée de l\'estimation : retenue bornée</span>' : '') + '</div>';
+      }).join('') + (r.lignes.length > 5 ? '<div>+ ' + (r.lignes.length - 5) + ' autre' + (r.lignes.length - 5 > 1 ? 's' : '') + '</div>' : '');
+      if (L) h += '<div style="margin-top:3px;font-size:11px;color:var(--t2);line-height:1.45;">' + L + '</div>';
+    } else {
+      h += _djRangee('Estimée aujourd\'hui', '—', 'aucune donnée d\'activité aujourd\'hui : rien n\'est supposé (ta référence reste ' + _fmtKcal(r.ref) + ')');
+    }
+    const manques = [];
+    if (r.manques.indexOf('pas_du_jour') >= 0 && r.pasConnectes) manques.push('Pas d\'aujourd\'hui non reçus : rien n\'est reporté d\'hier.');
+    if (r.manques.indexOf('habitude_pas') >= 0) manques.push('Habitude de pas pas encore connue (moins de 7 jours) : les pas ne comptent pas encore.');
+    if (manques.length) h += '<div style="margin-top:3px;font-size:11px;color:var(--t3);line-height:1.4;">' + manques.join('<br>') + '</div>';
+    h += _djRangee('Objectif alimentaire', (m && m.calories != null) ? k(m.calories) : '—',
+      'ta cible du jour · ne dépend pas de l\'estimée ci-dessus' + (pasLegacy > 0 ? ' · inclut +' + _fmtKcal(pasLegacy) + ' kcal de pas (règle actuelle)' : ''));
+  }
+  if (enreg) {
+    h += '<div style="margin-top:11px;padding-top:8px;border-top:1px solid var(--sep);"><div class="nu-stat-lbl" style="font-size:11.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;">Dépense enregistrée <span style="text-transform:none;letter-spacing:0;font-weight:500;">· musculation, cardio, autres</span></div>'
+      + '<div style="font-size:11px;color:var(--t3);line-height:1.4;margin-top:2px;">Telle qu\'enregistrée : l\'estimation de l\'app compte aussi le repos de la période, une valeur de montre non.</div>'
+      + (a1.kcal.total > 0 ? _djLigneEnregistree('Aujourd\'hui', a1) : '') + (a7.kcal.total > 0 ? _djLigneEnregistree('7 derniers jours', a7) : '') + '</div>';
+  }
+  h += '<div style="margin-top:9px;font-size:11px;color:var(--t3);line-height:1.4;">À titre d\'information. Ces calories ne s\'ajoutent pas à ton objectif — ton niveau d\'activité compte déjà ton entraînement habituel — et ce ne sont pas des calories en plus à manger.'
+    + (a7.cardioNonRepartie > 0 ? ' Pour ' + a7.cardioNonRepartie + ' ancienne' + (a7.cardioNonRepartie > 1 ? 's' : '') + ' séance' + (a7.cardioNonRepartie > 1 ? 's' : '') + ', la part cardio n\'a jamais été rangée : elle est comptée avec la musculation.' : '') + '</div></div>';
+  el.innerHTML = h; el.style.display = 'block';
+}
+// ⟦DJ:AFFICHAGE-FIN⟧
 function renderNutrition(){try{
   renderSupplements();
   // Phase buttons
@@ -3464,6 +3535,7 @@ function renderNutrition(){try{
     _wkEl.textContent = _wk===null ? '—' : (_wk+' séance'+(_wk>1?'s':''));
     _wkEl.style.color = 'var(--orange)';
   }
+  try{ _renderDepenseJour(); }catch(e){ /* jamais bloquant : le bloc est un ajout d'AFFICHAGE (TDEE V2, étape 1) */ }
   try{ _renderEcartActivite(); }catch(e){ /* jamais bloquant : la carte est un ajout */ }
   document.getElementById('nu-hydra').textContent=hydra;
 

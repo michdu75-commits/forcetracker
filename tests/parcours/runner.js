@@ -39243,6 +39243,10 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
      (hors ligne, reprise simulée, vrai Code.js, échec d'écriture). La matrice T01-T50 de la mission y est jouée. Blocs C-ACT-*.
      Banc : tools/banc_autre_activite.js · contrôle négatif : tools/mut_autre_activite.py. */
   await require('./autre_activite.js').ecran(t, b, PORT);
+  /* 🔥 TDEE V2 — ÉTAPE 1 « DÉPENSE DU JOUR » (session-C, Claude N°2 Séance, 06/11/2026, GO de Michel, développement isolé) : le moteur PUR extrait de `tracking.js`, ses sept scénarios, ses propriétés anti-doublon,
+     l'historique (un jour ne reçoit que ses données), l'absence de données, la NON-RÉGRESSION de l'objectif (TDEE, cible et macros À L'OCTET, lien historique avec les pas intact), l'absence d'effets de bord et la carte
+     « Dépense et objectif » de Nutrition. Blocs C-TDEE-*. Banc : tools/banc_tdee_v2.js · contrôle négatif : tools/mut_tdee_v2.py. */
+  await require('./tdee_v2.js').ecran(t, b, PORT);
   /* 📐 D031S-B — LES TÉMOINS PRÉPARÉS DE D-091 (D-031-SÉCURITÉ-01, Claude Nutrition, 19/10/2026), BRANCHÉS le 20/10 par Principal
      avec la livraison de D-091 (lot final ft-v1257), comme le prévoyait la passation (docs/D031-SECURITE-01.md § 6) : le panneau
      « Ta séance jusqu'ici » compte les échauffements validés dans les TOTAUX et dit le travail à part ; la séance enregistrée

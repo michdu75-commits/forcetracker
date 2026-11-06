@@ -1448,7 +1448,7 @@ async function blocJ(c) {
     'tracking.js::_updateAdminSyncInfo', 'coach.js::_vcApplyPersona', 'coach.js::startPt001Test',
     'coach.js::_sansSilent', 'log.js::_renameExEverywhere'
     ],
-    'voient les activités PAR CONCEPTION : formulaire d\'activité, historique, détail et édition, calendrier, bilans de la semaine et du mois, bloc dédié de Milo, exports': [
+    'voient les activités PAR CONCEPTION : formulaire d\'activité, historique, détail et édition, calendrier, bilans de la semaine et du mois, bloc dédié de Milo, exports, carte « Dépense et objectif » de Nutrition et lecteur de la dépense du jour (TDEE V2 : elles DOIVENT voir les activités, c\'est leur objet)': [
     'app.js::_auPersister', 'app.js::_auTsUnique', 'app.js::autreEnregistrer',
     'app.js::autreSupprimerOuConfirmer', 'app.js::openAutreActivite', 'app.js::_bilanMois',
     'app.js::_moisAvecSeances', 'app.js::_pKg', 'app.js::checkWeeklySummary',
@@ -1460,7 +1460,7 @@ async function blocJ(c) {
     'setup.js::exportHistoPdf', 'setup.js::goSessionsHistory', 'setup.js::openHistoExport',
     'setup.js::openSessDetail', 'setup.js::renderSessions', 'setup.js::nomM',
     'setup.js::saveSessEdits', 'setup.js::setSessCardioKcal', 'setup.js::showChartTooltip',
-    'setup.js::showSessMuscleMap', 'setup.js::_dbfFenetre'
+    'setup.js::showSessMuscleMap', 'setup.js::_dbfFenetre', 'screens.js::_renderDepenseJour', 'tracking.js::_djIndexSessions'
     ],
     'parcourent des EXERCICES, des blocs cardio ou des check-ins (une activité n\'en a pas : ni série, ni charge, ni bloc `cardio`, ni check-in à lire)': [
     'dashboard.js::renderDashboard', 'coach.js::ligneEvo', 'log.js::_chargesDejaFaites', 'log.js::_exUsageMap',

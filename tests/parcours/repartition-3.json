@@ -71,6 +71,7 @@
 "./seance_ux.js": 2,
 "./sec_admin.js": 0,
 "./session_integrity.js": 1,
+"./tdee_v2.js": 0,
 "./travail_existant.js": 2,
 "./ux_d086.js": 1,
 "./ux_integration.js": 2

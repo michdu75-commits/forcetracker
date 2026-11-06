@@ -3777,6 +3777,194 @@ function _pasEcart(refTs){
                   : 0};
   }catch(e){ return null; }
 }
+// ⟦DJ:BLOC-DEBUT⟧
+/* ═══ 🔥 LA DÉPENSE DU JOUR — MOTEUR PUR (TDEE V2, étape 1 · GO de Michel du 06/11/2026, développement ISOLÉ — audit `FORCE-TRACKER-AUDIT-TDEE-V2-2026-11-06.pdf`) ═══════════════════
+   TROIS GRANDEURS, JAMAIS MÉLANGÉES — et celle-ci n'en est qu'UNE :
+     · la dépense de RÉFÉRENCE   = BMR × niveau d'activité + travail + sport déclaré (`depenseReference`, SANS le surplus de pas) ;
+     · la dépense ESTIMÉE du jour = référence + ce que la journée a fait de PLUS que d'habitude, avec FOURCHETTE et PROVENANCE (`depenseEstimeeDuJour`, ce bloc) ;
+     · l'OBJECTIF alimentaire     = `calcMacros(...)` — ⛔ INCHANGÉ à cette étape : ni sa formule, ni son lien historique avec les pas (`calcPasExtra` reste dans `calcTDEE`).
+   ⛔ LE MOTEUR (entre les repères DJ) n'écrit rien et ne lit ni `S` ni le DOM ni le stockage ni l'horloge ; les ADAPTATEURS en dessous LISENT `S` et n'écrivent jamais ; AUCUNE fonction de l'objectif
+   n'appelle ni l'un ni les autres (témoins C-TDEE-*). L'estimé du jour est une INFORMATION :
+   il ne dit jamais « tu peux manger plus » (décision de Michel du 05/11 : ne pas laisser croire que ce sont des calories supplémentaires autorisées).
+
+   LES SEPT RÈGLES QUI EMPÊCHENT LE DOUBLON (chacune a sa propriété et sa mutation, `tests/parcours/tdee_v2.js`, `tools/mut_tdee_v2.py`) :
+     ① ACTIF, PAS BRUT — la référence contient déjà le repos de chaque heure : on n'ajoute que (brut − 1 MET × poids × durée). `kcalBloc` range le BRUT (MET × kg × h) dans `calories`.
+     ② UNE SEULE PREUVE PAR INTERVALLE — énergie active du jour mesurée > valeur de montre d'un entraînement > estimation de l'app > pas. Jamais deux pour la même plage.
+     ③ LES PAS D'UN ENTRAÎNEMENT SONT DÉJÀ PAYÉS PAR LUI — retirés du total du jour avant de regarder le surplus de pas (pas de la montre, sinon cadence × durée).
+     ④ LA MUSCULATION N'EST PAS ADDITIVE (ft-v949 : le niveau d'activité contient les séances) ET L'HABITUDE EST DÉJÀ DANS LA RÉFÉRENCE — l'« autre sport » déclaré (+150) et la médiane des
+        jours observés sont déduits ; on retient la plus grande des deux, jamais leur somme.
+     ⑤ LE MÊME ENTRAÎNEMENT NE COMPTE QU'UNE FOIS — saisie + import = une ligne (même famille, début ± 10 min, durées à ± 25 %).
+     ⑥ UNE MONTRE N'EST PAS UN INSTRUMENT — sa valeur est préférée, mais bornée entre 0,5× et 2× l'estimation active ; chaque chiffre porte une fourchette.
+     ⑦ UN JOUR NE REÇOIT QUE SES PROPRES DONNÉES — aucun report des pas d'hier sur aujourd'hui ; sans donnée, la sortie dit `connu:false`, jamais « +0 » (R29).
+
+   LES HYPOTHÈSES, ET CE QUI LES APPUIE (rien n'est présenté comme mesuré : aucune donnée réelle de montre n'est accessible, T50 reste BLOCKED) :
+     · 1 300 pas/km, 0,5 kcal/kg/km, seuil 1 500 pas, 7 jours minimum : REPRIS tels quels de `_pasEcart` (R13) ; 0,5 kcal/kg/km est le coût NET de la marche des équations ACSM
+       (0,1 mL O₂/kg/m ≈ 100 mL/kg/km ≈ 0,5 kcal/kg/km) — VÉRIFIÉ (docs/CALORIES-SOURCES.md §1) ;
+     · cadence : ≥ 100 pas/min = marche d'intensité modérée (3 MET), 100-119 = marche rapide — VÉRIFIÉ (Tudor-Locke et al., Br J Sports Med 2018) ; course 165 : PLAUSIBLE pour un coureur de
+       loisir (en général < 170), NON MESURÉ ; randonnée 75 : NON VÉRIFIÉ (la littérature dit seulement que la cadence BAISSE en montée) ; balade 85, tapis 105/125/160 : hypothèses ;
+       vélo, rameur, elliptique, corde : 0 (aucun pas retiré : un doublon résiduel est possible, DIT) ;
+     · fourchettes ±20 % (montre) · ±25 % (estimation ; docs/CALORIES-SOURCES.md §8 cite ±24 % entre personnes) · ±40 % (randonnée : terrain et charge) · ±30 % (pas), couloir 0,5-2×,
+       plafond de plausibilité 2 × BMR, tolérances de doublon : HYPOTHÈSES de conception, à calibrer sur un export réel (pas, entraînements, calories de montre) avant tout chiffre « fiable ».
+   Ce que cela ne fait PAS : aucune donnée persistée, aucune route serveur, aucune lecture d'Apple Santé au-delà de `S.healthDaily` déjà là, pas de `healthInbox` (les calories de la montre reçues
+   restent « jamais reprises dans un calcul » : `setup.js`, décision à Michel). Muscu : jamais de calories de montre. */
+// ⟦DJ:DEBUT⟧ — TOUT ce qui suit, jusqu'au repère de fin, est PUR (aucune référence à S, au DOM, au stockage, au réseau, à l'horloge) : `tests/parcours/tdee_v2.js` l'extrait et le rejoue hors navigateur.
+const DJ_PARAMS = Object.freeze({
+  PAS_PAR_KM: 1300, KCAL_KG_KM: 0.5, PAS_SEUIL: 1500, PAS_MIN_JOURS: 7,
+  CADENCE: Object.freeze({ marche: 100, marche_sportive: 115, randonnee: 75, balade: 85, course: 165, tapis: Object.freeze({ leger: 105, modere: 125, intense: 160 }) }),   // pas/min ; les familles absentes : 0
+  INCERT: Object.freeze({ montre: 0.20, met: 0.25, pas: 0.30, jourMontre: 0.25, metFamille: Object.freeze({ randonnee: 0.40, marche_sportive: 0.30, autre: 0.40 }) }),
+  COULOIR: Object.freeze([0.5, 2.0]),
+  PLAFOND_X_BMR: 2.0,
+  TOL_DOUBLON_MIN: 10, TOL_DOUBLON_DUREE: 0.25,
+});
+const DJ_LABELS = Object.freeze({ marche: 'Marche', marche_sportive: 'Marche sportive', randonnee: 'Randonnée', balade: 'Balade', velo_loisir: 'Vélo loisir', velo_sportif: 'Vélo sportif', course: 'Course',
+  tapis: 'Tapis', elliptique: 'Elliptique', velo: 'Vélo', rameur: 'Rameur', corde: 'Corde', natation: 'Natation', muscu: 'Musculation', autre: 'Autre activité' });
+const _DJ_RANG_ORIGINE = { healthkit: 0, montre: 1, saisie: 2 };
+function _djRangOrigine(o) { return _DJ_RANG_ORIGINE[o] == null ? 3 : _DJ_RANG_ORIGINE[o]; }
+function djMediane(a) { if (!a.length) return null; const t = a.slice().sort((x, y) => x - y), m = t.length >> 1; return t.length % 2 ? t[m] : (t[m - 1] + t[m]) / 2; }
+function djLabel(w) { return (DJ_LABELS[w.famille] || 'Activité') + ' ' + Math.round(w.dureeMin) + ' min'; }
+/* ⛔ L'ORDRE D'ARRIVÉE NE DOIT RIEN CHANGER (propriété P7, trouvée par la batterie sur le prototype, pas par relecture) : on trie sur un ordre TOTAL du contenu, puis on fusionne ;
+   la preuve gardée est celle d'une origine « machine » (montre, HealthKit) avant une transcription à la main ; la durée gardée est la plus longue. */
+function _djCleTri(w) { return [w.debut, String(w.famille), -(w.dureeMin || 0), _djRangOrigine(w.origine), w.kcalMontreActive == null ? -1 : w.kcalMontreActive]; }
+function _djCmp(a, b) { const x = _djCleTri(a), y = _djCleTri(b); for (let i = 0; i < x.length; i++) { if (x[i] < y[i]) return -1; if (x[i] > y[i]) return 1; } return 0; }
+function djDedoublonner(ws) {
+  const out = [], P = DJ_PARAMS;
+  ws.slice().sort(_djCmp).forEach(w => {
+    const d = out.find(x => x.famille === w.famille && Math.abs(x.debut - w.debut) <= P.TOL_DOUBLON_MIN * 60000
+                          && Math.abs(x.dureeMin - w.dureeMin) <= P.TOL_DOUBLON_DUREE * Math.max(x.dureeMin, w.dureeMin));
+    if (!d) { out.push(Object.assign({}, w)); return; }
+    d.dureeMin = Math.max(d.dureeMin, w.dureeMin);
+    const meilleure = _djRangOrigine(w.origine) < _djRangOrigine(d.origine);
+    if (w.kcalMontreActive != null && (d.kcalMontreActive == null || meilleure)) d.kcalMontreActive = w.kcalMontreActive;
+    if (w.pas != null && (d.pas == null || meilleure)) d.pas = w.pas;
+    if (meilleure) d.origine = w.origine;
+    d.fusion = (d.fusion || 1) + 1;
+  });
+  return out;
+}
+/* ① + ② + ⑥ — la meilleure preuve d'UN entraînement, en dépense ACTIVE, bornée. `kcalEstBrute` vient du propriétaire de l'estimation (`kcalBloc`) : le moteur n'a AUCUN barème MET à lui. */
+function djNetEntrainement(w, kg) {
+  const P = DJ_PARAMS, h = w.dureeMin / 60;
+  const brut = (typeof w.kcalEstBrute === 'number' && isFinite(w.kcalEstBrute) && w.kcalEstBrute >= 0) ? w.kcalEstBrute : null;
+  const estNet = brut == null ? null : Math.max(0, brut - kg * h);
+  const uMet = (P.INCERT.metFamille[w.famille] != null) ? P.INCERT.metFamille[w.famille] : P.INCERT.met;
+  if (typeof w.kcalMontreActive === 'number' && isFinite(w.kcalMontreActive) && w.kcalMontreActive >= 0) {
+    let v = w.kcalMontreActive, alerte = null;
+    if (estNet != null && estNet > 0) { const lo = P.COULOIR[0] * estNet, hi = P.COULOIR[1] * estNet; if (v < lo) { v = lo; alerte = 'montre_trop_basse'; } else if (v > hi) { v = hi; alerte = 'montre_trop_haute'; } }
+    return { net: v, brut, estNet, source: 'montre', alerte, u: P.INCERT.montre };
+  }
+  if (estNet == null) return { net: 0, brut, estNet, source: 'aucune', alerte: 'sans_estimation', u: 0 };
+  return { net: estNet, brut, estNet, source: 'estimation', alerte: null, u: uMet };
+}
+/* ③ — les pas qu'un entraînement a déjà fait payer. La musculation n'en retire aucun (ses pas restent dans l'habitude). */
+function djCadence(w) { const c = DJ_PARAMS.CADENCE[w.famille]; if (c == null) return 0; if (typeof c === 'object') return c[w.intensite || 'modere'] || c.modere || 0; return c; }
+function djPasEntrainement(w) { return w.famille === 'muscu' ? 0 : (typeof w.pas === 'number' ? w.pas : Math.round(djCadence(w) * w.dureeMin)); }
+
+/* ENTRÉE (tout est un nombre, une liste ou null — jamais un objet de l'app) :
+     profil : { kg, bmr, tdeeRef, sportExtra } — null si le profil ne permet pas de calcul (D-016 : aucun chiffre fabriqué)
+     jour   : { pas: nombre|null (le total de pas DE CE JOUR seulement), entrainements: [{ famille, dureeMin, debut(ms), intensite?, kcalEstBrute?, kcalMontreActive?, pas?, origine? }],
+                energieJour?: { active } }   ← la connexion future : NON branchée à cette étape
+     hist   : { pasHors: [ « pas hors entraînement » des 30 jours d'avant ], entrainementsNet: [ dépense active de ces 28 jours, jours OBSERVÉS seulement ], energieActive: [] }
+   SORTIE : { ref, connu, extra, estime, bande:{lo,hi}, bandeExtra:{lo,hi}, lignes:[{label,kcal,source,u,alerte?,detail?}], avert:[], manques:[], sources:[] } — ou null. */
+function depenseDuJour(profil, jour, hist) {
+  const P = DJ_PARAMS, U = P.INCERT;
+  if (!profil || profil.tdeeRef == null || !(profil.kg > 0) || !(profil.bmr > 0)) return null;
+  jour = jour || {}; hist = hist || {};
+  const kg = profil.kg, lignes = [], avert = [], manques = [], sources = new Set();
+  let extra = 0, lo = 0, hi = 0;
+  const pas = (typeof jour.pas === 'number' && isFinite(jour.pas) && jour.pas >= 0) ? jour.pas : null;
+  const ws = djDedoublonner((jour.entrainements || []).filter(w => w && w.dureeMin > 0));
+  const ej = (jour.energieJour && typeof jour.energieJour.active === 'number') ? jour.energieJour.active : null;
+  const bEj = (hist.energieActive || []).filter(x => x > 0);
+  if (ej != null && bEj.length >= P.PAS_MIN_JOURS) {
+    /* LA CONNEXION FUTURE : l'énergie active mesurée sur la journée contient déjà entraînements ET pas ; elle supplante les deux (②), on ne fait que retirer l'habitude. */
+    const b = djMediane(bEj), ex = Math.max(0, ej - b);
+    extra = ex; lo = ex * (1 - U.jourMontre); hi = ex * (1 + U.jourMontre); sources.add('energie_du_jour');
+    lignes.push({ label: 'Énergie active mesurée − ton habitude', kcal: ex, source: 'energie_du_jour', u: U.jourMontre, detail: { mesure: ej, habitude: Math.round(b) } });
+  } else {
+    let netTot = 0, loW = 0, hiW = 0;
+    ws.forEach(w => {
+      if (w.famille === 'muscu') { lignes.push({ label: djLabel(w), famille: 'muscu', dureeMin: w.dureeMin, kcal: 0, source: 'dans_ton_niveau' }); return; }                                       // ④
+      const n = djNetEntrainement(w, kg);
+      if (n.source === 'aucune') { avert.push(djLabel(w) + ' : ' + n.alerte); lignes.push({ label: djLabel(w), famille: w.famille, dureeMin: w.dureeMin, kcal: 0, source: 'aucune', alerte: n.alerte, u: 0 }); return; }
+      netTot += n.net; loW += n.net * (1 - n.u); hiW += n.net * (1 + n.u); sources.add(n.source); if (n.alerte) avert.push(djLabel(w) + ' : ' + n.alerte);
+      lignes.push({ label: djLabel(w), famille: w.famille, dureeMin: w.dureeMin, kcal: n.net, source: n.source, u: n.u, alerte: n.alerte, detail: { brut: n.brut, estimationActive: n.estNet == null ? null : Math.round(n.estNet) } });
+    });
+    const hab = (hist.entrainementsNet || []).filter(x => x >= 0);
+    const alloc = Math.max(hab.length >= P.PAS_MIN_JOURS ? djMediane(hab) : 0, profil.sportExtra || 0);         // ④ : l'habitude (médiane des jours observés ; sport déclaré) est déjà dans la référence
+    const netEntr = Math.max(0, netTot - alloc), kf = netTot > 0 ? netEntr / netTot : 0;
+    extra += netEntr; lo += loW * kf; hi += hiW * kf;
+    if (pas == null) manques.push('pas_du_jour');                                                                 // ⑦ : rien n'est reporté d'un autre jour, et l'absence est DITE
+    else {
+      const pasEntr = ws.reduce((a, w) => a + djPasEntrainement(w), 0);                                           // ③
+      const pasHors = Math.max(0, pas - pasEntr);
+      const baseArr = (hist.pasHors || []).filter(x => x > 0);
+      if (baseArr.length >= P.PAS_MIN_JOURS) {
+        const b = djMediane(baseArr), surplus = pasHors - b;
+        const k = surplus > P.PAS_SEUIL ? ((surplus - P.PAS_SEUIL) / P.PAS_PAR_KM) * kg * P.KCAL_KG_KM : 0;      // rampe CONTINUE (le moteur actuel saute de 0 à 47 kcal à 1 500 pas)
+        if (k > 0) { extra += k; lo += k * (1 - U.pas); hi += k * (1 + U.pas); sources.add('pas'); lignes.push({ label: 'Pas hors entraînement', kcal: k, source: 'pas', u: U.pas, detail: { pasHors, habitude: Math.round(b), surplus: Math.round(surplus) } }); }
+      } else manques.push('habitude_pas');
+    }
+  }
+  const plafond = P.PLAFOND_X_BMR * profil.bmr;
+  if (extra > plafond) { avert.push('plafond de plausibilité atteint (' + Math.round(plafond) + ' kcal)'); extra = plafond; lo = Math.min(lo, plafond); hi = Math.min(hi, plafond); }
+  extra = Math.max(0, extra); lo = Math.max(0, lo); hi = Math.max(0, hi);
+  const connu = sources.size > 0 || pas != null || ws.length > 0;      // une séance saisie, même de musculation, est une donnée du jour ; RIEN du tout = « je ne sais pas » (R29)
+  return { ref: profil.tdeeRef, connu, extra: Math.round(extra), estime: Math.round(profil.tdeeRef + extra), bande: { lo: Math.round(profil.tdeeRef + lo), hi: Math.round(profil.tdeeRef + hi) },
+           bandeExtra: { lo: Math.round(lo), hi: Math.round(hi) }, lignes, avert, manques, sources: Array.from(sources) };
+}
+// ⟦DJ:FIN⟧
+
+/* ── LES ADAPTATEURS (impurs : ils LISENT `S`, rien d'autre ; ils n'écrivent jamais) — ils fabriquent l'entrée du moteur, une source = un adaptateur (R2). ──
+   À cette étape : `S.sessions` (activités + cardio autonome ; la musculation est passée telle quelle pour être DITE « déjà dans ton niveau ») et `S.healthDaily` (pas, du MÊME jour).
+   ⛔ Pas de `S.healthInbox` : les calories de la montre reçues ne sont reprises dans aucun calcul (décision à Michel, `setup.js`). Une 3ᵉ source = un 3ᵉ adaptateur, le moteur ne bouge pas. */
+function _djJourDecale(date, n) { const d = new Date(date + 'T12:00:00'); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10); }
+function _djIndexSessions() {
+  const idx = {}; ((typeof S !== 'undefined' && Array.isArray(S.sessions)) ? S.sessions : []).forEach(s => { if (s && s.date) (idx[s.date] = idx[s.date] || []).push(s); });
+  return idx;
+}
+/* Les entrées du moteur pour UN jour. La valeur de la montre = la valeur SAISIE d'un bloc (`kcalMan`, calories d'ACTIVITÉ seulement) ; l'estimation = `kcalBloc(...).estimee` (BRUTE). */
+function _djEntrainementsDe(sessions) {
+  const out = [];
+  (sessions || []).forEach(s => {
+    if (!s || typeof s !== 'object') return;
+    const g = _genreSeance(s), t0 = (+s.ts || +s.id || Date.parse(s.date + 'T12:00:00') || 0);
+    const bloc = (b, famille, debut) => { const k = kcalBloc(b); out.push({ famille, intensite: b.intensity, dureeMin: +b.duration, debut, kcalEstBrute: k.estimee, kcalMontreActive: k.manuelle, origine: 'saisie' }); };
+    if (g === 'autre') { if (+s.autre.duration > 0) bloc(s.autre, s.autre.type || 'autre', t0); }
+    else if (g === 'cardio') { let off = 0; [s.cardioAvant, s.cardio].forEach(b => { if (b && +b.duration > 0) { bloc(b, b.type || 'autre', t0 + off); off += +b.duration * 60000; } }); }
+    else out.push({ famille: 'muscu', dureeMin: Math.round((+s.duration || 0) / 60), debut: t0, kcalEstBrute: +s.calories || 0, origine: 'saisie' });   // musculation : non additive, dite seulement
+  });
+  return out;
+}
+/* L'historique : « pas hors entraînement » des 30 jours d'avant, et la dépense active des 28 jours d'avant — jours OBSERVÉS seulement (un jour sans pas ni séance n'est pas un zéro : on ne sait pas). */
+function _djHistorique(date, kg) {
+  const idx = _djIndexSessions(), pasJ = {};
+  ((typeof S !== 'undefined' && S.healthDaily) || []).forEach(x => { if (x && x.date && x.steps > 0) pasJ[x.date] = x.steps; });
+  const out = { pasHors: [], entrainementsNet: [], energieActive: [] };
+  for (let k = 1; k <= 30; k++) {
+    const d = _djJourDecale(date, -k), ws = djDedoublonner(_djEntrainementsDe(idx[d]));
+    if (pasJ[d]) { const ph = pasJ[d] - ws.reduce((a, w) => a + djPasEntrainement(w), 0); if (ph > 0) out.pasHors.push(ph); }
+    if (k <= 28 && (pasJ[d] || (idx[d] && idx[d].length))) out.entrainementsNet.push(ws.filter(w => w.famille !== 'muscu').reduce((a, w) => a + djNetEntrainement(w, kg).net, 0));
+  }
+  return out;
+}
+/* LA RÉFÉRENCE : `calcTDEE()` SANS le surplus de pas — dérivée du propriétaire unique de la formule (R2), jamais recopiée. ⚠️ Quand l'étape 2 (découplage des pas, décision à Michel) retirera
+   `calcPasExtra` de `calcTDEE`, cette soustraction DEVRA disparaître avec elle : le témoin C-TDEE-REF la recalcule à part et rougira. */
+function depenseReference(refTs) { try { const t = calcTDEE(refTs); if (t == null) return null; return t - calcPasExtra(refTs); } catch (e) { return null; } }
+/* LA FAÇADE : l'estimé d'un jour (aujourd'hui par défaut). Un jour passé se rejoue avec ses seules données et celles d'AVANT lui : rien de ce qui s'est passé depuis ne le touche. */
+function depenseEstimeeDuJour(date) {
+  try {
+    const d = date || today(), auj = (d === today());
+    const ref = depenseReference(auj ? undefined : Date.parse(d + 'T12:00:00'));
+    const kg = _nbUtil(S.bw), bmr = calcBMR();
+    if (ref == null || kg == null || !(bmr > 0)) return null;
+    const lignePas = ((S.healthDaily || []).find(x => x && x.date === d && x.steps > 0)) || null;                 // ⑦ le MÊME jour, jamais hier
+    const r = depenseDuJour({ kg, bmr, tdeeRef: ref, sportExtra: calcSportExtra() },
+                            { pas: lignePas ? lignePas.steps : null, entrainements: _djEntrainementsDe(_djIndexSessions()[d]) }, _djHistorique(d, kg));
+    if (r) { r.date = d; r.pasConnectes = ((S.healthDaily || []).some(x => x && x.steps > 0)); }
+    return r;
+  } catch (e) { return null; }
+}
+// ⟦DJ:BLOC-FIN⟧
 const RHR_JOURS_BASE = 30;   // fenêtre de référence
 const RHR_MIN_JOURS  = 7;    // en dessous, on ne se prononce pas
 /* ⛔⛔ GARDÉ À 8 — DÉCISION DE MICHEL DU 04/09/2026, PRISE SUR LES CHIFFRES, ET C'EST UN CHOIX
