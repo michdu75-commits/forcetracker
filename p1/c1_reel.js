@@ -265,6 +265,13 @@ const SC = {
     const annonce = (msg) => console.log('\n>>> ACTION OPÉRATEUR (Michel) : ' + msg + '\n');
     const operateurLocal = (voulu) => { if (!LOCAL) return; setTimeout(() => { if (voulu === 'suspendre') faux.srv.props.NUT_SUSPENDU = '1'; else delete faux.srv.props.NUT_SUSPENDU; }, 8000); };
 
+    /* ── DÉPART : le serveur de TEST bascule tout seul (fonction `autoriserEtProgrammerEssaiP1`) ; si on arrive pendant un créneau de suspension, on attend sa fin avant de commencer ── */
+    if ((await sonde()) === 'suspendu') {
+      console.log('\n… le serveur est en créneau de suspension au moment du départ : on attend sa reprise (jusqu\'à 20 min) avant de commencer.\n');
+      const r00 = await attendre('actif', 20 * 60000);
+      verif('C5-0 le serveur sort du créneau de suspension de départ (la bascule programmée fonctionne)', r00.ok, r00);
+      if (!r00.ok) return;
+    }
     /* ── PHASE 1 : état sain, AVANT la suspension ── */
     const D = await appareil(b, port, email); await D.charger();
     await D.ev(() => window.__ajouter('Pates', 150)); await pause(5000); await D.ev(() => window.__ajouter('Sauce', 60));
@@ -277,7 +284,7 @@ const SC = {
     if (e0 !== 'actif') { await D.cx.close(); return; }
 
     /* ── ATTENTE : suspension posée par l'opérateur ── */
-    annonce('SUSPENDRE → dans l\'éditeur du projet de TEST, fonction `suspendreEssaiP1` → Exécuter. (le banc attend jusqu\'à 40 min)'); operateurLocal('suspendre');
+    annonce('ATTENTE de la prochaine suspension programmée (fonction `autoriserEtProgrammerEssaiP1`, créneaux de 12 min toutes les 45 min) — aucune action à faire. (le banc attend jusqu\'à 40 min)'); operateurLocal('suspendre');
     const s = await attendre('suspendu', 40 * 60000);
     verif('C5-2a la suspension est DÉTECTÉE sur le vrai Apps Script (la propriété posée est lue par le serveur sans redéploiement)', s.ok, s);
     if (!s.ok) { await D.cx.close(); return; }
@@ -306,7 +313,7 @@ const SC = {
     verif('C5-2h le serveur, pendant ce temps, n\'a RIEN reçu de ces modifications (Pates toujours 150 g, Sauce toujours là, pas de Yaourt)', srv2.ok && srv2.noms.includes('Sauce') && !srv2.noms.includes('Yaourt'), { noms: srv2.noms, kcal: srv2.kcal });
 
     /* ── ATTENTE : reprise ── */
-    annonce('REPRENDRE → dans l\'éditeur du projet de TEST, fonction `reprendreEssaiP1` → Exécuter. (le banc attend jusqu\'à 40 min)'); operateurLocal('reprendre');
+    annonce('ATTENTE de la reprise programmée (fin du créneau de suspension) — aucune action à faire. (le banc attend jusqu\'à 40 min)'); operateurLocal('reprendre');
     const rp = await attendre('actif', 40 * 60000);
     verif('C5-3a la REPRISE est détectée (propriété retirée : les envois sont de nouveau acceptés)', rp.ok, rp);
     if (!rp.ok) { await D.cx.close(); return; }

@@ -184,7 +184,7 @@ jobs:
           set -euo pipefail
           [ -n "$URL_EXEC" ] || { echo "::error::url_exec vide"; exit 1; }
           case "$URL_EXEC" in *AKfycbxWUsEFIlmx*) echo "::error::REFUS : adresse de production"; exit 1;; esac
-          node p1/c5_reel.js "$URL_EXEC" --rapport p1/rapport_c5.json
+          node p1/c1_reel.js "$URL_EXEC" --c5 --rapport p1/rapport_c5.json
 
       - name: "Garder le rapport"
         if: ${{ always() && (inputs.etape == 'essais' || inputs.etape == 'suspension' || inputs.etape == 'c1' || inputs.etape == 'c5') }}
