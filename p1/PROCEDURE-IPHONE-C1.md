@@ -9,7 +9,7 @@ cd <ton dossier forcetracker>
 git fetch origin test/c1-c5-2026-11-06
 git worktree add ../ft-c1-test origin/test/c1-c5-2026-11-06
 cd ../ft-c1-test
-node p1/serveur_iphone.js https://script.google.com/macros/s/AKfycbxdlCZcqOeKymoP5FDxMF9KdeWbNvqWI9h2vX0QCCMIJwSO3HYujOUdOR4KJ-x2qdMr/exec
+node p1/serveur_iphone.js https://script.google.com/macros/s/AKfycbxrPmpwVXltJCoRQngtla65DxzBQCrTGyKuxhyidz0hIMuowxqB6JZXONARmEWcNux-/exec
 ```
 Il affiche `http://<adresse>:8080/`. (Windows peut demander d'autoriser Node sur le réseau privé : **Autoriser**.) Ne ferme pas la fenêtre.
 

@@ -232,7 +232,7 @@ const BIG3=['Squat à la Barre','Développé Couché','Soulevé de Terre'];
 const BIG4=['Squat à la Barre','Soulevé de Terre','Développé Couché','Développé Militaire'];
 const PCT_IDS=['p100','p95','p90','p85','p80','p75','p70','p60'];
 const PCT_VALS=[100,95,90,85,80,75,70,60];
-const DEFAULT_URL='https://script.google.com/macros/s/AKfycbxdlCZcqOeKymoP5FDxMF9KdeWbNvqWI9h2vX0QCCMIJwSO3HYujOUdOR4KJ-x2qdMr/exec';
+const DEFAULT_URL='https://script.google.com/macros/s/AKfycbxrPmpwVXltJCoRQngtla65DxzBQCrTGyKuxhyidz0hIMuowxqB6JZXONARmEWcNux-/exec';
 // Serveur IA Cloudflare (worker.js / GUIDE-CLOUDFLARE.md) : appelle Anthropic EN DIRECT (sans la
 // redirection Google qui casse en 4G/5G) → validé en 5G le 2026-07-14 (bilan photo lu ✅).
 const AI_PROXY_URL='https://dry-field-e931.forcetracker-app.workers.dev';
