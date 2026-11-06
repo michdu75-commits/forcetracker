@@ -57,9 +57,21 @@ let ok = 0, rouge = 0; const t = (n, c, d) => { c ? ok++ : rouge++; console.log(
   /* (5) ce que Google répond, sans jeton */
   const r = await fetch(URL_EXEC + '?test=1', { redirect: 'follow' }); const txt = await r.text(); let j = null; try { j = JSON.parse(txt); } catch (e) { /* html */ }
   t('(5) GET ?test=1 sans jeton : HTTP ' + r.status + ' · JSON « online »', r.status === 200 && j && j.status === 'online', j || txt.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').slice(0, 160));
-  /* (6) le dossier de sauvegarde Drive du projet de TEST : lecture seule, nom uniquement */
-  const dr = await get('https://www.googleapis.com/drive/v3/files?q=' + encodeURIComponent("mimeType='application/vnd.google-apps.folder' and name contains 'FT-TEST-P1' and trashed=false") + '&fields=files(id,name,createdTime,ownedByMe)&pageSize=10');
-  if (dr.s === 200) t('(6) dossier(s) « FT-TEST-P1… » dans le Drive du compte : ' + (dr.j.files || []).length + ' (créés par preparerEssaiP1)', (dr.j.files || []).length >= 1, (dr.j.files || []).map((x) => x.name + ' · ' + String(x.createdTime).slice(0, 10) + ' · à moi=' + x.ownedByMe));
-  else console.log('   (6) liste des dossiers Drive : HTTP ' + dr.s + ' — non vérifiable avec ce jeton (portée drive.file seulement) : l\'isolement du dossier sera prouvé par le scénario P1-00 / un envoi réel');
+  /* (6) les dossiers de récupération : lecture seule, NOMS et dates seulement. Le TEST doit avoir SON dossier « FT-TEST-P1-RECUP-… » (créé par preparerEssaiP1) ; on liste aussi ce qu'il contient (la zone « recup-nut » écrite par les essais d'avant). */
+  const lister = async (q, champs) => { let out = [], pt = ''; for (let k = 0; k < 6; k++) { const r2 = await get('https://www.googleapis.com/drive/v3/files?q=' + encodeURIComponent(q) + '&fields=nextPageToken,files(' + champs + ')&pageSize=200&orderBy=createdTime' + (pt ? '&pageToken=' + pt : '')); if (r2.s !== 200) return { s: r2.s, j: r2.j, files: out }; out = out.concat(r2.j.files || []); pt = r2.j.nextPageToken; if (!pt) break; } return { s: 200, files: out }; };
+  const dossiers = await lister("mimeType='application/vnd.google-apps.folder' and trashed=false", 'id,name,createdTime,ownedByMe,parents');
+  if (dossiers.s !== 200) console.log('   (6) liste des dossiers Drive : HTTP ' + dossiers.s + ' — non vérifiable avec ce jeton');
+  else {
+    const tests = dossiers.files.filter((x) => /^FT-TEST-P1/.test(x.name)), prods = dossiers.files.filter((x) => x.name === 'ForceTracker-Backups');
+    console.log('   (6) dossiers du compte : ' + dossiers.files.length + ' · « FT-TEST-P1… » : ' + tests.length + ' · « ForceTracker-Backups » (nom du dossier de la PRODUCTION, cherché par son nom par le code) : ' + prods.length + ' — le TEST ne doit JAMAIS l\'utiliser');
+    t('(6) le projet de TEST a SON dossier de récupération « FT-TEST-P1… » (créé par preparerEssaiP1)', tests.length >= 1, tests.map((x) => x.name + ' · créé ' + String(x.createdTime).slice(0, 16) + ' · ' + masque(x.id)));
+    for (const d0 of tests) {
+      const enfants = await lister("'" + d0.id + "' in parents and trashed=false", 'id,name,mimeType,createdTime');
+      const sous = enfants.files.filter((x) => x.mimeType === 'application/vnd.google-apps.folder');
+      let nb = 0, premier = '', dernier = '';
+      for (const sd of sous) { const f2 = await lister("'" + sd.id + "' in parents and trashed=false", 'id,name,createdTime'); nb += f2.files.length; if (f2.files.length) { premier = premier || f2.files[0].createdTime; dernier = f2.files[f2.files.length - 1].createdTime; } }
+      console.log('       contenu de ' + d0.name + ' : ' + enfants.files.length + ' élément(s) (' + sous.map((x) => x.name).join(', ') + ') · fichiers dans les sous-dossiers : ' + nb + (nb ? ' · du ' + String(premier).slice(0, 16) + ' au ' + String(dernier).slice(0, 16) : ''));
+    }
+  }
   console.log('\n──── ' + ok + ' OK / ' + rouge + ' ROUGE ────'); process.exit(rouge ? 1 : 0);
 })().catch((e) => { console.error('⛔ ' + (e && e.message || e)); process.exit(2); });
