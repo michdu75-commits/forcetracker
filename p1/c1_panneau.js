@@ -66,15 +66,19 @@
       dernierServeur = diff.join(' ; ') + ' → ' + (diff.some(function (x) { return /⚠️/.test(x); }) ? 'DIVERGENCE' : 'identique') + (dup.length ? ' · DOUBLONS : ' + dup.join(', ') : ' · aucun doublon');
     }).catch(function (e) { dernierServeur = 'lecture serveur impossible : ' + String(e && e.message || e).slice(0, 80); }).then(maj);
   }
+  var serie = 1, utilisee = false;
+  function nomS(base) { return serie > 1 ? base + ' S' + serie : base; }
   function geste(n) {
     try {
+      utilisee = true;
       var decl = function (q) { return { kcal: Math.round(q * 1.3), prot: Math.round(q * 0.1), carbs: Math.round(q * 0.2), fat: Math.round(q * 0.05) }; };
       var ajouter = function (nom, q) { var r = _n2Enregistrer({ id: _foodLineId(), ts: Date.now(), date: '2026-11-05', repas: 'dejeuner', nom: nom, origine: { saisie: 'manuel', origine: 'utilisateur' }, mode: 'declaree', declare: decl(q), quantite: { val: q, unite: 'g' } }, 'addFoodEntry'); if (r.ok) _journalPersister(); return r.ok; };
       var modifier = function (nom, q) { var e = S.foodLog.find(function (l) { return l && l.name === nom; }); if (!e) return false; var r = _n2Enregistrer({ id: e.id, ts: e.ts, date: e.date, repas: e.meal, nom: e.name, origine: { saisie: e.saisie, origine: e.origine }, mode: 'declaree', declare: decl(q), quantite: { val: q, unite: 'g' }, remplace: e }, 'saveEditFood'); if (r.ok) _journalPersister(); return r.ok; };
-      if (n === 1) return ajouter('Pates', 150); if (n === 2) return modifier('Pates', 100); if (n === 3) return modifier('Pates', 80); if (n === 4) return ajouter('Sauce', 60); if (n === 5) return ajouter('Yaourt', 125);
+      if (n === 1) return ajouter(nomS('Pates'), 150); if (n === 2) return modifier(nomS('Pates'), 100); if (n === 3) return modifier(nomS('Pates'), 80); if (n === 4) return ajouter(nomS('Sauce'), 60); if (n === 5) return ajouter(nomS('Yaourt'), 125);
     } catch (e) { alert('Geste impossible : ' + e.message); }
   }
-  function rafale() { var i = 1; (function suite() { geste(i); i++; if (i <= 5) setTimeout(suite, 5000); })(); }
+  function nouvelleSerie() { serie++; utilisee = false; maj(); }
+  function rafale() { if (utilisee) serie++; utilisee = false; var i = 1; (function suite() { geste(i); i++; if (i <= 5) setTimeout(suite, 5000); })(); }
   function copier(txt) {
     var ok = false;
     try { var ta = document.createElement('textarea'); ta.value = txt; ta.style.cssText = 'position:fixed;left:0;top:0;opacity:0'; document.body.appendChild(ta); ta.focus(); ta.select(); ta.setSelectionRange(0, 999999); ok = document.execCommand('copy'); document.body.removeChild(ta); } catch (e) {}
@@ -89,8 +93,8 @@
       var b = 'style="margin:2px;padding:7px 9px;border-radius:8px;border:1px solid #888;background:#222;color:#fff;font:12px system-ui"';
       h += '<div style="' + css + 'background:#111e;color:#fff;padding:8px;border-radius:12px;margin-top:4px;max-width:92vw;max-height:70vh;overflow:auto">' +
         '<div>Compte fictif : <b>' + ent(CFG.email) + '</b></div><div>Réseau : <select id="c1-res" style="font-size:13px">' + ['Wi-Fi', '5G', '4G', 'Autre'].map(function (x) { return '<option' + (x === reseau ? ' selected' : '') + '>' + x + '</option>'; }).join('') + '</select> <input id="c1-note" placeholder="note (ex. 4 barres)" value="' + ent(note) + '" style="font-size:13px;width:9em"></div>' +
-        '<div style="margin:4px 0">Gestes : <button ' + b + ' data-g="1">① +Pâtes 150</button><button ' + b + ' data-g="2">② →100</button><button ' + b + ' data-g="3">③ →80</button><button ' + b + ' data-g="4">④ +Sauce</button><button ' + b + ' data-g="5">⑤ +Yaourt</button><button ' + b + ' data-g="r">▶︎ les 5 en rafale</button></div>' +
-        '<div><button ' + b + ' data-a="cmp">Comparer avec le serveur</button><button ' + b + ' data-a="cp">Copier le rapport</button></div>' +
+        '<div style="margin:4px 0">Gestes (série ' + serie + ') : <button ' + b + ' data-g="1">① +Pâtes 150</button><button ' + b + ' data-g="2">② →100</button><button ' + b + ' data-g="3">③ →80</button><button ' + b + ' data-g="4">④ +Sauce</button><button ' + b + ' data-g="5">⑤ +Yaourt</button><button ' + b + ' data-g="r">▶︎ les 5 en rafale</button></div>' +
+        '<div>Série n°' + serie + ' <button ' + b + ' data-a="ns">Nouvelle série</button> <button ' + b + ' data-a="cmp">Comparer avec le serveur</button><button ' + b + ' data-a="cp">Copier le rapport</button></div>' +
         '<div style="margin-top:4px;white-space:pre-wrap;word-break:break-word;opacity:.85">' + ent('Envois ' + s.n + ' · lisibles ' + s.lis + ' · illisibles ' + s.ill + ' · échecs ' + s.ech + ' · en vol max ' + maxInflight + ' · médiane ' + s.med + ' ms · max ' + s.max + ' ms\nMessages : ' + (TOASTS.join(' | ') || '(aucun)') + '\nServeur : ' + (dernierServeur || '—')) + '</div>' +
         '<textarea id="c1-rap" readonly style="width:100%;height:7em;margin-top:4px;font:10px monospace">' + ent(rapport(dernierServeur)) + '</textarea></div>';
     }
@@ -99,7 +103,7 @@
     q('#c1-bar').onclick = function () { ouvert = !ouvert; maj(); };
     if (ouvert) {
       ui.querySelectorAll('button[data-g]').forEach(function (e) { e.onclick = function () { var g = e.getAttribute('data-g'); if (g === 'r') rafale(); else geste(Number(g)); setTimeout(maj, 300); }; });
-      q('button[data-a="cmp"]').onclick = comparer; q('button[data-a="cp"]').onclick = function () { copier(rapport(dernierServeur)); };
+      q('button[data-a="cmp"]').onclick = comparer; q('button[data-a="ns"]').onclick = nouvelleSerie; q('button[data-a="cp"]').onclick = function () { copier(rapport(dernierServeur)); };
       q('#c1-res').onchange = function () { reseau = this.value; maj(); }; q('#c1-note').onchange = function () { note = this.value; maj(); };
     }
   }
