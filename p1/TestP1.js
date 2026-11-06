@@ -99,3 +99,44 @@ function arreterBasculeEssaiP1() {
   ScriptApp.getProjectTriggers().forEach(function (t) { if (t.getHandlerFunction() === 'basculeEssaiP1') ScriptApp.deleteTrigger(t); });
   Logger.log('BASCULE ARRÊTÉE : NUT_SUSPENDU retirée, déclencheur supprimé');
 }
+
+/* ════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+   06/11/2026 (soir) — ISOLER LE PROJET DE TEST *PUIS* PROGRAMMER C5 : UNE SEULE ACTION, À FAIRE AVANT TOUT ESSAI D'ÉCRITURE.
+   Pourquoi : le projet de TEST s'exécute AVEC LE COMPTE DE MICHEL (« Moi »). Le code serveur cherche son dossier de sauvegarde PAR SON NOM (« ForceTracker-Backups ») dans le Drive
+   de ce compte — c'est-à-dire le dossier de la PRODUCTION, qui y existe. Sans propriété `ft_backup_drive_folder_id` pointant vers un dossier de TEST, un essai qui fait écrire la zone de
+   récupération (« recup-nut ») écrirait dans le dossier de sauvegarde de la production. Le contrôle du 06/11 (étape « verifier ») n'a trouvé AUCUN dossier « FT-TEST-P1… » dans ce Drive :
+   l'isolement n'était donc pas en place. Cette fonction le met en place, le RELIT, et ne programme C5 qu'ensuite.
+   Ce qu'elle fait : (1) refuse si le projet porte autre chose que des comptes FICTIFS (@example.invalid) ou un secret ; (2) refuse si la feuille n'est pas neutralisée ; (3) crée un dossier NEUF
+   « FT-TEST-P1-RECUP-… » (sauf si la propriété en désigne déjà un) et pointe `ft_backup_drive_folder_id` dessus — l'ancienne valeur est ÉCARTÉE (jamais lue, jamais écrite) ; (4) relit et exige un nom « FT-TEST-P1… » ;
+   (5) pose LECTURE_STRICTE=off et FT_P1_TEST=1 ; (6) appelle autoriserEtProgrammerEssaiP1 (qui reteste le dossier, touche le verrou et programme les créneaux de suspension).
+   ════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
+function isolerEtProgrammerEssaiP1() {
+  var sp = PropertiesService.getScriptProperties();
+  /* ① que des comptes fictifs, aucun secret */
+  var interdit = sp.getKeys().filter(function (k) {
+    if (/^(ANTHROPIC_API_KEY|ADMIN_TOKEN|PREMIUM_EMAILS|PREMIUM_CODES|KOFI_TOKEN)$/.test(k)) return true;
+    var m = /^(u_|h_|auth_|prem_|confirmed_)(.*)$/.exec(k);
+    return !!m && !/@example\.invalid$/i.test(m[2]);
+  });
+  if (interdit.length) throw new Error('⛔ Ce projet porte autre chose que des comptes FICTIFS ou un secret (' + interdit.length + ' propriété(s) comme « ' + interdit[0].slice(0, 3) + '… ») : ce n\'est pas un projet de test. On s\'arrête, rien n\'a été modifié.');
+  /* ② la feuille de production neutralisée */
+  if (typeof SHEET_ID_ === 'undefined' || SHEET_ID_ !== 'TEST-SANS-FEUILLE-DE-PRODUCTION') throw new Error('⛔ SHEET_ID_ n\'est pas la valeur neutralisée du projet de test : on s\'arrête, rien n\'a été modifié.');
+  /* ③ un dossier de récupération de TEST — l'ancienne valeur n'est jamais ouverte en écriture */
+  var ancien = sp.getProperty('ft_backup_drive_folder_id'), ancienNom = '(absent)';
+  if (ancien) { try { ancienNom = DriveApp.getFolderById(ancien).getName(); } catch (e) { ancienNom = '(illisible)'; } }
+  var reutilise = !!ancien && ancienNom.indexOf('FT-TEST-P1') === 0, dossier;
+  if (reutilise) dossier = DriveApp.getFolderById(ancien);
+  else { dossier = DriveApp.createFolder('FT-TEST-P1-RECUP-' + new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-')); sp.setProperty('ft_backup_drive_folder_id', dossier.getId()); }
+  /* ④ on RELIT : la propriété doit désigner un dossier « FT-TEST-P1… » */
+  var nomRelu = '';
+  try { nomRelu = DriveApp.getFolderById(sp.getProperty('ft_backup_drive_folder_id')).getName(); } catch (e) { nomRelu = '(illisible)'; }
+  if (nomRelu.indexOf('FT-TEST-P1') !== 0) throw new Error('⛔ La propriété de dossier ne désigne pas un dossier « FT-TEST-P1… » après écriture (' + nomRelu + ') : on s\'arrête, rien n\'a été programmé.');
+  /* ⑤ le réglage du projet de test */
+  sp.setProperty('LECTURE_STRICTE', 'off'); sp.setProperty('FT_P1_TEST', '1');
+  Logger.log('ISOLÉ : ancienne valeur de ft_backup_drive_folder_id = « ' + ancienNom + ' » (écartée, jamais lue ni écrite) · dossier de TEST = « ' + nomRelu + ' » (' + (reutilise ? 'déjà là' : 'créé') + ')');
+  /* ⑥ la bascule de C5 */
+  var rep = autoriserEtProgrammerEssaiP1();
+  rep.isole = true; rep.ancienDossier = ancienNom; rep.dossierCree = !reutilise;
+  Logger.log('ISOLÉ ET PROGRAMMÉ : ' + JSON.stringify(rep));
+  return rep;
+}

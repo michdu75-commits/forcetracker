@@ -1,28 +1,21 @@
-# Procédure UNIQUE pour Michel (sur le PC, ~5 minutes) — rendre son autorisation au serveur de TEST
+# Procédure UNIQUE pour Michel (éditeur Apps Script du projet FT-TEST-P1, ~2 minutes) — v2 du 06/11/2026 au soir
 
-**Pourquoi** : le 06/11, le serveur de TEST répondait « Access Denied » à tout le monde. Le diagnostic (run 150, lecture seule) a montré qu'avec le jeton du propriétaire les 3 déploiements répondent **« Authorization needed — FT-TEST-P1 (Unverified) »** : le script de TEST n'est plus autorisé par son propriétaire. C'est un consentement Google : aucun programme ne peut le donner à ta place. Le fichier du projet, l'espace Drive et la configuration d'accès sont sains.
-**Ce que ça ne touche pas** : la production (autre projet, autre adresse). Le projet de TEST n'a ni la feuille de production, ni son dossier de sauvegarde (vérifié par la fonction elle-même, qui refuse sinon).
+**Pourquoi cette étape avant les essais** : ton nouveau déploiement répond (plus de 403) et le code qu'il sert est bien celui du candidat, feuille de production neutralisée (vérifié par l'API, 12 contrôles sur 13). Le 13ᵉ a échoué et il est important : le Drive du compte ne contient **aucun dossier « FT-TEST-P1… »** alors qu'il contient **« ForceTracker-Backups », le dossier de sauvegarde de la PRODUCTION**. Le code serveur cherche ce dossier **par son nom** : sans réglage, un essai qui écrit la zone de récupération écrirait chez la production. Je n'envoie donc **aucune écriture** au serveur de TEST tant que ce réglage n'est pas fait.
 
-## À faire (dans l'ordre, une fois)
-1. Sur le PC, dans Chrome, **connecte-toi au compte Google du projet Force Tracker** (celui qui possède l'Apps Script de production).
-2. Ouvre ce lien : <https://script.google.com/home/projects/1gBAmFDy2iEtsM8i5qeBTU5x2RckHqchkizUYgOurhKHw9C-Ymvis8C6m/edit>
-   Le projet s'appelle **FT-TEST-P1**. ⛔ Si la page dit « Vous avez besoin d'un accès » : mauvais compte, change de compte. ⛔ N'ouvre JAMAIS le projet de production.
-3. Dans la barre du haut, à côté du bouton **Exécuter**, ouvre la liste des fonctions et choisis **`autoriserEtProgrammerEssaiP1`**, puis clique **Exécuter**.
-4. Une fenêtre **« Autorisation requise »** s'ouvre : **Examiner les autorisations** → choisis le compte → *« Google n'a pas validé cette application »* → **Paramètres avancés** → **Accéder à FT-TEST-P1 (non sécurisé)** → **Autoriser**.
-5. Attends « Exécution terminée ». Dans le journal d'exécution, la ligne **`AUTORISÉ ET PROGRAMMÉ : {…}`** doit apparaître. Si une ligne commence par **« ⛔ »** : ne fais rien d'autre, copie-la et envoie-la à Claude (c'est un garde qui a refusé exprès).
-6. **Vérification** : dans une fenêtre de navigation **privée**, ouvre
-   `https://script.google.com/macros/s/AKfycbxdlCZcqOeKymoP5FDxMF9KdeWbNvqWI9h2vX0QCCMIJwSO3HYujOUdOR4KJ-x2qdMr/exec?test=1`
-   → elle doit afficher `{"status":"online",…}`.
-7. Écris à Claude **« fait »** (et l'heure). C'est tout. Tu peux fermer le PC.
+## À faire (une fois)
+1. Ouvre l'éditeur du projet **FT-TEST-P1** (le même que pour créer ton déploiement). Recharge la page (la nouvelle fonction vient d'y être poussée).
+2. Choisis la fonction **`isolerEtProgrammerEssaiP1`** dans la liste à côté de **Exécuter**, puis **Exécuter**. (L'autorisation est déjà donnée : aucune fenêtre ne devrait s'ouvrir.)
+3. Attends « Exécution terminée ». Dans le journal d'exécution, cherche **`ISOLÉ ET PROGRAMMÉ : {…}`**.
+   * Si une ligne commence par le symbole d'interdit rouge : **ne fais rien d'autre**, copie-la-moi (c'est un garde qui a refusé exprès, rien n'a été modifié).
+4. Écris-moi **« fait »**. Je vérifie moi-même (un dossier « FT-TEST-P1-RECUP-… » doit être apparu dans le Drive) puis je lance C1 tout seul.
 
-## Si l'étape 6 n'affiche PAS « online » (une seule manœuvre de secours)
-Dans l'éditeur : **Déployer → Gérer les déploiements →** le crayon ✏️ du déploiement le plus récent → **Version : Nouvelle version → Déployer**, puis recharge le lien de l'étape 6. Si ça ne change rien : envoie à Claude une capture de l'écran « Gérer les déploiements » et de la page affichée.
+## Ce que fait la fonction (et ce qu'elle ne fait pas)
+* Refuse si le projet porte autre chose que des comptes **fictifs** (`@example.invalid`) ou un secret ; refuse si la feuille de production n'est pas neutralisée.
+* Crée un dossier **neuf « FT-TEST-P1-RECUP-… »** dans ton Drive et y pointe la propriété `ft_backup_drive_folder_id`. **L'ancienne valeur est écartée : le dossier « ForceTracker-Backups » n'est ni lu ni écrit.** Elle relit la propriété et exige un nom « FT-TEST-P1… » avant de continuer.
+* Pose `LECTURE_STRICTE = off` (nécessaire aux essais, comme prévu pour le TEST) et programme les créneaux de suspension de **C5** (début 60 min plus tard, 3 créneaux de 12 min toutes les 45 min, puis la programmation se supprime toute seule).
+* Ne touche ni à la production, ni à ses sauvegardes, ni à son projet.
+* Arrêt d'urgence (facultatif) : fonction `arreterBasculeEssaiP1`.
 
-## Ce que Claude fait ensuite, tout seul (il ne t'est plus rien demandé sur le PC)
-* **Tout de suite** : lecture de contrôle (`diag`), puis **C1 réel** sur le vrai Google depuis les serveurs GitHub (scénarios R1–R8 : réponses lisibles, accusés, réseau lent, réponse perdue, doublons, délai de 180 s).
-* **+60 min après ton « fait »** : la fonction programmée suspend le Nutrition du serveur de TEST (3 créneaux de 12 min, un toutes les 45 min, puis elle se supprime toute seule) ; **C5 réel** (suspension → refus compris → reprise → convergence, aucune perte) est joué pendant ce temps.
-* **Après** : rapport C1/C5 (PASS / FAIL / BLOQUÉ, avec les preuves). L'essai **iPhone 4G/5G** (page déjà prête) se fait quand tu veux, de préférence hors des créneaux de suspension (Claude te dira les heures).
-* **Arrêt d'urgence** (facultatif) : fonction `arreterBasculeEssaiP1` (même éditeur) : retire la suspension et supprime la programmation.
-
-## Rien n'est « validé » tant que ce n'est pas joué
-C1 et C5 restent **non validés** jusqu'au rapport. Aucun déploiement en production n'est lié à cette procédure (aucun GO).
+## Ensuite, tout est automatique
+* **C1 réel** (vrai client A/A2 contre le vrai Google, depuis GitHub) dès ton « fait » ; **C5 réel** à partir de +60 min ; rapport PASS/FAIL/BLOQUÉ.
+* **iPhone 4G/5G** : quand je te le dis (page déjà prête), de préférence hors des créneaux de suspension.
