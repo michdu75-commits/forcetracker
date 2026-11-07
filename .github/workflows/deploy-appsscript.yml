@@ -36,7 +36,7 @@ jobs:
           set -euo pipefail
           echo "=== ESSAI P1 — workflow D'ESSAI (ce n'est PAS le workflow de production) · ref ${GITHUB_REF} · étape ${ETAPE} ==="
           [ "${GITHUB_REF}" != "refs/heads/master" ] || { echo "::error::refus : ce workflow d'essai ne tourne pas sur master"; exit 1; }
-          case "$ETAPE" in deployer|pousser|essais|suspension|sonde|diag|diag2|verifier|isolement|echo|ping-prod|deploiements|c1|c5) ;; *) echo "::error::etape inconnue : $ETAPE"; exit 1;; esac
+          case "$ETAPE" in deployer|pousser|essais|suspension|sonde|diag|diag2|verifier|isolement|echo|ping-prod|deploiements|c1|c1seul|c5) ;; *) echo "::error::etape inconnue : $ETAPE"; exit 1;; esac
           if [ "$ETAPE" = "deployer" ] || [ "$ETAPE" = "pousser" ]; then
             # (le .clasp.json de CETTE branche pointe lui-même vers le projet de TEST — ceinture : si GitHub exécutait par erreur le workflow de PRODUCTION sur cette branche, il pousserait dans le projet de TEST et échouerait au redéploiement)
             [ -n "$SCRIPT_ID" ] || { echo "::error::script_id vide"; exit 1; }
@@ -195,7 +195,7 @@ jobs:
           node p1/sonde_echo.js "$URL_EXEC"
 
       - name: "Installer Playwright + Chromium (essais navigateur C1 / C5)"
-        if: ${{ inputs.etape == 'c1' || inputs.etape == 'c5' }}
+        if: ${{ inputs.etape == 'c1' || inputs.etape == 'c5' || inputs.etape == 'c1seul' }}
         run: |
           set -euo pipefail
           npm install --no-save playwright@1.56.1
@@ -211,6 +211,19 @@ jobs:
           case "$URL_EXEC" in *AKfycbxWUsEFIlmx*) echo "::error::REFUS : adresse de production"; exit 1;; esac
           node p1/c1_reel.js "$URL_EXEC" --rapport p1/rapport_c1.json
 
+      - name: "C1 seul (scénarios nommés dans script_id, ex. R3 ou R1,R3) avec le détail des requêtes — projet de TEST uniquement"
+        if: ${{ inputs.etape == 'c1seul' }}
+        env:
+          URL_EXEC: ${{ inputs.url_exec }}
+          LISTE: ${{ inputs.script_id }}
+          FT_C1_DEBUG: '1'
+        run: |
+          set -euo pipefail
+          [ -n "$URL_EXEC" ] || { echo "::error::url_exec vide"; exit 1; }
+          case "$URL_EXEC" in *AKfycbxWUsEFIlmx*) echo "::error::REFUS : adresse de production"; exit 1;; esac
+          printf '%s' "$LISTE" | grep -qE '^R[0-9](,R[0-9])*$' || { echo "::error::liste de scénarios invalide : $LISTE"; exit 1; }
+          node p1/c1_reel.js "$URL_EXEC" --only "$LISTE" --rapport p1/rapport_c1seul.json
+
       - name: "C5 — suspension puis reprise sur le projet de TEST (le vrai client ET le serveur)"
         if: ${{ inputs.etape == 'c5' }}
         env:
@@ -222,7 +235,7 @@ jobs:
           node p1/c1_reel.js "$URL_EXEC" --c5 --rapport p1/rapport_c5.json
 
       - name: "Garder le rapport"
-        if: ${{ always() && (inputs.etape == 'essais' || inputs.etape == 'suspension' || inputs.etape == 'c1' || inputs.etape == 'c5') }}
+        if: ${{ always() && (inputs.etape == 'essais' || inputs.etape == 'suspension' || inputs.etape == 'c1' || inputs.etape == 'c5' || inputs.etape == 'c1seul') }}
         uses: actions/upload-artifact@v4
         with:
           name: "rapport-p1"

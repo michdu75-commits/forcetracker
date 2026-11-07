@@ -203,6 +203,7 @@ async function bilanScenario(scn, D, email, o) {
   const m = { scn, calme, envois: saves.length, volMax: vm, rejetes: saves.filter((x) => x.etat === 'rejete').length, lisibles: traites.filter((x) => x.ok === true).length, nonConfirmes: nonConf.length,
     conflitsRendus: conflits, durees: stat(durees), pates: { appareil: nb(appareilLog, 'Pates'), serveur: nb(srv.log, 'Pates') }, toasts: Array.from(new Set(toasts.map((t) => t.m))).slice(0, 5), messageAutreAppareil: faux_msg,
     bloques: Array.from(new Set(D.bloque)).slice(0, 8), erreursPage: D.erreurs.slice(0, 3), serveurLu: srv.ok, appareilLog, serveurLog: srv.log };
+  if (process.env.FT_C1_DEBUG) { try { console.log('      [fetchLog] ' + J((await D.fetchLog()).map((x) => ({ a: x.action, etat: x.etat, st: x.status, ty: x.type, err: x.err && String(x.err).slice(0, 60), ms: x.t1 ? x.t1 - x.t0 : null }))).slice(0, 900)); console.log('      [issues] ' + J((await D.issues()).map((x) => ({ via: x.via, code: x.code, dt: x.t - (D.t0 || 0) }))).slice(0, 600)); } catch (e) { /* page fermée */ } }
   R.scenarios[scn] = m;
   info(scn + ' mesures', { envois: m.envois, volMax: m.volMax, lisibles: m.lisibles, nonConfirmes: m.nonConfirmes, rejetes: m.rejetes, conflits: m.conflitsRendus, dureesMs: m.durees, pates: m.pates, toasts: m.toasts });
   return m;
