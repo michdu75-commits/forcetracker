@@ -3943,7 +3943,11 @@ function renderFoodJournal(){
           +`<div style="display:flex;flex-wrap:wrap;gap:6px;">`
           + MM.map(m=>{
               const hab=(m.k===r.meal);
-              return `<button onclick="rejouerRepas('${String(r.sig).replace(/'/g,"\\'")}','${m.k}')" `
+              /* ⭐⭐ NUT-CA-FAA'C (07/11) — LE NOM D'UN ALIMENT N'EST JAMAIS DU CODE NI DU HTML : `_escAttrJs` (log.js, l'échappeur de l'app pour un '…' JS dans un attribut "…")
+                 protège l'antislash, l'apostrophe, `&`, `"`, `<`, `>` — l'ancien `.replace(/'/g,…)` ne protégeait que l'apostrophe : un guillemet droit cassait le bouton
+                 (27 libellés CIQUAL en ont un), `"><img onerror=…>` injectait du HTML exécuté à l'AFFICHAGE, `\');…` et `&#39;);…` du JavaScript. Il laisse passer un retour à la
+                 ligne brut (erreur de syntaxe silencieuse) : on le remplace ici par son écriture JS. La signature reste celle que `_repasHabituels` calcule : rien d'autre ne change. */
+              return `<button onclick="rejouerRepas('${_escAttrJs(r.sig).replace(/\n/g,'\\n').replace(/\r/g,'\\r')}','${m.k}')" `
                 +`style="flex:1 1 30%;min-width:96px;padding:8px 6px;border-radius:9px;border:1px solid ${hab?'var(--red)':'var(--sep)'};`
                 +`background:var(--bg3);color:var(--t1);font-size:12.5px;font-weight:700;font-family:var(--font);cursor:pointer;touch-action:manipulation;">`
                 +`${m.ic} ${m.lbl}${hab?'<span style="display:block;font-size:9.5px;font-weight:600;color:var(--t3);margin-top:2px;">d\'habitude</span>':''}</button>`;

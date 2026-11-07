@@ -166,14 +166,17 @@ module.exports.ecran = async function ecran(t, b, PORT) {
     t('B-NCN C02c ⛔ la ligne masquée N\'EST NI supprimée NI modifiée : le journal est intact à l\'octet', (await instantane()) === av, '');
   }
   {
-    /* C3 : DEUX produits de même nom, deux identités (code-barres) — la médiane ne mélange pas leurs portions */
+    /* C3 : DEUX produits de même nom, deux identités (l'un sans code-barres, l'autre avec) — la médiane ne mélange pas leurs portions. Produit riche en protéines
+       (80 % des calories) pour que l'idée existe ; oracle écrit à la main : manque 40 g / 20 g pour 100 g = 200 g */
+    const P = { kcal: 100, prot: 20, carbs: 2, fat: 1 };
     const L = [];
-    for (const k of [6, 5, 4]) L.push(await mk({ tag: 'C3a', k, name: 'Yaourt jumeau', base: 'dec', sid: null, p100: { kcal: 60, prot: 4, carbs: 5, fat: 2 }, q: 125 }));
-    for (const k of [3, 2]) L.push(await mk({ tag: 'C3b', k, name: 'Yaourt jumeau', base: 'dec', sid: '3000000000955', p100: { kcal: 60, prot: 4, carbs: 5, fat: 2 }, q: 400 }));
+    for (const k of [6, 5, 4]) L.push(await mk({ tag: 'C3a', k, name: 'Fromage jumeau', base: 'dec', sid: null, p100: P, q: 50 }));
+    for (const k of [3, 2]) L.push(await mk({ tag: 'C3b', k, name: 'Fromage jumeau', base: 'dec', sid: '3000000000955', p100: P, q: 100 }));
     await charger(L);
-    const o = await E(() => { const a = _mesAliments(40).find((x) => x.name === 'Yaourt jumeau'); return { cle: a && a._cle, sans: _portionObservee('Yaourt jumeau', 'g', 'nom:yaourt jumeau'), avec: _portionObservee('Yaourt jumeau', 'g', 'id:3000000000955') }; });
-    t('B-NCN C03 ⭐ identité : la médiane d\'un produit SANS code-barres ne mélange pas les portions d\'un produit AVEC code-barres de même nom (« jamais deux produits par leur nom », D-111)', o.sans && o.sans.grammes === 125 && o.sans.n === 3 && o.avec && o.avec.grammes === 400 && o.avec.n === 2, J(o));
-    t('B-NCN C03b ⭐ et `_mesAliments` porte l\'identité du candidat retenu (pour que l\'idée la lise)', o.cle === 'nom:yaourt jumeau' || o.cle === 'id:3000000000955', J(o));
+    const o = await E(() => { const a = _mesAliments(40).find((x) => x.name === 'Fromage jumeau'); return { cle: a && a._cle, sans: _portionObservee('Fromage jumeau', 'g', 'nom:fromage jumeau'), avec: _portionObservee('Fromage jumeau', 'g', 'id:3000000000955'), idees: _ideesPourLeReste({ prot: 40, carbs: 0, fat: 0, kcal: 300 }, 12).map((i) => i.idee) }; });
+    t('B-NCN C03 ⭐ identité : la médiane d\'un produit SANS code-barres (50 g) ne mélange pas les portions d\'un produit AVEC code-barres de même nom (100 g) — « jamais deux produits par leur nom », D-111', o.sans && o.sans.grammes === 50 && o.sans.n === 3 && o.avec && o.avec.grammes === 100 && o.avec.n === 2, J(o));
+    t('B-NCN C03b ⭐ et `_mesAliments` porte l\'identité du candidat retenu (le plus récent : celui au code-barres)', o.cle === 'id:3000000000955', J(o));
+    t('B-NCN C03c ⭐⭐ de bout en bout : l\'idée part de la portion du produit RETENU (2 x 100 g = 200 g, le plus grand multiple qui ne dépasse pas 200 g), pas d\'une médiane mêlant les deux produits (qui aurait donné 100 g)', o.idees.length === 1 && /^200 g de Fromage jumeau$/.test(sansNbsp(o.idees[0])), J(o.idees));
   }
   {
     /* C4 : nominal — trois prises 80 / 100 / 120 g d'un même produit, mêmes unité et identité : médiane 100 g, « perso » (3 observations) */
@@ -220,7 +223,7 @@ module.exports.ecran = async function ecran(t, b, PORT) {
       const clic = await E((nomA) => ({ appels: window.__appels, pwn: window.__ncn_pwn || 0, ajoutes: S.foodLog.filter((x) => x.date === today()).map((x) => x.name), attendu: nomA }), nom);
       const sigAttendue = nom.toLowerCase().trim();
       const ok = rendu.boutons === rendu.attendus && rendu.cartes === 1 && apresRendu.pwn === 0 && apresRendu.img === 0 && apresRendu.souris === 0 && apresRendu.faux === 0
-        && !erreur && clic.pwn === 0 && clic.appels.length === 1 && clic.appels[0][0] === sigAttendue && clic.ajoutes.length === 1 && clic.ajoutes[0] === nom;
+        && !erreur && clic.pwn === 0 && clic.appels.length === 1 && clic.appels[0][0] === sigAttendue && clic.ajoutes.length === 1 && clic.ajoutes[0] === nom.slice(0, 80);   // le moteur écrit le nom sur 80 caractères au plus (`_n2Reajouter`, comportement existant)
       t('B-NCN F-' + cle + ' ⭐⭐ « ' + nom.slice(0, 40).replace(/[\r\n]/g, '↵') + ' » : 5 boutons, aucun HTML ni code injecté (ni à l\'affichage ni au clic), le bouton appelle rejouerRepas avec la signature EXACTE et le repas est re-noté sous son vrai nom',
         ok, J({ rendu, apresRendu, erreur, appels: clic.appels, pwn: clic.pwn, ajoutes: clic.ajoutes.length }));
       void av;

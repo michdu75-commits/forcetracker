@@ -89,8 +89,12 @@ module.exports.source = function(t, ROOT, fs, path){
   console.log('\n-- B-CCCXXII. Correctifs Nutrition — portions (source) --');
 
   const PR = _nuC(_corps('_portionRaisonnable', app));
-  t('B-CCCXXII P0 ⭐⭐ la quantité part de la portion OBSERVÉE',
-    /_portionObservee\(al\.name\)/.test(sp(PR)), '');
+  /* ⭐ RÉÉCRIT LE 07/11/2026 (NUT-CA-FAA'C) : l'ancien témoin lisait le TEXTE exact de l'appel (`_portionObservee(al.name)`) — il figeait une implémentation, et il
+     rougissait dès que l'appel recevait l'unité de la fiche et l'identité du candidat. L'INVARIANT qu'il protégeait — « la quantité part de la portion observée »,
+     jamais du seul manque — est conservé à l'identique, et sa preuve de COMPORTEMENT est dans `nut_conseils_noms.js` (A05, C01b, C02b, C04 : « 150 g de Riz »
+     = 1,5 x la médiane de 100 g, etc.). Ici : l'appel existe toujours, et il passe par l'unité de la fiche et l'identité du candidat. */
+  t('B-CCCXXII P0 ⭐⭐ la quantité part de la portion OBSERVÉE, de la MÊME unité et du MÊME produit que la fiche',
+    /_portionObservee\(al\.name,al\._fiche&&al\._fiche\.base,al\._cle\)/.test(sp(PR)), '');
   /* ⛔ LE PLAFOND UNIVERSEL N'EST PLUS LA LOGIQUE PRINCIPALE. Il n'est pas supprimé — il reste
      le garde-fou du cas « on ne sait rien » — mais il ne doit plus décider quand on sait. */
   t('B-CCCXXII P4 ⛔⛔ le plafond universel en grammes ne s\'applique PLUS quand une portion est '+
@@ -105,8 +109,11 @@ module.exports.source = function(t, ROOT, fs, path){
   const PN = _nuC(_corps('_portionsNotees', app));
   t('B-CCCXXII P10 ⛔⛔ une quantité ABSENTE n\'est pas comptée pour zéro',
     /e\.q==null/.test(sp(PN)), '');
-  t('B-CCCXXII P11 ⛔ et on ne mélange pas les unités : seules `g` et `ml` entrent dans la médiane',
-    /u!=='g'&&u!=='ml'/.test(sp(PN)), '');
+  /* ⭐ RÉÉCRIT LE 07/11/2026 (NUT-CA-FAA'C) — ET C'ÉTAIT LE DÉFAUT QU'IL VERROUILLAIT : l'ancien témoin exigeait `u!=='g'&&u!=='ml'`, c'est-à-dire que g ET ml
+     entrent dans LA MÊME médiane (mesuré : 40 g + 200 ml → « 60 g de Shake »). La garantie de fond (« on ne mélange pas les unités ») est maintenant VRAIE : une seule
+     unité à la fois, celle de la fiche — et elle est prouvée par le COMPORTEMENT dans `nut_conseils_noms.js` (C01, C01c). Ici, la forme du code : plus de « g OU ml ». */
+  t('B-CCCXXII P11 ⛔ et on ne mélange JAMAIS les unités : une seule échelle entre dans la médiane (celle de la fiche), jamais « g ou ml » ensemble',
+    /u!==echelle/.test(sp(PN)) && !/u!=='g'&&u!=='ml'/.test(sp(PN)), '');
   t('B-CCCXXII P6 ⭐⭐ le seuil de personnalisation est EXPLICITE et vaut 3 observations : '+
     'en dessous on s\'en sert, mais on n\'annonce pas « tes habitudes »',
     /const_PORTION_MIN_OBS=3/.test(sp(app)) && /perso:v\.length>=_PORTION_MIN_OBS/.test(sp(PO)), '');
