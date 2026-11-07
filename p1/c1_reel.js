@@ -161,11 +161,24 @@ async function echo(D, ev) {
 
 /* ── le côté serveur, lu par un GET indépendant du client (lecture : rien n'est écrit) ── */
 async function serveurVoit(email) {
+  /* Relecture TOLÉRANTE (07/11, après un rouge intermittent de R1 : « Pates » absent côté serveur alors que 5 accusés lisibles) : on GARDE le statut HTTP, la taille et le début
+     du corps ; une lecture qui n'est pas du JSON « ok » (page d'erreur de Google, délai) est retentée jusqu'à 3 fois, 6 s d'écart — et le fait est DIT dans `lecture`. Le banc ne compte
+     plus « 0 repas » ce qui est en réalité « lecture impossible ». ⛔ Une lecture réussie qui ne contient pas le repas reste un rouge : on ne masque rien. */
   const u = CFG.exec + (CFG.exec.includes('?') ? '&' : '?') + new URLSearchParams({ action: 'loadProfile', email });
-  const r = await fetch(u, { redirect: 'follow' }); const txt = await r.text(); let j = null; try { j = JSON.parse(txt); } catch (e) {}
-  if (process.env.FT_C1_DEBUG) console.log('      [serveurVoit] HTTP ' + r.status + ' ' + txt.slice(0, 160));
-  const p = (j && j.profile) || {}; const log = (p.foodLog || []).map((l) => ({ nom: l.name, q: l.q, kcal: l.kcal, rev: l.rev === undefined ? null : l.rev }));
-  return { ok: !!j && j.status === 'ok', raison: j ? (j.error || j.status) : 'non JSON : ' + txt.slice(0, 80), log, seances: (j && j.sessions || []).length };
+  const essais = [];
+  for (let k = 0; k < 3; k++) {
+    let status = 0, txt = '', err = null;
+    try { const r = await fetch(u, { redirect: 'follow' }); status = r.status; txt = await r.text(); } catch (e) { err = String(e && e.message || e).slice(0, 60); }
+    let j = null; try { j = JSON.parse(txt); } catch (e) {}
+    essais.push({ status, octets: txt.length, json: !!j, statut: j ? (j.status || null) : null, debut: j ? '' : txt.replace(/\s+/g, ' ').slice(0, 70), err });
+    if (process.env.FT_C1_DEBUG) console.log('      [serveurVoit] essai ' + (k + 1) + ' HTTP ' + status + ' ' + txt.slice(0, 160));
+    if (j && j.status === 'ok') {
+      const p = j.profile || {}; const log = (p.foodLog || []).map((l) => ({ nom: l.name, q: l.q, kcal: l.kcal, rev: l.rev === undefined ? null : l.rev }));
+      return { ok: true, raison: j.error || j.status, log, seances: (j.sessions || []).length, lecture: { essais: essais.length, dernier: essais[essais.length - 1] } };
+    }
+    await pause(6000);
+  }
+  return { ok: false, raison: 'lecture impossible : ' + J(essais[essais.length - 1]).slice(0, 160), log: [], seances: 0, lecture: { essais: essais.length, dernier: essais[essais.length - 1], tous: essais } };
 }
 
 /* ── le serveur interrogé DIRECTEMENT (comptes fictifs) : envois à la main, avec requestId, comme le ferait un appareil ── */
@@ -212,6 +225,7 @@ async function bilanScenario(scn, D, email, o) {
     conflitsRendus: conflits, durees: stat(durees), pates: { appareil: nb(appareilLog, 'Pates'), serveur: nb(srv.log, 'Pates') }, toasts: Array.from(new Set(toasts.map((t) => t.m))).slice(0, 5), messageAutreAppareil: faux_msg,
     bloques: Array.from(new Set(D.bloque)).slice(0, 8), erreursPage: D.erreurs.slice(0, 3), serveurLu: srv.ok, appareilLog, serveurLog: srv.log };
   if (process.env.FT_C1_DEBUG) { try { console.log('      [fetchLog] ' + J((await D.fetchLog()).map((x) => ({ a: x.action, etat: x.etat, st: x.status, ty: x.type, err: x.err && String(x.err).slice(0, 60), ms: x.t1 ? x.t1 - x.t0 : null }))).slice(0, 900)); console.log('      [issues] ' + J((await D.issues()).map((x) => ({ via: x.via, code: x.code, dt: x.t - (D.t0 || 0) }))).slice(0, 600)); } catch (e) { /* page fermée */ } }
+  console.log('      [lectureServeur] ' + scn + ' ' + J(srv.lecture).slice(0, 220));
   R.scenarios[scn] = m;
   info(scn + ' mesures', { envois: m.envois, volMax: m.volMax, lisibles: m.lisibles, nonConfirmes: m.nonConfirmes, rejetes: m.rejetes, conflits: m.conflitsRendus, dureesMs: m.durees, pates: m.pates, toasts: m.toasts });
   return m;
