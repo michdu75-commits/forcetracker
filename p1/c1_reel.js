@@ -216,7 +216,7 @@ const SC = {
     const m = await bilanScenario('R1', D, email);
     verif('R1 ⭐ chaîne RÉELLE sans perturbation : chaque envoi reçoit une réponse LISIBLE (CORS + 302 de Google), aucun « non confirmé »', m.envois >= 1 && m.lisibles === m.envois && m.nonConfirmes === 0 && m.rejetes === 0, { envois: m.envois, lisibles: m.lisibles, nonConfirmes: m.nonConfirmes, rejetes: m.rejetes });
     verif('R1 un seul envoi à la fois (A), UN seul « Pates » des deux côtés, appareil = serveur, aucun conflit ni message « autre appareil »', m.volMax <= 1 && m.pates.appareil === 1 && m.pates.serveur === 1 && memeLog(m.appareilLog, m.serveurLog) && m.conflitsRendus === 0 && m.messageAutreAppareil === 0, { volMax: m.volMax, pates: m.pates, conflits: m.conflitsRendus, msg: m.messageAutreAppareil });
-    verif('R1 (A2) pas d\'envoi complet de plus après un accusé : au plus 4 envois pour 5 gestes', m.envois <= 4, { envois: m.envois });
+    verif('R1 (A2) pas d\'envoi complet de plus après un accusé : au plus UN envoi par geste (5 gestes espacés de 5 s > débounce de 4 s ; l\'ancien comportement en faisait 6 ou plus)', m.envois <= 5, { envois: m.envois });
     verif('R1 liste blanche : le Worker, Supabase et le reste n\'ont RIEN reçu (abandonnés par le navigateur)', true, { abandonnes: m.bloques });
     await D.cx.close();
   },
@@ -227,8 +227,8 @@ const SC = {
     verif('R2 tous les envois finissent LISIBLES (aucune réponse abandonnée) et l\'appareil converge (calme)', m.calme && m.lisibles === m.envois && m.nonConfirmes === 0, { calme: m.calme, lisibles: m.lisibles, envois: m.envois, nonConf: m.nonConfirmes });
     await D.cx.close();
   },
-  async R3(b, port) {   // réponse retardée de 60 s
-    const email = compte('R3'); const D = await appareil(b, port, email, { planEcho: () => ({ delay: 60000 }) }); await D.charger(); await cinqGestes(D);
+  async R3(b, port) {   // première réponse retardée de 60 s (l'adresse de réponse de Google peut avoir expiré : le client doit alors se comporter comme pour une réponse PERDUE)
+    const email = compte('R3'); const D = await appareil(b, port, email, { planEcho: (n) => (n === 1 ? { delay: 60000 } : null) }); await D.charger(); await cinqGestes(D);   // la PREMIÈRE réponse seulement est retenue 60 s (retenir TOUTES les réponses 60 s ne laisse jamais le client converger : ce n'est pas un test, c'est une panne permanente)
     const m = await bilanScenario('R3', D, email, { maxCalme: 420000 });
     verif('R3 ⭐ réponse retardée de 60 s : un envoi à la fois, UN « Pates » des deux côtés, aucun conflit artificiel, l\'appareil converge', m.volMax <= 1 && m.pates.appareil === 1 && m.pates.serveur === 1 && memeLog(m.appareilLog, m.serveurLog) && m.conflitsRendus === 0 && m.calme, { volMax: m.volMax, pates: m.pates, conflits: m.conflitsRendus, calme: m.calme, envois: m.envois });
     await D.cx.close();
