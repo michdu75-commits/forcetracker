@@ -1,0 +1,8 @@
+C1 RÉEL (scénarios corrigés) — run 42352782962 (n°169), branche d'essai @f43cee0c, même cible TEST @4, étape c1seul R1,R3,R3b, 07:48–07:52 UTC. Verdict : « 7 OK / 0 ROUGE ».
+R0  OK  le projet de TEST répond « online » (test=1), le 302 est suivi
+R1  OK  ⭐ chaîne RÉELLE sans perturbation : 5 envois, 5 réponses LISIBLES (CORS + 302 de Google), 0 non confirmé   {durée médiane 1 881 ms, max 2 409 ms}
+R1  OK  un seul envoi à la fois (volMax 1), UN seul « Pates » des deux côtés, appareil = serveur, 0 conflit
+R1  OK  (A2) 5 gestes espacés de 5 s (> debounce 4 s) → 5 envois : pas d'envoi complet de plus après un accusé (l'ancien comportement en faisait 6 ou plus)
+R1  OK  liste blanche : le Worker et le reste n'ont RIEN reçu (abandonnés par le navigateur)
+R3  OK  ⭐ liaison lente (réponse tenue 60 s) : envois 2, volMax 1, UN « Pates » des deux côtés, 0 conflit, 2 réponses lisibles, l'appareil converge   {durée du 1er envoi 61 654 ms}
+R3b OK  ⭐ accusé périmé (l'adresse d'écho de Google reste valable ~15–30 s pour un POST ; ici tenue 45 s) : le client le sait « non confirmé » (ACCUSE_ABSENT), renvoie, finit avec les 5 repas UNE fois des deux côtés — 0 doublon, 0 conflit

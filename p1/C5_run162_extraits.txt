@@ -1,0 +1,21 @@
+C5 RÉEL — run GitHub Actions 42348111865 (n°162), branche d'essai test/c1-c5-2026-11-06 @19d2b6e9, cible = déploiement de TEST @4 (code serveur = Code.js du candidat, blob 897a0fb8), comptes fictifs @example.invalid.
+Extraits VERBATIM du journal (horodatage UTC, 07/11/2026) — verdict de fin : « 19 OK / 0 ROUGE », durée totale 3 654 s.
+06:42:24  OK  C5-1  ⭐ AVANT la suspension : le vrai client envoie, reçoit un accusé LISIBLE, et le serveur voit « Pates » et « Sauce » (appareil = serveur)   {envois:2, lisibles:2, nonConfirmes:0}
+06:42:25  OK  C5-1b envoi direct à jour accepté et accusé (ok:true)
+06:42:27  OK  C5-1c relecture : 2 repas, 1 séance, 2 pesées
+06:42:28  OK  C5-1d la sonde voit le serveur ACTIF
+07:18:46  OK  C5-2a la suspension est DÉTECTÉE sur le vrai Apps Script (propriété lue sans redéploiement)   {ms:2178495}
+07:18:49  OK  C5-2b envoi à jour REFUSÉ NUT_SUSPENDU, réessayable, requestId rendu, profil enregistré, aucun accusé exploitable
+07:18:49  OK  C5-2c le MÊME requestId rejoué pendant la suspension : refusé de nouveau (jamais « déjà appliqué »)
+07:18:51  OK  C5-2d un ANCIEN client (sans foodLogV ni requestId) : refusé NUT_SUSPENDU aussi
+07:18:52  OK  C5-2e le serveur n'a RIEN appris du Nutrition mais ENREGISTRE le reste (2ᵉ séance, 3ᵉ pesée)
+07:20:56  OK  C5-2f ⭐ le vrai client : refus compris (NUT_SUSPENDU, pas une panne), UN seul message « suspendue », envois bornés   {refus:5, messages:1, envois:5}
+07:20:56  OK  C5-2g ⭐ AUCUNE PERTE locale : l'appareil garde « Pates » 100 g, « Yaourt », « Sauce » supprimée
+07:20:56  OK  C5-2h le serveur, pendant ce temps, n'a RIEN reçu de ces modifications
+07:28:48  OK  C5-3a la REPRISE est détectée   {ms:472404}
+07:28:50  OK  C5-3b le requestId refusé pendant la suspension est APPLIQUÉ : ok:true et PAS « deja »
+07:28:52  OK  C5-3c journal = [L1 modifiée, L3], L2 supprimé, AUCUN doublon ; séances 2, pesées 3
+07:28:55  OK  C5-3d rejeu du MÊME requestId APRÈS application : accusé identique (deja:true)
+07:28:59  OK  C5-3e un appareil EN RETARD qui renvoie l'ancienne liste [L1, L2] : L2 ne REVIENT PAS
+07:42:53  OK  C5-3f ⭐ le vrai client CONVERGE après la reprise : « Pates » 100 g unique, « Yaourt » présent, « Sauce » absente, appareil = serveur, aucun doublon, aucun conflit   {convergeApresMs:843288, declencheurUtilisateurNecessaire:false, conflits:0, dureeSuspensionMs:602015}
+NOTE MESURÉE : convergence 843 s (≈ 14 min) APRÈS la reprise, sans geste de l'utilisateur — c'est le dernier palier de la rampe de relance du client (`_NUT_RELANCES_MS=[30 s, 60 s, 120 s, 300 s, 900 s]`, setup.js L1092) : 5 envois refusés pendant la suspension, donc le prochain essai attend 15 min. Borné, sans perte, mais pas immédiat.

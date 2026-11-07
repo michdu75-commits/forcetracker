@@ -1,0 +1,4 @@
+3946c3946
+<               return `<button onclick="rejouerRepas('${String(r.sig).replace(/'/g,"\\'")}','${m.k}')" `
+---
+>               return `<button onclick="rejouerRepas('${_escAttrJs(r.sig)}','${m.k}')" `

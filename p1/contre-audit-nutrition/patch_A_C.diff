@@ -1,0 +1,24 @@
+5028a5029,5031
+>     /* [ESSAI CONTRE-AUDIT] une fiche que `_n2Reajouter` refuse (non vérifiée, contredite) ne nourrit pas une idée ; et un aliment sans fiche utilisable ne prend pas la place du même nom */
+>     const _R0=_n2Reprise(e);
+>     if(!(_R0 && _R0.ok && _R0.fiche && _R0.fiche.base==='g' && !_n2FicheNonVerifiee(_R0))) return;
+5125c5128
+< function _portionsNotees(nom){
+---
+> function _portionsNotees(nom, unite){
+5129a5133
+>     if(!_n2Propose(e, e.ts)) return;           // [ESSAI] ni masquée ni d'avant la remise à zéro
+5134c5138
+<     if(u !== 'g' && u !== 'ml') return;      // une seule échelle à la fois
+---
+>     if(u !== (unite || 'g')) return;         // [ESSAI] UNE seule échelle : celle de la fiche (g ou ml), jamais les deux
+5139,5140c5143,5144
+< function _portionObservee(nom){
+<   const v = _portionsNotees(nom);
+---
+> function _portionObservee(nom, unite){
+>   const v = _portionsNotees(nom, unite);
+5165c5169
+<     const obs = _portionObservee(al.name);
+---
+>     const obs = _portionObservee(al.name, al._fiche && al._fiche.base);
