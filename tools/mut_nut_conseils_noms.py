@@ -17,17 +17,20 @@ SC = 'screens.js'
 W = lambda *c: ['B-NCN ' + x + ' ' for x in c]
 
 GATE = "    if(!_f || !_n2PeutNourrirIdee(e, vf)) return;\n    vus[k]=1;"
+FN = "function _n2PeutNourrirIdee(src, verifiees){ try{ const a=_n2Apercu(src, verifiees); return a.ok ? !a.raison : !!a.aCompleter; }catch(e){ return false; } }   // un aperçu qui échoue = refus (le repli sûr) : il ne casse jamais l'écran"
+FN_M02 = "function _n2PeutNourrirIdee(src, verifiees){ try{ const a=_n2Apercu(src, verifiees); return a.ok && !a.raison; }catch(e){ return false; } }"
+FN_M04 = "function _n2PeutNourrirIdee(src, verifiees){ try{ const a=_n2Apercu(src, verifiees); return a.ok || !!a.aCompleter; }catch(e){ return false; } }"
+FN_M14 = "function _n2PeutNourrirIdee(src, verifiees){ const a=_n2Apercu(src, verifiees); return a.ok ? !a.raison : !!a.aCompleter; }"
 MUT = [
     ('M01 la fiche refusee par « + Ajouter » nourrit de nouveau une idee (plus de garde d\'admissibilite)',
      [(A, GATE, "    if(!_f) return;\n    vus[k]=1;")], W('A01', 'A01b', 'A01c', 'A02')),
     ('M02 une ligne sans quantite (« a completer ») est prise pour un refus de FICHE : les anciennes lignes disparaissent des idees',
-     [(A, "function _n2PeutNourrirIdee(src, verifiees){ const a=_n2Apercu(src, verifiees); return a.ok ? !a.raison : !!a.aCompleter; }",
-          "function _n2PeutNourrirIdee(src, verifiees){ const a=_n2Apercu(src, verifiees); return a.ok && !a.raison; }")], W('A04')),
+     [(A, FN, FN_M02)], W('A04')),
     ('M03 un aliment sans fiche utilisable masque de nouveau, PAR SON NOM, le produit admissible (le nom est marque « vu » avant l\'admission)',
      [(A, GATE, "    vus[k]=1;\n    if(!_f || !_n2PeutNourrirIdee(e, vf)) return;")], W('A02', 'A03', 'A03b')),
     ('M04 le verdict d\'admission ignore ce que le moteur refuse a l\'ajout (tout ce qui a une fiche est admis)',
-     [(A, "function _n2PeutNourrirIdee(src, verifiees){ const a=_n2Apercu(src, verifiees); return a.ok ? !a.raison : !!a.aCompleter; }",
-          "function _n2PeutNourrirIdee(src, verifiees){ const a=_n2Apercu(src, verifiees); return a.ok || !!a.aCompleter; }")], W('A01', 'A01b', 'A01c', 'A02')),
+     [(A, FN,
+          FN_M04)], W('A01', 'A01b', 'A01c', 'A02')),
     ('M05 la frequence recompte les lignes masquees',
      [(A, "(S.foodLog||[]).forEach(e=>{ if(!e || !_n2Propose(e, e.ts)) return; const k=cle(e.name);", "(S.foodLog||[]).forEach(e=>{ if(!e) return; const k=cle(e.name);")], W('C05')),
     ('M06 la portion observee recompte les prises masquees / d\'avant la remise a zero',
@@ -45,6 +48,8 @@ MUT = [
      [(SC, ".replace(/\\n/g,'\\\\n').replace(/\\r/g,'\\\\r')}", "}")], W('F-retour_ligne', 'F-retour_chariot')),
     ('M12 l\'echappement ne protege plus que du HTML (ni antislash ni apostrophe)',
      [(SC, "${_escAttrJs(r.sig).replace(/\\n/g,'\\\\n').replace(/\\r/g,'\\\\r')}", "${_escNote(String(r.sig))}")], W('F-guillemet', 'F-antislash', 'F-antislash_apostrophe', 'F-apostrophe')),
+    ('M14 un apercu du moteur qui echoue (exception) casse « Ce qu\'il te reste » au lieu d\'etre un refus',
+     [(A, FN, FN_M14)], W('A06')),
     ('M13 « Ce qu\'il te reste » ECRIT dans le journal (une ligne refusee est « recalculee » en silence)',
      [(A, GATE, "    if(!_f) return;\n    if(!_n2PeutNourrirIdee(e, vf)){ e.etat='recalcule'; return; }\n    vus[k]=1;")], W('A01d')),
 ]

@@ -2269,7 +2269,7 @@ function _n2Apercu(src, verifiees){ return _n2Reajouter(src, 'apercu', today(), 
 /* ⭐ NUT-CA-FAA'C (07/11) — UNE référence peut-elle nourrir une IDÉE (« Ce qu'il te reste, en vrai ») ? Le MÊME verdict que « + Ajouter » (`_n2Apercu`) : une
    fiche que le moteur refuse de re-noter ne sert pas non plus à conseiller. ⚠️ Une quantité inconnue (`aCompleter`, d'anciennes lignes) n'est PAS un refus de
    FICHE — le moteur contrôle la fiche AVANT la quantité — : la ligne reste proposable. Lecture seule : rien n'est écrit, rien n'est recalculé. */
-function _n2PeutNourrirIdee(src, verifiees){ const a=_n2Apercu(src, verifiees); return a.ok ? !a.raison : !!a.aCompleter; }
+function _n2PeutNourrirIdee(src, verifiees){ try{ const a=_n2Apercu(src, verifiees); return a.ok ? !a.raison : !!a.aCompleter; }catch(e){ return false; } }   // un aperçu qui échoue = refus (le repli sûr) : il ne casse jamais l'écran
 /* « Vérifiée » : re-notée par une fiche SOURCE (Open Food Facts, CIQUAL, enseigne), et rien à redire. */
 function _n2Verifiee(a){ return !!(a && a.ok && !a.raison && a.R && a.R.fiche && a.R.fiche.fiab==='source' && a.R.controleReference && a.R.controleReference.etat==='admissible'); }   // NUT-REF-HIST-01 : `fiab:'source'` seul n'est pas une preuve
 /* Ce que la liste dit d'une référence, à côté de ses valeurs : l'étiquette que porterait la ligne écrite (`_n2Badge`), ou

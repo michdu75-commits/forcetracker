@@ -141,6 +141,13 @@ module.exports.ecran = async function ecran(t, b, PORT) {
     t('B-NCN A05 ⭐ nominal inchangé (oracle calculé à la main) : « 150 g de Riz nominal » (1,5 x la médiane 100 g) et « 200 g de Poulet nominal » (2 x la prise de 100 g, fiche CIQUAL conforme)', idees.length === 2 && idees.indexOf('150 g de Riz nominal') >= 0 && idees.indexOf('200 g de Poulet nominal') >= 0, J(idees));
   }
 
+  {
+    /* A6 : si l'aperçu du moteur ÉCHOUE (exception), c'est un refus — le repli sûr : « Ce qu'il te reste » ne casse pas l'écran et ne conseille pas avec une fiche qu'on n'a pas pu juger */
+    await charger([await mk({ tag: 'A6', k: 1, name: 'Skyr aperçu en panne', base: 'dec', p100: { kcal: 60, prot: 11, carbs: 4, fat: 0.2 }, q: 150 })]);
+    const r = await E(() => { const orig = window._n2Apercu; window._n2Apercu = () => { throw new Error('aperçu en panne (essai)'); }; let err = null, mes = null, idees = null; try { mes = _mesAliments(40).length; idees = _ideesPourLeReste({ prot: 70, carbs: 0, fat: 0, kcal: 400 }, 12).length; } catch (e) { err = String(e); } window._n2Apercu = orig; return { err, mes, idees }; });
+    t('B-NCN A06 ⭐ un aperçu du moteur qui ÉCHOUE est un refus (repli sûr) : aucune exception, aucune idée', r.err === null && r.mes === 0 && r.idees === 0, J(r));
+  }
+
   /* ═══ C — la portion observée : UNE unité, UNE identité, ni masquée ni d'avant la remise à zéro ═══ */
   {
     /* C1 : 40 g et 200 ml sous le même nom */
@@ -227,6 +234,16 @@ module.exports.ecran = async function ecran(t, b, PORT) {
       t('B-NCN F-' + cle + ' ⭐⭐ « ' + nom.slice(0, 40).replace(/[\r\n]/g, '↵') + ' » : 5 boutons, aucun HTML ni code injecté (ni à l\'affichage ni au clic), le bouton appelle rejouerRepas avec la signature EXACTE et le repas est re-noté sous son vrai nom',
         ok, J({ rendu, apresRendu, erreur, appels: clic.appels, pwn: clic.pwn, ajoutes: clic.ajoutes.length }));
       void av;
+    }
+    {
+      /* le PANNEAU DE CHOIX (repas dont un aliment est refusé) : un nom hostile n'y devient ni HTML ni code */
+      const nomH = '"><img src=x onerror=window.__ncn_pwn=(window.__ncn_pwn||0)+1>';
+      const L = [];
+      for (const k of [3, 2]) { L.push(await mk({ tag: 'FPn' + k, k, name: nomH, base: 'off', sid: '3000000000977', p100: { kcal: 380, prot: 85, carbs: 3, fat: 2 }, q: 30 })); L.push(await mk({ tag: 'FPo' + k, k, name: 'Riz panneau ok', base: 'dec', p100: { kcal: 130, prot: 3, carbs: 28, fat: 0.3 }, q: 100 })); }
+      await charger(L);
+      await E(() => { goScreen('s-nutrition'); renderFoodJournal(); document.querySelectorAll('img[src="x"]').forEach((x) => x.remove()); });
+      const r = await E(async () => { const sig = _repasHabituels()[0].sig; rejouerRepas(sig, 'dejeuner'); await new Promise((q) => setTimeout(q, 500)); return { panneau: !!document.querySelector('.hab-choix'), pwn: window.__ncn_pwn || 0, img: document.querySelectorAll('img[src="x"]').length, boutons: [...document.querySelectorAll('.hab-choix button')].length }; });
+      t('B-NCN F-panneau ⭐ le panneau de choix s\'ouvre (3 boutons) et un nom d\'aliment hostile n\'y devient ni HTML ni code', r.panneau && r.boutons === 3 && r.pwn === 0 && r.img === 0, J(r));
     }
     t('B-NCN F-fin aucune erreur JavaScript de page pendant tout le banc (hors la faute que le défaut provoquait)', erreurs.length === 0, J(erreurs.slice(0, 3)));
   }
