@@ -13,11 +13,12 @@
    Ce qu'ils NE COUVRENT PAS : la vraie lecture d'une page par l'IA, Safari / l'iPhone réel, la synchronisation cloud.
    ══════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
 'use strict';
+const { moisPrecedent } = require('../_jour.js');   // ⭐ ft4_lms = le mois PRÉCÉDENT du jour de Paris, jamais un mois écrit en dur (voir tests/_jour.js)
 const fs = require('fs'), os = require('os'), path = require('path'), cp = require('child_process'), crypto = require('crypto');
 
 const BASE = { ft4_bw: '82', ft4_age: '41', ft4_ht: '178', ft4_gender: 'H', ft4_goal: 'force', ft4_ob2: '1', ft4_name: 'Test',
   ft4_email: 't@t.t', ft4_devtoken: 'f'.repeat(64), ft4_tester_eq_v1: '1', ft4_ok: '1', ft4_stmig1: '1',
-  ft4_guide_shown: '1', ft4_wn_seen: '999', ft4_lms: '2026-10' };
+  ft4_guide_shown: '1', ft4_wn_seen: '999', ft4_lms: moisPrecedent() };
 const _det = o => JSON.stringify(o);
 const DC = 'Développé Couché', DM = 'Développé Militaire', SQ = 'Squat à la Barre';
 const NOTE_DC = 'Matériel Fitness Park — pivot différent';

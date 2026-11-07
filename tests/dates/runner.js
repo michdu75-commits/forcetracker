@@ -108,7 +108,12 @@ const EXCEPTIONS={
 /* RECETTE-01 : la forme « maintenant ± n jours » (`new Date(Date.now()-n*864e5)…`) est le MÊME
    défaut — c'est elle qui échappait à la ligne voisine de celle qu'on a trouvée. */
 const INTERDIT=/new Date\((Date\.now\(\)\s*[-+][^()]*(\([^()]*\))?[^()]*)?\)\.toISOString\(\)\s*\.\s*(slice\(0,\s*10\)|split\('T'\)\[0\])/;
-const fautifs=[], fautifsBancs=[];
+/* ⭐⭐ 07/11/2026 — UN MOIS ÉCRIT EN DUR POUR `ft4_lms` EST UN PIÈGE À RETARDEMENT. `ft4_lms` = « dernier bilan du mois annoncé » : au démarrage, l'app annonce le bilan du mois ÉCOULÉ s'il a des séances et
+   si ce n'est pas déjà fait — 2,2 s après le chargement, la fenêtre `ov-month-summary` s'ouvre PAR-DESSUS l'écran (elle intercepte les clics) et un `persist()` écrit `ft4_sb_last` + appelle le réseau.
+   Neuf modules écrivaient `ft4_lms: '2026-09'` ou `'2026-10'` : justes le jour où on les écrit, FAUX le 1ᵉʳ du mois suivant. Mesuré le 05/11 : `seance_ux` PLANTÉ (« ov-month-summary intercepts pointer events »),
+   B-UXI-G2 / G3 / G5 / G7 rouges, B-FFD-⑧e rouge — sur le code PUBLIÉ comme sur la branche : aucune régression, un calendrier. La valeur juste est `moisPrecedent()` (tests/_jour.js, jour de Paris). */
+const INTERDIT_MOIS=/\bft4_lms\s*:\s*['"`]\d{4}-\d{2}['"`]/;
+const fautifs=[], fautifsBancs=[], fautifsMois=[];
 for(const f of FICHIERS.concat(FICHIERS_BANCS)){
   const p=path.join(R,f); if(!fs.existsSync(p)) continue;
   let dansBloc=false;
@@ -135,6 +140,7 @@ for(const f of FICHIERS.concat(FICHIERS_BANCS)){
     if(/typeof today\s*===?\s*'function'/.test(sansBloc)) return; // repli défensif : today() existe toujours
     const ex=EXCEPTIONS[f]; if(ex&&ex[0].test(sansBloc)) return;
     if(INTERDIT.test(sansBloc)) ((f.startsWith('tests/')||f.startsWith('tools/'))?fautifsBancs:fautifs).push(f+':'+(i+1));
+    if(INTERDIT_MOIS.test(sansBloc)) fautifsMois.push(f+':'+(i+1));
   });
 }
 t('aucun fichier de l\'app ne recalcule le jour à l\'heure de Greenwich',
@@ -150,6 +156,13 @@ t('⛔ CONTRÔLE — la recherche couvre bien les modules de parcours et les ban
   FICHIERS_BANCS.length+' fichiers');
 t('⭐⭐ aucun BANC D\'ESSAI non plus (une fixture datée en UTC fait 11 faux rouges à minuit)',
   fautifsBancs.length===0, fautifsBancs.join(' · '));
+t('⭐⭐ aucun module de test ne FIGE le mois du bilan mensuel (`ft4_lms: \'AAAA-MM\'` en dur) — `moisPrecedent()` de tests/_jour.js : un mois écrit en dur ouvre le bilan du mois PAR-DESSUS l\'écran dès le 1ᵉʳ du mois suivant (seance_ux planté, B-UXI-G2/G3/G5/G7, B-FFD-⑧e, 05/11/2026)',
+  fautifsMois.length===0, fautifsMois.join(' · '));
+/* ⛔ CONTRÔLE — le détecteur n'est pas aveugle : il voit les trois écritures en dur, et laisse passer la bonne et la LECTURE du stockage. */
+t('⛔ CONTRÔLE — le détecteur de mois en dur voit « ft4_lms: \'2026-09\' » (guillemets simples, doubles, accent grave) et laisse passer `moisPrecedent()` et `getItem(\'ft4_lms\')`',
+  INTERDIT_MOIS.test("ft4_lms: '2026-09'") && INTERDIT_MOIS.test('ft4_lms:"2026-10"') && INTERDIT_MOIS.test('ft4_lms : `2027-01`')
+  && !INTERDIT_MOIS.test('ft4_lms: moisPrecedent()') && !INTERDIT_MOIS.test("localStorage.getItem('ft4_lms')") && !INTERDIT_MOIS.test('ft4_lms: lms, ft4_lws: ymd'),
+  'motif : '+INTERDIT_MOIS);
 
 
 // ── 3. RECETTE-01 — LES FIXTURES DE TEST À LA FRONTIÈRE DU JOUR (horloge gelée) ───────────
@@ -168,7 +181,7 @@ function gele(tz, instantISO, expr){
       static now(){ return FIXE.getTime(); }
     };
     ${TODAY_SRC}
-    const { jourParis, jourLocal } = require(${JSON.stringify(JOUR_JS)});
+    const { jourParis, jourLocal, moisPrecedent } = require(${JSON.stringify(JOUR_JS)});
     const utc = new Date().toISOString().slice(0,10);
     process.stdout.write(String(${expr}));`;
   return cp.execFileSync(process.execPath, ['-e', code],
@@ -187,6 +200,15 @@ t('le jour de Paris ne dépend PAS du fuseau du processus (UTC, Paris ou New Yor
 t('décalage CALENDAIRE à la fin du mois : −2, 0, +3 depuis 00 h 30 le 1ᵉʳ octobre (Paris)',
   gele('UTC',FINMOIS,'[jourParis(-2),jourParis(),jourParis(3)].join(",")')==='2026-09-29,2026-10-01,2026-10-04',
   gele('UTC',FINMOIS,'[jourParis(-2),jourParis(),jourParis(3)].join(",")'));
+/* ⭐ 07/11/2026 — `moisPrecedent()` est ce que les fixtures posent dans `ft4_lms` : le mois ÉCOULÉ DE LA PAGE, donc de PARIS. Les trois cas qui le font mentir : la frontière UTC / Paris (le 1ᵉʳ à 00 h 30 à Paris est encore
+   le 30 en UTC : un calcul en UTC rendrait le mois d'AVANT), le passage d'année, et le fuseau du processus. */
+t('⭐ `moisPrecedent()` (le `ft4_lms` des fixtures) : le mois précédent du jour de PARIS — 00 h 30 le 1ᵉʳ octobre (30/09 en UTC) → 2026-09 · 00 h 30 le 16 janvier → 2025-12 · 00 h 30 le 1ᵉʳ janvier → 2026-12 · à midi le 28/09 → 2026-08',
+  gele('UTC',FINMOIS,'moisPrecedent()')==='2026-09' && gele('UTC',HIVER,'moisPrecedent()')==='2025-12'
+  && gele('UTC','2026-12-31T23:30:00Z','moisPrecedent()')==='2026-12' && gele('UTC',MIDI,'moisPrecedent()')==='2026-08',
+  [FINMOIS,HIVER,'2026-12-31T23:30:00Z',MIDI].map(i=>gele('UTC',i,'moisPrecedent()')).join(' '));
+t('`moisPrecedent()` ne dépend PAS du fuseau du processus (UTC, Paris ou New York) : le mois écoulé de la page est celui de Paris',
+  ['UTC','Europe/Paris','America/New_York'].every(tz=>gele(tz,FINMOIS,'moisPrecedent()')==='2026-09'),
+  ['UTC','Europe/Paris','America/New_York'].map(tz=>tz+'='+gele(tz,FINMOIS,'moisPrecedent()')).join(' '));
 t('à midi, rien ne change (le cas normal reste le cas normal)',
   gele('UTC',MIDI,'utc')===gele('UTC',MIDI,'jourParis()'));
 t('contexte SANS fuseau : `jourLocal` suit le processus, donc la page (TZ=Europe/Paris → 29, TZ=UTC → 28)',

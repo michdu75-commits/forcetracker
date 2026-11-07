@@ -67,7 +67,17 @@ function fixture() {
   return out;
 }
 const cleDe = s => s.ts || s.id || 0;                  // la clé de la carte et de openSessDetail
-const OFF_DBF = -305;                                   // la séance au débrief rangé (année précédente)
+/* ⚠️ DATE RELATIVE (07/11/2026) — `OFF_DBF` valait −305 EN DUR, « l'année précédente » jusqu'au 01/11/2026 SEULEMENT : depuis le 02/11, −305 jours tombe en janvier de l'année COURANTE
+   (déjà dépliée) et PS-E29 (« depuis une app fraîche où son année est REPLIÉE ») rougissait — mesuré : la séance visée était du 2026-01-06, `avantPorte: "true"` — alors que l'application
+   se comportait exactement comme décidé (sa carte était visible et seule marquée). Le piège n'était pas dans le code : le test supposait un jour du calendrier.
+   ⭐ On prend la séance de la fixture qui est (1) dans l'année PRÉCÉDENTE (jour de Paris) et (2) au-delà des 20 dernières (PS-E14 : « hors des 20 dernières ») : −35 − 15 k pour k de 15 à 26 couvre
+   260 à 425 jours en arrière, donc il y en a TOUJOURS une, quelle que soit la date du jour. Et le témoin PS-E29 ⓪ vérifie la précondition au lieu de la supposer. */
+function offDbf() {
+  const an = Number(jourParis(0).slice(0, 4)) - 1;
+  for (let k = 15; k <= 26; k++) { const off = -35 - 15 * k; if (Number(jourParis(off).slice(0, 4)) === an) return off; }
+  throw new Error('PS : aucune séance de la fixture dans l\'année précédente (fixture trop courte pour la date du jour)');
+}
+const OFF_DBF = offDbf();                               // la séance au débrief rangé (année PRÉCÉDENTE, hors des 20 dernières — quelle que soit la date)
 const TXT_DBF = 'DEBRIEF-PS01 rangé pour une vieille séance.';
 
 module.exports.fixture = fixture;
@@ -634,6 +644,10 @@ module.exports.ecran = async function (t, b, PORT) {
     await Z.pg.waitForTimeout(700);
     const apresSeule = await cartes(Z.pg);
     const cSeule = apresSeule.filter(c => c.cible);
+    /* ⭐ PRÉCONDITION VÉRIFIÉE, PAS SUPPOSÉE (07/11/2026) : « son année est REPLIÉE » n'est vrai que si la séance visée est d'une année PASSÉE. Sans ce témoin, le jour où la fixture glisse dans l'année
+       courante, PS-E29 rougit pour une raison qui n'est pas l'application — exactement ce qui s'est passé le 02/11. */
+    t('PS-E29 ⓪ précondition : la séance visée est d\'une année PASSÉE (' + seule.date + ', année en cours ' + jourParis(0).slice(0, 4) + ') — son année est donc repliée par défaut, quelle que soit la date du jour',
+      Number(anS) < Number(jourParis(0).slice(0, 4)), JSON.stringify({ date: seule.date, off: OFF_DBF, anCourant: jourParis(0).slice(0, 4) }));
     t('PS-E29 une cible = UNE séance (par sa clé), depuis une app fraîche où son année est REPLIÉE : son année et son mois s\'ouvrent, sa carte est visible et seule marquée',
       avantPorte === 'false' && okSeule && cSeule.length === 1 && cSeule[0].cle === cleDe(seule) && cSeule[0].mois === moisS && cSeule[0].vis, JSON.stringify({ avantPorte, cSeule }));
     /* PS-E48 — la marque bleue ne vit que pour la navigation qui l'a posée : une entrée normale l'efface */

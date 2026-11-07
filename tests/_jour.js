@@ -32,4 +32,17 @@ function jourLocal(n, maintenant) {
   return _decale(b.getFullYear(), b.getMonth() + 1, b.getDate(), n);
 }
 
-module.exports = { jourParis, jourLocal, FUSEAU_TESTS };
+/* 📅 LE MOIS PRÉCÉDENT, POUR `ft4_lms` — NUT/SÉANCE (07/11/2026, défauts préexistants PS-E29 / seance_ux / B-UXI-G2-G3-G5-G7 / B-FFD-⑧e).
+   `ft4_lms` = « le dernier bilan du mois ANNONCÉ ». Au démarrage, `checkMonthlySummary` (app.js) annonce le bilan du mois ÉCOULÉ si ce n'est pas déjà fait et s'il a des séances :
+   2,2 s après le chargement, la fenêtre `ov-month-summary` s'ouvre PAR-DESSUS l'écran (elle intercepte les clics : plantage de `seance_ux`, onglets du Coach, figurines) et un
+   `persist()` écrit `ft4_sb_last` et appelle le réseau (B-UXI-G3). Une fixture qui écrit `ft4_lms: '2026-09'` EN DUR était juste jusqu'au 31/10 et fausse dès le 1ᵉʳ novembre :
+   le « mois écoulé » de la page avait changé, pas le code. ⭐ La valeur à poser est TOUJOURS le mois précédent du JOUR DE PARIS (le fuseau des contextes de test).
+   ⛔ `tests/dates/runner.js` refuse désormais tout `ft4_lms: 'AAAA-MM'` écrit en dur dans un module de test. */
+function moisPrecedent(maintenant) {
+  const base = maintenant != null ? new Date(maintenant) : new Date();
+  const [y, m] = base.toLocaleDateString('sv-SE', { timeZone: FUSEAU_TESTS }).split('-').map(Number);
+  const d = new Date(Date.UTC(y, m - 2, 1));          // m vaut 1…12 : le mois précédent est l'indice m − 2 (janvier → décembre de l'année d'avant)
+  return d.getUTCFullYear() + '-' + String(d.getUTCMonth() + 1).padStart(2, '0');
+}
+
+module.exports = { jourParis, jourLocal, moisPrecedent, FUSEAU_TESTS };

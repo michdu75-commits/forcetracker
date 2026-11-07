@@ -21,10 +21,11 @@
    actuel, identique à la prod, ouvert à décision) — seulement qu'aucune réponse n'y va jamais au mauvais mouvement.
    ═══════════════════════════════════════════════════════════════════════════════ */
 'use strict';
+const { moisPrecedent } = require('../_jour.js');   // ⭐ ft4_lms = le mois PRÉCÉDENT du jour de Paris, jamais un mois écrit en dur (voir tests/_jour.js)
 
 const BASE = { ft4_bw: '82', ft4_age: '41', ft4_ht: '178', ft4_gender: 'H', ft4_goal: 'force', ft4_ob2: '1', ft4_name: 'Test',
   ft4_email: 't@t.t', ft4_devtoken: 'f'.repeat(64), ft4_tester_eq_v1: '1', ft4_ok: '1', ft4_stmig1: '1',
-  ft4_guide_shown: '1', ft4_wn_seen: '999', ft4_lms: '2026-10', ft4_sessions: '[]' };
+  ft4_guide_shown: '1', ft4_wn_seen: '999', ft4_lms: moisPrecedent(), ft4_sessions: '[]' };
 const _det = o => JSON.stringify(o);
 const OI = 'Machine Oiseau', MA = 'Marteau', CP = 'Curl Poulie';
 const N = (kg, reps) => ({ kg, reps, done: false, type: 'N' }), E = (kg, reps) => ({ kg, reps, done: false, type: 'É' });

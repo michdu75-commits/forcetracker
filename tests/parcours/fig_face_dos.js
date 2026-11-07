@@ -18,10 +18,11 @@
    la figurine ? » (comportement existant, à trancher — les séances du banc l'évitent exprès), Milo (aucun appel).
    ══════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
 'use strict';
+const { moisPrecedent } = require('../_jour.js');   // ⭐ ft4_lms = le mois PRÉCÉDENT du jour de Paris, jamais un mois écrit en dur (voir tests/_jour.js)
 
 const BASE = { ft4_bw: '82', ft4_age: '41', ft4_ht: '178', ft4_gender: 'H', ft4_goal: 'force', ft4_ob2: '1', ft4_name: 'Test',
   ft4_email: 't@t.t', ft4_devtoken: 'f'.repeat(64), ft4_tester_eq_v1: '1', ft4_ok: '1', ft4_stmig1: '1',
-  ft4_guide_shown: '1', ft4_wn_seen: '999', ft4_lms: '2026-10' };
+  ft4_guide_shown: '1', ft4_wn_seen: '999', ft4_lms: moisPrecedent() };
 const _det = o => JSON.stringify(o);
 const SDT = 'Soulevé de Terre', DC = 'Développé Couché', SQ = 'Squat à la Barre', TR = 'Tractions (Pull-up)', DM = 'Développé Militaire',
   CB = 'Curl Barre', RB = 'Rowing Barre (Tirage Horizontal)', HT = 'Hip Thrust Barre (Poussée de Hanche)', LC = 'Leg Curl Couché Machine', CR = 'Crunch';
@@ -303,7 +304,12 @@ async function ecran(t, b, PORT) {
     const L6 = await lire(X);
     t('B-FFD-⑥e rouvrir l\'app : la séance est là et la carte est identique (rien n\'est gardé à part, tout se recalcule)', _det(L6) === _det(L4), _det(L6 && { n: L6.n }));
     // ⑧ fin de séance par la vraie porte, puis les autres figurines restent de face (une seule vue)
-    await X.pg.evaluate(() => { if (typeof goSessionsHistory === 'function') goSessionsHistory(); }); await X.pg.waitForTimeout(500);
+    /* ⚠️ DATE (07/11/2026) — les séances de la fixture (HISTO) sont d'un mois PASSÉ : l'historique plie les mois passés et n'y rend AUCUNE carte (décision du filtre / des replis de Progrès). Le 05/11, depuis le
+       passage à novembre, `cartes0` était donc VIDE et ⑧e rougissait alors que les figurines restaient de face. On entre par la PORTE CIBLÉE (`goSessionsHistory([clé])`, celle de l'agenda) : elle ouvre
+       l'année et le mois de la séance visée — la carte est là, quelle que soit la date du jour. Le témoin exige toujours AU MOINS une carte vue avant ET après (jamais un vert qui ne regarde rien). */
+    const porteVers = () => X.pg.evaluate(() => { if (typeof goSessionsHistory !== 'function') return;
+      const passee = (S.sessions || []).find(x => x && x.date && x.date < today()); goSessionsHistory(passee ? [passee.ts || passee.id] : undefined); });
+    await porteVers(); await X.pg.waitForTimeout(500);
     const cartes0 = await X.pg.evaluate(() => [...document.querySelectorAll('.sess-card svg')].map(s => s.getAttribute('viewBox')).filter(v => / 32 94$/.test(v || '')));
     await clic(X.pg, '#nb-log'); await nettoyer(X.pg);
     const okFin = (await clic(X.pg, '#log-finish .lf-fin')) && (await clic(X.pg, '#confirm-ok'));
@@ -311,7 +317,7 @@ async function ecran(t, b, PORT) {
     const fini = await X.pg.evaluate(nom => ({ ouverte: _seanceOuverte(), der: ((S.sessions || [])[0] || {}).exs ? S.sessions[0].exs.some(e => e.name === nom) : false }), TR);
     await X.pg.evaluate(() => { goScreen('log', document.getElementById('nb-log')); renderLog(); }); await X.pg.waitForTimeout(250);
     const la = await X.pg.evaluate(() => [...document.querySelectorAll('#la-ctx .la-fig svg')].map(s => s.getAttribute('viewBox')));
-    await X.pg.evaluate(() => { if (typeof goSessionsHistory === 'function') goSessionsHistory(); }); await X.pg.waitForTimeout(500);
+    await porteVers(); await X.pg.waitForTimeout(500);
     const cartes = await X.pg.evaluate(() => [...document.querySelectorAll('.sess-card svg')].map(s => s.getAttribute('viewBox')).filter(v => / 32 94$/.test(v || '')));
     t('B-FFD-⑧e ⭐ « Terminer la séance » enregistre la séance comme avant ; les AUTRES figurines (carte « Dernière séance », cartes de Progrès) restent une seule vue, de face — pendant et après la séance',
       okFin && !fini.ouverte && fini.der && _det(la) === _det([FACE]) && cartes0.length >= 1 && cartes0.every(v => v === FACE) && cartes.length >= 1 && cartes.every(v => v === FACE),

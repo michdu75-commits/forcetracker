@@ -19,10 +19,11 @@
    (inchangés) ; l'ordre de validation hors séquence au-delà du cas « série sautée ».
    ══════════════════════════════════════════════════════════════════════════════════════ */
 'use strict';
+const { moisPrecedent } = require('../_jour.js');   // ⭐ ft4_lms = le mois PRÉCÉDENT du jour de Paris, jamais un mois écrit en dur (voir tests/_jour.js)
 
 const BASE = { ft4_bw: '80', ft4_age: '40', ft4_ht: '178', ft4_gender: 'H', ft4_goal: 'force', ft4_ob2: '1', ft4_name: 'Test',
   ft4_email: 't@t.t', ft4_devtoken: 'f'.repeat(64), ft4_tester_eq_v1: '1', ft4_ok: '1', ft4_stmig1: '1',
-  ft4_guide_shown: '1', ft4_wn_seen: '99', ft4_lms: '2026-09' };
+  ft4_guide_shown: '1', ft4_wn_seen: '99', ft4_lms: moisPrecedent() };
 const _det = o => JSON.stringify(o);
 const EX = 'Développé Couché';
 // Deux séries VALIDÉES aux données riches et distinctes, puis deux séries prévues.
