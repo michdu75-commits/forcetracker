@@ -87,7 +87,8 @@ async function appareil(b, port, email, o) {
   D.cdpEcho = await cx.newCDPSession(pg);
   await D.cdpEcho.send('Network.enable');
   D.cdpEcho.on('Network.requestWillBeSent', (ev) => { if (!D.methodes.has(ev.requestId)) D.methodes.set(ev.requestId, { m: ev.request.method, a: ((/^\{"action":"([A-Za-z]+)"/.exec(String(ev.request.postData || '').slice(0, 80))) || [])[1] || '' }); });
-  await D.cdpEcho.send('Fetch.enable', { patterns: [{ urlPattern: CFG.echoPattern, requestStage: 'Request' }] });
+  await D.cdpEcho.send('Fetch.enable', { patterns: [{ urlPattern: CFG.echoPattern, requestStage: 'Request' }, { urlPattern: CFG.echoPattern, requestStage: 'Response' }] });
+  D.planRep = new Map();   // identifiant réseau → délai de RÉPONSE à appliquer (liaison lente : la requête part tout de suite, c'est le corps qui arrive tard)
   D.cdpEcho.on('Fetch.requestPaused', (ev) => { echo(D, ev).catch(() => {}); });
   D.ev = (f, a) => pg.evaluate(f, a);
   D.instrumenter = async () => {
@@ -138,6 +139,12 @@ async function appareil(b, port, email, o) {
 }
 /* l'écho : seule la RÉPONSE est perturbée (le serveur, lui, a déjà appliqué) */
 async function echo(D, ev) {
+  /* ÉTAPE RÉPONSE : la requête d'écho est DÉJÀ partie (Google a répondu tout de suite) ; on retient seulement l'arrivée du corps jusqu'à la page = une liaison LENTE (le cas réel d'un réseau mobile faible). */
+  if (ev.responseStatusCode !== undefined || ev.responseErrorReason) {
+    const dr = D.planRep.get(ev.networkId); D.planRep.delete(ev.networkId);
+    if (dr) await pause(dr);
+    return D.cdpEcho.send('Fetch.continueResponse', { requestId: ev.requestId });
+  }
   const o = D.methodes.get(ev.networkId) || { m: '?', a: '' }; const m = o.m + (o.a ? ':' + o.a : '');
   const isSave = o.a === 'saveProfile'; const n = isSave ? ++D.saves : 0;
   const plan = (isSave && D.planEcho(n)) || null;
@@ -145,7 +152,8 @@ async function echo(D, ev) {
   if (process.env.FT_C1_DEBUG) console.log('      [écho] ' + m + ' n=' + n + ' plan=' + rec.plan + ' ' + ev.request.url.slice(0, 70));
   const continuer = () => D.cdpEcho.send('Fetch.continueRequest', { requestId: ev.requestId });
   if (!plan) return continuer();
-  if (plan.delay) { await pause(plan.delay); return continuer(); }
+  if (plan.delayRep) { D.planRep.set(ev.networkId, plan.delayRep); return continuer(); }   // liaison lente : la requête part maintenant, la réponse arrivera dans plan.delayRep ms
+  if (plan.delay) { await pause(plan.delay); return continuer(); }   // adresse de réponse PÉRIMÉE : la requête d'écho n'est envoyée que plan.delay ms après le 302 (le téléphone a perdu le réseau entre les deux)
   if (plan.perdu) return D.cdpEcho.send('Fetch.failRequest', { requestId: ev.requestId, errorReason: 'InternetDisconnected' });
   if (plan.hang) { await pause(plan.hang); return D.cdpEcho.send('Fetch.failRequest', { requestId: ev.requestId, errorReason: 'TimedOut' }); }
   return continuer();
@@ -228,10 +236,18 @@ const SC = {
     verif('R2 tous les envois finissent LISIBLES (aucune réponse abandonnée) et l\'appareil converge (calme)', m.calme && m.lisibles === m.envois && m.nonConfirmes === 0, { calme: m.calme, lisibles: m.lisibles, envois: m.envois, nonConf: m.nonConfirmes });
     await D.cx.close();
   },
-  async R3(b, port) {   // première réponse retardée de 60 s (l'adresse de réponse de Google peut avoir expiré : le client doit alors se comporter comme pour une réponse PERDUE)
-    const email = compte('R3'); const D = await appareil(b, port, email, { planEcho: (n) => (n === 1 ? { delay: 60000 } : null) }); await D.charger(); await cinqGestes(D);   // la PREMIÈRE réponse seulement est retenue 60 s (retenir TOUTES les réponses 60 s ne laisse jamais le client converger : ce n'est pas un test, c'est une panne permanente)
+  async R3(b, port) {   // LIAISON LENTE : la réponse met 60 s à ARRIVER (la requête d'écho part tout de suite — Google répond, le navigateur reçoit le corps 60 s plus tard)
+    const email = compte('R3'); const D = await appareil(b, port, email, { planEcho: (n) => (n === 1 ? { delayRep: 60000 } : null) }); await D.charger(); await cinqGestes(D);
     const m = await bilanScenario('R3', D, email, { maxCalme: 420000 });
-    verif('R3 ⭐ réponse retardée de 60 s : un envoi à la fois, UN « Pates » des deux côtés, aucun conflit artificiel, l\'appareil converge', m.volMax <= 1 && m.pates.appareil === 1 && m.pates.serveur === 1 && memeLog(m.appareilLog, m.serveurLog) && m.conflitsRendus === 0 && m.calme, { volMax: m.volMax, pates: m.pates, conflits: m.conflitsRendus, calme: m.calme, envois: m.envois });
+    verif('R3 ⭐ liaison lente (réponse reçue 60 s plus tard) : un envoi à la fois, UN « Pates » des deux côtés, aucun conflit artificiel, TOUTES les réponses lisibles, l\'appareil converge', m.volMax <= 1 && m.pates.appareil === 1 && m.pates.serveur === 1 && memeLog(m.appareilLog, m.serveurLog) && m.conflitsRendus === 0 && m.lisibles === m.envois && m.nonConfirmes === 0, { volMax: m.volMax, pates: m.pates, conflits: m.conflitsRendus, lisibles: m.lisibles, envois: m.envois, nonConf: m.nonConfirmes });
+    await D.cx.close();
+  },
+  async R3b(b, port) {   // ADRESSE DE RÉPONSE PÉRIMÉE : Google ne rend l'accusé que ~30 s après le 302 ; au-delà il rend « Unknown GET action » (mesuré le 07/11). Gestes sur des repas DISTINCTS (aucune correction du même repas).
+    const email = compte('R3b'); const D = await appareil(b, port, email, { planEcho: (n) => (n === 1 ? { delay: 45000 } : null) }); await D.charger();
+    for (const [nom, q] of [['Pates', 150], ['Sauce', 60], ['Yaourt', 125], ['Riz', 200], ['Oeuf', 55]]) { await D.ev((a) => window.__ajouter(a[0], a[1]), [nom, q]); await pause(5000); }
+    const m = await bilanScenario('R3b', D, email, { maxCalme: 420000 });
+    const noms = (l) => l.map((x) => x.nom).sort();
+    verif('R3b ⭐ accusé périmé (non lisible) : le client le sait « non confirmé », renvoie, et finit avec les 5 repas UNE fois des deux côtés — aucun doublon, aucun conflit artificiel, appareil = serveur', m.nonConfirmes >= 1 && m.volMax <= 1 && memeLog(m.appareilLog, m.serveurLog) && m.appareilLog.length === 5 && new Set(noms(m.appareilLog)).size === 5 && m.conflitsRendus === 0, { nonConf: m.nonConfirmes, appareil: noms(m.appareilLog), serveur: noms(m.serveurLog), conflits: m.conflitsRendus, volMax: m.volMax });
     await D.cx.close();
   },
   async R4(b, port) {   // réponse PERDUE après enregistrement serveur (coupure au retour) : le 1ᵉʳ envoi seulement
