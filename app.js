@@ -2266,6 +2266,10 @@ function _n2Reajouter(src, repas, date, porte, apercu){
 /* Ce que « + Ajouter » écrirait pour cette référence, et s'il peut l'écrire — SANS rien écrire. `verifiees` : les fiches
    vérifiées du journal (`_n2FichesVerifiees`), calculées une fois pour toute une liste. */
 function _n2Apercu(src, verifiees){ return _n2Reajouter(src, 'apercu', today(), 'apercu', {verifiees:verifiees}); }
+/* ⭐ NUT-CA-FAA'C (07/11) — UNE référence peut-elle nourrir une IDÉE (« Ce qu'il te reste, en vrai ») ? Le MÊME verdict que « + Ajouter » (`_n2Apercu`) : une
+   fiche que le moteur refuse de re-noter ne sert pas non plus à conseiller. ⚠️ Une quantité inconnue (`aCompleter`, d'anciennes lignes) n'est PAS un refus de
+   FICHE — le moteur contrôle la fiche AVANT la quantité — : la ligne reste proposable. Lecture seule : rien n'est écrit, rien n'est recalculé. */
+function _n2PeutNourrirIdee(src, verifiees){ try{ const a=_n2Apercu(src, verifiees); return a.ok ? !a.raison : !!a.aCompleter; }catch(e){ return false; } }   // un aperçu qui échoue = refus (le repli sûr) : il ne casse jamais l'écran
 /* « Vérifiée » : re-notée par une fiche SOURCE (Open Food Facts, CIQUAL, enseigne), et rien à redire. */
 function _n2Verifiee(a){ return !!(a && a.ok && !a.raison && a.R && a.R.fiche && a.R.fiche.fiab==='source' && a.R.controleReference && a.R.controleReference.etat==='admissible'); }   // NUT-REF-HIST-01 : `fiab:'source'` seul n'est pas une preuve
 /* Ce que la liste dit d'une référence, à côté de ses valeurs : l'étiquette que porterait la ligne écrite (`_n2Badge`), ou
@@ -5020,19 +5024,27 @@ function _mesAliments(max){
   const cle = n => (n||'').trim().toLowerCase();
   /* On compte d'abord combien de fois chaque aliment revient dans le journal. */
   const freq = {};
-  (S.foodLog||[]).forEach(e=>{ const k=cle(e&&e.name); if(k) freq[k]=(freq[k]||0)+1; });
+  /* NUT-CA-FAA'C (07/11) : la fréquence ne compte que ce qui est encore PROPOSÉ (même règle que les propositions : ni masqué « ✕ », ni d'avant la
+     remise à zéro) — sinon ce que la personne a masqué continuait de piloter le classement. ⛔ Le journal, lui, ne bouge pas. */
+  (S.foodLog||[]).forEach(e=>{ if(!e || !_n2Propose(e, e.ts)) return; const k=cle(e.name); if(k) freq[k]=(freq[k]||0)+1; });
+  const vf=_n2FichesVerifiees();   // une fois pour toute la liste : ce à quoi « + Ajouter » compare une référence
   const prendre = (e, fav) => {
     const n = (e && e.name || '').trim(); if(!n) return;
     const k = cle(n); if(vus[k]) return;
     const kcal=+e.kcal||0, prot=+e.prot||0, carbs=+e.carbs||0, fat=+e.fat||0;
     if(!(kcal>0 || prot>0 || carbs>0 || fat>0)) return;    // ⛔ rien à proposer sans macros
-    vus[k]=1;
     /* 🥗 V2 : le pour-100 g d'une idée vient d'une fiche de CONFIANCE (moteur), jamais d'une fiche notée
        non vérifiée (M1 : un pour-100 g fabriqué ne doit plus nourrir aucun calcul). */
     const _R=_n2Reprise(e);
     const _f=(_R && _R.ok && _R.fiche && _R.fiche.base==='g') ? _R.fiche : null;
+    /* ⭐⭐ NUT-CA-FAA'C (07/11, contre-audit) — A : UNE fiche que « + Ajouter » refuse (copie OFF sans preuve, copie contredite par la table, valeurs qui
+       se contredisent) ne sert pas non plus à CONSEILLER : même verdict (`_n2PeutNourrirIdee`). A' : et un aliment sans fiche utilisable (un ancien
+       favori, une copie refusée) ne prend plus la place, PAR SON NOM, du produit admissible du journal — `vus[k]` n'est posé qu'APRÈS l'admission, donc
+       la ligne plus ancienne du même nom reste candidate. Sans fiche, aucune idée n'était possible de toute façon (`_portionRaisonnable` rend null). */
+    if(!_f || !_n2PeutNourrirIdee(e, vf)) return;
+    vus[k]=1;
     out.push({name:n, kcal:kcal, prot:prot, carbs:carbs, fat:fat,
-              per100:_f?_f.p100:null, _fiche:_f, fav:!!fav, freq:(freq[k]||0)});
+              per100:_f.p100, _fiche:_f, _cle:_n2Cle(e), fav:!!fav, freq:(freq[k]||0)});
   };
   /* NV2-FIAB (24/10) : les idées aussi sont des propositions — un aliment masqué, ou d'avant la remise à zéro, n'en est plus une. */
   (S.savedFoods||[]).forEach(e=>{ if(_n2Propose(e, e && e.t)) prendre(e,true); });
@@ -5122,22 +5134,30 @@ const _deNom = n => /^[aeiouàâäéèêëîïôöùûüœæh]/i.test((n||'').tr
  *   0                → rien. L'appelant retombe sur le générique, et l'annonce comme générique.
  */
 const _PORTION_MIN_OBS = 3;
-function _portionsNotees(nom){
+/* ⭐⭐ NUT-CA-FAA'C (07/11, contre-audit) — LES PRISES QUI FONT UNE MÉDIANE sont celles d'UN seul aliment, dans UNE seule unité, et encore PROPOSÉES :
+     · `unite` : l'échelle de la FICHE (« g » ou « ml ») — 40 g et 200 ml ne se moyennent pas (mesuré : médiane 120 → « 60 g de Shake » pour une prise de 40 g) ;
+     · `ident` : l'identité du candidat (`_n2Cle` : son code-barres s'il en a un, sinon son nom) — deux produits de même nom ne se confondent pas (D-111) ;
+     · `_n2Propose` : ni masquée (« ✕ »), ni d'avant la remise à zéro — la MÊME règle que les propositions (mesuré : une ancienne prise masquée de 500 g
+       donnait « 600 g de Skyr »). ⛔ Lecture seule : aucune ligne n'est modifiée, supprimée ni recalculée ; elles ne sont simplement pas comptées ici. */
+function _portionsNotees(nom, unite, ident){
   const k = cle(nom);
+  const echelle = (unite || 'g');
   const out = [];
   (S.foodLog||[]).forEach(e=>{
     if(!e || cle(e.name) !== k) return;
+    if(!_n2Propose(e, e.ts)) return;
+    if(ident && _n2Cle(e) !== ident) return;
     const q = +e.q;
     /* ⛔ `e.q == null` → ABSENTE, pas nulle. `!(q>0)` attrape aussi NaN et les négatifs. */
     if(e.q == null || !(q > 0)) return;
     const u = String(e.u||'').toLowerCase();
-    if(u !== 'g' && u !== 'ml') return;      // une seule échelle à la fois
+    if(u !== echelle) return;                // une seule échelle à la fois : celle de la fiche
     out.push(q);
   });
   return out;
 }
-function _portionObservee(nom){
-  const v = _portionsNotees(nom);
+function _portionObservee(nom, unite, ident){
+  const v = _portionsNotees(nom, unite, ident);
   if(!v.length) return null;
   v.sort((a,b)=>a-b);
   const m = v.length % 2
@@ -5162,7 +5182,7 @@ function _portionRaisonnable(al, macro, manque, soir){
        à zéro ; on cherche la plus grande portion PLAUSIBLE qui s'en approche.*
        ⛔ Et le multiple est BORNÉ AVANT d'être arrondi : sans ça, l'arrondi au pas de 5 g
        pourrait faire repasser la borne. */
-    const obs = _portionObservee(al.name);
+    const obs = _portionObservee(al.name, al._fiche && al._fiche.base, al._cle);   // NUT-CA-FAA'C : l'unité de la fiche et l'identité du candidat
     if(obs && obs.grammes > 0){
       const ideal = manque / p100 * 100;                     // le manque reste calculé EXACTEMENT
       const parts = [0.5, 1, 1.5, 2].filter(x => x <= (soir ? 1 : 2));
