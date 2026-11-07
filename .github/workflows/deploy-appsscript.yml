@@ -233,7 +233,7 @@ jobs:
           set -euo pipefail
           [ -n "$URL_EXEC" ] || { echo "::error::url_exec vide"; exit 1; }
           case "$URL_EXEC" in *AKfycbxWUsEFIlmx*) echo "::error::REFUS : adresse de production"; exit 1;; esac
-          printf '%s' "$LISTE" | grep -qE '^R[0-9](,R[0-9])*$' || { echo "::error::liste de scénarios invalide : $LISTE"; exit 1; }
+          printf '%s' "$LISTE" | grep -qE '^R[0-9]b?(,R[0-9]b?)*$' || { echo "::error::liste de scénarios invalide : $LISTE"; exit 1; }
           node p1/c1_reel.js "$URL_EXEC" --only "$LISTE" --rapport p1/rapport_c1seul.json
 
       - name: "C5 — suspension puis reprise sur le projet de TEST (le vrai client ET le serveur)"
