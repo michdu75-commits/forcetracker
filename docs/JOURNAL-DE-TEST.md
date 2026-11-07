@@ -139,6 +139,10 @@ réponse dépend du goût reste 🟣 — elle n'est pas moins importante, elle s
 
 ## Les entrées
 
+### 🟡 UN CARDIO SEUL ARRIVE CHEZ MILO COMME « ÉCHAUFFEMENT … + APRÈS SÉANCE … », AVEC LA CLÉ BRUTE « modere » — que comprend-il d'une séance de 34 minutes de tapis ? (07/11/2026)
+
+**Ce qui déclenche la question** : étude « cardio multi-activités » (session-C, `docs/CARDIO-MULTI-ACTIVITES-ETUDE-2026-11-07.md`). Sonde sur le vrai code, ligne que Milo lit (`_ligneSeance`, `coach.js:3671-3674`) : séance **100 % cardio** de 34 min (deux blocs de tapis de 17 min, aucun exercice) → *« cardio: échauffement Tapis 17min (modere) + après séance Tapis 17min (modere) »*. ① « échauffement » et « après séance » sont **faux** (il n'y a pas de séance autour) ; ② la **clé brute** « modere » (sans accent) sort, alors que `CARDIO_INTENSITES` existe pour ce défaut. En plus, Milo ne peut pas **livrer** une séance 100 % cardio (quatre gardes sur `exs.length`) alors que son prompt la dit « parfaitement valable » (`coach.js:4345`). **Que répond-il** à « comment était ma dernière séance ? » — parle-t-il d'un échauffement et d'un retour au calme qui n'ont pas existé ? Et à « fais-moi 40 min de vélo » ?
+**Vérifiable par du code ?** Le FAIT transmis : **oui**, sans appel API — la ligne de contexte d'un cardio seul ne doit contenir ni « après séance » ni « (modere) » (scénario déterministe, mesuré tel quel). Ce que Milo en conclut : **non mesuré** (0 appel). Changer cette ligne change ce que Milo reçoit → **R34** (banc avant / après) avant toute publication. **État : à trier** — lié à `EVO-CARDIO-01` (étude livrée, GO CODE en attente).
 ### 🟡 UNE JOURNÉE À MOITIÉ NOTÉE ARRIVE CHEZ MILO COMME UN VRAI JOUR BAS — qu'en conclut-il ? (25/10/2026)
 
 **Ce qui déclenche la question** : Michel a laissé **exprès** des journées incomplètes (il n'avait plus confiance dans les données,
