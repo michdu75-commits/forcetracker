@@ -36,7 +36,7 @@ jobs:
           set -euo pipefail
           echo "=== ESSAI P1 — workflow D'ESSAI (ce n'est PAS le workflow de production) · ref ${GITHUB_REF} · étape ${ETAPE} ==="
           [ "${GITHUB_REF}" != "refs/heads/master" ] || { echo "::error::refus : ce workflow d'essai ne tourne pas sur master"; exit 1; }
-          case "$ETAPE" in deployer|pousser|essais|suspension|sonde|diag|diag2|verifier|isolement|echo|ping-prod|deploiements|c1|c1seul|c5) ;; *) echo "::error::etape inconnue : $ETAPE"; exit 1;; esac
+          case "$ETAPE" in deployer|pousser|essais|suspension|sonde|diag|diag2|verifier|isolement|echo|webkit|ping-prod|deploiements|c1|c1seul|c5) ;; *) echo "::error::etape inconnue : $ETAPE"; exit 1;; esac
           if [ "$ETAPE" = "deployer" ] || [ "$ETAPE" = "pousser" ]; then
             # (le .clasp.json de CETTE branche pointe lui-même vers le projet de TEST — ceinture : si GitHub exécutait par erreur le workflow de PRODUCTION sur cette branche, il pousserait dans le projet de TEST et échouerait au redéploiement)
             [ -n "$SCRIPT_ID" ] || { echo "::error::script_id vide"; exit 1; }
@@ -193,6 +193,18 @@ jobs:
           [ -n "$URL_EXEC" ] || { echo "::error::url_exec vide"; exit 1; }
           case "$URL_EXEC" in *AKfycbxWUsEFIlmx*) echo "::error::REFUS : adresse de production"; exit 1;; esac
           node p1/sonde_echo.js "$URL_EXEC"
+
+      - name: "Même chemin que l'app dans le moteur WebKit (Safari) : POST text/plain + 302, réponse lisible ? (TEST seulement, compte fictif)"
+        if: ${{ inputs.etape == 'webkit' }}
+        env:
+          URL_EXEC: ${{ inputs.url_exec }}
+        run: |
+          set -euo pipefail
+          [ -n "$URL_EXEC" ] || { echo "::error::url_exec vide"; exit 1; }
+          case "$URL_EXEC" in *AKfycbxWUsEFIlmx*) echo "::error::REFUS : adresse de production"; exit 1;; esac
+          npm install --no-save playwright@1.56.1
+          npx playwright install --with-deps webkit
+          node p1/sonde_webkit.js "$URL_EXEC"
 
       - name: "Installer Playwright + Chromium (essais navigateur C1 / C5)"
         if: ${{ inputs.etape == 'c1' || inputs.etape == 'c5' || inputs.etape == 'c1seul' }}
