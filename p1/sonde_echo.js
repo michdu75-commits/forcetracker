@@ -9,16 +9,20 @@ if (URL_EXEC.includes('AKfycbxWUsEFIlmx')) { console.error('⛔ PRODUCTION : ref
 const pause = (ms) => new Promise((r) => setTimeout(r, ms));
 const DELAIS = [0, 5, 15, 25, 35, 45, 60, 90, 120, 180];
 (async () => {
+  const variantes = [['GET', null], ['POST', { action: 'loadProfile', email: 'echo-sonde@example.invalid' }]];   // POST = le chemin de saveProfile (lecture seule ici : loadProfile d'un compte fictif inexistant)
+  for (const [methode, corps] of variantes) {
+  console.log('── ' + methode + (corps ? ' (loadProfile, lecture seule)' : ' ?test=1'));
   const res = await Promise.all(DELAIS.map(async (d) => {
-    const r1 = await fetch(URL_EXEC + '?test=1', { redirect: 'manual' }); const loc = r1.headers.get('location');
-    if (!loc) { const txt = await r1.text(); return { d, etat: 'pas de redirection (HTTP ' + r1.status + ')', json: /"status"\s*:\s*"online"/.test(txt) }; }
+    const r1 = await (corps ? fetch(URL_EXEC, { method: 'POST', body: JSON.stringify(corps), headers: { 'Content-Type': 'text/plain;charset=utf-8' }, redirect: 'manual' }) : fetch(URL_EXEC + '?test=1', { redirect: 'manual' })); const loc = r1.headers.get('location');
+    if (!loc) { const txt = await r1.text(); return { d, etat: 'pas de redirection (HTTP ' + r1.status + ') : ' + txt.slice(0, 60) }; }
     await pause(d * 1000);
     const r2 = await fetch(loc, { redirect: 'follow' }); const txt = await r2.text(); let j = null; try { j = JSON.parse(txt); } catch (e) { /* html */ }
-    return { d, http: r2.status, lisible: !!(j && j.status === 'online'), debut: j ? '' : txt.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 70), hote: new URL(loc).host };
+    return { d, http: r2.status, lisible: !!j, debut: j ? '' : txt.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 70), hote: new URL(loc).host };
   }));
-  res.sort((a, b) => a.d - b.d).forEach((x) => console.log('   attente ' + String(x.d).padStart(3) + ' s avant de lire l\'adresse de réponse : ' + (x.etat || ('HTTP ' + x.http + ' · ' + (x.lisible ? 'LISIBLE (JSON online)' : 'ILLISIBLE : « ' + x.debut + ' »'))) + (x.hote ? ' · ' + x.hote : '')));
+  res.sort((a, b) => a.d - b.d).forEach((x) => console.log('   attente ' + String(x.d).padStart(3) + ' s avant de lire l\'adresse de réponse : ' + (x.etat || ('HTTP ' + x.http + ' · ' + (x.lisible ? 'LISIBLE (JSON)' : 'ILLISIBLE : « ' + x.debut + ' »'))) + (x.hote ? ' · ' + x.hote : '')));
   const dernierOk = Math.max.apply(null, res.filter((x) => x.lisible).map((x) => x.d).concat([-1]));
   const premierKo = Math.min.apply(null, res.filter((x) => x.lisible === false).map((x) => x.d).concat([1e9]));
-  console.log('\nRÉSULTAT : dernière attente encore lisible = ' + dernierOk + ' s · première attente illisible = ' + (premierKo === 1e9 ? 'aucune (toutes lisibles jusqu\'à ' + DELAIS[DELAIS.length - 1] + ' s)' : premierKo + ' s'));
+  console.log('\nRÉSULTAT (' + methode + ') : dernière attente encore lisible = ' + dernierOk + ' s · première attente illisible = ' + (premierKo === 1e9 ? 'aucune (toutes lisibles jusqu\'à ' + DELAIS[DELAIS.length - 1] + ' s)' : premierKo + ' s'));
+  }
   process.exit(0);
 })().catch((e) => { console.error('⛔ ' + (e && e.message || e)); process.exit(2); });
