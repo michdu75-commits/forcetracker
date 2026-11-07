@@ -65,6 +65,13 @@ let ok = 0, rouge = 0; const t = (n, c, d) => { c ? ok++ : rouge++; console.log(
     const tests = dossiers.files.filter((x) => /^FT-TEST-P1/.test(x.name)), prods = dossiers.files.filter((x) => x.name === 'ForceTracker-Backups');
     console.log('   (6) dossiers du compte : ' + dossiers.files.length + ' · « FT-TEST-P1… » : ' + tests.length + ' · « ForceTracker-Backups » (nom du dossier de la PRODUCTION, cherché par son nom par le code) : ' + prods.length + ' — le TEST ne doit JAMAIS l\'utiliser');
     t('(6) le projet de TEST a SON dossier de récupération « FT-TEST-P1… » (créé par preparerEssaiP1)', tests.length >= 1, tests.map((x) => x.name + ' · créé ' + String(x.createdTime).slice(0, 16) + ' · ' + masque(x.id)));
+    /* la production : SEULEMENT des comptes (nombre de fichiers, date du plus récent) — ni nom, ni contenu. Comparé AVANT / APRÈS les essais : aucun fichier de plus ne doit y apparaître. */
+    for (const pd of prods) {
+      const en = await lister("'" + pd.id + "' in parents and trashed=false", 'id,name,mimeType,createdTime');
+      let n = en.files.length, recent = en.files.length ? en.files[en.files.length - 1].createdTime : '';
+      for (const sd of en.files.filter((x) => x.mimeType === 'application/vnd.google-apps.folder')) { const f2 = await lister("'" + sd.id + "' in parents and trashed=false", 'id,createdTime'); n += f2.files.length; if (f2.files.length && String(f2.files[f2.files.length - 1].createdTime) > String(recent)) recent = f2.files[f2.files.length - 1].createdTime; }
+      console.log('       PROD_DOSSIER_SAUVEGARDE_COMPTE ' + masque(pd.id) + ' : ' + n + ' élément(s) au total, le plus récent créé ' + String(recent).slice(0, 19) + ' (compte seulement ; à comparer après les essais)');
+    }
     for (const d0 of tests) {
       const enfants = await lister("'" + d0.id + "' in parents and trashed=false", 'id,name,mimeType,createdTime');
       const sous = enfants.files.filter((x) => x.mimeType === 'application/vnd.google-apps.folder');
