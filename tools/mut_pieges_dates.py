@@ -49,6 +49,12 @@ MUT = [
      [('tests/_jour.js', "const [y, m] = base.toLocaleDateString('sv-SE', { timeZone: FUSEAU_TESTS }).split('-').map(Number);\n  const d = new Date(Date.UTC(y, m - 2, 1));",
        "const [y, m] = base.toISOString().slice(0, 10).split('-').map(Number);\n  const d = new Date(Date.UTC(y, m - 2, 1));")],
      [(DATES, 'rouge', r'le mois précédent du jour de PARIS|ne dépend PAS du fuseau', True)]),
+    ('P08 seance_date : `ft4_lms` de nouveau déduit du jour RÉEL (`moisPrecedent()` sans argument) alors que ce module FIGE l\'horloge de sa page sur octobre 2026 — l\'erreur faite puis rattrapée le 07/11 (son mois en dur était le bon réglage)',
+     [('tests/parcours/seance_date.js', 'ft4_lms: moisPrecedent(new Date(H(J1)))', 'ft4_lms: moisPrecedent()')],
+     [(DATES, 'rouge', r"FIGE l'horloge de sa page", True)]),
+    ('P09 dates : le détecteur « horloge figée » est AVEUGLE (`/(?!)/`, jamais `/$^/` qui matche la chaîne vide) — son témoin de contrôle doit rougir',
+     [('tests/dates/runner.js', r'''const HORLOGE_FIGEE=/\bclock\.(setFixedTime|install)\s*\(/, MOIS_JOUR_REEL=/\bmoisPrecedent\(\s*\)/;''', r'''const HORLOGE_FIGEE=/(?!)/, MOIS_JOUR_REEL=/\bmoisPrecedent\(\s*\)/;''')],
+     [(DATES, 'rouge', r'CONTRÔLE — ce détecteur voit', True)]),
 ]
 
 
@@ -96,7 +102,7 @@ def sain():
     tmp, arbre = cloner()
     try:
         mauvais = []
-        for cmd in (DATES, banc('seance_ux'), banc('ux_integration'), banc('fig_face_dos'), banc('progres_seances')):
+        for cmd in (DATES, banc('seance_ux'), banc('ux_integration'), banc('fig_face_dos'), banc('progres_seances'), banc('seance_date')):
             code, sortie = lancer(arbre, cmd)
             if code != 0: mauvais.append(' '.join(cmd[1:]) + ' → code %d' % code)
         return mauvais
@@ -111,7 +117,7 @@ def main():
         mauvais = sain()
         if mauvais:
             print('  !! ARBRE SAIN PAS VERT — contrôle refusé :', ' · '.join(mauvais)); return 1
-        print('  arbre sain : dates, seance_ux, ux_integration, fig_face_dos, progres_seances = 0 rouge (point de départ valide)\n')
+        print('  arbre sain : dates, seance_ux, ux_integration, fig_face_dos, progres_seances, seance_date = 0 rouge (point de départ valide)\n')
     conformes = 0
     for mu in choix:
         nom, ok, verdict, res = une(mu)

@@ -163,6 +163,26 @@ t('⛔ CONTRÔLE — le détecteur de mois en dur voit « ft4_lms: \'2026-09\' �
   INTERDIT_MOIS.test("ft4_lms: '2026-09'") && INTERDIT_MOIS.test('ft4_lms:"2026-10"') && INTERDIT_MOIS.test('ft4_lms : `2027-01`')
   && !INTERDIT_MOIS.test('ft4_lms: moisPrecedent()') && !INTERDIT_MOIS.test("localStorage.getItem('ft4_lms')") && !INTERDIT_MOIS.test('ft4_lms: lms, ft4_lws: ymd'),
   'motif : '+INTERDIT_MOIS);
+/* ⭐⭐ 07/11/2026 — UN MODULE QUI FIGE L'HORLOGE DE SA PAGE NE DÉDUIT PAS `ft4_lms` DU JOUR RÉEL. `seance_date` fige sa page sur octobre 2026 (`pg.clock.setFixedTime`) : le « mois écoulé » de SA page est septembre, CONSTANT,
+   quel que soit le jour réel. `moisPrecedent()` SANS argument lit le jour RÉEL : juste par hasard en octobre, faux dès que le jour réel en sort. On le déduit de l'instant gelé : `moisPrecedent(new Date(H(J1)))`.
+   (Erreur faite puis rattrapée le jour même : le correctif « mois en dur → jour réel » avait d'abord été appliqué à ce module aussi, alors que son mois en dur était LE BON réglage pour son horloge figée.) */
+const HORLOGE_FIGEE=/\bclock\.(setFixedTime|install)\s*\(/, MOIS_JOUR_REEL=/\bmoisPrecedent\(\s*\)/;
+const sansCommentaires=src=>src.replace(/\/\*[\s\S]*?\*\//g,'').replace(/(^|[\s;{}),])\/\/[^\n]*/g,'$1');
+const fautifsHorlogeMois=FICHIERS_BANCS.filter(f=>fs.existsSync(path.join(R,f))).filter(f=>{
+  const src=sansCommentaires(fs.readFileSync(path.join(R,f),'utf8'));
+  return HORLOGE_FIGEE.test(src)&&MOIS_JOUR_REEL.test(src);
+});
+t('⭐⭐ un module de test qui FIGE l\'horloge de sa page (`clock.setFixedTime`) ne déduit pas `ft4_lms` du jour RÉEL (`moisPrecedent()` sans argument) : il le déduit de l\'instant gelé (`seance_date` : octobre 2026, constant)',
+  fautifsHorlogeMois.length===0, fautifsHorlogeMois.join(' · '));
+t('⛔ CONTRÔLE — ce détecteur voit « horloge figée + moisPrecedent() sans argument » et laisse passer `moisPrecedent(new Date(H(J1)))`, un module sans horloge figée, et la simple mention dans un commentaire',
+  (()=>{
+    const juge=s=>HORLOGE_FIGEE.test(sansCommentaires(s))&&MOIS_JOUR_REEL.test(sansCommentaires(s));
+    return juge("await pg.clock.setFixedTime(new Date(x)); const lms = moisPrecedent();")
+      && !juge("await pg.clock.setFixedTime(new Date(x)); const lms = moisPrecedent(new Date(H(J1)));")
+      && !juge("const lms = moisPrecedent();")
+      && !juge("await pg.clock.setFixedTime(x); // pas moisPrecedent() ici\n/* ni moisPrecedent() */");
+  })(),
+  'motifs : '+HORLOGE_FIGEE+' + '+MOIS_JOUR_REEL);
 
 
 // ── 3. RECETTE-01 — LES FIXTURES DE TEST À LA FRONTIÈRE DU JOUR (horloge gelée) ───────────
