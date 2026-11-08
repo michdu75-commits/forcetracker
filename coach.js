@@ -4191,7 +4191,7 @@ ${(()=>{
   if(!progs.length) return lien?('\nSES PROGRAMMES ENREGISTRÉS DANS L\'APP : AUCUN.'+lien+'\n'):'';
   const nSet=x=>{const t=(x.sets||[]).filter(z=>z&&z.type!=='É'&&z.type!=='W');
     if(!t.length) return '';
-    const r=t[0]&&(t[0].maxi?'max':(+t[0].reps||0));
+    const r=t[0]&&(t[0].maxi?'max':(t[0].reps===null?'?':(+t[0].reps||0)));   // IMPORT-IA-FIDELITE-01 (correction D) : « Non renseigné » reste « ? » pour Milo, jamais « 0 » ni un nombre inventé
     return ' '+t.length+'×'+r+((+t[0].kg>0)?' @'+t[0].kg+'kg':'');};
   const exList=(exs,max)=>(exs||[]).slice(0,max).map(e=>(e&&e.name?e.name+nSet(e)+(e.group?' [superset '+e.group+']':''):'')).filter(Boolean).join(' · ')
     + (((exs||[]).length>max)?' · …+'+((exs||[]).length-max):'');

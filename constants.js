@@ -321,6 +321,9 @@ function _setFtToken(t){ try{ if(t){ localStorage.setItem(FT_TOKEN_KEY,String(t)
 
 const SET_TYPES=['N','É','X'];
 const SET_TYPE_LABELS={N:'Normal',É:'Échauffement',X:'Échec'};
+/* 🔢 IMPORT-IA-FIDELITE-01 (correction D, 02/11/2026) — le mot d'une répétition que le document n'écrit PAS : `reps: null` dans un programme.
+   Une seule source du libellé (R2) : aperçu d'import, éditeur de programme et séance (log.js) l'affichent, rien ne l'invente ailleurs. */
+const REPS_NON_RENSEIGNE='Non renseigné';
 
 // ─── NOUVELLES FONCTIONNALITÉS (indicateur pastille) ─────────
 // Ajouter ici chaque nouvelle feature avec un id unique + l'écran concerné.
@@ -2601,32 +2604,94 @@ function exMuscles(nom){
  *
  * Rend des SECONDES, ou 0 si c'est illisible (l'app garde alors son réglage habituel).
  */
-function _secRepos(v){
-  if(v==null)return 0;
-  if(typeof v==='number')return v>0&&isFinite(v)?Math.round(v):0;
-  const s=String(v).trim().toLowerCase().replace(',','.');
-  if(!s)return 0;
+/* ═══ LIRE UN REPOS COMME LE COACH L'A ÉCRIT — IMPORT-IA-FIDELITE-01 (02/11/2026) ═══════════
+ * ⛔⛔ DÉFAUT MESURÉ avant de toucher à quoi que ce soit : le parseur
+ * ci-dessus rendait **0** pour « 3 mins », « 2 mins », « 1.30 mins », « 2.30 mins » — des écritures
+ * courantes chez les coachs (le « s » du pluriel faisait échouer le `\b`
+ * final). Le repos du PDF n'arrivait donc jamais au chrono : l'app retombait sur son réglage par
+ * défaut, sans un mot. Et « 1.30 » se lisait « 1,3 minute » (78 s) dès qu'on écrivait « min ».
+ * ⭐ Les PLAGES (« 60-90 s », « 3-4 min », « 2 à 3 mins ») rendaient 0 elles aussi — voulu (un repos
+ * variable n'est pas un repos : consigne de Michel, ft-v1176) — mais le TEXTE était alors PERDU.
+ * Or le document dit quelque chose : on ne le transforme pas en nombre, on le CONSERVE.
+ *
+ * `_reposLire(v)` rend { sec, min, max, txt } :
+ *   · valeur FERME  → sec > 0, txt ''                       (« 3 mins » → 180)
+ *   · PLAGE         → sec 0, min < max (secondes), txt = le texte écrit   (« 3-4 min » → 180–240)
+ *   · autre texte   → sec 0, txt = le texte écrit            (« selon ressenti »)
+ *   · vide / « - »  → tout à zéro
+ * ⛔ `sec` n'est JAMAIS tiré d'une plage ni d'un texte : le choix appartient à la personne.
+ * `_secRepos(v)` reste le point d'entrée historique (toutes ses valeurs d'avant sont inchangées).
+ *
+ * LES CONVENTIONS DE LECTURE, ÉCRITES POUR QUE PERSONNE NE LES DEVINE :
+ *   · « 1.30 », « 2.30 mins » (deux chiffres après le point) = MINUTES.SECONDES comme on l'écrit
+ *     en salle : 1 min 30, pas 1,3 minute. « 2.5 min » (un chiffre) = 2,5 minutes (150 s).
+ *   · un entier SEUL de 1 à 9 = des minutes (« 2 » dans une colonne Repos ; personne ne se repose
+ *     2 secondes) ; de 10 à 14 = ambigu → texte conservé, rien d'appliqué ; 15 et plus = secondes.
+ *   · dans une plage, un côté sans unité prend l'unité de l'autre (« 3-4 min », « 60-90 s »).
+ */
+function _reposQte(s, indice){
+  // → { sec, u } où u = 'm' (minutes), 's' (secondes) ou '' (aucune unité écrite) ; null si ce n'est pas UNE quantité
   let m;
-  // « 1:30 » ou « 1'30 » → minutes:secondes
-  if((m=s.match(/^(\d+)\s*[:'’]\s*(\d{1,2})$/)))return (+m[1])*60+(+m[2]);
-  /* « 1 min 30 », « 1 minute 30 s » — ET « 1min30 » COLLÉ (ft-v1176).
-     ⚠️ LE `\b` QUI ÉTAIT ICI INTERDISAIT LA FORME COLLÉE, et c'est celle que les gens écrivent :
-     entre le « n » de min et le « 3 », il n'y a **aucune** frontière de mot, donc `1min30`
-     rendait **0** — le chrono retombait sur le réglage par défaut, sans erreur, sans message.
-     ⭐ Trouvé en vérifiant ma PROPRE consigne : le prompt d'import (règle 9) annonce ce format
-     au modèle. *Promettre au modèle un format que l'app lit comme zéro, c'est fabriquer un
-     silence.* Et le correctif est celui que cette fonction prescrit dix lignes plus haut :
-     on rend l'app tolérante, on ne durcit pas la consigne. */
-  if((m=s.match(/^(\d+(?:\.\d+)?)\s*(?:minutes?|min|mn|m)\s*(\d{1,2})\s*(?:s|sec|secs?|secondes?)?$/)))
-    return Math.round((+m[1])*60)+(+m[2]);
-  // « 3 min », « 2.5 minutes », « 3mn »
-  if((m=s.match(/^(\d+(?:\.\d+)?)\s*(?:min|minutes?|mn|m)\b$/)))return Math.round((+m[1])*60);
-  // « 90 s », « 90 sec », « 90 secondes »
-  if((m=s.match(/^(\d+(?:\.\d+)?)\s*(?:s|sec|secs?|secondes?)\b$/)))return Math.round(+m[1]);
-  // « 180 » tout court → déjà des secondes
-  if((m=s.match(/^(\d+(?:\.\d+)?)$/)))return Math.round(+m[1]);
-  return 0;
+  s=String(s).trim();
+  if((m=s.match(/^(\d+)\s*[:'](\d{1,2})$/)))                                   // 1:30 · 1'30
+    return +m[2]<60?{sec:(+m[1])*60+(+m[2]),u:'m'}:null;
+  // 1 min 30 · 1 mins 30 s · 1min30 (collé) · 1m30
+  if((m=s.match(/^(\d+)\s*(?:minutes?|mins?|mns?|m)\.?\s*(\d{1,2})\s*(?:secondes?|secs?|s)?$/)))
+    return +m[2]<60?{sec:(+m[1])*60+(+m[2]),u:'m'}:null;
+  // 3 min · 3 mins · 2 minutes · 3mn · 2.5 min · 1.30 mins (minutes.secondes)
+  if((m=s.match(/^(\d+)[.,](\d+)\s*(?:minutes?|mins?|mns?|m)\.?$/))){
+    if(m[2].length===2&&+m[2]<60) return {sec:(+m[1])*60+(+m[2]),u:'m'};      // 1.30 = 1 min 30
+    return {sec:Math.round(parseFloat(m[1]+'.'+m[2])*60),u:'m'};               // 2.5 = 2,5 min
+  }
+  if((m=s.match(/^(\d+)\s*(?:minutes?|mins?|mns?|m)\.?$/))) return {sec:(+m[1])*60,u:'m'};
+  // 90 s · 90 sec · 90 secondes · 40"
+  if((m=s.match(/^(\d+(?:[.,]\d+)?)\s*(?:secondes?|secs?|s|")\.?$/))) return {sec:Math.round(parseFloat(m[1].replace(',','.'))),u:'s'};
+  // « 1.30 » tout seul : minutes.secondes (2,3 SECONDES n'aurait aucun sens)
+  if((m=s.match(/^(\d{1,2})[.,](\d{2})$/))&&+m[2]<60) return {sec:(+m[1])*60+(+m[2]),u:indice==='s'?'s':'m'};
+  // un entier seul
+  if((m=s.match(/^(\d+)$/))){
+    const n=+m[1];
+    if(indice==='m'&&n>=1&&n<=60) return {sec:n*60,u:'m'};
+    if(indice==='s'&&n>=1) return {sec:n,u:'s'};
+    if(n>=15) return {sec:n,u:''};                       // 90 · 120 · 180 → déjà des secondes
+    if(n>=1&&n<=9) return {sec:n*60,u:''};               // 2 · 3 → des minutes
+    return null;                                         // 0 et 10–14 : ambigu, on n'applique rien
+  }
+  return null;
 }
+function _reposLire(v){
+  const vide={sec:0,min:0,max:0,txt:''};
+  if(v==null) return vide;
+  if(typeof v==='number') return (v>0&&isFinite(v)&&v<=3600)?{sec:Math.round(v),min:0,max:0,txt:''}:vide;
+  let s=String(v).replace(/[  ]/g,' ').replace(/[‘’]/g,"'").replace(/\s+/g,' ').trim();
+  if(!s||/^[-–—_.\/·•]+$/.test(s)||/^(n\/?a|aucun|aucune|none|nc|0)$/i.test(s)) return vide;
+  const txt=s.length>40?s.slice(0,40).trim():s;
+  let bas=s.toLowerCase().replace(/^(?:repos|r\u00e9cup(?:\u00e9ration)?|recup(?:eration)?|rest|pause)\s*:?\s*/,'');   // « repos 40 sec » → « 40 sec »
+  /* Ce que les coachs ÉCRIVENT autour du chiffre : « 2 min max », « repos 30 sec maxi »,
+     « 1.15 min max » = un PLAFOND, donc le chiffre écrit EST le repos ; « environ 90 s » ;
+     et le blanc d'extraction d'un PDF « 1 . 20 min ». Avant : tout cela restait du texte, 0 seconde, et la séance prenait le réglage
+     global (130 s) pour un coach qui écrivait 45 s. ⛔ On n'enlève QUE ces mots-là : « selon ressenti », « 1.10/20 min max » (format
+     que rien ne permet de lire sans deviner) restent du TEXTE conservé, sans repos appliqué. */
+  bas=bas.replace(/(\d)\s*\.\s*(\d)/g,'$1.$2').replace(/\s*\b(?:au\s+)?max(?:i|imum)?\b\.?$/,'').replace(/^(?:environ|env\.?|~|\u2248)\s*/,'').trim();
+  if(!bas) return vide;                                         // le mot « repos » seul n'est pas une valeur
+  const un=_reposQte(bas);
+  if(un&&un.sec>0&&un.sec<=3600) return {sec:un.sec,min:0,max:0,txt:''};
+  // une PLAGE : deux quantités séparées par - – — / à a to
+  const p=bas.replace(/^de\s+/,'').split(/\s*(?:[-–—\/]|à|\bto\b|\ba\b)\s*/);
+  if(p.length===2&&/\d/.test(p[0])&&/\d/.test(p[1])){
+    const d=_reposQte(p[1]);                                   // le côté droit porte l'unité s'il y en a une
+    const g=d&&_reposQte(p[0],d.u);
+    // ⛔ Une plage dont la borne haute vaut plus de 5 fois la basse n'est pas une plage de repos : « 1.10/20 min » (un coach qui écrit
+    //    1 min 10 à 1 min 20) se lisait 70 s → 20 MINUTES. On garde le texte, on n'applique rien (la personne lit et choisit).
+    if(d&&g&&g.sec>0&&d.sec>g.sec&&d.sec<=3600&&d.sec<=g.sec*5) return {sec:0,min:g.sec,max:d.sec,txt};
+    // « 3-4 » sans aucune unité : minutes si les deux sont petits, sinon secondes
+    const nb=bas.match(/^(\d+)\s*(?:[-–—\/]|à|to|a)\s*(\d+)$/);
+    if(nb){ const a=+nb[1],b=+nb[2];
+      if(a>0&&b>a){ if(b<=9) return {sec:0,min:a*60,max:b*60,txt}; if(a>=15&&b<=3600) return {sec:0,min:a,max:b,txt}; } }
+  }
+  return {sec:0,min:0,max:0,txt};
+}
+function _secRepos(v){ return _reposLire(v).sec; }
 
 /* ─── LIRE UNE DATE ANNONCÉE, EN CHIFFRES OU EN TOUTES LETTRES (05/08/2026) ────────────
  *

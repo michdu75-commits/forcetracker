@@ -29203,18 +29203,18 @@ console.log('\n-- CCLVI. Le filet déterministe des échauffements (ft-v1158) --
      personne n'a jamais décidé de figer. */
   const _iDeb=_lj.indexOf('_mergeImportSeances();');
   const _reg=_lj.slice(_iDeb, _lj.indexOf('_renderImpConfirm();', _iDeb));
-  const _iM=_reg.indexOf('_mergeImportEchauffements();'), _iV=_reg.indexOf('_vmMatchExtracted();');
+  const _iM=_reg.indexOf('_mergeImportBlocsEch();'), _iV=_reg.indexOf('_vmMatchExtracted();');
   t('CCLVI ⛔⛔ CONTRÔLE — le chemin d\'extraction APPELLE la fusion, et AVANT le rattachement VM',
-    /^[ \t]*_mergeImportEchauffements\(\);/m.test(_reg) && _iM>=0 && _iV>=0 && _iM<_iV,
-    'appel décommenté : '+/^[ \t]*_mergeImportEchauffements\(\);/m.test(_reg)+' · fusion@'+_iM+' vm@'+_iV);
+    /^[ \t]*_mergeImportBlocsEch\(\);/m.test(_reg) && _iM>=0 && _iV>=0 && _iM<_iV,
+    'appel décommenté : '+/^[ \t]*_mergeImportBlocsEch\(\);/m.test(_reg)+' · fusion@'+_iM+' vm@'+_iV);
 
   const R=await p.evaluate(()=>{
    try{
     const o={};
-    o.fn=['_nomSansEch','_estLaLigneDeTravail','_seriesImport','_fusionneEch','_mergeImportEchauffements','finalImportProg']
+    o.fn=['_nomSansEch','_estLaLigneDeTravail','_seriesImport','_fusionneBlocImport','_identiteBlocImport','_mergeImportBlocsEch','finalImportProg']
           .filter(f=>typeof window[f]!=='function');
     const merge=exs=>{ _impExtracted={name:'T',weeks:4,startDate:'',days:[{label:'J',exercises:exs}]};
-                       _mergeImportEchauffements(); return _impExtracted.days[0].exercises; };
+                       _mergeImportBlocsEch(); return _impExtracted.days[0].exercises; };
 
     /* ⭐⭐ LE J1 RÉEL DE MICHEL, tel qu'il sort VRAIMENT du modèle sur sa vidéo : 9 lignes. */
     const j1=[
@@ -29273,8 +29273,17 @@ console.log('\n-- CCLVI. Le filet déterministe des échauffements (ft-v1158) --
     const gd=merge([{name:'Développé épaules guide (échauffement léger)',sets:1,reps:10},
                     {name:'Développé épaules guide (échauffement progressif)',sets:1,reps:5},
                     {name:'Développé épaules guide / haltères',sets:3,reps:8,kg:55}]);
-    o.prolonge = gd.length===1 && gd[0].name==='Développé épaules guide / haltères'
-                 && gd[0].sets===5 && (gd[0].setTypePerSet||[]).join(',')==='W,W,,,';
+    /* ⚠️ DÉCISION DE MICHEL DU 02/11/2026 (IMPORT-IA-FIDELITE-01), QUI CHANGE CE TÉMOIN : « guidé / haltères » peut désigner deux
+       mouvements, donc une ligne de travail qui PROLONGE le nom n'est plus fusionnée d'office — elle est PROPOSÉE (marques
+       `_propGrp`), la personne tranche (`impGrouperEch`). Rien n'est perdu : le résultat accepté est celui d'avant (1 exercice, 5
+       séries, même nom, mêmes types). Le témoin protège l'INVARIANT — « jamais de fusion sans l'accord de la personne, jamais de
+       perte une fois qu'elle l'a donné » — pas l'ancienne mécanique. */
+    const avant=gd.length===2 && !!gd[0]._propGrp && gd[0]._propGrp===gd[1]._propGrp && gd[0].sets===2 && (gd[0].setTypePerSet||[]).join(',')==='W,W';
+    _impExtracted={name:'T',weeks:4,startDate:'',days:[{label:'J',exercises:gd}]};
+    impGrouperEch(0,_impExtracted.days[0].exercises.findIndex(e=>e._propRole==='travail'));
+    const gdA=_impExtracted.days[0].exercises;
+    o.prolonge = avant && gdA.length===1 && gdA[0].name==='Développé épaules guide / haltères'
+                 && gdA[0].sets===5 && (gdA[0].setTypePerSet||[]).join(',')==='W,W,,,';
     /* ⛔⛔ ET LE CONTRE-TEST COMPTE AUTANT QUE LE CAS : le prolongement n'est accepté que derrière
        un SÉPARATEUR. « Squat (échauffement) » suivi de « Squat BULGARE » sont deux exercices
        différents — les fusionner mettrait les charges d'échauffement du squat sur une fente. */
@@ -29289,7 +29298,7 @@ console.log('\n-- CCLVI. Le filet déterministe des échauffements (ft-v1158) --
     S.programmes=[]; S.customExercises=[]; persist();
     _impMode='new';
     _impExtracted={name:'PB Bloc 1',weeks:4,startDate:'',days:[{label:'J1',exercises:JSON.parse(JSON.stringify(j1))}]};
-    _mergeImportEchauffements();
+    _mergeImportBlocsEch();
     finalImportProg();
     o.customEch = (S.customExercises||[]).filter(e=>/\(\s*(ech|éch)/i.test(e.n)).length;
     const prog=(S.programmes||[])[S.programmes.length-1];
@@ -29325,7 +29334,7 @@ console.log('\n-- CCLVI. Le filet déterministe des échauffements (ft-v1158) --
     t('CCLVI ⛔⛔ sans ligne de travail, on ne fusionne rien et on ne renomme rien', R.sansTravail===true, '');
     t('CCLVI ⛔ « (Leg Curl) » n\'est pas un marqueur d\'échauffement', R.parenthNeutre===true, '');
     t('CCLVI ⛔ des lignes NON consécutives ne se fusionnent pas', R.nonConsecutif===true, '');
-    t('CCLVI ⭐⭐ 2ᵉ cas de sa vidéo : la ligne de travail peut PROLONGER le nom (« … / haltères »)', R.prolonge===true, '');
+    t('CCLVI ⭐⭐ 2ᵉ cas de sa vidéo : la ligne de travail qui PROLONGE le nom (« … / haltères ») est PROPOSÉE, jamais fusionnée d\'office ; acceptée = 1 exercice, 5 séries', R.prolonge===true, '');
     t('CCLVI ⛔⛔ mais « Squat Bulgare » n\'absorbe PAS l\'échauffement du Squat (le séparateur décide)', R.pasBulgare===true, '');
     t('CCLVI ⭐ casse et accents ne coupent pas le rapprochement', R.accents===true, '');
     /* ⭐ LE GAIN QU'ON NE VOIT PAS SUR L'ÉCRAN D'IMPORT : le catalogue perso n'est plus pollué. */
@@ -39273,6 +39282,18 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
      UN exercice même quand le Worker rend des noms nus (échauffement en note / en type) ; jamais de fusion sans preuve.
      Banc : tools/banc_import_echauffement.js. */
   await require('./import_echauffement.js').ecran(t, b, PORT);
+  /* 📥 IMPORT-IA-FIDELITE-01 (session-C, 02/11/2026, GO de Michel) — du document au chronomètre : repos lus comme le coach les écrit
+     (« 3 mins », « 1.30 mins », plages conservées), UNE seule règle de regroupement échauffement/travail avec propositions à confirmer,
+     chrono réellement déclenché, aperçu fidèle, semaine sans date, programmes homonymes. Banc : tools/banc_import_fidelite.js ·
+     contrôle négatif : tools/mut_import_fidelite.py. */
+  await require('./import_fidelite.js').ecran(t, b, PORT);
+  /* 📚 IMPORT-IA-FIDELITE-01 · CORPUS (session-C, 02/11/2026) — 16 programmes ENTIÈREMENT INVENTÉS (12 méthodes + 4 formats
+     d'écriture) passés par la vraie chaîne : programme enregistré série par série, reconnaissance (aucun rattachement faux), chrono
+     réellement déclenché pour chaque série. Banc : tools/banc_import_corpus.js · contrôle négatif : tools/mut_import_corpus.py. */
+  await require('./import_corpus.js').ecran(t, b, PORT);
+  /* 📥 IMPORT-IA-FIDELITE-01 · LOT A — le Worker CONDUIT (réseau simulé, horloge figée, 0 appel réel) : prompt envoyé, catalogue, réponse
+     tronquée, normalisation. Banc : tools/banc_import_worker_contrat.js · contrôle négatif : tools/mut_import_worker_contrat.py. */
+  await require('./import_worker_contrat.js').reel(t, ROOT, fs, path);
   /* 🔒 SEC-ADMIN-01 (session-B, 09/10/2026) — la route de diagnostic premium (S-01) et `testGardeFou` exigent le jeton admin
      côté serveur (refus sans rien lire ni écrire) ; le mode admin ne change plus l'identité locale ; la carte « Statut
      Premium » présente le jeton ; la carte des comptes dit qu'elle affiche des adresses. Vrai Code.js en local (doGet /
@@ -40154,6 +40175,9 @@ require('./debrief_demande.js').source(t, ROOT, fs, path);
 require('./progres_seances.js').source(t, ROOT, fs, path);
 require('./seance_date.js').source(t, ROOT, fs, path);
 require('./seance_repos.js').source(t, ROOT, fs, path);
+require('./import_fidelite.js').pur(t, ROOT, fs, path);   // IMPORT-IA-FIDELITE-01 : la lecture d'un repos écrit par un coach (constants.js exécuté)
+require('./import_corpus.js').source(t, ROOT, fs, path);  // IMPORT-IA-FIDELITE-01 : le corpus est sain (inventé, cohérent, au catalogue)
+require('./import_worker_contrat.js').source(t, ROOT, fs, path);   // IMPORT-IA-FIDELITE-01 · LOT A : le contrat d'import du Worker (parité avec Code.js)
 require('./picker_vignettes.js').source(t, ROOT, fs, path);
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');

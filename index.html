@@ -610,6 +610,8 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
       <button class="rbtn rd-skip" onclick="skipRest()">Passer</button>
     </div>
     <div id="rest-label"></div>
+    <!-- 📝 IMPORT-IA-FIDELITE-01 : la consigne de repos ÉCRITE dans le programme (une plage « 3-4 min »). Un seul auteur : `_restConsigneMontrer`. Vide = masquée. -->
+    <div id="rest-consigne"></div>
     <!-- ⏳ ft-v1030 : le repos est un MAXIMUM. Ce libellé n'apparaît qu'AU-DELÀ de zéro et n'a
          qu'un seul auteur (`updRest`) — #rest-label, lui, appartient à `startRest`. -->
     <div id="rest-over"></div>
@@ -2204,6 +2206,7 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
          du repos en cours (`_highlightRestPreset`) les retrouve ici. -->
     <!-- ⏱️ D-086 (recette de Michel, 18/10) : 30 s et 45 s rejoignent la rangée — même propriétaire `setRestPreset`, même
          mémoire par exercice (`S.exRestPref`), liste unique `_REPOS_PRESETS` (log.js). La durée précise reste juste en dessous. -->
+    <div id="re-consigne" style="display:none;"></div>
     <div class="re-presets">
       <button class="rbtn" id="rp-30" onclick="setRestPreset(30);closeRestEdit()">30&nbsp;s</button>
       <button class="rbtn" id="rp-45" onclick="setRestPreset(45);closeRestEdit()">45&nbsp;s</button>
@@ -2638,8 +2641,8 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
     <!-- Étape 4 : Confirmation -->
     <div id="imp-s4" style="display:none;flex-direction:column;gap:12px;">
       <div style="font-weight:800;font-size:17px;" id="imp-prog-name"></div>
-      <div style="font-size:13px;color:var(--t2);">Vérifie les exercices extraits. Appuie sur ✕ pour retirer un exercice.</div>
-      <div id="imp-preview" style="display:flex;flex-direction:column;gap:10px;max-height:40dvh;overflow-y:auto;"></div>
+      <div style="font-size:13px;color:var(--t2);">Vérifie ce que l'IA a lu : échauffements, séries de travail, repos, exercices reconnus. « Voir / corriger » ouvre les séries ; ✕ retire un exercice.</div>
+      <div id="imp-preview" style="display:flex;flex-direction:column;gap:10px;max-height:54dvh;overflow-y:auto;-webkit-overflow-scrolling:touch;"></div>
       <div style="background:var(--bg3);border-radius:12px;padding:12px 14px;">
         <div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;">Enregistrer comme</div>
         <div style="display:flex;gap:8px;margin-bottom:0;" id="imp-mode-btns">
