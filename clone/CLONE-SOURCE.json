@@ -1,13 +1,14 @@
 {
-  "ref": "claude/seance-recette-precedent",
-  "sha": "b1840bc7115ededd435faffd114d8f1d4efb129f",
-  "genere_le": "2026-10-19 22:43 UTC",
+  "ref": "claude/integration-autre-activite-2026-11-08",
+  "sha": "3bac5474ca1cbb48917c296637ce887fef83f330",
+  "genere_le": "2026-11-08 17:21 UTC",
   "fichiers": [
     "index.html",
     "style.css",
     "manifest.json",
     "sw.js",
     "capacites-ia.js",
+    "nutrition-v2.js",
     "constants.js",
     "state.js",
     "supabase.js",
@@ -20,5 +21,5 @@
     "app.js"
   ],
   "banc_isolation": "22 OK / 0 rouge",
-  "empreinte": "24c8671e1655dbe981b52950e86d83604855cfc96ad990f2520513a4e69d5bb1"
+  "empreinte": "373eff25503bb93f0953b6fba2899668204655bfb21f54bc2c547b58c2b55f55"
 }

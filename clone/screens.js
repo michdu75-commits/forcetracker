@@ -206,16 +206,16 @@ const _HELP_DATA={
       {i:'😴',t:'Ton sommeil se note dans « Ton check-in du jour » (déplie la carte, en haut de l\'Accueil) : choisis la qualité + les heures. Oublié un jour ? Change la date (ex. hier) ou tape « ＋ Noter un jour oublié ». Un bon sommeil fait remonter ton score de récupération (contrairement au moral/à la douleur, qui n\'y touchent pas). ⭐ <b>Si ta montre envoie ton sommeil à Santé</b> (Garmin, Apple Watch…), c\'est la <b>durée mesurée</b> qui compte, pas celle que tu tapes — la carte affiche alors « Mesuré par ta montre » et rappelle ce que tu avais noté. <b>Pourquoi</b> : la saisie à la main est bonne en moyenne, mais elle <b>lisse les mauvaises semaines</b>, donc ton score était le plus optimiste pile quand tu étais le plus fatigué. ⛔ <b>Ta saisie n\'est jamais effacée</b>, et la <b>qualité reste la tienne</b> : une montre mesure une durée, elle ne sait pas comment tu t\'es senti. Sans montre, rien ne change.'},
       {i:'📊',t:'« Historique du sommeil » (déplie le check-in, puis la barre repliable) : un mini-graphique sur 7 ou 30 jours + la liste nuit par nuit. Tape une barre ou une ligne pour ajouter/corriger cette nuit. Les jours vides affichent « ＋ à renseigner ».'},
       {i:'🩹',t:'Pour une zone qui fait mal : dans le check-in, tape directement le MUSCLE sur la figurine anatomique (vue de face + de dos) — il devient rouge. Les articulations (nuque, coude, poignet, genou, cheville) sont en boutons juste en dessous. Pour une zone comme le genou ou l\'épaule tu peux préciser le CÔTÉ (gauche/droite/les deux). Le Gardien protège cette zone du jour en priorité dans les conseils de Milo.'},
-      {i:'💡',t:'Ton score de récup (sur NN/100) estime à quel point ton corps est prêt à s\'entraîner aujourd\'hui. Tape « Pourquoi ce score ? » juste en dessous pour voir, en clair, D\'OÙ il vient : sommeil, séance récente, âge, forme du jour… chaque facteur avec sa raison et son +/−. Il remonte au fil de la journée après une séance, et reste un simple repère — ton ressenti prime toujours.'},
+      {i:'💡',t:'Ton score de récup (noté sur 100) estime à quel point ton corps est prêt à s\'entraîner aujourd\'hui. Tape « Pourquoi ce score ? » juste en dessous pour voir, en clair, D\'OÙ il vient : sommeil, séance récente, âge, forme du jour… chaque facteur avec sa raison et son +/−. Il remonte au fil de la journée après une séance, et reste un simple repère — ton ressenti prime toujours.'},
       {i:'🧠',t:'Milo apprend à te connaître : de temps en temps, il te pose une petite question sur l\'Accueil (« tu t\'entraînes plutôt le matin, non ? »). Tu réponds « Oui, c\'est vrai » ou « Pas vraiment » — rien n\'est retenu sans ton accord. Tout ce qu\'il a retenu est consultable et effaçable dans Menu → « Ce que Milo sait de toi ».'},
       {i:'🌱',t:'Milo complète ton profil tout seul : s\'il manque une info de base (où tu t\'entraînes, combien de séances/semaine, la durée), il te propose de la remplir en 1 tap sur l\'Accueil — de vrais boutons, rien à écrire. Ta réponse va direct dans ton profil et ses conseils deviennent plus justes. Pas envie maintenant ? « Plus tard » et il te le redemandera une autre fois. (Utile surtout si tu as sauté ces questions à l\'inscription.)'},
       {i:'🔎',t:'Milo s\'adapte à ce que tu fais vraiment : il compare ce que tu as déclaré à ce qu\'il MESURE dans tes vraies séances. ① Ta FRÉQUENCE : s\'il repère un changement DURABLE (pas juste une semaine chargée), il te fait une petite vérification (« tu t\'entraînes plutôt 5×/sem maintenant, ça a changé ? »). ② Ton STYLE d\'entraînement : s\'il voit que tu t\'entraînes plutôt en FORCE (séries lourdes, peu de reps) alors que ton objectif est « prise de muscle » — ou l\'inverse — il te propose d\'ajuster ton objectif. Dans les deux cas : « Oui, mets à jour » ou « Non, garde comme ça ». Il ne change JAMAIS rien tout seul — il constate et te laisse décider.'},
       {i:'🚴',t:'Milo tient compte de tes autres sports : de temps en temps il te demande sur l\'Accueil si tu pratiques un autre sport (vélo, course, foot, natation…) — un tap pour répondre (« Aucun » est valable). Un autre sport déclaré augmente automatiquement tes besoins caloriques (+150 kcal/j — sauf si ton niveau d\'activité est déjà « Actif » ou « Très actif », où il est déjà compté dedans). Pour la récupération, l\'app ne sait pas QUAND tu pratiques : c\'est Milo qui en tient compte dans ses conseils.'},
       {i:'🌿',t:'Milo garde ton profil à jour : une info peut vieillir (tu as changé de salle, tes séances sont plus courtes…). De temps en temps il te fait une petite vérification sur l\'Accueil (« toujours en salle basique ? »). « Oui, toujours » ne change RIEN — il note juste que c\'est à jour ; « Non, ça a changé » → tu choisis la nouvelle réponse en 1 tap. Au plus une petite question par semaine, et « Plus tard » est toujours possible : jamais de harcèlement.'},
       {i:'🟢',t:'Milo te connaît de mieux en mieux : ouvre Menu → « Ce que Milo sait de toi ». Tout en haut, une phrase te dit — simplement — à quel point Milo peut te conseiller (de « il apprend à te connaître » à « il connaît très bien ton profil — conseils sur-mesure »). Ce n\'est PAS une note ni un score : ça monte au fil de ce que tu lui apportes (tes séances, tes réponses à ses questions, ce que tu lui confies) et ça ne redescend JAMAIS, même si tu effaces une info. Juste en dessous, « 🧠 Milo a appris récemment » liste les dernières choses qu\'il a retenues sur toi (la plus récente en haut). Et tout en bas, la liste complète — tu peux en effacer. 🔒 Privé.'},
-      {i:'🏆',t:'Les PRs se mettent à jour automatiquement. Le Big 3 (Squat + DC + SDT) est ton indicateur de force globale.'},
-      {i:'🔄',t:'Le cycle de force (Accumulation → Intensification → Peak → Décharge) se configure dans Profil → Cycle de force.'},
-      {i:'🏅',t:'Tes badges débloqués récemment apparaissent ici. Pour tout voir : Menu ☰ → <b>Ton suivi</b> → <b>Badges</b>.'},
+      {i:'🏆',t:'Tes records (PRs) se mettent à jour automatiquement — retrouve-les dans Progrès → <b>Exercices</b>.'},
+      {i:'🔄',t:'Le cycle de force (Accumulation → Intensification → Peak → Décharge) se configure dans Menu ☰ → <b>Tes outils</b> → <b>Cycle de force</b>.'},
+      {i:'🏅',t:'Tes badges sont dans Menu ☰ → <b>Ton suivi</b> → <b>Badges</b>.'},
     ],
     female:[
       {i:'🌙',t:'La carte de ton cycle menstruel s\'affiche ici — remplis la date de tes règles dans Profil pour l\'activer.'},
@@ -229,14 +229,14 @@ const _HELP_DATA={
          changer sous les yeux de tout le monde. ⛔ Elle ne se devine pas : quatre titres de
          section ne disent pas POURQUOI une entrée est dans l'un plutôt que dans l'autre, et
          c'est justement ce qui manquait quand tout était dans « Outils ». */
-      {i:'🗂️',t:'<b>Le menu est rangé en 4 rayons</b>, et chacun répond à une question : <b>Ton suivi</b> = ce qui parle de <b>toi</b> et de ton histoire (ce que Milo sait de toi, tes bilans mensuels, l\'export de tes données, tes badges) · <b>Tes outils</b> = ce qu\'on utilise pour s\'entraîner (cycle de force, calculateur 1RM) · <b>Apprendre</b> = du contenu de référence, qui ne change pas avec toi (guide de la muscu, anatomie, protéines, compléments) · <b>L\'application</b> = l\'app elle-même (son guide, les nouveautés, l\'aide, à propos, confidentialité). ⭐ <b>Ce qui parle de toi passe en premier</b> : avant, « Ce que Milo sait de toi » était en 8ᵉ position et il fallait faire défiler. ⚠️ <b>Rien n\'a été supprimé</b> — les 14 entrées sont toutes là. 💡 <b>Apparence</b> (couleur du halo, style de la carte récup…) est descendue en bas et se <b>replie</b> : tape son titre, ton choix est gardé.'},
+      {i:'🗂️',t:'<b>Le menu est rangé en 4 rayons</b>, et chacun répond à une question : <b>Ton suivi</b> = ce qui parle de <b>toi</b> et de ton histoire (ce que Milo sait de toi, tes bilans mensuels, l\'export de tes données, tes badges) · <b>Tes outils</b> = ce qu\'on utilise pour s\'entraîner (cycle de force, calculateur 1RM) · <b>Apprendre</b> = du contenu de référence, qui ne change pas avec toi (guide de la muscu, anatomie, protéines, compléments) · <b>L\'application</b> = l\'app elle-même (son guide, les nouveautés, l\'aide, à propos, confidentialité). ⭐ <b>Ce qui parle de toi passe en premier</b> : avant, « Ce que Milo sait de toi » était en 8ᵉ position et il fallait faire défiler. ⚠️ <b>Rien n\'a été supprimé</b> — les 15 entrées sont toutes là. 💡 <b>Apparence</b> (couleur du halo, style de la carte récup…) est descendue en bas et se <b>replie</b> : tape son titre, ton choix est gardé.'},
       /* 📏 EN TÊTE : c'est la question que Michel a posée mot pour mot (« la mesure du tour de
          cou et de taille, elle est datée ou pas ? »), donc c'est celle que d'autres se poseront.
          ⛔ Elle ne se devine PAS en regardant l'écran : deux champs identiques, deux
          comportements — c'est exactement le genre de chose qui doit vivre dans l'aide (R25). */
       {i:'📏',t:'<b>Tes mensurations sont datées, où que tu les tapes</b> (Profil → Composition, ou Progrès → carte « Masse grasse »). Chaque valeur est <b>rangée au jour où tu l\'entres</b>, ce qui permet de suivre ton évolution et de comparer tes centimètres à ton poids. ⭐ <b>Se remesurer le même jour CORRIGE</b> la valeur, ça n\'empile pas : deux tours de taille le même jour, c\'est une hésitation, pas une tendance. ⚠️ <b>Enregistrer ton profil ne re-date rien</b> si tu n\'as pas touché aux mesures — sinon corriger ton poids ferait croire que tu t\'es mesuré aujourd\'hui, et l\'app ne fabrique pas de mesure que tu n\'as pas prise. ⛔ <b>Une valeur entrée AVANT le 4 septembre 2026 n\'a pas de date</b> : elle n\'a jamais été enregistrée avec son jour, et on ne va pas lui en inventer une. Retape-la une fois et elle comptera à partir de là.'},
       {i:'📷',t:'<b>Bilan corporel</b> (Profil → Composition) : la photo de ton rapport de balance est lue <b>sur ton téléphone</b>, gratuitement et sans réseau. L\'app <b>vérifie son propre travail</b> — les lignes du rapport se recoupent — et si le compte n\'y est pas, elle préfère ne rien te proposer plutôt que de te donner un chiffre faux. Vérifie toujours avant d\'enregistrer.'},
-      {i:'📂',t:'Le Profil est organisé en sections repliables (Identité · Objectif · Discipline · Composition · Morphologie · Santé · Cycle · Accessibilité) : tape un titre pour l\'ouvrir. Le bouton "Enregistrer" confirme par une notification verte.'},
+      {i:'📂',t:'Le Profil est organisé en sections repliables (Identité · Objectif · Discipline · Mon ADN sportif · Composition corporelle · Morphologie · Santé · Cycle menstruel pour un profil femme · Accessibilité) : tape un titre pour l\'ouvrir. Le bouton "Enregistrer" confirme par une notification verte.'},
       {i:'⚖️',t:'Poids, taille et âge sont indispensables pour calculer ton TDEE (besoins caloriques) dans Nutrition.'},
       {i:'🎯',t:'L\'objectif principal (muscle, perte de poids, force, rééquilibrage...) adapte tes macros et les conseils du Coach IA. Tu peux aussi ajouter une « priorité complémentaire » (2e objectif) : elle affine les conseils de Milo et ton entraînement, mais la NUTRITION suit toujours l\'objectif principal (elle ne peut viser qu\'une seule direction de calories). Pour « perdre du gras ET prendre du muscle », prends l\'objectif « Perte de gras + muscle ».'},
       {i:'💪',t:'Muscles prioritaires : dans Profil → Objectif, choisis jusqu\'à 2 muscles que tu veux développer EN PRIORITÉ (ex. pectoraux + épaules). Comme un vrai coach, Milo leur donnera plus de fréquence, de volume et de variantes dans ses conseils et les programmes qu\'il génère, en maintenant le reste. Ça ne touche pas ta nutrition — c\'est juste pour cibler où tu veux progresser.'},
@@ -260,6 +260,20 @@ const _HELP_DATA={
   nutrition:{
     title:'🍽️ Nutrition',
     tips:[
+      /* 🥗 RÈGLE D'OR #11, POINT 3 — NUTRITION V2 (jalon 4, D-099, D-101, D-103 — 22/10/2026). EN TÊTE, exprès : ce sont
+         les gestes de TOUS les jours qui changent (un poids est demandé, une portion veut son poids). Sans un mot, ces refus
+         se liraient comme des pannes. ⛔ Ne pas écrire « partout » pour le « ? » : la carte des repas habituels et l'en-tête
+         d'un repas comptent encore une valeur inconnue comme 0 (point ouvert, non corrigé). */
+      {i:'⚖️',t:'<b>Combien tu en as mangé : les grammes d\'abord.</b> L\'ajout d\'un aliment s\'ouvre sur <b>⚖️ En grammes</b> (<b>🥛 En ml</b> juste à côté — une boisson scannée se compte en ml). <b>Sans quantité, rien ne s\'enregistre</b> : l\'app ne devine pas ce que tu as mangé. 🍽️ <b>Une portion</b> (« 2 steaks ») se note avec <b>son nom et le poids d\'UNE portion</b> : sans ce poids, ce n\'est pas une quantité, et l\'écran te le demande — il te le <b>redemande</b> si « 1 portion » change de sens (une valeur retouchée, un retour sur l\'onglet). ⭐ Quand ce poids est connu, l\'app dit les deux : « <b>3 portions (450 g)</b> » — dans « Mes aliments », à la reprise, dans « Modifier » et dans l\'ajout. Le total entre parenthèses est calculé ; les <b>grammes restent la base</b> du calcul. ⚠️ Pour un aliment dont l\'app ne peut pas prouver le poids d\'une portion (noté avant cette façon de compter), elle dit « <b>2 portions</b> », sans grammes : elle n\'affirme pas un poids qu\'elle ne connaît pas.'},
+      {i:'👆',t:'<b>Rien n\'est pré-rempli : l\'app propose, tu choisis.</b> Le poids estimé par l\'IA, la portion du fabricant, le paquet entier, « <b>↩ … (la dernière fois)</b> » sont des <b>pastilles</b> : un toucher pose la quantité, sinon le champ reste vide. ❓ Une valeur que la source ne donne pas s\'affiche « <b>?</b> » sur sa ligne du journal — jamais 0 — et le haut du jour dit « <b>Total partiel</b> » : elle n\'est ni comptée, ni inventée.'},
+      /* 🔎 RÈGLE D'OR #11, POINT 3 — NV2-FIAB (mission P1 de Michel, 24/10/2026) : la fiche retrouvée par l'identité du produit,
+         les trois issues d'une reprise figée, « ✕ » partout et sur tous les appareils, le favori qui se corrige, l'ordre des valeurs. */
+      {i:'↩️',t:'<b>Reprendre un aliment déjà noté.</b> Dans « Mes aliments » et la recherche dans ton journal, chaque proposition se lit dans le même ordre : <b>calories · pour quelle quantité · P · G · L</b> — « <b>pour 100 g</b> » est une <b>référence</b> (base d\'aliments, produit), « <b>pour 40 g</b> » est ce que <b>tu as noté</b>. S\'il a une <b>fiche vérifiée</b>, ta quantité <b>recalcule</b> ses valeurs. 🔎 Un produit scanné avant : l\'app <b>retrouve sa fiche par son code-barres</b> — dans ton journal s\'il a été scanné depuis, sinon en ligne. Sans fiche, ses valeurs restent celles de la quantité notée, et trois boutons te proposent de la <b>retrouver</b>, de le <b>scanner</b> ou de <b>saisir son étiquette</b>. ⚠️ <b>« à vérifier »</b> : ses valeurs se contredisent (avec sa fiche, avec sa quantité, ou avec une autre saisie du même produit) — <b>« + Ajouter »</b> ouvre l\'écran au lieu de les recopier. <b>« non vérifié »</b> : des valeurs reprises d\'une ancienne ligne qu\'aucune fiche ne confirme. <b>✕</b> retire un aliment de tes propositions, <b>sur tous tes appareils</b>, sans toucher à ton journal — le re-noter le fait revenir. ⭐ Un favori repris se corrige : « <b>⭐ Corriger ce favori</b> » le remplace par ce qui est à l\'écran, ton journal ne change pas. ✎ <b>« Modifier » remplace la ligne</b> : une valeur que tu corriges à la main y garde la trace de son calcul.'},
+      {i:'🔗',t:'🔗 <b>Un ancien aliment retrouve sa fiche.</b> Quand tu reprends un aliment noté avant, sans son code-barres ni son code CIQUAL, et qu\'un produit du <b>même nom</b> est déjà identifié dans ton journal, l\'écran te le <b>propose</b> : tu choisis (rien n\'est choisi à ta place), les valeurs viennent de <b>sa fiche</b>, et rien n\'est enregistré avant « Ajouter ». ✏️ <b>Modifier</b> garde le produit d\'une ligne dont tu ne changes que le nom ou le repas.'},
+      /* 🛡️ RÈGLE D'OR #11, POINT 3 — NUT-REF-HIST-01 (30/10/2026) : la fiche d'un ancien produit scanné se retrouve en ligne, jamais recopiée sans preuve. */
+      {i:'🛡️',t:'🛡️ <b>Un ancien produit scanné ne se recopie plus sans preuve.</b> Quand tu reprends (« + », favori, repas habituel) un produit scanné avant dont la fiche n\'est pas confirmée, l\'app <b>ne l\'ajoute plus toute seule</b> : elle <b>retrouve sa fiche en ligne</b> par son code-barres, te dit l\'écart avec ton ancienne saisie, et <b>c\'est toi qui décides</b> — rien n\'est enregistré avant « Ajouter ». Hors ligne, tu saisis tes valeurs toi-même. ✏️ <b>Modifier</b> : la quantité d\'une telle ligne se recalcule avec un avertissement, et elle reste « non vérifiée ».'},
+      /* 🔄 RÈGLE D'OR #11, POINT 3 — NUT-SYNC-01/02 (04/11/2026) : les suppressions du journal suivent d'un appareil à l'autre ; la sauvegarde qui échoue se voit. */
+      {i:'🔄',t:'🔄 <b>Ton journal se synchronise plus sûrement.</b> Un repas que tu supprimes <b>reste supprimé</b> sur tes autres appareils (il ne revient plus par un téléphone resté en retard) ; chaque repas garde sa propre identité. Si la sauvegarde du journal sur ton téléphone échoue (stockage plein), un bandeau <b>« Réessayer »</b> te le dit. Un appareil resté sur une <b>ancienne version</b> de l\'app ne synchronise plus son journal : ouvre l\'app, elle se met à jour toute seule.'},
       /* 🏃 RÈGLE D'OR #11, POINT 3 — D-020 + D-021 (24-25/09/2026). */
       {i:'🏃',t:'<b>Ton niveau d\'activité doit venir de toi.</b> Sans lui (Profil → Activité), l\'app n\'invente pas de plan. S\'il date d\'avant (l\'app mettait « Modéré » toute seule), une carte en haut te demande de le <b>confirmer</b> ou de le <b>modifier</b> — une seule fois.'},
       /* ⚖️ ft-v1159 — CE QU'ON NE DEVINE PAS, ET MICHEL EN EST LA PREUVE : c'est l'AUTEUR de
@@ -268,7 +282,7 @@ const _HELP_DATA={
          d'écran montre exactement ça : il tape 50, attend que les 156 kcal bougent, rien.
          ⛔ L'aide dit les deux temps ET la raison, parce que la raison est ce qui rend le
          mécanisme évident : l'app ne sait pas ce que pèse ce que tu as noté. */
-      {i:'⚖️',t:'<b>Le poids d\'une portion se règle en DEUX temps</b> — et le premier ne change rien, c\'est normal. ① <b>Tu indiques combien ça pèse</b> : l\'app ne peut pas le deviner, et les 4 valeurs que tu as sous les yeux (calories, protéines…) se <b>calent</b> sur ce poids. <b>Elles ne bougent pas à ce moment-là</b> — tu ne fais que dire à quoi elles correspondent. ② <b>Ensuite tu changes ce nombre quand tu veux</b>, et là <b>les 4 valeurs suivent en proportion</b> : 50 g → 30 g fait passer 156 kcal à 94. ⭐ Tu sais où tu en es au texte sous le champ : tant qu\'il demande « combien pèse ce que tu as noté ? », tu es à l\'étape ① ; dès qu\'il affiche <b>✅ 50 g</b>, c\'est calé.'},
+      {i:'⚖️',t:'<b>Le poids de ce que tu notes (onglet ⚖️ En grammes) se règle en DEUX temps</b> — et le premier ne change rien, c\'est normal. ① <b>Tu indiques combien ça pèse</b> : l\'app ne peut pas le deviner, et les 4 valeurs que tu as sous les yeux (calories, protéines…) se <b>calent</b> sur ce poids. <b>Elles ne bougent pas à ce moment-là</b> — tu ne fais que dire à quoi elles correspondent. ② <b>Ensuite tu changes ce nombre quand tu veux</b>, et là <b>les 4 valeurs suivent en proportion</b> : 50 g → 30 g fait passer 156 kcal à 94. ⭐ Tu sais où tu en es au texte sous le champ : tant qu\'il demande « combien pèse ce que tu as devant toi ? », tu es à l\'étape ① ; dès qu\'il affiche <b>✅ 50 g</b>, c\'est calé.'},
       /* 🍽️ POINT 3 DE LA RÈGLE #11 — ni pop-up ni point rouge, et c'est argumenté : une ligne
          apparaît dans une carte livrée la veille, et un chiffre existant devient plus juste ;
          rien n'est à faire, aucun repère ne bouge. ⚠️ Mais la moyenne de « Ta semaine » PEUT
@@ -292,13 +306,13 @@ const _HELP_DATA={
          viennent ces chiffres, pourquoi certaines lignes portent un ⚠️, et pourquoi on les
          montre quand même. ⛔ C'est le cœur du sujet : un chiffre de marque qui ne dirait pas
          d'où il vient serait pire qu'absent (R32/R33). */
-      {i:'\ud83c\udf54',t:'<b>Le fast-food par son nom.</b> Tape <b>big mac</b>, <b>whopper</b>, <b>tenders kfc</b>, <b>frites mcdo</b> : le produit sort avec son <b>enseigne</b> et le <b>poids de sa portion</b> déjà rempli (232 g pour un Big Mac) — tu n\'as plus qu\'à valider, ou à mettre ton poids si tu n\'as pas tout mangé. ⭐ <b>D\'où viennent ces chiffres</b> : des <b>sources officielles des enseignes</b>, relevées dans un tableau puis vérifiées ligne à ligne. Ce ne sont <b>pas</b> des valeurs mesurées par l\'app, et chaque proposition affiche son enseigne pour que tu le saches. ⚠️⚠️ <b>Et certaines lignes portent un ⚠️ : c\'est voulu.</b> Quand un chiffre publié ne tient pas debout — des calories annoncées qui ne collent pas aux macros de la même fiche, des morceaux dont le prix en calories change du simple au double — l\'app <b>te le dit et te montre le chiffre qui permet de juger</b>, au lieu de faire disparaître la ligne. 👉 <b>Pourquoi on ne les cache pas</b> : une ligne absente te pousse vers l\'<b>estimation automatique</b>, qui est bien moins fiable qu\'une valeur publiée douteuse. Mieux vaut un chiffre discutable que tu peux juger qu\'une estimation que tu crois. ⭐⭐ <b>Et la base est passée de 27 à 128 produits</b> : <b>Quick</b> y entre avec sa table officielle complète (burgers, wraps, salades, accompagnements), <b>Domino\'s</b> s\'étoffe. ⛔ <b>Les valeurs d\'avant n\'ont pas bougé d\'un chiffre</b> — c\'est la même source, étendue. ⚠️ <b>Ce qui n\'y est pas, et pourquoi</b> : les sandwichs <b>Subway</b> — leur document officiel donne les calories mais pas les protéines, glucides et lipides, et une ligne sans macros ne peut pas alimenter ton journal. ⚠️ Et <b>O\'Tacos n\'y est pas</b> : leur table ne publie que des desserts, aucun tacos — la garder aurait fait qu\'en tapant « tacos » tu obtiennes une <b>glace</b>. Un mot qui ne désigne pas ce qu\'on croit est pire qu\'un mot qui ne rend rien. ⛔ Et si un produit manque, le plus sûr reste le <b>code-barres</b> ou la <b>photo de l\'étiquette</b>.'},
+      {i:'\ud83c\udf54',t:'<b>Le fast-food par son nom.</b> Tape <b>big mac</b>, <b>whopper</b>, <b>tenders kfc</b>, <b>frites mcdo</b> : le produit sort avec son <b>enseigne</b>, et le <b>poids de sa portion</b> t\'est <b>proposé</b> en pastille (232 g pour un Big Mac) — un toucher et tu valides, ou tu tapes ton poids si tu n\'as pas tout mangé. ⭐ <b>D\'où viennent ces chiffres</b> : des <b>sources officielles des enseignes</b>, relevées dans un tableau puis vérifiées ligne à ligne. Ce ne sont <b>pas</b> des valeurs mesurées par l\'app, et chaque proposition affiche son enseigne pour que tu le saches. ⚠️⚠️ <b>Et certaines lignes portent un ⚠️ : c\'est voulu.</b> Quand un chiffre publié ne tient pas debout — des calories annoncées qui ne collent pas aux macros de la même fiche, des morceaux dont le prix en calories change du simple au double — l\'app <b>te le dit et te montre le chiffre qui permet de juger</b>, au lieu de faire disparaître la ligne. 👉 <b>Pourquoi on ne les cache pas</b> : une ligne absente te pousse vers l\'<b>estimation automatique</b>, qui est bien moins fiable qu\'une valeur publiée douteuse. Mieux vaut un chiffre discutable que tu peux juger qu\'une estimation que tu crois. ⭐⭐ <b>Et la base est passée de 27 à 128 produits</b> : <b>Quick</b> y entre avec sa table officielle complète (burgers, wraps, salades, accompagnements), <b>Domino\'s</b> s\'étoffe. ⛔ <b>Les valeurs d\'avant n\'ont pas bougé d\'un chiffre</b> — c\'est la même source, étendue. ⚠️ <b>Ce qui n\'y est pas, et pourquoi</b> : les sandwichs <b>Subway</b> — leur document officiel donne les calories mais pas les protéines, glucides et lipides, et une ligne sans macros ne peut pas alimenter ton journal. ⚠️ Et <b>O\'Tacos n\'y est pas</b> : leur table ne publie que des desserts, aucun tacos — la garder aurait fait qu\'en tapant « tacos » tu obtiennes une <b>glace</b>. Un mot qui ne désigne pas ce qu\'on croit est pire qu\'un mot qui ne rend rien. ⛔ Et si un produit manque, le plus sûr reste le <b>code-barres</b> ou la <b>photo de l\'étiquette</b>.'},
       /* 🍔 ⚠️ L'ENTRÉE CI-DESSOUS A ÉTÉ CORRIGÉE EN ft-v1114 — elle promettait « les noms sont
          GÉNÉRIQUES, jamais des marques » et « tu ne verras pas Big Mac ». Depuis qu'une base
          d'enseignes existe, c'était devenu FAUX. *Une aide qui nomme un repère inexistant est
          pire qu'une aide absente, parce qu'on la croit* (famille §31 de `BUGS.md`, R23). */
       {i:'\ud83c\udf54',t:'<b>Cherche avec les mots que tu emploies, pas ceux de la table.</b> Tape <b>mcdo</b>, <b>macdo</b> ou <b>fast food</b> : tu obtiens un menu — un sandwich, des frites, des nuggets. <b>coca</b> trouve le cola, <b>coca zéro</b> et <b>coca light</b> les versions aux édulcorants, <b>soda</b> les boissons gazeuses. ⭐ Avant, ces mots-là ne rendaient <b>rien</b>, alors que les aliments étaient déjà dans ton téléphone — et ça ne se voyait qu\'<b>hors ligne</b>, parce qu\'avec du réseau la recherche en ligne rattrapait le coup. ⚠️ <b>Deux familles de résultats, et elles ne disent pas la même chose</b> : la section <b>🍔 FAST-FOOD</b> donne le produit précis d\'une enseigne (« Big Mac · McDonald\'s ») ; la section <b>🥗 ALIMENTS</b> donne le <b>générique</b> de la table officielle française (« Hamburger, <i>de restauration rapide</i> ») — celui-là sert quand ton burger n\'est d\'aucune enseigne connue. 👉 Dans ce cas : prends le générique et <b>mets son poids</b> (un gros burger fait ~220 g), ou utilise « ⚖️ Saisir les valeurs pour 100 g » avec l\'affichage du restaurant. ⛔ Et <b>tacos</b> ne rend rien : il n\'est pas dans la table, et on préfère te le dire plutôt que te servir un kebab à sa place.'},
-      {i:'⚖️',t:'<b>Un produit dont les valeurs sont fausses, tu peux le corriger une bonne fois.</b> Dans « Ajouter un aliment », le bouton <b>« ⚖️ Saisir les valeurs pour 100 g »</b> te laisse recopier le tableau de ton étiquette. Ensuite tu tapes seulement <b>ta dose</b>, et l\'app calcule — cette fois-ci <b>et toutes les suivantes</b>. ⭐ C\'est ce qui manquait : jusque-là ce chiffre ne pouvait venir que d\'un code-barres ou de la base d\'aliments, donc <b>un produit dont la fiche est incomplète restait faux à vie</b>, et sa vieille ligne revenait à chaque fois. ⛔ <b>C\'est la colonne « pour 100 g »</b>, pas celle « par portion » : si tu te trompes de colonne, l\'app te le dit (plus de 100 g de matière dans 100 g de produit, c\'est impossible). ⚠️ Et ces valeurs sont enregistrées comme venant de <b>ton étiquette</b>, pas d\'une base de données — l\'app ne fait jamais passer ce que tu as tapé pour une source vérifiée.'},
+      {i:'⚖️',t:'<b>Un produit dont les valeurs sont fausses, tu peux le corriger une bonne fois.</b> Dans « Ajouter un aliment », le bouton <b>« ⚖️ Saisir les valeurs pour 100 g »</b> te laisse recopier le tableau de ton étiquette. Ensuite tu tapes seulement <b>ta dose</b>, et l\'app calcule — cette fois-ci <b>et toutes les suivantes</b> (un aliment dont l\'app ne retrouve pas une fiche vérifiée se reprend, lui, avec ses valeurs telles quelles : recopie son étiquette une fois). ⭐ C\'est ce qui manquait : jusque-là ce chiffre ne pouvait venir que d\'un code-barres ou de la base d\'aliments, donc <b>un produit dont la fiche est incomplète restait faux à vie</b>, et sa vieille ligne revenait à chaque fois. ⛔ <b>C\'est la colonne « pour 100 g »</b>, pas celle « par portion » : si tu te trompes de colonne, l\'app te le dit (plus de 100 g de matière dans 100 g de produit, c\'est impossible). ⚠️ Et ces valeurs sont enregistrées comme venant de <b>ton étiquette</b>, pas d\'une base de données — l\'app ne fait jamais passer ce que tu as tapé pour une source vérifiée.'},
       /* 📷 ft-v1163 — LA SUITE DIRECTE DU VOISIN : il explique le calibrage, celle-ci dit
          QUAND l'app te l'ouvre toute seule, et surtout ce qu'on y gagne. */
       {i:'\ud83d\udcf7',t:'<b>Quand un code-barres trouve le produit mais pas ses valeurs, l\'app t\'ouvre maintenant la saisie pour 100 g.</b> \u26a0\ufe0f <b>C\'est fr\u00e9quent</b> : beaucoup de fiches de produits de marque n\'ont que le nom et la marque, sans tableau nutritionnel. Avant, tu avais juste un message \u00ab saisis \u00e0 la main \u00bb et un formulaire vide \u2014 <b>et surtout aucun moyen d\'indiquer une quantit\u00e9</b>, donc la ligne restait impossible \u00e0 recalculer, ce jour-l\u00e0 et tous les suivants. \u2b50 <b>Maintenant</b> : le <b>nom du produit est rempli</b> (l\'app le connaissait, elle le jetait), et le bloc <b>\u00ab \u2696\ufe0f Saisir les valeurs pour 100 g \u00bb s\'ouvre tout seul</b>. \ud83d\udc49 <b>Recopie le tableau de l\'\u00e9tiquette UNE fois</b> : ensuite tu tapes seulement <b>ta quantit\u00e9 en grammes</b>, et l\'app calcule \u2014 cette fois-ci <b>et toutes les suivantes</b>, parce que le pour-100 g est enregistr\u00e9 avec l\'aliment. \u2b50 <b>Pareil pour la photo d\'\u00e9tiquette</b> quand les valeurs ne sont pas lues : m\u00eame porte, m\u00eame message \u2014 et l\u00e0 tu as d\u00e9j\u00e0 l\'\u00e9tiquette sous les yeux. \u26d4 <b>L\'app n\'invente jamais rien</b> : elle ne devine ni un poids ni des valeurs, elle t\'ouvre le champ o\u00f9 <b>toi</b> tu sais lire. \u26a0\ufe0f Et si tu renonces, rien n\'est retenu \u2014 le bloc se vide \u00e0 l\'aliment suivant, pour qu\'une \u00e9tiquette ne se retrouve jamais coll\u00e9e sur un autre produit.'},
@@ -325,7 +339,7 @@ const _HELP_DATA={
       /* 📉 EN TÊTE, ET C'EST LA RÈGLE R25 APPLIQUÉE : la pop-up ANNONCE que le chiffre a
          bougé, l'aide EXPLIQUE **où il est parti**. C'est la première question de quelqu'un qui
          ouvre l'aide après avoir cherché son compteur. */
-      {i:'📉',t:'<b>« X kcal restantes » n\'a pas été supprimé — il a changé de forme.</b> Le calcul est <b>exactement le même</b> ; ce qui change, c\'est ce qu\'on en montre. ⭐ Un nombre de calories ne se mange pas : « il te reste 800 kcal » ne dit pas quoi mettre dans l\'assiette, et crée une <b>dette</b> (« je DOIS manger 800 kcal »). 👉 Le même reste est donc traduit juste dessous en <b>aliments réels que tu manges déjà</b> (« ≈ 2 × blanc de poulet »). ⭐ <b>La cible, elle, n\'est plus écrite qu\'une fois</b> — en haut de la carte : elle l\'était <b>deux fois</b>, à deux endroits et dans deux mises en forme. ⛔ Et à la place du compteur, en petit, le <b>type de journée</b> (« 🍚 Jour de séance » / « 😴 Jour de repos ») — c\'est lui qui explique pourquoi tes cibles ne sont pas celles d\'hier.'},
+      {i:'📉',t:'<b>« X kcal restantes » n\'a pas été supprimé — il a changé de forme.</b> Le calcul est <b>exactement le même</b> ; ce qui change, c\'est ce qu\'on en montre. ⭐ Un nombre de calories ne se mange pas : « il te reste 800 kcal » ne dit pas quoi mettre dans l\'assiette, et crée une <b>dette</b> (« je DOIS manger 800 kcal »). 👉 Le même reste est donc traduit juste dessous en <b>aliments réels que tu manges déjà</b> (« 150 g de blanc de poulet »). ⭐ <b>La cible, elle, n\'est plus écrite qu\'une fois</b> — en haut de la carte : elle l\'était <b>deux fois</b>, à deux endroits et dans deux mises en forme. ⛔ Et à la place du compteur, en petit, le <b>type de journée</b> (« 🍚 Jour de séance » / « 😴 Jour de repos ») — c\'est lui qui explique pourquoi tes cibles ne sont pas celles d\'hier.'},
       /* 📈 LE DÉTAIL DE LA CARTE « TON ÉVOLUTION » : ce que la pop-up n'a pas le droit de
          dire (R25). Les 4 états, la fenêtre, et surtout POURQUOI elle se tait. */
       {i:'📈',t:'<b>La carte « Ton évolution » croise trois choses sur 14 jours</b> : ton <b>poids</b>, tes <b>charges</b> et tes <b>repas notés</b>. ⭐ <b>Pourquoi 14 jours</b> : en dessous, une seule mauvaise nuit ou un repas salé déplace la courbe ; au-dessus, on ne verrait plus ce que tu as changé la semaine dernière. ⭐ <b>Les charges se comparent à répétitions égales</b> (8 reps contre 8 reps) : comparer 8 reps à 5 reps ferait bouger le chiffre de <b>plus de 25 %</b> sans que tu sois plus fort. ⛔ <b>Une semaine allégée est reconnue</b> et signalée comme telle — une décharge n\'est pas une régression. ⛔ <b>Et quand elle n\'a pas assez de données, elle le dit et s\'arrête</b> : ni flèche, ni pourcentage, ni conclusion. <b>Une flèche est déjà une conclusion.</b>'},
@@ -346,8 +360,8 @@ const _HELP_DATA={
       /* 🍽️ ORDRE DE L'ONGLET MACROS (ft-v1025) — en PREMIER dans l'aide, parce que c'est la
          première question qu'on se pose en arrivant : « où est passé mon TDEE ? ». R25 : la
          pop-up ANNONCE (une fois), l'aide EXPLIQUE (à chaque fois qu'on la rouvre). */
-      {i:'🍽️',t:'<b>L\'onglet Macros se lit de haut en bas, du jour vers le durable.</b> En haut, <b>ta journée</b> : ce que tu as mangé en gros, ta cible en petit, trois anneaux (protéines · glucides · lipides) et « ce qu\'il te reste, en vrai » — traduit en <b>tes</b> aliments, pas en grammes abstraits. Puis le bouton pour noter, ta séance du jour, ce que l\'app a appris de ton alimentation, ta semaine. <b>Tout en bas, deux lignes repliées</b> : « Comment c\'est calculé » (BMR, TDEE, répartition en %, charge/décharge, ajuster à la main) et « Mes réglages alimentaires » (mode cétogène/low carb/paléo/méditerranéen, jeûne, régime, restrictions, allergies). ⚠️ <b>Rien n\'a été retiré</b> : ces réglages se touchent deux ou trois fois par an, ils ne sont plus au milieu de ce que tu regardes tous les jours. Le titre de chaque ligne repliée te dit déjà l\'essentiel (ton objectif et ton TDEE, ton régime en cours) — tu n\'as à l\'ouvrir que pour changer quelque chose.'},
-      {i:'🍱',t:'Le <b>plan de repas</b> est replié par défaut, et c\'est volontaire : c\'est une liste écrite à l\'avance, <b>la même pour tout le monde</b>, qui ne connaît ni ce que tu manges ni ce que tu détestes. Il te donne un ordre de grandeur, pas un menu à suivre. Le jour où il saura se baser sur tes vrais aliments, il se dépliera tout seul. En attendant, « ce qu\'il te reste, en vrai » (en haut) est bien plus proche de toi : il ne propose que des aliments que <b>tu as déjà notés</b>.'},
+      {i:'🍽️',t:'<b>L\'onglet Macros se lit de haut en bas, du jour vers le durable.</b> En haut, <b>ta journée</b> : ce que tu as mangé en gros, ta cible en petit, trois anneaux (protéines · glucides · lipides) et « ce qu\'il te reste, en vrai » — traduit en <b>tes</b> aliments (ceux dont l\'app connaît la fiche), pas en grammes abstraits. Puis le bouton pour noter, ta séance du jour, ce que l\'app a appris de ton alimentation, ta semaine. <b>Tout en bas, deux lignes repliées</b> : « Comment c\'est calculé » (BMR, TDEE, répartition en %, charge/décharge, ajuster à la main) et « Mes réglages alimentaires » (mode cétogène/low carb/paléo/méditerranéen, jeûne, régime, restrictions, allergies). ⚠️ <b>Rien n\'a été retiré</b> : ces réglages se touchent deux ou trois fois par an, ils ne sont plus au milieu de ce que tu regardes tous les jours. Le titre de chaque ligne repliée te dit déjà l\'essentiel (ton objectif et ton TDEE, ton régime en cours) — tu n\'as à l\'ouvrir que pour changer quelque chose.'},
+      {i:'🍱',t:'Le <b>plan de repas</b> est replié par défaut, et c\'est volontaire : c\'est une liste écrite à l\'avance, <b>la même pour tout le monde</b>, qui ne connaît ni ce que tu manges ni ce que tu détestes. Il te donne un ordre de grandeur, pas un menu à suivre. Le jour où il saura se baser sur tes vrais aliments, il se dépliera tout seul. En attendant, « ce qu\'il te reste, en vrai » (en haut) est bien plus proche de toi : il ne propose que des aliments que <b>tu as déjà notés</b>, et dont il connaît la fiche.'},
       /* ⛔ POURQUOI CETTE ENTREE EXISTE (ft-v1029) : le bloc CHANGE de comportement a 20 h, et un
          changement qu'on n'explique pas se lit comme un bug — on croit que l'app s'est trompee, ou
          qu'elle a « oublie » une macro. La phrase du bloc le dit sur le moment ; celle-ci le dit
@@ -357,9 +371,12 @@ const _HELP_DATA={
       {i:'🔥',t:'<b>D\'où vient ton BMR</b> (métabolisme de base, ce que ton corps brûle au repos) : si tu as renseigné un <b>bilan corporel</b> ou ton <b>% de masse grasse</b>, l\'app le calcule sur ta <b>masse maigre</b> (formule de Katch-McArdle) au lieu de ton seul poids — chez quelqu\'un de musclé ça change souvent de <b>100 à 200 kcal par jour</b>, parce que le muscle consomme au repos et le gras beaucoup moins. Sinon, elle utilise la formule générique (Mifflin-St Jeor). <b>La ligne sous le chiffre dit toujours laquelle</b> : tape-la, le calcul est posé avec tes nombres. ⚠️ Un bilan de plus de 3 mois, ou un poids qui a bougé de plus de 5 % depuis, n\'est pas utilisé : on ne sait pas si les kilos sont du muscle ou du gras. Le métabolisme affiché par ta balance, lui, est enregistré mais pas utilisé dans le calcul — chaque marque a sa formule secrète, invérifiable.'},
       {i:'📈',t:'Phase Charge = surplus calorique pour prendre du muscle. Phase Décharge = déficit pour perdre du gras. Alterne selon tes cycles.'},
       {i:'💊',t:'Suppléments : créatine (phases charge/entretien) et whey dosés selon ton poids. Combinaisons Premium : 4 stacks complets (muscle, force, cardio, perte de poids).'},
-      {i:'🔥',t:'Les calories brûlées au cardio (bloc cardio dans ta séance) s\'ajoutent à ton TDEE estimé du jour.'},
+      /* ⚠️ TEXTE FAUX CORRIGÉ LE 05/11/2026 : il disait que les calories du cardio « s'ajoutent à ton TDEE ». Le code ne l'a jamais fait pour la cible (`calcTDEE` = BMR × niveau
+         d'activité + travail + autre sport déclaré + pas ; verrouillé par nutri_moteur.js et nut_punch01.js) : ton niveau d'activité compte DÉJÀ tes entraînements. Une aide qui
+         promet un calcul que l'app ne fait pas est pire qu'une aide absente (R23). */
+      {i:'🔥',t:'Les calories brûlées en séance (musculation, cardio) et en « Autre activité » <b>ne s\'ajoutent pas</b> à ta cible du jour : ton <b>niveau d\'activité</b> (Profil) compte déjà ton entraînement — les ajouter serait le compter deux fois.'},
       {i:'🍽️',t:'Le plan de repas détaillé (5 repas) est généré depuis tes macros — adapté à ta phase et ton objectif.'},
-      {i:'📓',t:'Onglet Journal : note ce que tu manges dans la journée et compare aux objectifs. 3 façons d\'ajouter un aliment : saisie à la main (gratuit, illimité), 🤖 estimation IA (décris ton repas, l\'IA remplit les calories — 25 gratuites, illimité en Premium), ou par code-barres (produit reconnu via une base mondiale, ajuste la quantité en grammes).'},
+      {i:'📓',t:'Onglet Journal : note ce que tu manges dans la journée et compare aux objectifs. 3 façons d\'ajouter un aliment : saisie à la main (gratuit, illimité — avec le poids de ce que tu as mangé), 🤖 estimation IA (décris ton repas : l\'IA propose les valeurs et un poids, que tu prends d\'un toucher — 25 gratuites, illimité en Premium), ou par code-barres (produit reconnu via une base mondiale ; tu choisis la quantité, en grammes — en ml pour une boisson).'},
       {i:'📷',t:'Code-barres : tape les chiffres écrits sous le code (gratuit) OU appuie sur « 📷 Photographier le code-barres » et prends-le en photo — l\'IA lit le numéro pour toi (utile si les chiffres sont petits/abîmés). La lecture photo utilise 1 essai IA ; ensuite la recherche du produit et le score santé restent gratuits.'},
       {i:'🥗',t:'Score santé : au code-barres d\'un produit, tu vois son Nutri-Score (A à E) et son niveau de transformation (brut ou ultra-transformé). Gratuit pour tout le monde, sans crédit IA. Pratique pour repérer d\'un coup d\'œil ce qui est sain.'},
       {i:'📥',t:'Tu as un plan de ta diététicienne ? Bouton « Importer un plan » (Plan de repas IA) : prends-le en photo ou importe le PDF, l\'IA range les repas.'},
@@ -368,7 +385,7 @@ const _HELP_DATA={
       /* 📤 AIDE DE L'ONGLET (règle d'or #11) : le bouton EXISTE, l'aide dit ce qu'on peut en
          faire et surtout ce que le fichier CONTIENT — la provenance est ce qui distingue un
          export utile d'une colonne de chiffres sans histoire (R33). */
-      {i:'\u{1F4E4}',t:'<b>Exporter ton journal alimentaire</b> : le bouton \u{1F4E4} en haut du journal cr\u00e9e un <b>tableur (CSV)</b> dat\u00e9 du jour, que tu ouvres dans Excel, Numbers ou Google Sheets. Une ligne par aliment : <b>date, repas, quantit\u00e9, calories et macros</b>. \u2b50 Il dit aussi <b>d\u2019o\u00f9 vient chaque valeur</b> \u2014 scann\u00e9e au code-barres, tap\u00e9e \u00e0 la main ou estim\u00e9e : sans \u00e7a, un chiffre douteux est impossible \u00e0 v\u00e9rifier six mois plus tard. \u26a0\uFE0F Rien n\u2019est envoy\u00e9 nulle part : le fichier reste sur ton t\u00e9l\u00e9phone, tu choisis quoi en faire.'},
+      {i:'\u{1F4E4}',t:'<b>Exporter ton journal alimentaire</b> : le bouton \u{1F4E4} en haut du journal cr\u00e9e un <b>tableur (CSV)</b> dat\u00e9 du jour, que tu ouvres dans Excel, Numbers ou Google Sheets. Une ligne par aliment : <b>date, repas, quantit\u00e9, calories et macros</b> — et deux colonnes : <b>statut</b> (« fiable », « estimee », « declaree » — écrits ainsi, sans accent —, ou « ancienne » pour une ligne notée avant cette façon de compter) et <b>valeurs inconnues</b> (une valeur inconnue sort en case vide, jamais 0). \u2b50 Il dit aussi <b>d\u2019o\u00f9 vient chaque valeur</b> \u2014 scann\u00e9e au code-barres, tap\u00e9e \u00e0 la main ou estim\u00e9e : sans \u00e7a, un chiffre douteux est impossible \u00e0 v\u00e9rifier six mois plus tard. \u26a0\uFE0F Rien n\u2019est envoy\u00e9 nulle part : le fichier reste sur ton t\u00e9l\u00e9phone, tu choisis quoi en faire.'},
     ],
     female:[
       {i:'🌙',t:'Tes macros s\'adaptent automatiquement : plus de glucides en folliculaire (énergie haute), légère hausse en lutéale.'},
@@ -426,13 +443,16 @@ const _HELP_DATA={
   log:{
     title:'⚡ Séance',
     tips:[
+      /* 🚶 Mission « Autre activité » (05/11/2026) — règle d'or #11, point 3 : ce qu'on ne devine pas, c'est que la marche n'est PAS une séance (aucune série, aucun
+         volume, pas de badge) et que les calories de la montre REMPLACENT l'estimation au lieu de s'y ajouter. */
+      {i:'🚶',t:'<b>Autre activité</b> (juste sous « Programme ») : marche, randonnée, vélo, course… <b>sans série ni volume</b>. L\'app <b>estime</b> les calories ; tape celles de ta <b>montre</b> et elles <b>remplacent</b> l\'estimation — jamais additionnées (estimé 300, montre 255 → <b>255</b>). Tu la retrouves dans le calendrier de l\'Accueil et dans <b>Progrès → Séances</b>, où tu peux la <b>modifier</b> ou la <b>supprimer</b>.'},
       /* 🏋️ UX SÉANCE (16/10/2026, cadrage validé par Michel) — règle d'or #11, point 3 : l'écran a changé de FORME.
          Ce qu'on ne devine pas : où sont passés Pause / Vider / Changer et les préréglages de repos, et ce que compte
          « N / M séries » (les séries de TRAVAIL, décision ①). */
       /* 📋 D-093 — règle d'or #11, point 3 : ce qu'on ne devine pas, c'est que l'en-tête « Précédent » se touche (la case,
          elle, ouvre la note de la série) — et qu'il n'y a aucun verdict dans la comparaison. */
       {i:'📋',t:'<b>Comparer tes 4 dernières séances</b> : touche <b>« Précédent ▾ »</b>, en haut de la colonne (ou <b>⋯ → 4 dernières séances</b>). Tes séries de <b>travail</b> s\'alignent par rang, de la plus ancienne séance à la plus récente, avec la réserve, les échecs (X) et tes notes ; « — » = pas de série à ce rang, rien n\'est répété. Les échauffements sont à part. ⛔ Aucun verdict : tu lis, tu décides. La <b>case</b> « Précédent » d\'une série ouvre toujours sa note ; la colonne ne montre plus que les séries <b>vraiment faites</b> la dernière fois.'},
-      {i:'🏋️',t:'<b>L\'écran Séance a deux états</b> (depuis le 16/10/2026). <b>Avant</b> : « Séance libre » (tu ajoutes tes exercices un à un) ou « Programme ». <b>Pendant</b> : l\'en-tête « Séance en cours » remplace la barre du haut — chrono, <b>séries de travail faites / prévues</b> (les échauffements ne comptent pas), le bouton <b>⋯</b> (pause, date, tout dérouler, grouper, programmes, aide, vider, abandonner) et <b>« Terminer »</b>. S\'il reste des séries de travail, « Terminer » te le dit avant d\'enregistrer — « Continuer la séance » ne change rien. Le repos s\'affiche <b>en bas</b> ; touche le temps (✎) pour <b>régler</b> : 1:00 · 1:30 · 2:00 ou une durée exacte. Une carte repliée ne porte plus de boutons : <b>« Monter » / « Descendre »</b> sont dans le ⋯ de l\'exercice.'},
+      {i:'🏋️',t:'<b>L\'écran Séance a deux états</b> (depuis le 16/10/2026). <b>Avant</b> : « Séance libre » (tu ajoutes tes exercices un à un) ou « Programme ». <b>Pendant</b> : l\'en-tête « Séance en cours » remplace la barre du haut — chrono, <b>séries de travail faites / prévues</b> (les échauffements ne comptent pas), le bouton <b>⋯</b> (pause, date, <b>repos par défaut</b>, tout dérouler, grouper, programmes, importer un historique, aide, vider, abandonner) et <b>« Terminer »</b>. S\'il reste des séries de travail, « Terminer » te le dit avant d\'enregistrer — « Continuer la séance » ne change rien. Le repos s\'affiche <b>en bas</b> ; touche le temps (✎) pour <b>régler</b> : 30 s · 45 s · 1:00 · 1:30 · 2:00 ou une durée exacte. Une carte repliée ne porte plus de boutons : <b>« Monter » / « Descendre »</b> sont dans le ⋯ de l\'exercice.'},
       /* 📷 ft-v1155 — CE QU'ON NE DEVINE PAS, et Michel en est la preuve : il a cherché comment
          charger SON programme et n'a pas trouvé l'import. « Si moi je ne le vois pas, les
          utilisateurs ne vont pas le voir non plus. » ⛔ L'aide dit la LIMITE en même temps que la
@@ -445,8 +465,8 @@ const _HELP_DATA={
          programme n'avait pas de bloc cardio), et Michel l'a vu \u00e0 la salle sur \u00ab Cardio l\u00e9ger \u00bb
          affich\u00e9 avec une figurine de JAMBES. L'aide dit AUSSI les deux limites, qui se devinent
          encore moins que la fonctionnalit\u00e9 elle-m\u00eame. */
-      {i:'\ud83c\udfc3',t:'\ud83c\udfc3 **Le cardio d\'un programme va dans le bloc Cardio**, plus dans la liste des exercices. Une ligne du genre \u00ab Cardio l\u00e9ger \u2014 8 minutes \u00bb n\'est pas un exercice : elle n\'a ni charge ni figurine, et elle faussait ton tonnage. \u2b50 \u00c7a marche AUSSI sur les programmes d\u00e9j\u00e0 import\u00e9s, au moment de les charger \u2014 rien \u00e0 r\u00e9importer. \u26d4 Deux limites : un cardio au MILIEU de la s\u00e9ance reste un exercice, et un exercice qui porte une CHARGE n\'est jamais d\u00e9plac\u00e9, m\u00eame si sa note parle de minutes.'},
-      {i:'\u26a0\ufe0f',t:'\u26a0\ufe0f L\'aper\u00e7u d\'import <b>marque en orange</b> les exercices qu\'il ne conna\u00eet pas et qui vont \u00eatre <b>cr\u00e9\u00e9s</b>. Un exercice cr\u00e9\u00e9 n\'a <b>ni photo, ni figurine, ni historique</b> \u2014 le bouton <b>\u00ab \ud83d\udd17 Rattacher \u00bb</b> le relie \u00e0 celui de ton catalogue et tout revient. <i>Exemple : \u00ab Presse 45 degr\u00e9s \u00bb \u2192 <b>Press Jambes 45\u00b0</b>.</i>'},
+      {i:'\ud83c\udfc3',t:'<b>Le cardio d\'un programme va dans le bloc Cardio</b>, plus dans la liste des exercices. Une ligne du genre \u00ab Cardio l\u00e9ger \u2014 8 minutes \u00bb n\'est pas un exercice : elle n\'a ni charge ni figurine, et elle faussait ton tonnage. \u2b50 \u00c7a marche AUSSI sur les programmes d\u00e9j\u00e0 import\u00e9s, au moment de les charger \u2014 rien \u00e0 r\u00e9importer. \u26d4 Deux limites : un cardio au MILIEU de la s\u00e9ance reste un exercice, et un exercice qui porte une CHARGE n\'est jamais d\u00e9plac\u00e9, m\u00eame si sa note parle de minutes.'},
+      {i:'\u26a0\ufe0f',t:'L\'aper\u00e7u d\'import <b>marque en orange</b> les exercices qu\'il ne conna\u00eet pas et qui vont \u00eatre <b>cr\u00e9\u00e9s</b>. Un exercice cr\u00e9\u00e9 n\'a <b>ni photo, ni figurine, ni historique</b> \u2014 le bouton <b>\u00ab \ud83d\udd17 Rattacher \u00bb</b> le relie \u00e0 celui de ton catalogue et tout revient. <i>Exemple : \u00ab Presse 45 degr\u00e9s \u00bb \u2192 <b>Press Jambes 45\u00b0</b>.</i>'},
       {i:'📷',t:'<b>Un programme sur papier ou en PDF ?</b> Tape <b>Programme</b> → <b>« 📷 Importer un programme »</b> : l\'IA lit ta photo ou ton PDF et <b>garde tes jours</b> (Push, Pull, Legs…). ⚠️ C\'est <b>la seule façon</b> d\'avoir un programme à plusieurs jours — celui qu\'on crée à la main est forcément une séance unique.'},
       /* 🛡️ ft-v1153 — CE QU'ON NE DEVINE PAS : ces avertissements existaient DEPUIS UN MOIS,
          mais seulement sur les séances proposées par Milo. Quelqu'un qui travaille au programme
@@ -458,15 +478,15 @@ const _HELP_DATA={
          presque les mêmes mots et un seul enregistrait. Les libellés sont corrigés ; l'aide dit
          la règle générale (le bouton du bas est TOUJOURS celui qui enregistre) et la deuxième
          chose qu'on ne devine pas — qu'un cardio seul est une vraie séance. */
-      {i:'🏃',t:'<b>Deux boutons, un seul enregistre.</b> Dans le bloc Cardio, <b>« ✓ C\'est noté »</b> range ta saisie et replie le bloc — <b>ta séance n\'est pas encore enregistrée</b>. C\'est <b>« Terminer »</b> — en haut, ou le <b>gros bouton rouge du bas</b> — qui l\'inscrit dans ton historique : il s\'appelle <b>« 🏁 Terminer la séance »</b> si tu as validé des séries, <b>« 🏁 Enregistrer le cardio »</b> si tu n\'as fait que du cardio. ⭐ <b>Un cardio seul est une vraie séance</b> : il a sa durée, ses calories, il apparaît dans ton calendrier et Milo le voit. 💡 Tant qu\'elle n\'est pas enregistrée, l\'Accueil te le rappelle avec <b>« ↩ Reprendre la séance »</b>. 📈 Dans ton historique (onglet Progrès) elle s\'appelle <b>« 🏃 Cardio »</b> et dit ce que c\'était — « Tapis 45 min (Modéré) ».'},
+      {i:'🏃',t:'<b>Deux boutons, un seul enregistre.</b> Dans le bloc Cardio, <b>« ✓ C\'est noté »</b> range ta saisie et replie le bloc — <b>ta séance n\'est pas encore enregistrée</b>. C\'est <b>« Terminer »</b> — en haut, ou le <b>gros bouton bleu du bas</b> — qui l\'inscrit dans ton historique : il s\'appelle <b>« 🏁 Terminer la séance »</b> si tu as validé des séries, <b>« 🏁 Enregistrer le cardio »</b> si tu n\'as fait que du cardio. ⭐ <b>Un cardio seul est une vraie séance</b> : il a sa durée, ses calories, il apparaît dans ton calendrier et Milo le voit. 💡 Tant qu\'elle n\'est pas enregistrée, l\'Accueil te le rappelle avec <b>« ↩ Reprendre la séance »</b>. 📈 Dans ton historique (onglet Progrès) elle s\'appelle <b>« 🏃 Cardio »</b> et dit ce que c\'était — « Tapis 45 min (Modéré) ».'},
       /* D-093 (19/10/2026) — « échec = 0 en réserve, la même chose que le tag X » contredisait ft-v1154 depuis le 06/09 :
          l'échec est le tag X, un cran AU-DELÀ de RIR 0. Le sélecteur a maintenant les deux réponses. */
       {i:'💪',t:'<b>RIR — répétitions en réserve</b> : après une série de travail, le repos (en bas de l\'écran) demande « il t\'en restait combien ? » — <b>Échec · 0 · 1 · 2 · 3 · 4+</b>. Un tap, c\'est tout, et c\'est facultatif. <b>0</b> = ta dernière répétition est passée, une de plus n\'aurait pas tenu ; <b>Échec</b> = une répétition tentée n\'est pas passée : la série passe en <b>X</b> (la même chose que la pastille). Tes anciens « échec » (avant le 19/10) s\'affichent « 0 ou échec » : l\'app ne devine pas lequel c\'était. Tu le relis la fois d\'après dans « précédent » (<i>8×80·2r</i>), et Milo s\'en sert pour vérifier le cadre de ta discipline. Une série non notée n\'est <b>pas</b> comptée comme un échec. 🎚️ <b>Tu préfères le RPE ?</b> Profil → <b>Échelle d\'effort</b> : la question, la colonne « précédent » (<i>8×80·@8</i>) et Milo passent en RPE. C\'est la <b>même mesure</b> (<i>RPE = 10 − RIR</i>) — rien n\'est perdu, et tu peux revenir.'},
       {i:'🎽',t:'<b>Le repos exigé suit ta discipline</b> : l\'avertissement « repos trop court pour du lourd » ne dit plus la même chose à tout le monde. Il lit le <b>cadre de ta discipline</b> — celui que tu vois dans Profil — et le conseil cite <b>sa</b> plage (<i>3 à 5 min</i> en force athlétique). ⚠️ Il ne se relâche jamais en dessous du repère d\'origine : il resserre seulement là où ton cadre est plus exigeant.'},
       {i:'📍',t:'<b>Charge sans repère</b> : si Milo propose un poids sur un exercice que tu n\'as <b>jamais noté dans l\'app</b>, un 📍 le signale sous l\'exercice. C\'est un <b>point de départ</b>, pas une mesure — il n\'a rien dans ton historique sur lequel se caler — <b>même si tu le pratiques depuis des années ailleurs</b>. Dès ta première série notée, le message disparaît et le contrôle d\'intensité (⚡) prend le relais.'},
-      {i:'🔤',t:'Tags de série : É = Échauffement (exclu du volume et des PRs) · N = Normal, par défaut, non affiché · X = Échec musculaire. La lettre s\'affiche sur le <b>numéro</b> de la série : touche-le pour changer, le nom complet s\'affiche en toast. Le 1RM estimé a sa propre colonne.'},
-      {i:'⏱️',t:'Timer adaptatif : É = 45s <b>si le palier suivant est léger</b>, <b>90s</b> à partir de 75 % de ta charge de travail, <b>2 min</b> à partir de 85 % (la barre affiche alors « palier lourd ») — jamais plus que ton repos de travail · N = 2:10 · X = 4min. Boutons −15s/+15s ; les presets 1:00/1:30/2:00 sont dans « Régler » (touche le temps ✎). <b>C\'est un MAXIMUM, pas un temps à attendre</b> : tu peux repartir avant, c\'est permis. Le chrono ne s\'arrête plus à zéro — il continue en +0:12, +0:45… avec « au-delà de ton repos max ». Ce n\'est pas un reproche, c\'est une information ; au-delà de 15 min il s\'arrête seul.'},
-      {i:'⚡',t:'Super-séries : ⋯ → « Grouper des exercices » dès 2 exercices → sélectionne-les → "Lier en supersérie". Enchaînement automatique sans repos. Boutons 📉 Drop / 📈 +10% / 📉 −10% pour pyramides et drop sets.'},
+      {i:'🔤',t:'Tags de série : É = Échauffement (exclu du volume et des PRs) · N = Normal, par défaut · X = Échec musculaire. Chaque série porte sa <b>pastille</b> N, É ou X (colonne « Type ») : touche-la pour changer, le nom complet s\'affiche en toast. Le 1RM estimé a sa propre colonne.'},
+      {i:'⏱️',t:'Timer adaptatif : É = 45s <b>si le palier suivant est léger</b>, <b>90s</b> à partir de 75 % de ta charge de travail, <b>2 min</b> à partir de 85 % (la barre affiche alors « palier lourd ») — jamais plus que ton repos de travail · N = <b>ton repos par défaut</b> (2:10 à l\'installation ; il se règle pendant la séance dans <b>⋯ → « Repos par défaut »</b>, ou dans Profil — c\'est le même réglage) · X = 4min. Boutons −15s/+15s ; les presets 30 s/45 s/1:00/1:30/2:00 sont dans « Régler » (touche le temps ✎). <b>C\'est un MAXIMUM, pas un temps à attendre</b> : tu peux repartir avant, c\'est permis. Le chrono ne s\'arrête plus à zéro — il continue en +0:12, +0:45… avec « au-delà de ton repos max ». Ce n\'est pas un reproche, c\'est une information ; 15 min après la fin, il s\'arrête seul. <b>L\'app se ferme pendant un repos ?</b> Il t\'attend : en la rouvrant, tu le retrouves à l\'heure réelle, jamais remis à zéro.'},
+      {i:'⚡',t:'Super-séries : ⋯ → « Grouper des exercices » dès 2 exercices → sélectionne-les → "Lier en supersérie". Enchaînement automatique sans repos. Sur la carte ouverte d\'un exercice : 📉 Drop (série dégressive) et 📈 +% (pyramide montante) — tu choisis le nombre de paliers et le pourcentage.'},
       {i:'🔁',t:'« maxi » : dans l\'éditeur de programme, touche le bouton « max » à côté des reps d\'une série pour viser le maximum de répétitions (au lieu d\'un chiffre exact). En séance, la case affiche « max » et tu notes ce que tu as vraiment fait.'},
       {i:'✋',t:'Superset au doigt : sur un exercice pas encore en superset, attrape la petite poignée (6 points, à côté du ⋯) et glisse-le sur un autre exercice → le superset se crée tout seul. Plus rapide que « Grouper des exercices » (menu ⋯). Pour défaire : "↩ Retirer". Marche aussi dans l\'éditeur de programme (✏️) : glisse une carte exercice sur une autre.'},
       /* 🎯 DEBRIEF-ON-DEMAND-01 — règle d'or #11, point 3 (Séance) : la fin de séance a changé. */
@@ -474,9 +494,8 @@ const _HELP_DATA={
       /* 🛡️ SESSION-INTEGRITY-01 — règle d'or #11, point 3 (Séance) : le comportement du remplacement a changé. */
       {i:'🔄',t:'<b>Remplacer un exercice</b> (⋯ → Remplacer) change d\'<b>exercice</b> : le nouveau arrive avec <b>ses propres</b> charges (celles de ta dernière fois), jamais celles de l\'ancien. Et les séries que tu as <b>déjà cochées</b> restent à l\'exercice que tu as réellement fait : seul le reste passe au nouveau. Tu t\'étais juste trompé de nom après coup ? Corrige-le dans Progrès → la séance → 🔄.'},
       {i:'🔀',t:'Exercices « un côté à la fois » : 48 exercices portent une pastille <b>🔀 par bras</b> ou <b>par jambe</b> (rowing haltère, curl haltères, fentes, squat bulgare…). <b>Tu notes le poids qui BOUGE</b> : un seul haltère monte → note son poids à lui (28), pas le double ; les deux bougent → note le total. Tu saisis toujours <b>3 séries, pas 6</b> — l\'app sait qu\'elles se refont de l\'autre côté et double ton tonnage. Ton record reste calculé sur la charge d\'un côté. Tape la pastille pour le détail.'},
-      {i:'📊',t:'Bouton 📊 sur chaque exercice → graphique du poids max sur les 5 dernières séances.'},
-      {i:'🏋️',t:'Le 1RM (Brzycki) s\'affiche en temps réel sous le type — utilise-le pour calibrer tes charges. Appuie sur ℹ️ pour l\'aide sur les types.'},
-      {i:'📸',t:'Bouton 📸 pour importer un programme depuis une photo, un fichier Word ou Excel — l\'IA le convertit en séance automatiquement.'},
+      {i:'📊',t:'⋯ d\'un exercice → « 📊 Statistiques » : graphique du poids max sur les 5 dernières séances.'},
+      {i:'🏋️',t:'Le 1RM estimé (Brzycki) s\'affiche en temps réel dans sa colonne « 1RM » — utilise-le pour calibrer tes charges. L\'aide sur les types : ⋯ d\'un exercice → « ℹ️ Types de série ».'},
       {i:'⭐',t:'Recherche d\'exercices : quand tu cherches un exercice à ajouter, tes FAVORIS (ceux que tu utilises le plus souvent) remontent automatiquement en haut de la liste, avec une petite ★. Plus besoin de scroller pour retrouver tes mouvements habituels.'},
       {i:'🌱',t:'Débutant ? Dans 📋 Mes Programmes, bouton vert « Créer mon parcours débutant » : 2 questions (2 ou 3 séances/sem, style Full Body ou Split) et hop, un programme sur mesure sur machines (sécurité), adapté à ton profil. Étape 1 gratuite sur 3 semaines. +2,5 kg le haut du corps, +5 kg les jambes quand tes séries passent. Les mouvements techniques (squat, couché, soulevé) se débloquent ensuite. Pense au cardio léger en fin de séance.'},
       {i:'📄',t:'Exporter en PDF : dans 📋 Mes Programmes, le bouton 📄 PDF génère un vrai fichier PDF du programme (exercices, séries × reps, colonne « Poids » vide à remplir à la salle). Sur iPhone, le menu Partager s\'ouvre (Enregistrer dans Fichiers, envoyer par message…) ; sur ordi ça se télécharge. Marche même hors-ligne.'},
@@ -484,7 +503,7 @@ const _HELP_DATA={
          astuces désignaient des boutons qui n'existent plus (la leçon de ft-v1012 / ft-v1026). */
       {i:'⏸️',t:'<b>⋯ → « Mettre en pause »</b> : fige le chrono de durée si tu dois t\'interrompre (appel, pause…). Le temps en pause n\'est pas compté dans la durée de la séance. Touche <b>▶</b> en haut (ou « Reprendre la séance » dans ⋯) pour relancer.'},
       {i:'🗑️',t:'<b>⋯ → « Vider la séance »</b> : retire tous les exercices d\'un coup si tu as chargé le mauvais programme. La séance reste ouverte et ton historique n\'est pas touché. (« Abandonner la séance », juste en dessous, l\'annule complètement.)'},
-      {i:'📷',t:'Photo sur n\'importe quel exercice : tape le ⋯ sur un exercice (perso OU de la bibliothèque) → "Ajouter/Changer la photo". Pratique pour coller la photo de TA machine sur un exercice existant. Dans la liste de choix, tape la petite photo à gauche pour la voir en grand (ça n\'ajoute pas l\'exercice). Ta photo reste privée à ton compte.'},
+      {i:'📷',t:'Photo sur n\'importe quel exercice : tape le ⋯ sur un exercice (perso OU de la bibliothèque) → "Ajouter/Changer la photo". Pratique pour coller la photo de TA machine sur un exercice existant. Dans la liste de choix, tape la petite photo à gauche pour la voir en grand (ça n\'ajoute pas l\'exercice). Ta photo reste privée à ton compte. Un exercice qui n\'a <b>ni photo ni animation</b> le dit : « <b>Aucune illustration disponible</b> » (plus d\'image de muscle devinée à sa place) — c\'est là que ta photo est la plus utile.'},
       {i:'✏️',t:'Modifier un exercice perso : tape le ⋯ sur l\'exercice → "Modifier l\'exercice" (ou le ✎ dans la liste). Tu peux changer le nom, le groupe et les muscles — sans perdre ton historique ni tes records. Ne marche que sur TES exercices perso (les autres restent intacts).'},
       {i:'⚖️',t:'<b>Quel poids noter ?</b> Pour une <b>barre</b>, note la charge <b>totale</b>, barre comprise (barre de 20 kg + 60 kg de disques = <b>80</b>). Pour une <b>machine</b> (presse, poulie…), note simplement <b>ce que tu charges</b> : le poids du chariot varie d\'une machine à l\'autre et ne se compte pas. L\'important est de faire <b>toujours pareil</b> — c\'est ce qui rend tes progrès comparables dans le temps.'},
       {i:'⏱️',t:'<b>Ton repos est retenu par exercice.</b> Quand tu règles le chronomètre pendant une séance (les boutons −/+ ou en tapant la durée), l\'app <b>garde ta valeur pour CET exercice</b> et la réapplique les fois suivantes. Tu peux donc avoir 4 min sur le squat et 60 s sur les élévations, sans y penser. <b>Milo aussi le sait</b> : il reprend tes réglages dans les séances qu\'il te propose, et il en tient compte pour te dire si ta séance rentre dans ton temps.'},
@@ -525,7 +544,7 @@ const _HELP_DATA={
       {i:'💾',t:'Tes discussions sont gardées : le bouton « + » ne les efface plus, il les range dans « Mes discussions » (icône horloge, en haut du Coach). Tape-la pour rouvrir une ancienne discussion, ✕ pour la supprimer.'},
       {i:'🧪',t:'Milo connaît ton Bilan corporel (balance pro) si tu l\'as rempli : il te conseille avec tes vrais chiffres (graisse viscérale, muscle, métabolisme) — sans jamais en inventer ni poser de diagnostic.'},
       {i:'📸',t:'Bouton 📷 pour envoyer une photo (analyse corpo ou morphologie). Bouton 📸 "Analyser ma morphologie" pour l\'analyse 3 angles (Premium).'},
-      {i:'📋',t:'Analyse de programme IA (bouton 🤖 dans Programmes) : le Coach évalue ton programme et propose des améliorations.'},
+      {i:'📋',t:'Analyse de programme IA (Premium — bouton 🤖 dans Programmes) : le Coach évalue ton programme et propose des améliorations.'},
       {i:'🔗',t:'Bouton "Partager" sous chaque réponse : envoie-la (SMS, Notes, WhatsApp…) ou copie-la en un tap. Pratique pour garder un conseil ou l\'envoyer à un pote.'},
       {i:'🔓',t:'10 questions gratuites, puis Premium illimité (6,99 €/mois via Ko-fi — essai 3 jours à 1,99 €).'},
     ],
@@ -706,6 +725,7 @@ const _OVERLAY_CLOSERS={
   'ov-export-choix':'closeExportChoix',           // fermer au doigt = annuler, jamais exporter
   'ov-ex-swap':'closeExSwap',                      // pas de marqueur à poser, mais la paire en cours doit être oubliée
   'ov-prev4':'closeDernieresSeances',              // D-093 « 4 dernières séances » (R15 : tout chemin de fermeture ; lecture seule)
+  'ov-autre':'closeAutreActivite',                 // 🚶 Autre activité (R15 : le brouillon du formulaire est remis à zéro par tous les chemins de fermeture)
   /* 🔴🔴 ft-v1073 — LE PLUS COÛTEUX DE LA FAMILLE R15, ET IL CORROMPAIT L'HISTORIQUE.
      Michel : *« mon tirage a été remplacé par le rowing hammer »*.
      Le sélecteur d'exercices garde un MODE (`_exPickerMode`) et un INDEX (`_replaceEi`), tous
@@ -890,12 +910,12 @@ function _renderHomeHero(){
   const _sansDonnee=((typeof _nuitsRecentes==='function')
       ? _nuitsRecentes(today(),3).length===0
       : !((S.sleepLog||[]).length))
-    && !((S.sessions||[]).length);
+    && !(_seancesTrain().length);   // 🚶 sans les activités (`_estAutre`) : une marche ne suffit pas à faire apparaître un score de récupération
   const detail=_sansDonnee
     ? {score:null,factors:[],tips:[],dayPains:_detail.dayPains}
     : _detail;
   const score=detail.score;
-  const info=getRecoveryInfo(score);
+  const info=getRecoveryInfo(score,detail.sansSommeil);   // F19 : sans sommeil récent, une estimation
   const ringColor=score!==null?info.color:'var(--t3)';
   // L'arc parcourt l'échelle : il DÉMARRE au rouge et arrive à la couleur du score.
   const arcC=_ringScale(score||0);   // couleur du score : sert au halo et à la pastille
@@ -929,7 +949,7 @@ function _renderHomeHero(){
         +'</b> — pense à <b>terminer ta séance</b> pour qu\'elle soit enregistrée.</span></div>';
     }
   }
-  const heroLabel=score===null?'Enregistre ton sommeil':score>=80?'Prêt à performer':score>=60?'Bonne récupération':score>=40?'Récupération modérée':'Fatigué';
+  const heroLabel=score===null?'Enregistre ton sommeil':detail.sansSommeil?'Estimation sans sommeil':score>=80?'Prêt à performer':score>=60?'Bonne récupération':score>=40?'Récupération modérée':'Fatigué';
   const heroDesc=score===null?'Renseigne ton sommeil ce soir pour obtenir ton score de récupération.':info.rec.length>90?info.rec.substring(0,90).replace(/\s+\S*$/,'')+'…':info.rec;
   const pillHtml=score!==null?'<div style="display:flex;align-items:center;gap:6px;"><span style="width:7px;height:7px;border-radius:50%;background:'+ringColor+';box-shadow:0 0 8px '+ringColor+';"></span><span style="font-size:12px;font-weight:700;color:'+ringColor+';">Récup '+info.label+'</span></div>':'';
   // Restylage maquette : gros chiffre + barre de progression (au lieu de l'anneau). Mêmes données, CTA conservé.
@@ -1157,7 +1177,7 @@ function openRecoWhy(){
   const d=(typeof calcRecoveryDetail==='function')?calcRecoveryDetail():null;
   const body=document.getElementById('reco-why-body');
   if(!d||d.score==null||!body)return;
-  const info=getRecoveryInfo(d.score);
+  const info=getRecoveryInfo(d.score,d.sansSommeil);
   const factorsHtml=(d.factors||[]).map(f=>{
     const col=f.base?'var(--t2)':(f.val>0?'#34D399':'#FF8A72');
     const valTxt=f.base?(f.val+' /100'):((f.val>0?'+':'')+f.val);
@@ -1256,7 +1276,7 @@ function _miloReturnHint(){
   return h[idx];
 }
 function _miloMessage(){
-  const sess=(S.sessions||[]).filter(s=>s.date);
+  const sess=_seancesTrain().filter(s=>s.date);   // 🚶 sans les activités (`_estAutre`) : la carte parle de SÉANCES
   const tStr=today();
   const lastDate=sess.length?sess.map(s=>s.date).sort().slice(-1)[0]:null;
   const daysSince=lastDate?Math.floor((new Date(tStr+'T12:00:00')-new Date(lastDate+'T12:00:00'))/864e5):null;
@@ -2104,7 +2124,9 @@ function renderHome(){try{
   _renderHomeHero();
   if(typeof renderLogSleep==='function')renderLogSleep(); // sommeil du jour, juste sous le score de récup (déplacé de Séance → Accueil)
   const now=new Date();
-  const mo=S.sessions.filter(s=>{const d=new Date(s.date+'T12:00:00');return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();});
+  const _memeMois=s=>{const d=new Date(s.date+'T12:00:00');return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();};
+  const mo=_seancesTrain().filter(_memeMois);   // 🚶 les SÉANCES du mois (sans les activités, `_estAutre`) — les activités sont dites à côté
+  const moAct=S.sessions.filter(s=>_estAutre(s)&&s.date&&_memeMois(s)).length;
   /* ⛔⛔ « Volume » ET « Force » ONT ÉTÉ RETIRÉS DE CE BLOC LE 05/09/2026 (ft-v1138) — RETRAIT
      VOLONTAIRE, PAS UN OUBLI (R30). Michel : « quand on clique sur les tuiles, c'est pas terrible
      où j'arrive » → « on le retire pour l'instant, tu le notes ».
@@ -2188,7 +2210,7 @@ function renderHome(){try{
   const _chev='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;transition:transform .18s;'+(_cmOpen?'transform:rotate(90deg);':'')+'"><polyline points="9 18 15 12 9 6"/></svg>';
   if(statsEl)statsEl.innerHTML='<div onclick="toggleCeMois()" style="cursor:pointer;-webkit-tap-highlight-color:transparent;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 3px '+(_cmOpen?'9px':'0')+';"><span style="font-family:var(--font-cond);font-size:11px;font-weight:700;letter-spacing:.16em;color:var(--t3);">CE MOIS</span><span style="margin-left:auto;font-size:12.5px;color:var(--t3);text-transform:capitalize;">'+_moName+'</span>'+_chev+'</div>'
     +(!_cmOpen?'':'<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:7px;">'
-    +_sc("goSessionsHistory()",'<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>','rgba(168,85,247,.14)','var(--purp)','<span id="h-sess" style="color:var(--t1)">'+mo.length+'</span>','Séances ce mois','Séances')
+    +_sc("goSessionsHistory()",'<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>','rgba(168,85,247,.14)','var(--purp)','<span id="h-sess" style="color:var(--t1)">'+mo.length+(moAct?' <span style="font-size:11px;font-weight:600;color:var(--t3);">+'+moAct+' act.</span>':'')+'</span>','Séances ce mois','Séances')
     +_sc("goWeightTab()",'<rect x="4" y="4" width="16" height="16" rx="3"/><path d="M9 9.5a3 3 0 0 1 6 0"/><line x1="12" y1="9.5" x2="13.8" y2="8"/>','rgba(91,168,255,.14)','#5BA8FF','<span id="h-bw" style="color:var(--t1)">'+bwTxt+'</span><span style="font-size:13px;color:var(--t2);font-weight:600;"> kg</span>','Poids de corps','Poids')
     +'</div>');
   // Calendrier mensuel (remplace cycle de force / niveau / records sur l'Accueil — chantier feat/accueil-calendrier)
@@ -2202,6 +2224,13 @@ let _calZoomWeek=null;         // null = vue mois ; sinon index (0-5) de la sema
 function _calPad(n){return (n<10?'0':'')+n;}
 function _calYmd(d){return d.getFullYear()+'-'+_calPad(d.getMonth()+1)+'-'+_calPad(d.getDate());}
 function _calSessLabel(s){ if(!s)return 'Séance'; if(s.progLabel)return s.progLabel; return 'Séance'; }
+/* 🚶 Les libellés d'un jour (vue semaine) : « 💪 Séance » pour l'entraînement — exactement comme avant —, « 🚶 Marche » pour une activité. */
+function _calLibellesJour(L){
+  const tr=L.filter(s=>!_estAutre(s)), ac=L.filter(_estAutre), p=[];
+  if(tr.length)p.push('💪 '+_escFood(tr.map(_calSessLabel).join(', ')));
+  ac.forEach(s=>p.push(_escFood(autreIcone(s.autre)+' '+autreLabel(s.autre))));
+  return p.join(' · ');
+}
 // Jours où au moins une série a battu un record (même règle que le popup PR :
 // 1er passage d'un exo OU 1RM > meilleur précédent ; W/É exclus). Rejoue tout
 // l'historique dans l'ordre chronologique pour trouver ces jours.
@@ -2220,13 +2249,11 @@ function _calPrDays(){
 let _calSelDay=null;   // ymd du jour ouvert dans le panneau de détail (null = aucun)
 
 // Volume (kg × reps) d'une séance — mêmes exclusions que les PR : séries non faites, É (échauffement), W
+/* 🧮 F01 (mission Séance du 24/10/2026) — LE CALENDRIER LIT LA RÈGLE UNIQUE (`_volTravail` → `_workVol`, log.js). Sa copie
+   ignorait la convention unilatérale de la séance (`uniConv`, charge notée par côté) : mesuré le 23/10, une séance
+   enregistrée à 1 100 kg s'affichait « 0,8 t » ici. Mêmes exclusions qu'avant (non faites, É, W). */
 function _calSessVol(s){
-  let v=0;
-  (s.exs||[]).forEach(ex=>{(ex.sets||[]).forEach(st=>{
-    if(!st.done||!st.kg||!st.reps||st.type==='É'||st.type==='W')return;
-    v+=st.kg*st.reps;
-  });});
-  return v;
+  return _volTravail(s);
 }
 function _calVolByDay(){
   const o={};
@@ -2262,12 +2289,17 @@ function _calSessMix(s){
   // ⚠️ la clé doit tenir compte de TOUS les exercices : deux séances du même jour avec
   // le même nombre d'exos et le même premier exo partageraient sinon la même couleur
   // (trouvé par CAL-003 : « Squat + DC + Rowing » héritait de la couleur de « Squat + Presse + Leg Curl »).
-  const key=s.date+'|'+(s.exs||[]).map(e=>(e&&e.name)||'').join('~');
+  /* ⚠️ F07 (mission Séance du 24/10/2026) — LA CLÉ PORTE TOUT CE QUI CHANGE LE RÉSULTAT de `_mscScores` : un exercice ne
+     compte que s'il a au moins une série FAITE, et un exercice perso se lit avec ses muscles cochés. Avec les seuls noms,
+     une séance modifiée (mêmes exercices, autres séries faites) gardait sa couleur jusqu'au redémarrage — mesuré : « bas
+     86 % » au lieu de « haut 100 % ». */
+  const _cex=n=>{ const c=(S.customExercises||[]).find(e=>e&&e.n===n); return c&&c.muscles?JSON.stringify(c.muscles):''; };
+  const key=s.date+'|'+(s.exs||[]).map(e=>((e&&e.name)||'')+':'+((e&&(e.sets||[]).some(x=>x&&x.done))?1:0)+_cex(e&&e.name)).join('~');
   if(key in _calColorCache)return _calColorCache[key];
   let mix=null;
   try{
-    if(typeof _mscScores==='function'){
-      const sc=(_mscScores(s.exs||[])||{}).sc||{};
+    if(typeof _mscScoresVus==='function'){
+      const sc=(_mscScoresVus(s.exs||[])||{}).sc||{};
       const tot={haut:0,dos:0,bas:0,tronc:0}; let grand=0;
       for(const g in sc){
         for(const r in _CAL_REGIONS){
@@ -2335,7 +2367,9 @@ function _calSelect(ymd){
 }
 function _renderHomeCalendar(){
   const el=document.getElementById('home-secondary');if(!el)return;
-  const sessSet={};(S.sessions||[]).forEach(s=>{if(s&&s.date)sessSet[s.date]=(sessSet[s.date]||0)+1;});
+  /* 🚶 Deux ensembles de jours : les jours de SÉANCE (musculation + cardio) et les jours d'ACTIVITÉ (`_estAutre`). Un jour d'activité est actif et cliquable, mais il ne colore pas
+     le calendrier d'une région musculaire et ne pèse pas dans la gouttière « tonnage / N× ». */
+  const sessSet={}, actSet={};(S.sessions||[]).forEach(s=>{if(s&&s.date){ if(_estAutre(s))actSet[s.date]=(actSet[s.date]||0)+1; else sessSet[s.date]=(sessSet[s.date]||0)+1; }});
   const prSet=_calPrDays();
   const y=_calDate.getFullYear(), m=_calDate.getMonth();
   const todayY=_calYmd(new Date());
@@ -2361,17 +2395,18 @@ function _renderHomeCalendar(){
     weeks.forEach((wk,wi)=>{
       const wVol=wk.reduce((a,c)=>a+(volByDay[_calYmd(c.d)]||0),0);
       const wSess=wk.filter(c=>sessSet[_calYmd(c.d)]).length;   // une séance au poids du corps pèse 0 kg : ce n'est PAS du repos
+      const wAct=wk.filter(c=>actSet[_calYmd(c.d)]).length;     // 🚶 jours d'activité de la semaine
       html+='<div onclick="_calZoom('+wi+')" class="ft-press" style="display:flex;flex-direction:column;justify-content:center;gap:2px;cursor:pointer;">'
         +'<span style="font-family:var(--font-cond);font-size:11.5px;font-weight:700;color:var(--t3);line-height:1;">S'+_calIsoWeek(wk[0].d)+'</span>'
-        +'<span style="font-size:8.5px;font-weight:700;line-height:1;color:'+(wSess?'var(--red)':'var(--t3)')+';">'
-          +(wSess?(wVol?_calFmtT(wVol):wSess+'×'):'repos')+'</span>'
+        +'<span style="font-size:8.5px;font-weight:700;line-height:1;color:'+(wSess?'var(--red)':(wAct?'var(--t2)':'var(--t3)'))+';">'
+          +(wSess?(wVol?_calFmtT(wVol):wSess+'×'):(wAct?'act.':'repos'))+'</span>'
         +'</div>';
 
       wk.forEach(c=>{
         const ymd=_calYmd(c.d), num=c.d.getDate();
-        const vol=volByDay[ymd]||0, has=!!sessSet[ymd];
+        const vol=volByDay[ymd]||0, jourSeance=!!sessSet[ymd], has=jourSeance||!!actSet[ymd];
         const isPr=has&&prSet[ymd], isToday=ymd===todayY, isSel=ymd===_calSelDay;
-        const sess=has?(S.sessions||[]).find(s=>s.date===ymd):null;
+        const sess=jourSeance?_seancesTrain().find(s=>s.date===ymd):null;   // 🚶 la couleur vient d'une SÉANCE du jour, jamais d'une activité
         const rat=maxVol?vol/maxVol:0;
 
         let st='position:relative;min-height:46px;display:flex;flex-direction:column;align-items:center;'
@@ -2387,7 +2422,7 @@ function _renderHomeCalendar(){
                 +'<svg width="11" height="11" viewBox="0 0 24 24" fill="var(--gold)"><path d="m12 2 3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1L12 2Z"/></svg></span>':'')
           +'<span style="font-family:var(--font-cond);font-size:16px;font-weight:700;line-height:1;color:'
             +(c.inMonth?'var(--t1)':'var(--t3)')+';">'+num+'</span>'
-          +(has?'<span style="width:'+(10+Math.round(9*rat))+'px;height:3px;border-radius:2px;background:'+_calSessColor(sess)+';"></span>'
+          +(has?'<span style="width:'+(10+Math.round(9*rat))+'px;height:3px;border-radius:2px;background:'+(jourSeance?_calSessColor(sess):'var(--t2)')+';"></span>'
                :(isToday?'<span style="font-size:7.5px;font-weight:800;letter-spacing:.06em;line-height:1;color:var(--red);">AUJ</span>':''))
           +'</div>';
       });
@@ -2401,6 +2436,7 @@ function _renderHomeCalendar(){
         +'<span style="width:12px;height:12px;border-radius:4px;background:rgba(255,45,85,.21);background:color-mix(in srgb,var(--red) 55%,var(--bg2));"></span></span>'
       +[['var(--red)','Haut'],['var(--blue)','Dos'],['var(--purp)','Bas'],['var(--orange)','Tronc'],['var(--green)','Full']]
         .map(g=>'<span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:3px;border-radius:2px;background:'+g[0]+';"></span>'+g[1]+'</span>').join('')
+      +(Object.keys(actSet).length?'<span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:3px;border-radius:2px;background:var(--t2);"></span>Activité</span>':'')   // 🚶 seulement s'il y en a
       +'<span style="display:flex;align-items:center;gap:4px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="var(--gold)"><path d="m12 2 3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1L12 2Z"/></svg>Record</span>'
       +'</div>';
 
@@ -2422,7 +2458,7 @@ function _renderHomeCalendar(){
       html+='<div onclick="'+(daySess.length?'goSessionsHistory('+_argAttr(daySess.map(s=>s.ts||s.id||0))+')':'')+'" style="display:flex;align-items:center;gap:10px;padding:10px 6px;border-bottom:1px solid var(--sep);'+(isToday?'background:rgba(255,45,85,.06);':'')+(daySess.length?'cursor:pointer;':'')+'">'
         +'<div style="width:44px;text-align:center;flex-shrink:0;"><div style="font-size:10px;color:var(--t3);text-transform:capitalize;">'+dow+'</div><div style="font-size:17px;font-weight:800;color:'+(c.inMonth?'var(--t1)':'var(--t3)')+';">'+c.d.getDate()+'</div></div>'
         +'<div style="flex:1;min-width:0;">'
-          +'<div style="font-size:12.5px;'+(daySess.length?'color:var(--t1);font-weight:600;':'color:var(--t3);')+'">'+(daySess.length?('💪 '+_escFood(daySess.map(_calSessLabel).join(', '))+(isPr?' <span style="display:inline-block;width:10px;height:10px;border-radius:50%;box-shadow:inset 0 0 0 2px var(--gold);vertical-align:-1px;"></span> <span style="color:var(--gold);font-weight:800;">Record !</span>':'')):'Repos')+'</div>'
+          +'<div style="font-size:12.5px;'+(daySess.length?'color:var(--t1);font-weight:600;':'color:var(--t3);')+'">'+(daySess.length?(_calLibellesJour(daySess)+(isPr?' <span style="display:inline-block;width:10px;height:10px;border-radius:50%;box-shadow:inset 0 0 0 2px var(--gold);vertical-align:-1px;"></span> <span style="color:var(--gold);font-weight:800;">Record !</span>':'')):'Repos')+'</div>'
           +ctx
         +'</div>'
         +(daySess.length?'<span style="font-size:11px;color:var(--red);font-weight:700;flex-shrink:0;align-self:flex-start;margin-top:2px;">'+daySess.length+'×</span>':'')
@@ -2435,8 +2471,11 @@ function _renderHomeCalendar(){
 // Détail du jour sélectionné, sous la grille. Réutilise _calDayContext (sommeil/moral/douleur).
 function _calDayPanel(volByDay,prSet){
   if(!_calSelDay)return '';
-  const sess=(S.sessions||[]).filter(s=>s&&s.date===_calSelDay);
-  if(!sess.length)return '';
+  const tout=(S.sessions||[]).filter(s=>s&&s.date===_calSelDay);
+  if(!tout.length)return '';
+  /* 🚶 Le jour peut porter des séances (musculation, cardio) ET des activités. Le tonnage, les séries et les exercices ne parlent QUE des séances ; les activités ont leur
+     propre liste (type, durée, calories retenues). Un jour sans activité est dessiné exactement comme avant. */
+  const sess=tout.filter(s=>!_estAutre(s)), acts=tout.filter(_estAutre);
   const d=new Date(_calSelDay+'T12:00:00');
   const titre=d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
   const vol=volByDay[_calSelDay]||0;
@@ -2449,22 +2488,39 @@ function _calDayPanel(volByDay,prSet){
   const sep='<div style="width:1px;background:var(--sep);"></div>';
   return '<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--sep);">'
     +'<div style="display:flex;align-items:center;gap:9px;margin-bottom:10px;">'
-      +'<span style="width:8px;height:8px;border-radius:3px;flex:none;background:'+_calSessColor(sess[0])+';"></span>'
+      +'<span style="width:8px;height:8px;border-radius:3px;flex:none;background:'+(sess.length?_calSessColor(sess[0]):'var(--t2)')+';"></span>'
       +'<span style="font-family:var(--font-cond);font-size:16px;font-weight:700;color:var(--t1);line-height:1;text-transform:capitalize;">'+titre+'</span>'
       +'<span style="flex:1;"></span>'
       +(isPr?'<span style="font-size:9.5px;font-weight:800;letter-spacing:.06em;color:var(--bg);background:var(--gold);border-radius:5px;padding:3px 7px;line-height:1;">RECORD</span>':'')
     +'</div>'
-    +'<div style="font-size:12.5px;font-weight:600;color:var(--t2);margin-bottom:10px;">'+_escFood(sess.map(s=>_calSessLabel(s)).join(', '))+'</div>'
+    +(sess.length?'<div style="font-size:12.5px;font-weight:600;color:var(--t2);margin-bottom:10px;">'+_escFood(sess.map(s=>_calSessLabel(s)).join(', '))+'</div>'
     +'<div style="display:flex;background:var(--bg3);border-radius:var(--r-sm);padding:9px 0;">'
       +cell(vol?_calFmtT(vol):'—','TONNAGE')+sep+cell(sets,'SÉRIES')+sep+cell(exs,'EXOS')
-    +'</div>'
+    +'</div>':'')
+    +_calActivitesJour(acts,tout)
     +_calDayContext(_calSelDay)
     /* 🗂️ PROGRES-SEANCES-01 (contrat UX-HIST) — « Revoir la séance » ouvre CETTE séance dans Séances, par sa
        clé ; plusieurs séances ce jour-là → toutes celles du jour. Avant : le haut de l'historique, sans cible. */
-    +'<div onclick="goSessionsHistory('+_argAttr(sess.map(s=>s.ts||s.id||0))+')" class="ft-press" style="margin-top:11px;height:42px;border-radius:var(--r);background:var(--bg3);display:flex;align-items:center;justify-content:center;gap:7px;cursor:pointer;">'
-      +'<span style="font-size:13px;font-weight:700;color:var(--t1);">Revoir la séance</span>'
+    +'<div onclick="goSessionsHistory('+_argAttr(tout.map(s=>s.ts||s.id||0))+')" class="ft-press" data-calpanel-revoir style="margin-top:11px;height:42px;border-radius:var(--r);background:var(--bg3);display:flex;align-items:center;justify-content:center;gap:7px;cursor:pointer;">'
+      +'<span style="font-size:13px;font-weight:700;color:var(--t1);">'+(sess.length?'Revoir la séance':(acts.length>1?'Voir les activités':'Voir l\'activité'))+'</span>'
       +'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--t1)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>'
     +'</div></div>';
+}
+/* 🚶 Les activités d'un jour, dans le panneau du calendrier : une ligne par activité (type, durée, calories RETENUES, « ✎ » si c'est la valeur de la montre) et, dès qu'il y a une
+   activité, le total des calories du jour (séances + activités : chaque enregistrement compte UNE fois, par sa valeur retenue). Vide s'il n'y a aucune activité. */
+function _calActivitesJour(acts,tout){
+  if(!acts.length)return '';
+  const kc=s=>(typeof s.calories==='number')?s.calories:0;
+  const lignes=acts.map(s=>{
+    const a=s.autre||{}, kb=kcalBloc({duration:a.duration,kcalEst:a.kcalEst,kcalMan:a.kcalMan,kcalPoids:a.kcalPoids}), dur=+a.duration||0;
+    return '<div data-calact="'+(s.ts||s.id)+'" style="display:flex;align-items:baseline;gap:8px;padding:5px 2px;font-size:12.5px;color:var(--t1);">'
+      +'<span style="flex:1;min-width:0;font-weight:600;">'+_escFood(autreIcone(a)+' '+autreLabel(a))+'</span>'
+      +'<span style="color:var(--t3);font-size:11.5px;">'+(dur>=60?Math.floor(dur/60)+'h'+String(dur%60).padStart(2,'0'):dur+' min')+'</span>'
+      +'<span style="color:var(--t2);font-weight:700;">🔥'+kc(s)+' kcal'+(kb.remplacee?' ✎':'')+'</span></div>';
+  }).join('');
+  const total=tout.reduce((a,s)=>a+kc(s),0);
+  return '<div style="margin-top:8px;padding:6px 10px;border-radius:var(--r-sm);background:var(--bg3);">'+lignes
+    +'<div data-caltotal style="display:flex;justify-content:space-between;border-top:1px solid var(--sep);margin-top:4px;padding:6px 2px 2px;font-size:12px;color:var(--t2);font-weight:700;"><span>Total du jour</span><span>🔥'+total+' kcal</span></div></div>';
 }
 // Contexte d'un jour dans le calendrier (brique 7) : sommeil + humeur/énergie + douleur, s'ils ont été notés ce jour-là.
 function _calDayContext(ymd){
@@ -3385,8 +3441,12 @@ function renderNutrition(){try{
       : '';
   }
   const todayStr=today();
-  const todaySess=S.sessions.find(s=>s.date===todayStr);
-  const sessCals=todaySess&&todaySess.calories?todaySess.calories:0;
+  /* 🧮 F06 (mission Séance du 24/10/2026) — TOUTES les séances du jour, pas la première trouvée : mesuré le 23/10, deux
+     séances de 250 et 350 kcal affichaient 350. La tuile additionne, et son libellé dit combien (« 2 séances ») — le
+     libellé plutôt que la valeur, pour que « 600 kcal » tienne dans la tuile à 320 px. */
+  const _sessJour=_seancesTrain().filter(s=>s&&s.date===todayStr);   // 🚶 sans les activités (`_estAutre`) : cette tuile dit la SÉANCE ; les kcal d'une activité ne s'ajoutent pas à la dépense de Nutrition (`docs/AUTRE-ACTIVITE-CALORIES.md` §5)
+  const sessCals=_sessJour.reduce((a,s)=>a+(+s.calories||0),0);
+  {const _l=document.getElementById('nu-session-lbl'); if(_l)_l.textContent=_sessJour.length>1?_sessJour.length+' séances':'Séance';}
   /* ⚠️ « aucune » et plus « — (pas de séance) » (ft-v1025) : le libellé long ne tenait pas dans
      la tuile à 390 px et se coupait EN TRAVERS de son propre titre (« — (pas de / Séance
      séance) », vu à la capture). Le défaut existait avant ce chantier ; il devient visible
@@ -3761,7 +3821,7 @@ function renderFoodJournal(){
      aucune poignée et deviendrait **ni éditable ni supprimable** — précisément le défaut que
      Michel interdit nommément à l'étape 3. */
   if(typeof _foodLogIdentifier==='function') _foodLogIdentifier(S.foodLog);
-  const entries=(S.foodLog||[]).filter(e=>e.date===td).sort((a,b)=>b.ts-a.ts);
+  const entries=(S.foodLog||[]).filter(e=>e&&e.date===td).sort((a,b)=>b.ts-a.ts);
 
   let html='';
   // Navigation jour par jour — même repère visuel que le calendrier de l'Accueil (R13).
@@ -3776,6 +3836,7 @@ function renderFoodJournal(){
     +'<span style="font-weight:800;font-size:14px;color:var(--t1);text-transform:capitalize;">'+jourLabel+'</span>'
     +_navBtn(1,'›',!estAuj)
     +'</div>';
+  html+=(typeof _journalBandeau==='function')?_journalBandeau():'';   // NUT-REF-HIST-02 (3B) : tant que la dernière sauvegarde du journal a échoué, le dire et offrir « Réessayer » (aucune donnée de plus)
 
   /* 📅 LA SEMAINE EN UN COUP D'ŒIL (ft-v1004) — Michel, capture d'une autre app à l'appui :
      « j'aimerais les jours de la semaine en haut, qu'ils soient cliquables, et voir d'un seul
@@ -3857,6 +3918,9 @@ function renderFoodJournal(){
   }else{
     html+=`<div style="background:var(--bg2);border-radius:14px;padding:16px;text-align:center;color:var(--t3);font-size:13px;box-shadow:inset 0 0 0 1px var(--sep);">Remplis ton profil (âge, taille, poids) pour comparer à tes objectifs.</div>`;
   }
+  /* 🥗 V2 (jalon 4) : une valeur inconnue n'est pas comptée — et l'écran le DIT (avec ou sans objectif), au lieu de
+     laisser croire à un total complet (« aucune valeur inventée pour compléter un champ manquant », Michel, 22/10). */
+  html+=(typeof _n2TotalPartiel==='function') ? _n2TotalPartiel(tot) : '';
 
   /* 🧠 LA CARTE « CE QUE L'APP A APPRIS DE TON ALIMENTATION » N'EST PLUS ICI (26/08/2026,
      ft-v1025) — elle est passée dans l'onglet MACROS, sur décision de Michel. La raison est
@@ -3892,18 +3956,24 @@ function renderFoodJournal(){
      un bloc vide serait un reproche déguisé (R24). */
   try{
     const habitudes=(typeof _repasHabituels==='function')?_repasHabituels():[];
+    const vf=(habitudes.length && typeof _n2FichesVerifiees==='function')?_n2FichesVerifiees():null;
     if(habitudes.length){
       html+=`<div style="margin-top:14px;"><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--t3);margin-bottom:7px;">Tes repas habituels</div>`
         +`<div style="display:flex;flex-direction:column;gap:6px;">`;
       habitudes.forEach((r,idx)=>{
         const mi=(typeof _foodMealInfo==='function')?_foodMealInfo(r.meal):{ic:'🍽️',lbl:''};
-        const k=r.items.reduce((a,e)=>a+(e.kcal||0),0);
-        const p=r.items.reduce((a,e)=>a+(e.prot||0),0);
+        /* ⭐ INCIDENT DU 23/10 — les totaux de CE QUI SERA ÉCRIT (`_habApercu`, app.js), jamais un inconnu compté 0, et ce qui ne
+           le sera pas, compté à part : la carte dit ce que le « + » fera. */
+        const ha=(typeof _habApercu==='function')?_habApercu(r, vf):null;
+        const k=ha ? (ha.nk ? ha.kcal : '?') : r.items.reduce((a,e)=>a+(e.kcal||0),0);
+        const p=ha ? (ha.np ? ha.prot : '?') : r.items.reduce((a,e)=>a+(e.prot||0),0);
+        const totaux=(!ha || ha.n) ? `${k} kcal · ${p} g de protéines${ha && ha.partiel ? ' (total partiel)' : ''} · ` : '';
+        const reste=ha ? ((ha.aVerifier ? ` · ${ha.aVerifier} à vérifier` : '') + (ha.aCompleter ? ` · ${ha.aCompleter} à compléter` : '')) : '';
         const noms=r.items.map(e=>e.name).join(' + ');
         html+=`<button onclick="_habChoisirMoment('hab-m-${idx}')" class="btn btn-bg2" style="display:flex;align-items:center;gap:10px;text-align:left;padding:11px 12px;width:100%;">`
           +`<span style="font-size:18px;flex:none;">${mi.ic}</span>`
           +`<span style="flex:1;min-width:0;"><span style="display:block;font-size:13.5px;font-weight:700;color:var(--t1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${_escNote?_escNote(noms):noms}</span>`
-          +`<span style="display:block;font-size:11.5px;color:var(--t3);margin-top:1px;">${mi.lbl||''} · ${k} kcal · ${p} g de protéines · noté ${r.n} fois</span></span>`
+          +`<span style="display:block;font-size:11.5px;color:var(--t3);margin-top:1px;">${mi.lbl||''} · ${totaux}noté ${r.n} fois${reste}</span></span>`
           +`<span style="flex:none;color:var(--red);font-size:19px;font-weight:800;">+</span></button>`;
         /* ⏰ LA RANGÉE DES MOMENTS (ft-v1052) — repliée, dépliée par un tap sur la carte.
            ⭐ `FOOD_MEALS` est le seul propriétaire de la liste (R2) : on ne la recopie pas ici.
@@ -3915,7 +3985,11 @@ function renderFoodJournal(){
           +`<div style="display:flex;flex-wrap:wrap;gap:6px;">`
           + MM.map(m=>{
               const hab=(m.k===r.meal);
-              return `<button onclick="rejouerRepas('${String(r.sig).replace(/'/g,"\\'")}','${m.k}')" `
+              /* ⭐⭐ NUT-CA-FAA'C (07/11) — LE NOM D'UN ALIMENT N'EST JAMAIS DU CODE NI DU HTML : `_escAttrJs` (log.js, l'échappeur de l'app pour un '…' JS dans un attribut "…")
+                 protège l'antislash, l'apostrophe, `&`, `"`, `<`, `>` — l'ancien `.replace(/'/g,…)` ne protégeait que l'apostrophe : un guillemet droit cassait le bouton
+                 (27 libellés CIQUAL en ont un), `"><img onerror=…>` injectait du HTML exécuté à l'AFFICHAGE, `\');…` et `&#39;);…` du JavaScript. Il laisse passer un retour à la
+                 ligne brut (erreur de syntaxe silencieuse) : on le remplace ici par son écriture JS. La signature reste celle que `_repasHabituels` calcule : rien d'autre ne change. */
+              return `<button onclick="rejouerRepas('${_escAttrJs(r.sig).replace(/\n/g,'\\n').replace(/\r/g,'\\r')}','${m.k}')" `
                 +`style="flex:1 1 30%;min-width:96px;padding:8px 6px;border-radius:9px;border:1px solid ${hab?'var(--red)':'var(--sep)'};`
                 +`background:var(--bg3);color:var(--t1);font-size:12.5px;font-weight:700;font-family:var(--font);cursor:pointer;touch-action:manipulation;">`
                 +`${m.ic} ${m.lbl}${hab?'<span style="display:block;font-size:9.5px;font-weight:600;color:var(--t3);margin-top:2px;">d\'habitude</span>':''}</button>`;
@@ -3999,9 +4073,9 @@ function renderFoodJournal(){
         html+=`<div onclick="openEditFood('${_h}')" style="background:var(--bg3);border-radius:11px;padding:9px 11px;display:flex;align-items:center;gap:9px;cursor:pointer;">`
           +`<div style="flex:1;min-width:0;">`
             +`<div style="font-size:13px;font-weight:600;color:var(--t1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${_escFood(e.name)}</div>`
-            +`<div style="font-size:11px;color:var(--t3);">P ${e.prot||0} · G ${e.carbs||0} · L ${e.fat||0} · ✎ modifier</div>`
+            +`<div style="font-size:11px;color:var(--t3);">P ${_n2Val(e.prot)} · G ${_n2Val(e.carbs)} · L ${_n2Val(e.fat)}${_n2Badge(e)} · ✎ modifier</div>`
           +`</div>`
-          +`<span style="font-size:13px;font-weight:700;color:var(--red);flex-shrink:0;">${e.kcal||0}</span>`
+          +`<span style="font-size:13px;font-weight:700;color:var(--red);flex-shrink:0;">${_n2Val(e.kcal)}</span>`
           +`<button onclick="event.stopPropagation();confirmRemoveFood('${_h}')" style="background:none;border:none;color:var(--t3);font-size:16px;cursor:pointer;padding:2px 4px;flex-shrink:0;line-height:1;">✕</button>`
         +`</div>`;
       });

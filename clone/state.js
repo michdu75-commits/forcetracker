@@ -77,6 +77,7 @@ let S={
   exSwaps:{},
   mealPlan:null,
   foodLog:[],
+  foodSupprimes:[],   // NUT-SYNC-01 : registre DURABLE des suppressions volontaires du journal [{i:id, t:instant}] — jamais purgé (voir _foodSupprimer)
   /* 🫙 L'ANCIEN POT COMMUN — GELÉ DEPUIS LE 19/09/2026 (phase 3.1).
      ⛔ Plus AUCUN code ne l'incrémente : les trois capacités IA de la Nutrition ont chacune
      le sien (ci-dessous). Il est GARDÉ, pas supprimé, pour trois raisons écrites :
@@ -165,22 +166,170 @@ function _foodIdAttr(id){ return String(id==null?'':id).replace(/[^0-9a-zA-Z-]/g
    ⛔⛔ IL NE TOUCHE QU'À L'IDENTITÉ MANQUANTE. Aucune macro, aucune date, aucun repas, aucune
    quantité, aucune portion, aucun `per100`, aucune provenance ne bouge — une ancienne ligne
    gagne uniquement ce qui lui manquait. Rend le nombre de lignes enrichies (0 = rien à faire). */
+/* 🔑⭐⭐ NUT-SYNC-01 — L'IDENTITÉ D'UNE ANCIENNE LIGNE EST DÉTERMINISTE, DONC STABLE.
+   Avant : une ligne sans `id` recevait un identifiant ALÉATOIRE à chaque chargement, et rien ne l'enregistrait si la personne ne touchait à rien — « le prochain chargement en
+   repose d'autres ». Conséquence : deux appareils (ou deux ouvertures) donnaient à la MÊME ancienne ligne deux identités différentes, donc aucune suppression ne pouvait la
+   désigner de façon sûre.
+   Maintenant : l'identité d'une ligne sans `id` est calculée À PARTIR DE TOUT SON CONTENU (`_empreinteFood` : tous les champs sauf `id`, `ts` compris) —
+   `m1-` + 32 premiers caractères hexadécimaux du SHA-256 de cette empreinte. ⛔ Jamais le nom, les calories ou la date SEULS : deux repas voulus identiques ont des `ts` différents
+   donc des empreintes différentes ; si deux lignes sont réellement indiscernables (même empreinte), elles reçoivent `…`, `…-2`, `…-3` selon leur rang — deux entrées DISTINCTES,
+   jamais fusionnées — et deux appareils qui portent le même multi-ensemble leur donnent les mêmes identités.
+   ⛔ Un `id` déjà présent n'est JAMAIS régénéré. Seule exception, indispensable à l'unicité : un `id` PORTÉ PAR PLUSIEURS lignes (donnée corrompue) n'est gardé que par UNE — celle dont
+   l'empreinte est la plus petite (indépendant de l'ordre de la liste, donc identique sur tous les appareils) ; les autres reçoivent une identité déterministe.
+   Idempotent et reprenable : rien n'est écrit ici (la sauvegarde suit au premier `persist()` naturel) ; si le chargement est interrompu, le suivant recalcule les MÊMES identités.
+   ⛔⛔ IL NE TOUCHE QU'À L'IDENTITÉ MANQUANTE OU EN DOUBLE. Aucune macro, aucune date, aucun repas, aucune quantité, aucune portion, aucun `per100`, aucune provenance ne bouge.
+   Rend le nombre de lignes dont l'identité a été posée (0 = rien à faire). */
+function _sha256hex(msg){
+  if(!_sha256hex.K){
+    const K=[], H=[]; let n=2;
+    const frac=x=>x-Math.floor(x);
+    for(let c=0;c<64;n++){
+      let premier=true; for(let d=2;d*d<=n;d++){ if(n%d===0){ premier=false; break; } }
+      if(!premier) continue;
+      if(c<8) H[c]=(frac(Math.sqrt(n))*4294967296)>>>0;
+      K[c]=(frac(Math.cbrt(n))*4294967296)>>>0; c++;
+    }
+    _sha256hex.K=K; _sha256hex.H=H;
+  }
+  const K=_sha256hex.K, octets=new TextEncoder().encode(String(msg)), l=octets.length;
+  const n=((l+9+63)>>6)<<6, m=new Uint8Array(n); m.set(octets); m[l]=0x80;
+  const dv=new DataView(m.buffer); dv.setUint32(n-8, Math.floor(l/0x20000000)); dv.setUint32(n-4, (l<<3)>>>0);
+  let h=_sha256hex.H.slice(); const w=new Uint32Array(64);
+  for(let o=0;o<n;o+=64){
+    for(let i=0;i<16;i++) w[i]=dv.getUint32(o+i*4);
+    for(let i=16;i<64;i++){
+      const x=w[i-15], y=w[i-2];
+      const s0=((x>>>7)|(x<<25))^((x>>>18)|(x<<14))^(x>>>3), s1=((y>>>17)|(y<<15))^((y>>>19)|(y<<13))^(y>>>10);
+      w[i]=(w[i-16]+s0+w[i-7]+s1)>>>0;
+    }
+    let [a,b,c,d,e,f,g,hh]=h;
+    for(let i=0;i<64;i++){
+      const S1=((e>>>6)|(e<<26))^((e>>>11)|(e<<21))^((e>>>25)|(e<<7)), ch=(e&f)^(~e&g);
+      const t1=(hh+S1+ch+K[i]+w[i])>>>0;
+      const S0=((a>>>2)|(a<<30))^((a>>>13)|(a<<19))^((a>>>22)|(a<<10)), maj=(a&b)^(a&c)^(b&c);
+      const t2=(S0+maj)>>>0;
+      hh=g; g=f; f=e; e=(d+t1)>>>0; d=c; c=b; b=a; a=(t1+t2)>>>0;
+    }
+    h=[(h[0]+a)>>>0,(h[1]+b)>>>0,(h[2]+c)>>>0,(h[3]+d)>>>0,(h[4]+e)>>>0,(h[5]+f)>>>0,(h[6]+g)>>>0,(h[7]+hh)>>>0];
+  }
+  return h.map(x=>x.toString(16).padStart(8,'0')).join('');
+}
 function _foodLogIdentifier(liste){
   if(!Array.isArray(liste)) return 0;
-  let n=0;
-  /* ⛔ ON NE FAIT PAS CONFIANCE À `id` PARCE QU'IL EST « PRÉSENT » : un `id` recopié sur deux
-     lignes (une fusion malheureuse, un futur écrivain distrait) rejouerait le bug exact qu'on
-     corrige. On exige l'UNICITÉ, et on réattribue le doublon plutôt que de le laisser passer. */
-  const vus=Object.create(null);
-  for(let i=0;i<liste.length;i++){
-    const l=liste[i]; if(!l||typeof l!=='object') continue;
-    const cle=(typeof l.id==='string' && l.id.length>=8) ? l.id : null;
-    if(cle && !vus[cle]){ vus[cle]=1; continue; }
-    const neuf=_foodLineId();
-    if(!neuf) continue;              // aucune source aléatoire : on laisse la ligne telle quelle
-    l.id=neuf; vus[neuf]=1; n++;
-  }
+  const objet=l=>!!l && typeof l==='object';
+  const valide=l=>typeof l.id==='string' && l.id.length>=8;
+  const emp=l=>_empreinteFood(l);
+  // ① un `id` porté par plusieurs lignes : une seule le garde (la plus petite empreinte), les autres sont à refaire
+  const parId=Object.create(null), aRefaire=[];
+  liste.forEach((l,i)=>{ if(objet(l) && valide(l)) (parId[l.id]=parId[l.id]||[]).push(i); });
+  Object.keys(parId).forEach(id=>{
+    const idx=parId[id]; if(idx.length<2) return;
+    const e=idx.map(i=>[emp(liste[i]),i]).sort((x,y)=> x[0]<y[0]?-1 : x[0]>y[0]?1 : x[1]-y[1]);
+    e.slice(1).forEach(x=>aRefaire.push(x[1]));
+  });
+  liste.forEach((l,i)=>{ if(objet(l) && !valide(l)) aRefaire.push(i); });
+  if(!aRefaire.length) return 0;
+  // ② les identités déjà prises (toutes les lignes qui gardent la leur)
+  const redo=new Set(aRefaire), pris=new Set();
+  liste.forEach((l,i)=>{ if(objet(l) && valide(l) && !redo.has(i)) pris.add(l.id); });
+  // ③ identité = empreinte du contenu + rang parmi les lignes de MÊME empreinte (dans l'ordre de la liste)
+  const rang=Object.create(null); let n=0;
+  aRefaire.sort((x,y)=>x-y).forEach(i=>{
+    const l=liste[i], h=_sha256hex(emp(l)).slice(0,32);
+    let r=(rang[h]||0)+1, id;
+    do{ id='m1-'+h+(r>1?'-'+r:''); r++; }while(pris.has(id));
+    rang[h]=r-1; pris.add(id); l.id=id; n++;
+  });
   return n;
+}
+
+/* 🗑️⭐⭐ NUT-SYNC-01 — UNE SUPPRESSION VOLONTAIRE EST UN FAIT ENREGISTRÉ, PAS UNE ABSENCE.
+   Avant : retirer un repas, c'était l'ABSENCE d'une ligne dans le journal envoyé. Le serveur ne pouvait pas distinguer « la personne l'a supprimé » de « cet appareil n'a pas (ou
+   plus) la ligne » — après une panne d'écriture, un historique local raccourci ou un appareil resté hors ligne, l'absence était lue comme une suppression, ou à l'inverse la
+   ligne supprimée revenait avec l'ancienne copie d'un autre appareil.
+   Maintenant : `S.foodSupprimes` = [{i:identité de la ligne, t:instant}], clé `ft4_food_supprimes`, écrite par SON écrivain (`_ecrireSuppressionsLocal`, qui dit s'il a écrit).
+     · ⛔ ELLE S'ÉCRIT AVANT LA LIGNE : `_foodSupprimer(id)` ne rend `true` que si le registre est sur le téléphone. Sinon la ligne n'est PAS retirée et l'appelant le dit — jamais une
+       réussite trompeuse, jamais une suppression « à moitié ».
+     · Le registre fait foi sur la ligne : au chargement, à chaque fusion et à chaque restauration, une ligne dont l'identité y figure est retirée (`_foodAppliquerSuppressions`). Une
+       panne qui empêche de réécrire le journal ne peut donc plus faire revenir une ligne supprimée.
+     · Il ne s'efface JAMAIS (aucune expiration : une purge ferait revenir la ligne depuis un appareil resté absent) ; une entrée coûte une soixantaine d'octets.
+     · Il VOYAGE avec la synchro (`setup.js`) et s'additionne partout (union) : la suppression gagne sur toute version de la ligne, modification comprise. */
+function _foodSupprimesNormaliser(x){
+  /* NUT-SYNC-01 FINAL — TROIS ÉTATS, JAMAIS CONFONDUS, lisibles sur l'entrée elle-même (aucune clé de stockage de plus) :
+       · ni `c` ni `x`  = ENREGISTRÉE SUR CE TÉLÉPHONE, EN ATTENTE de la confirmation du serveur ;
+       · `c` (instant)  = CONFIRMÉE : le serveur l'a écrite et l'a dit dans un accusé valide ;
+       · `x` (code)     = REJETÉE : le serveur a répondu qu'il ne pouvait pas (ex. NUT_TOMBSTONE_LIMIT) — elle reste ici, et fait toujours loi sur ce téléphone.
+     Une entrée n'est JAMAIS effacée, quel que soit son état. */
+  const out=[], idx=Object.create(null);
+  (Array.isArray(x)?x:[]).forEach(e=>{
+    const i=(e && typeof e==='object') ? e.i : e;
+    if(typeof i!=='string' || i.length<8 || i.length>64 || !/^[0-9A-Za-z-]+$/.test(i)) return;
+    const o2=(e && typeof e==='object') ? e : {};
+    const t=(isFinite(+o2.t) && +o2.t>0) ? Math.floor(+o2.t) : 0;
+    const c=(isFinite(+o2.c) && +o2.c>0) ? Math.floor(+o2.c) : 0;
+    const xx=(typeof o2.x==='string') ? o2.x.replace(/[^0-9A-Za-z_\-]/g,'').slice(0,40) : '';
+    if(idx[i]!==undefined){
+      const o=out[idx[i]];
+      if(t && (!o.t || t<o.t)) o.t=t;
+      if(c && (!o.c || c>o.c)) o.c=c;
+      if(xx && !o.x) o.x=xx;
+      if(o.c) delete o.x;
+      return;
+    }
+    const n={i:i, t:t}; if(c) n.c=c; else if(xx) n.x=xx;
+    idx[i]=out.length; out.push(n);
+  });
+  return out;
+}
+/* `deServeur` : la liste vient du COMPTE (profil chargé au démarrage, restauration) — ces entrées sont par définition déjà chez le serveur, donc confirmées. */
+function _foodSupprimesFusion(a,b,deServeur){
+  const dessus=(Array.isArray(b)?b:[]).map(e=>{
+    if(!deServeur) return e;
+    const o=(e && typeof e==='object') ? e : {i:e};
+    return Object.assign({}, o, {c:Date.now()});
+  });
+  return _foodSupprimesNormaliser((Array.isArray(a)?a:[]).concat(dessus));
+}
+/* Ce qui part au serveur : l'identité et l'instant des suppressions NON CONFIRMÉES (en attente ou différées), jamais l'état local.
+   ⚙️ NUT-SYNC-02 phase A : avant, le registre ENTIER partait à chaque synchro, confirmé ou non — 59 Ko à 1 000 entrées, 176 Ko à 3 000 (calculé), à chaque envoi. Une suppression CONFIRMÉE est chez le serveur : la renvoyer ne sert à rien tant
+   que le serveur ne l'a pas perdue — ce que la guérison (`_nutTraiterReponse`) détecte (le serveur annonce MOINS d'entrées que l'appareil n'en a confirmé) et corrige en les remettant « en attente ». */
+function _foodSupprimesPourEnvoi(){ return _foodSupprimesNormaliser(S.foodSupprimes).filter(e=>!e.c).map(e=>({i:e.i, t:e.t})); }
+/* Le registre COMPLET, confirmé ou non — pour le miroir seulement (il REMPLACE son champ : jamais un sous-ensemble). */
+function _foodSupprimesTous(){ return _foodSupprimesNormaliser(S.foodSupprimes).map(e=>({i:e.i, t:e.t})); }
+/* Les suppressions que le serveur n'a PAS encore confirmées (en attente OU rejetées) : à renvoyer, à ne jamais perdre. */
+function _foodSupprimesEnAttente(){ return _foodSupprimesNormaliser(S.foodSupprimes).filter(e=>!e.c); }
+/* Un identifiant d'opération par envoi : le serveur l'écho, l'appareil ne croit un accusé que s'il porte le SIEN. */
+function _nutNouvelIdOperation(){
+  try{
+    if(typeof crypto!=='undefined' && typeof crypto.randomUUID==='function') return crypto.randomUUID();
+    if(typeof crypto!=='undefined' && typeof crypto.getRandomValues==='function'){
+      const a=new Uint8Array(16); crypto.getRandomValues(a); return Array.from(a,b=>b.toString(16).padStart(2,'0')).join('');
+    }
+  }catch(e){}
+  return 'op'+Date.now().toString(36)+Math.random().toString(36).slice(2,12);
+}
+/* Retire du journal (sur place) les lignes dont l'identité figure au registre. Rend le nombre de lignes retirées. */
+function _foodAppliquerSuppressions(){
+  const reg=S.foodSupprimes||[]; if(!reg.length || !Array.isArray(S.foodLog)) return 0;
+  const m=Object.create(null); reg.forEach(e=>{ m[e.i]=1; });
+  let n=0;
+  for(let k=S.foodLog.length-1;k>=0;k--){ const l=S.foodLog[k]; if(l && typeof l.id==='string' && m[l.id]){ S.foodLog.splice(k,1); n++; } }
+  return n;
+}
+/* L'écrivain du registre — le même geste que `_ecrireJournalLocal` : `true` seulement si la clé a été écrite (mode démo : rien n'est écrit par conception → `true`), jamais d'exception. */
+function _ecrireSuppressionsLocal(){
+  if(window._demoMode) return true;
+  try{ localStorage.setItem('ft4_food_supprimes',JSON.stringify(S.foodSupprimes||[])); return true; }
+  catch(e){ try{ console.warn('[FT suppressions] écriture locale refusée',e); }catch(_){} return false; }
+}
+/* Enregistre la suppression d'UNE ligne, DURABLEMENT. `true` = le registre est écrit (la ligne peut alors être retirée) ; `false` = rien n'a changé. Ne touche pas au journal. */
+function _foodSupprimer(id){
+  if(typeof id!=='string' || !id) return false;
+  const avant=S.foodSupprimes||[];
+  S.foodSupprimes=_foodSupprimesFusion(avant,[{i:id,t:Date.now()}]);
+  if(!S.foodSupprimes.some(e=>e.i===id)){ S.foodSupprimes=avant; return false; }   // identité refusée par la normalisation
+  if(!_ecrireSuppressionsLocal()){ S.foodSupprimes=avant; return false; }
+  return true;
 }
 
 /* ☁️🍽️ NUT-FOODLOG-RESTORE-01 (01/10/2026, lot Nutrition 3) — LA RESTAURATION FAIT UNE UNION DU
@@ -204,17 +353,20 @@ function _foodLogIdentifier(liste){
        ajoutée. *Un doublon vaut mieux qu'une perte silencieuse.*
    ⛔ Aucune ressemblance approximative (nom, date, calories…) ne fait disparaître une ligne. */
 function _empreinteFood(l){
-  const tri=v=>Array.isArray(v)?v.map(tri):(v&&typeof v==='object')
-    ?Object.keys(v).filter(k=>k!=='id').sort().reduce((o,k)=>{o[k]=tri(v[k]);return o;},{}):v;
-  try{ return JSON.stringify(tri(l)); }catch(e){ return String(Math.random()); }
+  /* NUT-SYNC-01 FINAL : `rev` (révision) et `modifiedAt` sont posés par le SERVEUR sur la ligne, ils ne DÉCRIVENT pas le repas — ignorés AU NIVEAU DE LA LIGNE seulement (`haut`). Sans cela une ligne
+     et sa copie identique ne se reconnaîtraient plus dès que l'une a reçu sa révision (restauration, identité des anciennes lignes). Une ancienne ligne n'a pas ces champs : son empreinte, donc
+     l'identité déterministe qui en dérive, ne change pas d'un octet. */
+  const tri=(v,haut)=>Array.isArray(v)?v.map(x=>tri(x,false)):(v&&typeof v==='object')
+    ?Object.keys(v).filter(k=>k!=='id' && !(haut && (k==='rev'||k==='modifiedAt'))).sort().reduce((o,k)=>{o[k]=tri(v[k],false);return o;},{}):v;
+  try{ return JSON.stringify(tri(l,true)); }catch(e){ return String(Math.random()); }
 }
 function _fusionnerFoodLogRestauration(local, cloud){
   const out=Array.isArray(local)?local.slice():[];
   const idValide=l=>(typeof l.id==='string' && l.id.length>=8);
-  const parIdLocal=new Map(), libres=new Map(), cloudParId=new Map();
+  const parIdLocal=new Map(), libres=new Map(), cloudParId=new Map(), objLocal=new Map();
   out.forEach(l=>{
     if(!l||typeof l!=='object') return;
-    if(idValide(l) && !parIdLocal.has(l.id)) parIdLocal.set(l.id,_empreinteFood(l));
+    if(idValide(l) && !parIdLocal.has(l.id)){ parIdLocal.set(l.id,_empreinteFood(l)); objLocal.set(l.id,l); }
     const e=_empreinteFood(l); libres.set(e,(libres.get(e)||0)+1);
   });
   const nuage=(Array.isArray(cloud)?cloud:[]).filter(c=>c&&typeof c==='object');
@@ -234,7 +386,14 @@ function _fusionnerFoodLogRestauration(local, cloud){
   nuage.forEach((c,k)=>{
     if(idValide(c)){
       const e=_empreinteFood(c), vus=cloudParId.get(c.id)||[];
-      if(absorbe.has(k)){ vus.push(e); cloudParId.set(c.id,vus); return; }      // la version de la ligne du téléphone : il garde la sienne
+      if(absorbe.has(k)){                                                        // la version de la ligne du téléphone : il garde la sienne
+        vus.push(e); cloudParId.set(c.id,vus);
+        /* NUT-SYNC-01 FINAL — il APPREND seulement la révision du serveur, et seulement si le contenu est identique (sa révision de base est alors vraie). Sinon il garde la sienne telle quelle :
+           au prochain envoi le serveur dira « conflit » et les DEUX versions seront gardées. */
+        const lo=objLocal.get(c.id);
+        if(lo && Number.isSafeInteger(c.rev) && c.rev>(Number.isSafeInteger(lo.rev)?lo.rev:0) && _empreinteFood(lo)===e){ lo.rev=c.rev; if(c.modifiedAt) lo.modifiedAt=c.modifiedAt; }
+        return;
+      }
       if(vus.indexOf(e)>=0 || parIdLocal.get(c.id)===e) return;                 // copie strictement identique
       vus.push(e); cloudParId.set(c.id,vus);
       if(vus.length>1 || parIdLocal.has(c.id)){                                // un exemplaire SUPPLÉMENTAIRE de cet id
@@ -248,6 +407,87 @@ function _fusionnerFoodLogRestauration(local, cloud){
     out.push(c); ajoutees++;
   });
   return {liste:out, ajoutees};
+}
+
+/* 🙈🧹 NV2-FIAB (24/10/2026, mission de Michel) — « ✕ » ET LA REMISE À ZÉRO SONT DES DATES DE DÉPART, SYNCHRONISÉES.
+   `S.hiddenFoods` dit ce que les PROPOSITIONS (« Mes aliments », « Déjà noté par toi », les favoris, les repas habituels,
+   les idées) ne montrent plus. ⛔ Jamais le journal : il reste intact, ses totaux aussi.
+   ⭐ Une entrée = {k, t} : l'identité masquée (`id:…` = code-barres ou `ciqual:…` ; `nom:…` pour un aliment sans
+      identifiant ; un nom nu pour un masquage d'avant le 23/10) et l'INSTANT du masquage. Ce qui a été noté (ou mis en
+      favori) AVANT `t` n'est plus proposé ; ce qui est noté APRÈS revient de lui-même — re-noter, c'est le vouloir.
+   ⭐ `k:'*'` = la REMISE À ZÉRO (décision de Michel du 24/10, Q14) : une seule date, pas une liste qui grossit.
+   ⭐ Fusionner deux appareils est sans perte et sans ordre : par identité, le plus TARD gagne (max de `t`) ; une
+      entrée antérieure à la remise à zéro n'a plus d'effet, elle tombe. C'est ce qui empêche toute réapparition par
+      la synchro, la restauration ou un autre téléphone — chacun applique les mêmes dates.
+   ⛔ Avant : des chaînes, locales, jamais synchronisées (Principal, N2 du 24/10), masquées « jusqu'à ce qu'on le
+      re-note » — elles deviennent {k, t:maintenant}, le même sens dit en date. Une date future (horloge fausse) est
+      ramenée à maintenant ; la liste est bornée, la remise à zéro n'en sort jamais. */
+const _NUT_MASQUES_MAX=300;
+function _nutMasquesNormaliser(liste, maintenant){
+  const now=+maintenant||Date.now(), par=Object.create(null);
+  (Array.isArray(liste)?liste:[]).forEach(x=>{
+    let k='', t=0;
+    if(typeof x==='string'){ k=x; t=now; }
+    else if(x && typeof x==='object' && typeof x.k==='string'){ k=x.k; t=+x.t; }
+    k=String(k||'').trim().toLowerCase().slice(0,120);
+    if(!k || !(isFinite(t) && t>0)) return;
+    if(t>now) t=now;
+    if(!(k in par) || t>par[k]) par[k]=t;
+  });
+  const g=par['*']||0;
+  const out=Object.keys(par).filter(k=>k!=='*' && par[k]>g).map(k=>({k:k, t:par[k]}))
+    .sort((a,b)=>(b.t-a.t)||(a.k<b.k?-1:1)).slice(0, g ? _NUT_MASQUES_MAX-1 : _NUT_MASQUES_MAX);
+  return g ? [{k:'*', t:g}].concat(out) : out;
+}
+function _nutMasquesFusion(a, b, maintenant){
+  return _nutMasquesNormaliser([].concat(Array.isArray(a)?a:[], Array.isArray(b)?b:[]), maintenant);
+}
+/* La date de départ d'un aliment : la plus tardive de la remise à zéro, de son identité (`cle`, celle de `_n2Cle`)
+   et — pour les masquages d'avant le 23/10 seulement — de son nom nu. ⛔ Un `nom:…` ne masque jamais un produit qui
+   a un code-barres : deux produits ne se confondent pas par leur nom (D-111). */
+function _nutDepart(masques, cle, nom){
+  const c=String(cle||'').trim().toLowerCase(), n=String(nom||'').trim().toLowerCase();
+  let t=0;
+  (Array.isArray(masques)?masques:[]).forEach(e=>{
+    if(e && typeof e==='object' && (e.k==='*' || e.k===c || (n && e.k===n))) t=Math.max(t, +e.t||0);
+  });
+  /* ⭐ B2 (29/10/2026) — LECTURE NORMALISÉE DES CLÉS `nom:…`, ET RIEN D'AUTRE. « Crème fraîche » masquée doit aussi masquer « Creme fraiche » :
+     les deux listes regroupaient avec deux règles différentes (accents, apostrophes, ponctuation, espaces). On compare donc la clé `nom:` de
+     l'aliment à celles qui sont ENREGISTRÉES, des deux côtés normalisées par `_afNorm` (le propriétaire, app.js).
+     ⛔ LECTURE SEULEMENT : aucune clé enregistrée ne change (même format, plafond de 300 inchangé, aucune migration) — un appareil resté sur
+        l'ancienne version lit et écrit la même liste. ⛔ Seules les clés `nom:…` sont normalisées : `id:…` (code-barres, `ciqual:…`), `*` et les
+        anciens noms nus (avant le 23/10) restent comparés À L'IDENTIQUE (boucle ci-dessus) — deux produits ne se confondent jamais par un nom (D-111).
+     ⛔ `_afNorm` vit dans app.js, chargé APRÈS ce fichier : s'il n'existe pas encore, on garde l'ancienne lecture (aucun effet au démarrage). */
+  const nc=_nutNomNormalise(c);
+  if(nc) t=Math.max(t, _nutMasquesNomIndex(masques)[nc]||0);
+  return t;
+}
+/* 'nom:xxx' → 'nom:' + `_afNorm`(xxx) ; null si ce n'est pas une clé `nom:`, si `_afNorm` n'est pas encore là, ou si le nom normalisé est vide. */
+function _nutNomNormalise(k){
+  if(typeof k!=='string' || k.indexOf('nom:')!==0 || typeof _afNorm!=='function') return null;
+  const r=_afNorm(k.slice(4));
+  return r ? 'nom:'+r : null;
+}
+/* L'index de lecture des masquages `nom:` : clé normalisée → date la plus tardive. Calculé UNE fois par liste (la liste est remplacée, jamais
+   modifiée sur place : `_nutMasquesFusion`) — `_n2Propose` est appelé une fois par ligne du journal, normaliser 300 clés à chaque appel serait trop lent. */
+const _nutMasquesIdx=(typeof WeakMap==='function') ? new WeakMap() : null;
+function _nutMasquesNomIndex(masques){
+  const liste=Array.isArray(masques)?masques:[];
+  let c=_nutMasquesIdx ? _nutMasquesIdx.get(liste) : null;
+  if(c && c.n===liste.length) return c.idx;
+  const idx=Object.create(null);
+  liste.forEach(e=>{
+    if(!e || typeof e!=='object') return;
+    const k=_nutNomNormalise(e.k); if(!k) return;
+    idx[k]=Math.max(idx[k]||0, +e.t||0);
+  });
+  if(_nutMasquesIdx && liste.length) _nutMasquesIdx.set(liste, {n:liste.length, idx:idx});
+  return idx;
+}
+/* Les favoris qui restent proposés : un favori porte l'instant où il a été mis (`t`, depuis le 24/10) ; sans lui, il
+   date d'avant — donc d'avant toute remise à zéro et tout « ✕ ». `cle` = la fonction d'identité de l'app (`_n2Cle`). */
+function _nutFavorisVivants(favs, masques, cle){
+  return (Array.isArray(favs)?favs:[]).filter(f=>{ if(!f) return false; const d=_nutDepart(masques, cle(f), f.name); return !d || (+f.t||0) > d; });
 }
 
 /* ═══ 🫙 LA MIGRATION DU POT COMMUN VERS LES TROIS POTS (19/09/2026, phase 3.1) ════════════
@@ -591,8 +831,11 @@ function load(){
        personne ne touche à rien, le prochain chargement en repose d'autres : c'est sans
        conséquence, rien ne dépend d'un `id` stable d'une session à l'autre. */
     _foodLogIdentifier(S.foodLog);
+    /* 🗑️ NUT-SYNC-01 — le registre des suppressions volontaires fait foi sur le journal : une ligne supprimée ne revient pas, même si le journal n'a pas pu être réécrit après. */
+    try{ S.foodSupprimes=_foodSupprimesNormaliser(JSON.parse(localStorage.getItem('ft4_food_supprimes')||'[]')); }catch(e){ S.foodSupprimes=[]; }
+    _foodAppliquerSuppressions();
     S.savedFoods=JSON.parse(localStorage.getItem('ft4_savedfoods')||'[]');
-    S.hiddenFoods=JSON.parse(localStorage.getItem('ft4_hiddenfoods')||'[]');
+    S.hiddenFoods=_nutMasquesNormaliser(JSON.parse(localStorage.getItem('ft4_hiddenfoods')||'[]'));   // NV2-FIAB : des dates de départ
     S.foodAiUses=parseInt(localStorage.getItem('ft4_foodai')||'0')||0;
     /* 🫙 LES TROIS POTS SÉPARÉS + LEUR MIGRATION (19/09/2026, phase 3.1).
        ⚠️ `null` VOLONTAIRE quand la clé n'existe pas : c'est le signal « ce pot n'a jamais
@@ -755,6 +998,53 @@ function _ecrireSessionsLocal(){
     return false;
   }
 }
+/* ⛔⛔ NUT-REF-HIST-02 (3B) — LE JOURNAL ALIMENTAIRE A SON ÉCRIVAIN, ET IL DIT S'IL A ÉCRIT.
+   MESURÉ (sondes du 30-31/10/2026, quota simulé) : `persist()` écrit ~98 clés dans UN SEUL `try`, sans valeur de retour, et
+   `ft4_foodlog` y est la 77ᵉ. Trois conséquences, toutes silencieuses :
+     · le journal échoue → le repli quota réécrit `ft4_sessions` à 50 séances et pose `ft4_hist_tronque`, alors que les
+       séances avaient DÉJÀ été écrites en entier juste avant : une panne de la NUTRITION tronquait l'historique de SÉANCES
+       sur le téléphone (et coupait leur envoi au cloud jusqu'à une restauration) ;
+     · une clé antérieure échoue (photos d'exercices, par exemple) → le journal n'est JAMAIS essayé : la mémoire a le repas,
+       le disque non, et personne n'en sait rien ;
+     · tous les écrivains Nutrition annonçaient « ajouté ✅ » sans le savoir.
+   👉 UN SEUL propriétaire de la clé (R2), qui rend un résultat EXPLICITE — le même geste que `_ecrireSessionsLocal` (ft-v1092) :
+   `true` seulement si `setItem` a ABOUTI (une clé est atomique : elle porte l'ancienne valeur ou la nouvelle) ; `false` sinon,
+   et alors le disque n'a PAS bougé. Elle ne lève jamais, n'écrit aucune autre clé, n'annonce rien (l'appelant parle) — et surtout
+   elle NE DÉCLENCHE PAS le repli des séances : une panne du journal n'est pas une panne des séances.
+   ⛔ Mode démo : on n'écrit rien PAR CONCEPTION, ce n'est pas une panne → `true`.
+   `_journalSeq` compte les TENTATIVES et `_journalOk` garde la dernière issue : l'appelant compare avant/après, donc une issue
+   ancienne ne peut jamais passer pour celle de CETTE sauvegarde (« non tentée » = « non confirmée »). */
+let _journalSeq=0, _journalOk=null;
+function _ecrireJournalLocal(){
+  _journalSeq++;
+  if(window._demoMode){ _journalOk=true; return true; }
+  try{ localStorage.setItem('ft4_foodlog',JSON.stringify(S.foodLog||[])); _journalOk=true; return true; }
+  catch(e){
+    _journalOk=false;
+    console.warn('[FT journal] écriture locale refusée',e);
+    try{ if(typeof _logErr==='function')_logErr({m:'ft4_foodlog non écrit : '+String((e&&e.message)||e).slice(0,120)}); }catch(_){}
+    return false;
+  }
+}
+/* L'issue de la DERNIÈRE tentative d'écriture du journal : `{seq, ok}` (`ok` : true / false / null = jamais tenté). */
+function _journalEtat(){ return {seq:_journalSeq, ok:_journalOk}; }
+/* ⚙️⚙️ NUT-SYNC-02 phase A (02/11/2026) — LES CLÉS NUTRITION ANNEXES NE FONT PLUS JAMAIS RÉDUIRE LES SÉANCES.
+   Le lot 3B a isolé le journal (`ft4_foodlog`) et le registre (`ft4_food_supprimes`). Il restait, DANS les deux `try` communs de `persist()`, les favoris (`ft4_savedfoods`), les masquages (`ft4_hiddenfoods`), le plan de repas (`ft4_mealplan`) et les
+   quatre compteurs de l'IA nutritionnelle (`ft4_foodai*`) : le navigateur ne dit pas QUELLE clé a dépassé le quota, donc un échec de l'une d'elles déclenchait le repli (`_persistRepli`) — séances ramenées à 50. Même geste que le journal : chacune est
+   écrite par CE helper, à sa place EXACTE (l'ordre des écritures est la priorité d'écriture — G2b l'épingle, octet pour octet), et son échec est avalé ici : il ne lève pas, n'atteint pas le `catch` commun, ne déclenche PAS le repli. `true` seulement si
+   `setItem` a abouti. Les clés refusées sont gardées (`_nutClesRefusees`) : l'appelant et les bancs peuvent les lire.
+   ⚠️ LIMITE ÉCRITE : les petites clés de réglage Nutrition (`ft4_diet*`, `ft4_foodmode`, `ft4_fasting`, `ft4_keto`, `ft4_nphase`) restent dans les blocs communs — quelques octets chacune, elles ne sont jamais la clé qui fait dépasser un quota. */
+let _nutRefusees=[];
+function _ecrireCleNutrition(cle,valeur){
+  try{ localStorage.setItem(cle,valeur); return true; }
+  catch(e){
+    _nutRefusees.push(cle); if(_nutRefusees.length>40) _nutRefusees.shift();
+    try{ console.warn('[FT nutrition] écriture locale refusée : '+cle,e); }catch(_){}
+    try{ if(typeof _logErr==='function')_logErr({m:cle+' non écrit : '+String((e&&e.message)||e).slice(0,120)}); }catch(_){}
+    return false;
+  }
+}
+function _nutClesRefusees(){ return _nutRefusees.slice(); }
 /* ⛔⛔ ft-v1094 — DEUX ONGLETS OUVERTS, ET LE DERNIER QUI ÉCRIT EFFACE L'AUTRE.
    `persist()` écrit **tout `S`** d'un coup, depuis la mémoire de l'onglet qui l'appelle. Or
    l'app est une PWA : elle est très souvent ouverte à DEUX endroits en même temps — l'icône
@@ -808,9 +1098,35 @@ function _cmpSeances(a,b){
   return (+(b&&b.ts)||0)-(+(a&&a.ts)||0);
 }
 function _trierSeances(l){ if(Array.isArray(l)) l.sort(_cmpSeances); return l; }
-/* Les N plus récentes (copie, jamais le tableau lui-même), éventuellement filtrées. */
+
+/* 🚶 « AUTRE ACTIVITÉ » (05/11/2026, mission de Michel — `docs/AUTRE-ACTIVITE-CALORIES.md`) — LE PRÉDICAT EST ICI, ET IL N'Y EN A QU'UN (R2).
+   Une activité hors musculation (marche, randonnée, vélo…) vit DANS `S.sessions` (bloc `autre`), pas dans un tableau à part :
+   le Code.js déployé jette tout champ racine qu'il ne connaît pas (mesuré par exécution), alors qu'il garde tel quel ce qui est
+   DANS une séance — cloud, restauration, sauvegarde Drive et export suivent sans redéploiement.
+   ⛔ Conséquence à connaître : tout lecteur de `S.sessions` qui COMPTE « des séances » compterait une marche comme une séance
+   (mesuré : 9 marches font passer les glucides de 377 à 371 g, proposent « Passer en Actif » et fabriquent une question de Milo).
+   Les lecteurs « séance » passent donc par `_seancesTrain()` ; seuls l'historique, le calendrier, les bilans, Milo (bloc dédié)
+   et les exports lisent les activités, et ils le disent. */
+function _estAutre(s){ return !!(s && typeof s==='object' && s.autre && typeof s.autre==='object'); }
+/* Le GENRE d'un enregistrement — DÉRIVÉ de sa structure, jamais stocké pour l'ancien (aucune migration) :
+   'autre' (bloc `autre`) · 'cardio' (aucun exercice et au moins un bloc cardio de durée > 0 : le « cardio seul ») · 'muscu' (tout le reste,
+   y compris un ancien enregistrement vide : défaut conservateur, il se compte comme avant). */
+function _genreSeance(s){
+  if(!s || typeof s!=='object') return 'muscu';
+  if(_estAutre(s)) return 'autre';
+  if(!(s.exs||s.exercises||[]).length){
+    if((s.cardio && +s.cardio.duration>0) || (s.cardioAvant && +s.cardioAvant.duration>0)) return 'cardio';
+  }
+  return 'muscu';
+}
+/* Les séances d'ENTRAÎNEMENT (musculation + cardio) : la liste que lisent tous les compteurs et toutes les règles « séance ».
+   Copie — jamais le tableau lui-même. Sans activité enregistrée, le résultat est identique à `S.sessions` (même contenu, même ordre). */
+function _seancesTrain(){
+  return ((typeof S!=='undefined'&&Array.isArray(S.sessions))?S.sessions:[]).filter(s=>!_estAutre(s));
+}
+/* Les N plus récentes (copie, jamais le tableau lui-même), éventuellement filtrées. ⛔ Sans les activités (voir `_estAutre`). */
 function _seancesRecentes(n, filtre){
-  const l=((typeof S!=='undefined'&&Array.isArray(S.sessions))?S.sessions:[]).filter(x=>x&&(!filtre||filtre(x)));
+  const l=_seancesTrain().filter(x=>x&&(!filtre||filtre(x)));
   l.sort(_cmpSeances);
   return (n==null)?l:l.slice(0,n);
 }
@@ -931,6 +1247,12 @@ function _fusionnerAvecLeDisque(){
     /* 🔑 La fusion peut ramener des lignes de l'AUTRE onglet écrites avant cette version : elles
        repassent donc par le même propriétaire, qui réattribue aussi un `id` en double. */
     _foodLogIdentifier(S.foodLog);
+    /* 🗑️ NUT-SYNC-01 — le registre des suppressions de l'AUTRE onglet s'ajoute au nôtre, puis fait foi : une ligne supprimée dans un onglet ne revient pas par l'autre (la fusion
+       ci-dessus, par ressemblance, peut la ramener depuis le disque ; son identité — désormais déterministe — permet de la retirer).
+       ⛔ La clé de fusion du journal reste la SIGNATURE (décision figée, témoin B-CCCXVI ⑪) : deux repas voulus identiques peuvent encore se confondre ENTRE DEUX ONGLETS — limite
+       connue, hors de cette brique (voir le rapport NUT-SYNC-01). */
+    S.foodSupprimes = _foodSupprimesFusion(S.foodSupprimes, lire('ft4_food_supprimes',[]));
+    _foodAppliquerSuppressions();
     /* Les records sont un OBJET : pour un exercice connu des deux côtés, on garde le plus
        RÉCENT — sinon un onglet resté ouvert écraserait un record battu ailleurs par son
        ancienne valeur, ce qui est précisément la perte qu'on répare. */
@@ -1131,6 +1453,7 @@ function persist(){
   // ⛔ un autre onglet a écrit depuis notre dernière sauvegarde → on ajoute, on n'écrase pas
   if(_ftAutreOnglet){ _ftAutreOnglet=false; _fusionnerAvecLeDisque(); }
   _assurerRunIdSeance();   // LOT 3C : AVANT toute écriture de `ft4_wkt` et du brouillon
+  const _rep={fait:false};   // le repli quota ne joue qu'UNE fois par appel, quelle que soit la phase qui échoue
   try{
     localStorage.setItem('ft4_bw',S.bw);localStorage.setItem('ft4_bar',S.barW);
     localStorage.setItem('ft4_rest',S.defRest);localStorage.setItem('ft4_expandall',S.expandAll?'1':'0');localStorage.setItem('ft4_keto',S.keto?'1':'0');localStorage.setItem('ft4_foodmode',S.foodMode||'');localStorage.setItem('ft4_fasting',S.fasting||'');localStorage.setItem('ft4_gender',S.gender);
@@ -1156,7 +1479,10 @@ function persist(){
        `_seanceOuverte()` (log.js) est le propriétaire unique de la question (R2) ; le repli sert
        aux appels de `persist()` qui pourraient précéder le chargement de log.js. */
     if((typeof _seanceOuverte==='function')?_seanceOuverte():!!(S.wkt&&S.wkt.exs&&S.wkt.exs.length)){
-      localStorage.setItem('ft4_wkt_draft',JSON.stringify(S.wkt));
+      /* ⏱️ SEANCE-REPOS-01 (22/10/2026, décision 3 de Michel — docs/SEANCE-REPOS-01.md) : le brouillon garde la SÉANCE, pas le repos en cours
+         (`S.wkt.repos`, log.js) — il sert à ne pas perdre une séance, et un repos repris d'un brouillon serait un fantôme.
+         Sans repos, le texte est identique à l'octet à `JSON.stringify(S.wkt)`. Coordonné avec Claude Principal (22/10). */
+      localStorage.setItem('ft4_wkt_draft',JSON.stringify(Object.assign({},S.wkt,{repos:undefined})));
     }else{
       localStorage.removeItem('ft4_wkt_draft');
     }
@@ -1239,17 +1565,23 @@ function persist(){
     localStorage.setItem('ft4_bday',S.bday||'');
     localStorage.setItem('ft4_lws',S.lastWeekSummary||'');
     localStorage.setItem('ft4_lms',S.lastMonthSummary||'');
-    localStorage.setItem('ft4_mealplan',JSON.stringify(S.mealPlan||null));
-    localStorage.setItem('ft4_foodlog',JSON.stringify(S.foodLog||[]));
-    localStorage.setItem('ft4_savedfoods',JSON.stringify(S.savedFoods||[]));
-    localStorage.setItem('ft4_hiddenfoods',JSON.stringify(S.hiddenFoods||[]));
+    _ecrireCleNutrition('ft4_mealplan',JSON.stringify(S.mealPlan||null));   // NUT-SYNC-02 phase A : même rang, échec isolé (voir `_ecrireCleNutrition`)
+  }catch(e){ _persistRepli(e, _rep); }
+  /* ⭐ NUT-REF-HIST-02 (3B) — LE JOURNAL ICI, À SA PLACE D'AVANT (l'ordre des clés ne bouge pas : les séances, les records et la séance en
+     cours passent toujours AVANT lui — la priorité d'écriture EST l'ordre), mais HORS du `try` commun : ni une clé qui a échoué plus tôt
+     ne l'empêche d'être essayé, ni son propre échec n'interrompt les clés suivantes ou ne déclenche le repli des séances. */
+  _ecrireSuppressionsLocal();   // NUT-SYNC-01 : le registre des suppressions AVANT le journal — si le journal est écrit, les suppressions qu'il suppose le sont aussi
+  _ecrireJournalLocal();
+  try{
+    _ecrireCleNutrition('ft4_savedfoods',JSON.stringify(S.savedFoods||[]));      // NUT-SYNC-02 phase A : ces sept clés Nutrition gardent leur rang, leur échec est isolé
+    _ecrireCleNutrition('ft4_hiddenfoods',JSON.stringify(S.hiddenFoods||[]));
     /* ⛔ L'ANCIEN POT EST TOUJOURS ÉCRIT, ET IL NE BOUGE PLUS : plus personne ne
        l'incrémente, mais le réécrire garde la valeur intacte pour un appareil resté sur
        l'ancienne version et pour la restauration. *On gèle une donnée, on ne l'efface pas.* */
-    localStorage.setItem('ft4_foodai',String(S.foodAiUses||0));
-    localStorage.setItem('ft4_foodai_label',String(S.foodLabelAiUses||0));
-    localStorage.setItem('ft4_foodai_meal', String(S.foodMealEstimateAiUses||0));
-    localStorage.setItem('ft4_foodai_bc',   String(S.foodBarcodeAiUses||0));
+    _ecrireCleNutrition('ft4_foodai',String(S.foodAiUses||0));
+    _ecrireCleNutrition('ft4_foodai_label',String(S.foodLabelAiUses||0));
+    _ecrireCleNutrition('ft4_foodai_meal', String(S.foodMealEstimateAiUses||0));
+    _ecrireCleNutrition('ft4_foodai_bc',   String(S.foodBarcodeAiUses||0));
     localStorage.setItem('ft4_health',JSON.stringify(S.healthProfile||null));
     localStorage.setItem('ft4_bodystudy',JSON.stringify(S.bodyStudy||null));
     localStorage.setItem('ft4_bodystudies',JSON.stringify(S.bodyStudies||[]));
@@ -1265,29 +1597,40 @@ function persist(){
     localStorage.setItem('ft4_a11y',S.a11y?'1':'0');
     localStorage.setItem('ft4_cb',S.colorblind||'');
     localStorage.setItem('ft4_lh',S.leftHand?'1':'0');
-  }catch(e){
-    if(e&&(e.name==='QuotaExceededError'||e.name==='NS_ERROR_DOM_QUOTA_REACHED'||e.code===22)){
-      try{
-        // Fallback : allège les sessions à 50 et réessaie les clés critiques
-        // ⚠️ 02/08 : on POSE UN DRAPEAU. Sans lui, au redémarrage suivant l'app ne connaissait
-        // plus que 50 séances, les renvoyait au serveur, et le cloud était écrasé par la version
-        // tronquée — alors que le message ci-dessous promet l'inverse. Tant que ce drapeau est
-        // levé, `_cloudSync` n'envoie PLUS les séances (règle d'or n°1 : zéro perte).
-        localStorage.setItem('ft4_sessions',JSON.stringify((S.sessions||[]).slice(0,50)));
-        localStorage.setItem('ft4_hist_tronque','1'); S.histTronque=true;
-        localStorage.setItem('ft4_prs',JSON.stringify(S.prs));
-        localStorage.setItem('ft4_wkt',JSON.stringify(S.wkt));
-        if(typeof toast==='function')toast('⚠️ Stockage du téléphone plein — seules tes 50 dernières séances restent SUR LE TÉLÉPHONE. Ta sauvegarde en ligne est intacte et protégée : fais « Restaurer » dans Profil pour tout récupérer.','error');
-      }catch(e2){}
-    }else{
-      // 🛡️ Audit 27/07 : une erreur NON-quota était 100 % silencieuse → au moins une trace console
-      try{console.warn('[FT persist] échec de sauvegarde locale :',e);}catch(_){}
-    }
-  }
+  }catch(e){ _persistRepli(e, _rep); }
   // Mise à jour reportée (app.js) : elle ne s'applique QUE sur l'accueil, sans séance en cours ni
   // récapitulatif ouvert — voir `_majPeutSAppliquer`. Une seule décision, un seul endroit (R2).
   try{ if(typeof _appliquerMaj==='function')_appliquerMaj(); }catch(e){}
   _cloudSyncDebounced();
+}
+
+/* ⛔ LE REPLI QUOTA DES SÉANCES — DÉPLACÉ TEL QUEL hors de `persist()` (NUT-REF-HIST-02, 3B), pour que les DEUX phases de `persist()` l'appellent sans le recopier.
+   Sa logique n'a pas bougé d'une ligne : stockage plein → les séances locales ramenées à 50 + `ft4_hist_tronque` (voir `_cloudSync`) + prs + wkt + message.
+   Deux garanties de plus, et seulement elles :
+     · UNE seule fois par appel de `persist()` (`rep.fait`) : un repli destructeur n'a pas à se rejouer parce que la 2ᵉ phase échoue aussi ;
+     · il n'est JAMAIS appelé pour le journal alimentaire (`_ecrireJournalLocal` avale son propre échec) : une panne de la nutrition n'est pas une panne des séances.
+   ⚠️ LIMITE ÉCRITE : il est toujours déclenché par une erreur de quota sur N'IMPORTE QUELLE autre clé (le navigateur ne dit pas laquelle) — comportement d'avant, hors du
+   périmètre du journal. */
+function _persistRepli(e, rep){
+  if(e&&(e.name==='QuotaExceededError'||e.name==='NS_ERROR_DOM_QUOTA_REACHED'||e.code===22)){
+    if(rep && rep.fait) return;
+    if(rep) rep.fait=true;
+    try{
+      // Fallback : allège les sessions à 50 et réessaie les clés critiques
+      // ⚠️ 02/08 : on POSE UN DRAPEAU. Sans lui, au redémarrage suivant l'app ne connaissait
+      // plus que 50 séances, les renvoyait au serveur, et le cloud était écrasé par la version
+      // tronquée — alors que le message ci-dessous promet l'inverse. Tant que ce drapeau est
+      // levé, `_cloudSync` n'envoie PLUS les séances (règle d'or n°1 : zéro perte).
+      localStorage.setItem('ft4_sessions',JSON.stringify((S.sessions||[]).slice(0,50)));
+      localStorage.setItem('ft4_hist_tronque','1'); S.histTronque=true;
+      localStorage.setItem('ft4_prs',JSON.stringify(S.prs));
+      localStorage.setItem('ft4_wkt',JSON.stringify(S.wkt));
+      if(typeof toast==='function')toast('⚠️ Stockage du téléphone plein — seules tes 50 dernières séances restent SUR LE TÉLÉPHONE. Ta sauvegarde en ligne est intacte et protégée : fais « Restaurer » dans Profil pour tout récupérer.','error');
+    }catch(e2){}
+  }else{
+    // 🛡️ Audit 27/07 : une erreur NON-quota était 100 % silencieuse → au moins une trace console
+    try{console.warn('[FT persist] échec de sauvegarde locale :',e);}catch(_){}
+  }
 }
 
 // ─── UTILS ───────────────────────────────────────────────────
@@ -1381,7 +1724,7 @@ function plannedSession(){
     const t=today();
     const days=Math.round((new Date(np.date+'T12:00:00')-new Date(t+'T12:00:00'))/864e5);
     if(isNaN(days)||days<0)return null;
-    const sess=(S.sessions||[]).filter(s=>s.date);
+    const sess=_seancesTrain().filter(s=>s.date);   // 🚶 sans les activités (`_estAutre`) : une marche n'honore pas une séance annoncée
     const lastDate=sess.length?sess.map(s=>s.date).sort().slice(-1)[0]:null;
     if(lastDate&&lastDate>=np.date)return null;   // annonce honorée : la séance a été faite
     return {date:np.date,label:String(np.label||''),days:days};
@@ -1417,7 +1760,7 @@ function seanceManquee(){
     /* ⛔ « MANQUÉE » VEUT DIRE : AUCUNE SÉANCE LE JOUR PRÉVU NI DEPUIS. Si la personne s'est
        entraînée ce jour-là ou après, l'annonce est honorée — c'est exactement la règle que
        `plannedSession()` applique déjà, et elle ne doit exister qu'à un seul endroit (R2). */
-    const sess=(S.sessions||[]).filter(s=>s&&s.date);
+    const sess=_seancesTrain().filter(s=>s&&s.date);   // 🚶 sans les activités (`_estAutre`)
     const lastDate=sess.length?sess.map(s=>s.date).sort().slice(-1)[0]:null;
     if(lastDate&&lastDate>=np.date)return null;
     /* ⛔ ON NE REDEMANDE JAMAIS DEUX FOIS POUR LA MÊME DATE. Une question qu'on ne peut pas
@@ -2147,7 +2490,7 @@ function cycleGlucides(m, kcal){
     /* r̄ = facteur de région MOYEN de SES séances récentes. C'est lui qui rend la neutralité
        exacte : les jours de repos rendent la moyenne de ce que les jours de séance ont pris. */
     const t=(typeof today==='function')?today():new Date().toISOString().slice(0,10);
-    const recentes=(S.sessions||[]).filter(s=>{
+    const recentes=_seancesTrain().filter(s=>{   // 🚶 sans les activités (`_estAutre`) : leur fréquence ne règle pas le cyclage
       if(!s||!s.date) return false;
       const d=Math.round((new Date(t+'T12:00:00')-new Date(s.date+'T12:00:00'))/864e5);
       return d>=0&&d<28;
@@ -2155,7 +2498,7 @@ function cycleGlucides(m, kcal){
     const facteurs=recentes.map(_facteurRegion);
     const rMoy=facteurs.length?facteurs.reduce((a,b)=>a+b,0)/facteurs.length:1;
     const rJour=js.seance
-      ? _facteurRegion((S.sessions||[]).find(s=>s&&s.date===t)||S.wkt||null)
+      ? _facteurRegion(_seancesTrain().find(s=>s&&s.date===t)||S.wkt||null)
       : rMoy;
     // Amplitude, rabotée si le plancher lipidique mord un jour de séance (les deux côtés).
     let D=m.fat_g*_CYCLE_AMPLI;
@@ -2276,9 +2619,9 @@ function _volumeParMoitie(jours){
       const k = Math.round((new Date(t+'T12:00:00') - new Date(d+'T12:00:00'))/864e5);
       if(!(k>=0 && k<j)) return;
       const m = k < j/2 ? 0 : 1;
-      (sess.exs||[]).forEach(e=>(e.sets||[]).forEach(x=>{
-        if(x && x.done!==false && +x.kg>0 && +x.reps>0) v[m]+= (+x.kg)*(+x.reps);
-      }));
+      /* 🧮 F25 (mission Séance du 24/10/2026) — la règle unique du volume de travail (`_volTravail`, log.js) : sa copie ici
+         ignorait la convention unilatérale de la séance ET comptait les échauffements (aucun filtre de type). */
+      v[m]+= (typeof _volTravail==='function') ? _volTravail(sess) : 0;
     });
     return {recent:Math.round(v[0]), avant:Math.round(v[1])};
   }catch(e){ return null; }
@@ -2831,7 +3174,7 @@ function _heureSeance(s){
 function jourSeance(){
   try{
     const t=(typeof today==='function')?today():new Date().toISOString().slice(0,10);
-    const faite=(S.sessions||[]).find(s=>s&&s.date===t);
+    const faite=_seancesTrain().find(s=>s&&s.date===t);   // 🚶 sans les activités (`_estAutre`) : une marche n'est pas un « jour de séance »
     if(faite) return {seance:true, heure:_heureSeance(faite), source:'faite'};
     if(S.wkt && S.wkt.date===t) return {seance:true, heure:_heureSeance(S.wkt), source:'encours'};
     const pl=(typeof plannedSession==='function')?plannedSession():null;

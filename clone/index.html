@@ -25,7 +25,7 @@
    fichier, posée par le générateur) refuse de démarrer et le dit à l'écran.
    ⚠️ Les gardes `window.__FT_CLONE__` du code de l'app (cookie ft_email, identité IDB) en
    dépendent : le drapeau est posé en premier, quoi qu'il arrive.
-   ⚠️ Ce fichier est un MODÈLE : `["", "index.html", "style.css", "manifest.json", "sw.js", "capacites-ia.js", "constants.js", "state.js", "supabase.js", "screens.js", "log.js", "setup.js", "tracking.js", "coach.js", "food-health.js", "app.js"]` et `{"ref": "claude/seance-recette-precedent", "sha": "b1840bc7115ededd435faffd114d8f1d4efb129f", "genere_le": "2026-10-19 22:43 UTC"}` sont remplacés par le
+   ⚠️ Ce fichier est un MODÈLE : `["", "index.html", "style.css", "manifest.json", "sw.js", "capacites-ia.js", "nutrition-v2.js", "constants.js", "state.js", "supabase.js", "screens.js", "log.js", "setup.js", "tracking.js", "coach.js", "food-health.js", "app.js"]` et `{"ref": "claude/integration-autre-activite-2026-11-08", "sha": "3bac5474ca1cbb48917c296637ce887fef83f330", "genere_le": "2026-11-08 17:21 UTC"}` sont remplacés par le
    générateur. Ne pas éditer clone/index.html à la main — régénérer.
    ============================================================================================ */
 (function(){
@@ -34,10 +34,10 @@
   var P = 'cl_', PC = 'cl-';
   var BASE = location.pathname.replace(/[^\/]*$/, '');            // ex. /forcetracker/clone/
   var PARENT = BASE.replace(/[^\/]+\/$/, '');                     // ex. /forcetracker/
-  var PROPRES = ["", "index.html", "style.css", "manifest.json", "sw.js", "capacites-ia.js", "constants.js", "state.js", "supabase.js", "screens.js", "log.js", "setup.js", "tracking.js", "coach.js", "food-health.js", "app.js"];                                // fichiers servis PAR le clone
+  var PROPRES = ["", "index.html", "style.css", "manifest.json", "sw.js", "capacites-ia.js", "nutrition-v2.js", "constants.js", "state.js", "supabase.js", "screens.js", "log.js", "setup.js", "tracking.js", "coach.js", "food-health.js", "app.js"];                                // fichiers servis PAR le clone
   var echecs = [];
   function echec(r){ echecs.push(r); }
-  window.__FT_CLONE_SOURCE__ = {"ref": "claude/seance-recette-precedent", "sha": "b1840bc7115ededd435faffd114d8f1d4efb129f", "genere_le": "2026-10-19 22:43 UTC"};
+  window.__FT_CLONE_SOURCE__ = {"ref": "claude/integration-autre-activite-2026-11-08", "sha": "3bac5474ca1cbb48917c296637ce887fef83f330", "genere_le": "2026-11-08 17:21 UTC"};
 
   /* 1. localStorage / sessionStorage — le prototype commun aux deux. */
   try {
@@ -774,6 +774,9 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
       <div class="la-glow" aria-hidden="true"></div>
       <button class="la-cta1 ft-press" onclick="openExPicker()"><span class="la-cta1-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span><span class="la-cta-t"><b>Séance libre</b><small>Ajoute tes exercices un à un</small></span><svg class="la-arr" viewBox="0 0 24 24" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></button>
       <button class="la-cta2 ft-press" onclick="openProgModal()"><span class="la-cta2-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg></span><span class="la-cta-t"><b>Programme</b><small id="la-prog-sub"></small></span><svg class="la-chev" viewBox="0 0 24 24" aria-hidden="true"><polyline points="9 6 15 12 9 18"/></svg></button>
+      <!-- 🚶 AUTRE ACTIVITÉ (05/11/2026, mission de Michel) — JUSTE SOUS « Programme », même gabarit (`.la-cta2`) : distincte de « Séance libre » et du cardio d'une séance.
+           Marche, vélo, randonnée, course… : aucune série, aucun volume. docs/AUTRE-ACTIVITE-CALORIES.md -->
+      <button class="la-cta2 ft-press" id="la-autre" onclick="openAutreActivite()"><span class="la-cta2-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="19" r="3"/><path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15"/><circle cx="18" cy="5" r="3"/></svg></span><span class="la-cta-t"><b>Autre activité</b><small>Marche, vélo, randonnée, course…</small></span><svg class="la-chev" viewBox="0 0 24 24" aria-hidden="true"><polyline points="9 6 15 12 9 18"/></svg></button>
     </div>
     <div id="la-ctx"></div>
   </div>
@@ -1010,7 +1013,7 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
 
     <!-- ④ La séance du jour -->
     <div style="display:flex;gap:8px;">
-      <div class="nu-stat" style="flex:1;"><span class="nu-stat-lbl"><svg viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;vertical-align:-2px;margin-right:5px;"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5Z"/></svg>Séance</span><span class="nu-stat-val" id="nu-session-cal" style="color:var(--red);">—</span></div>
+      <div class="nu-stat" style="flex:1;"><span class="nu-stat-lbl"><svg viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;vertical-align:-2px;margin-right:5px;"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5Z"/></svg><span id="nu-session-lbl">Séance</span></span><span class="nu-stat-val" id="nu-session-cal" style="color:var(--red);">—</span></div>
       <div class="nu-stat" style="flex:1;"><span class="nu-stat-lbl"><svg viewBox="0 0 24 24" fill="none" stroke="var(--orange)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;vertical-align:-2px;margin-right:5px;"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Cette semaine</span><span class="nu-stat-val" id="nu-week-sess" style="color:var(--orange);">—</span></div>
     </div>
 
@@ -1290,6 +1293,28 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
       <div style="font-size:12.5px;color:var(--t2);line-height:1.5;">Ce que la douane a vu passer <strong>en usage réel</strong> : combien de lignes, combien d'alertes, et <strong>quelles règles ne se déclenchent jamais</strong>. Sert à décider, plus tard, lesquelles pourraient devenir bloquantes. <strong>Aucune donnée de repas n'est gardée</strong> — ni nom, ni quantité, ni calories.</div>
       <button class="btn btn-bg2" onclick="loadDouaneAdmin()" style="padding:11px;font-size:14px;">📊 Voir le rapport</button>
       <div id="admin-douane" style="margin-top:4px;"></div>
+    </div>
+    <!-- 🍽️ INVENTAIRE NUTRITION (22/10/2026, GO limité A2 de Michel : PRÉPARÉ, NON PUBLIÉ sans son accord).
+         Lit les deux routes de diagnostic déployées en lecture seule (A1, Apps Script @192).
+         ⛔ Le jeton part dans le CORPS d'un POST, jamais dans l'adresse. ⛔ Que des nombres. -->
+    <div class="card cp" style="display:flex;flex-direction:column;gap:10px;">
+      <div style="font-weight:700;color:var(--t1);font-size:15px;">🍽️ Inventaire Nutrition</div>
+      <div style="font-size:12.5px;color:var(--t2);line-height:1.5;">Combien de comptes ont un journal alimentaire sur le serveur, combien d'entrées, et ce que disent les <strong>sauvegardes de la nuit</strong>. <strong>Que des nombres</strong> : aucun aliment, aucune adresse. Rien n'est modifié.</div>
+      <button class="btn btn-bg2" onclick="loadNutInventaireAdmin('nutInventory')" style="padding:11px;font-size:14px;">📊 Compter les journaux</button>
+      <button class="btn btn-bg2" onclick="loadNutInventaireAdmin('nutBackupAudit')" style="padding:11px;font-size:14px;">🗄️ Comparer avec les sauvegardes (jusqu'à 5 min)</button>
+      <div id="admin-nutinv" style="margin-top:4px;"></div>
+    </div>
+    <!-- 🧹 NV2-FIAB (24/10/2026, décision de Michel, Q14 → Q17) — REMISE À ZÉRO DES PROPOSITIONS NUTRITION : PRÉPARÉE, JAMAIS
+         AUTOMATIQUE. Favoris, « Déjà noté par toi », récents, repas habituels : ce qui est PROPOSÉ. ⛔ Le journal daté n'est pas
+         touché. Ordre imposé : le périmètre exact → la sauvegarde → l'exécution (confirmée). Réservé à l'admin. -->
+    <div class="card cp" style="display:flex;flex-direction:column;gap:10px;">
+      <div style="font-weight:700;color:var(--t1);font-size:15px;">🧹 Remise à zéro des propositions (Nutrition)</div>
+      <div style="font-size:12.5px;color:var(--t2);line-height:1.5;"><strong>Supprime tes favoris</strong> d'avant — de ce téléphone, puis du serveur (après une copie gardée à part, jamais reproposée) et de tes autres appareils — et ne propose plus « <strong>Déjà noté par toi</strong> », les <strong>récents</strong> ni les <strong>repas habituels</strong> d'avant, même après « Restaurer ». <strong>Ton journal daté n'est pas touché</strong>, ni ses totaux : les propositions renaissent de ce que tu noteras ensuite.</div>
+      <button class="btn btn-bg2" onclick="nutRazPerimetre()" style="padding:11px;font-size:14px;">🔎 Voir le périmètre exact</button>
+      <button class="btn btn-bg2" onclick="nutRazSauvegarder()" style="padding:11px;font-size:14px;">💾 Télécharger la sauvegarde</button>
+      <button class="btn btn-bg2" onclick="nutRazExecuter()" style="padding:11px;font-size:14px;">🧹 Remettre à zéro…</button>
+      <label class="btn btn-bg2" style="padding:11px;font-size:14px;text-align:center;cursor:pointer;">♻️ Rétablir des favoris depuis une sauvegarde<input type="file" accept="application/json,.json" onchange="nutRazRetablir(this)" style="display:none;"></label>
+      <div id="admin-nutraz" style="margin-top:4px;"></div>
     </div>
     <!-- 🍽️ HABITUDES — LA MESURE AVANT LA RÈGLE (17/09/2026, demande de Michel).
          ⛔⛔ CET OUTIL EXISTE PARCE QU'ON REFUSE D'INVENTER UN SEUIL. La règle actuelle de
@@ -1645,13 +1670,7 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
           <div id="act-src-hint" style="display:none;font-size:11.5px;color:var(--gold);margin-top:5px;line-height:1.35;">À confirmer — ancien réglage, peut-être celui par défaut de l'app. Choisis ton niveau puis enregistre.</div>
         </div>
         <div class="fg"><label>Repos défaut</label>
-          <select id="rest-sel">
-            <option value="60">60s</option>
-            <option value="90">90s</option>
-            <option value="120" selected>120s</option>
-            <option value="180">180s</option>
-            <option value="300">300s</option>
-          </select>
+          <select id="rest-sel"><!-- les durées : `reposDefautChoix` (log.js), la même liste que le menu ⋯ de la séance --></select>
         </div>
       </div>
       <div class="fg">
@@ -2381,7 +2400,7 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
       <div class="se-debrief" id="se-debrief"></div>
     </div>
     <div class="se-mood" id="se-mood"></div>
-    <button class="btn btn-red" onclick="closeSessionEnd()" style="width:100%;margin-top:14px;padding:14px;font-size:16px;">Terminer</button>
+    <button class="btn se-fin" onclick="closeSessionEnd()" style="width:100%;margin-top:14px;padding:14px;font-size:16px;">Terminer</button>
     <button class="btn btn-bg2" onclick="closeSessionEnd('coach')" style="width:100%;margin-top:8px;padding:12px;font-size:14px;">💬 Continuer avec Milo</button>
   </div>
 </div>
@@ -2593,8 +2612,8 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
         <div><div style="font-weight:700;font-size:14px">Échauffement</div><div style="font-size:13px;color:var(--t2);margin-top:2px">Série légère de préparation. <strong>Exclue du volume et des PRs.</strong> Timer <strong>selon la charge du palier suivant</strong> : 45 s tant que c'est léger, 90 s à partir de 75 % de ta charge de travail, 2 min à partir de 85 % — jamais plus que ton propre repos. Précède automatiquement la 1ère série si tu as un historique.</div></div>
       </div>
       <div style="display:flex;align-items:flex-start;gap:12px">
-        <span style="font-size:13px;font-weight:800;background:var(--bg3);border:1px solid rgba(240,240,255,.15);color:var(--t3);border-radius:6px;padding:5px 10px;min-width:36px;text-align:center">—</span>
-        <div><div style="font-weight:700;font-size:14px">Normal <span style="font-weight:400;font-size:12px;color:var(--t3)">(défaut, non affiché)</span></div><div style="font-size:13px;color:var(--t2);margin-top:2px">Série de travail standard. <strong>Compte dans le volume et le 1RM.</strong> Timer selon ta préférence.</div></div>
+        <span style="font-size:13px;font-weight:800;background:var(--bg3);border:1px solid rgba(240,240,255,.15);color:var(--t3);border-radius:6px;padding:5px 10px;min-width:36px;text-align:center">N</span>
+        <div><div style="font-weight:700;font-size:14px">Normal <span style="font-weight:400;font-size:12px;color:var(--t3)">(par défaut)</span></div><div style="font-size:13px;color:var(--t2);margin-top:2px">Série de travail standard. <strong>Compte dans le volume et le 1RM.</strong> Timer selon ta préférence.</div></div>
       </div>
       <div style="display:flex;align-items:flex-start;gap:12px">
         <span style="font-size:13px;font-weight:800;background:rgba(255,45,85,.1);border:1px solid rgba(255,45,85,.5);color:var(--red);border-radius:6px;padding:5px 10px;min-width:36px;text-align:center">X</span>
@@ -2604,7 +2623,7 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
     <div style="background:var(--bg3);border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:12px;color:var(--t2);line-height:1.6">
       💡 Le <strong>1RM estimé</strong> s'affiche en temps réel dans la colonne 1RM de chaque série. Le <strong>volume</strong> affiché = séries de travail uniquement (échauffement exclu).
     </div>
-    <div style="font-size:12px;color:var(--t3);text-align:center;margin-bottom:16px">Touche le numéro de la série, en séance, pour changer le tag — le nom s'affiche en toast</div>
+    <div style="font-size:12px;color:var(--t3);text-align:center;margin-bottom:16px">Touche la pastille N / É / X de la série (colonne « Type »), en séance, pour changer le tag — le nom s'affiche en toast</div>
     <div style="border-top:1px solid var(--sep);padding-top:16px;margin-bottom:12px">
       <div style="font-weight:800;font-size:15px;margin-bottom:12px;text-align:center">Chaînes d'exercices</div>
       <div style="font-size:12px;color:var(--t2);margin-bottom:12px;line-height:1.5">Dans le footer d'un exercice, des boutons permettent d'enchaîner automatiquement plusieurs exercices ou séries :</div>
@@ -2705,6 +2724,49 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
       <div style="display:flex;gap:8px;margin-top:14px">
         <button class="btn" id="sd-del-btn" style="flex:1;padding:12px;background:var(--bg3);color:var(--red);border:none" onclick="deleteSessOrConfirm()">🗑️ Supprimer</button>
         <button class="btn btn-red" style="flex:2;padding:12px" onclick="saveSessEdits()">💾 Enregistrer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 🚶 OVERLAY: AUTRE ACTIVITÉ (05/11/2026, mission de Michel) — un seul formulaire pour créer, consulter, modifier ET supprimer (R13 : pas deux chemins).
+     Aucune série, aucune répétition, aucun volume. Les calories suivent la règle commune (estimation FT · valeur de la montre qui la REMPLACE · valeur retenue). -->
+<div class="overlay" id="ov-autre" onclick="if(event.target===this)closeAutreActivite()">
+  <div class="modal" style="max-width:420px;max-height:92dvh;display:flex;flex-direction:column;padding:0;overflow:hidden">
+    <div style="position:sticky;top:0;z-index:5;background:var(--bg2);border-radius:16px 16px 0 0;padding:14px 16px 12px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--sep);flex-shrink:0">
+      <div>
+        <div style="font-weight:700;font-size:17px" id="au-title">Autre activité</div>
+        <div style="font-size:13px;color:var(--t2)" id="au-sub">Marche, vélo, randonnée, course…</div>
+      </div>
+      <button onclick="closeAutreActivite()" aria-label="Fermer" style="width:36px;height:36px;border-radius:50%;background:var(--bg3);border:none;font-size:18px;font-weight:700;color:var(--t2);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;touch-action:manipulation">✕</button>
+    </div>
+    <div style="overflow-y:auto;flex:1;padding:14px 16px 16px">
+      <div style="font-size:12px;font-weight:700;color:var(--t2);margin-bottom:6px;">Quelle activité ?</div>
+      <div id="au-types" style="display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch;scrollbar-width:none;"></div>
+      <div id="au-libelle-wrap" style="display:none;margin-top:8px;">
+        <input type="text" id="au-libelle" maxlength="40" placeholder="Nom de l'activité (facultatif) — ex. Football" aria-label="Nom de l'activité" style="width:100%;box-sizing:border-box;padding:9px 11px;border-radius:10px;border:1px solid var(--sep);background:var(--bg2);color:var(--t1);font-size:15px;font-family:var(--font);">
+      </div>
+      <div style="display:flex;gap:10px;margin-top:12px;">
+        <label style="flex:1;font-size:12px;font-weight:700;color:var(--t2);">Date
+          <input type="date" id="au-date" aria-label="Date de l'activité" style="display:block;width:100%;box-sizing:border-box;margin-top:5px;padding:9px 10px;border-radius:10px;border:1px solid var(--sep);background:var(--bg2);color:var(--t1);font-size:15px;font-family:var(--font);"></label>
+        <label style="flex:1;font-size:12px;font-weight:700;color:var(--t2);">Heure <span style="font-weight:500;color:var(--t3);">(facultatif)</span>
+          <input type="time" id="au-heure" aria-label="Heure de l'activité" style="display:block;width:100%;box-sizing:border-box;margin-top:5px;padding:9px 10px;border-radius:10px;border:1px solid var(--sep);background:var(--bg2);color:var(--t1);font-size:15px;font-family:var(--font);"></label>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:12px;">
+        <label style="flex:1;font-size:12px;font-weight:700;color:var(--t2);">Durée (min)
+          <input type="number" inputmode="numeric" min="1" max="1440" step="1" autocomplete="off" id="au-duree" placeholder="60" oninput="_auSurDuree(this.value)" aria-label="Durée en minutes" style="display:block;width:100%;box-sizing:border-box;margin-top:5px;padding:9px 10px;border-radius:10px;border:1px solid var(--sep);background:var(--bg2);color:var(--t1);font-size:15px;font-weight:700;font-family:var(--font);"></label>
+        <label style="flex:1;font-size:12px;font-weight:700;color:var(--t2);">Distance (km) <span style="font-weight:500;color:var(--t3);">(facultatif)</span>
+          <input type="text" inputmode="decimal" autocomplete="off" id="au-dist" placeholder="5,2" aria-label="Distance en kilomètres" style="display:block;width:100%;box-sizing:border-box;margin-top:5px;padding:9px 10px;border-radius:10px;border:1px solid var(--sep);background:var(--bg2);color:var(--t1);font-size:15px;font-family:var(--font);"></label>
+      </div>
+      <div style="font-size:12px;font-weight:700;color:var(--t2);margin:12px 0 6px;">Intensité <span style="font-weight:500;color:var(--t3);">(facultatif — « modérée » sinon)</span></div>
+      <div id="au-int" style="display:flex;gap:6px;"></div>
+      <div id="au-kcal"></div>
+      <label style="display:block;font-size:12px;font-weight:700;color:var(--t2);margin-top:12px;">Notes <span style="font-weight:500;color:var(--t3);">(facultatif)</span>
+        <textarea id="au-notes" rows="3" maxlength="500" placeholder="Parcours, sensations, météo…" aria-label="Notes" style="display:block;width:100%;box-sizing:border-box;margin-top:5px;padding:9px 11px;border-radius:10px;border:1px solid var(--sep);background:var(--bg2);color:var(--t1);font-size:14px;font-family:var(--font);resize:vertical;"></textarea></label>
+      <div id="au-err" role="alert" aria-live="polite" style="display:none;margin-top:10px;font-size:12.5px;font-weight:600;color:var(--red);line-height:1.4;"></div>
+      <div style="display:flex;gap:8px;margin-top:14px">
+        <button class="btn" id="au-del-btn" style="flex:1;padding:12px;background:var(--bg3);color:var(--red);border:none;display:none" onclick="autreSupprimerOuConfirmer()">🗑️ Supprimer</button>
+        <button class="btn btn-red" id="au-save-btn" style="flex:2;padding:12px" onclick="autreEnregistrer()">💾 Enregistrer</button>
       </div>
     </div>
   </div>
@@ -2942,12 +3004,16 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
          se remplissent en bas, et le réglage qui COMMANDE tout ça restait hors du regard, plus haut.
          ⭐ Placé juste au-dessus des macros qu'il pilote, il sert les DEUX chemins : après un scan
          comme après une recherche, il apparaît là où se porte déjà l'attention. -->
+    <!-- 🔗 NIDT (27/10/2026) — « même aliment déjà identifié dans ton journal ? » : les candidats d'identité (CIQUAL / code-barres) d'une
+         reprise SANS fiche source. Peint par `_n2CandRendre` (app.js) ; vide et caché le reste du temps. Un bouton par candidat,
+         jamais de choix fait à la place de la personne. -->
+    <div id="af-cand-row" style="display:none;background:var(--bg3);border-radius:10px;padding:10px 12px;margin-bottom:14px;"></div>
     <div id="af-bc-row" style="display:none;background:var(--bg3);border-radius:10px;padding:10px 12px;margin-bottom:14px;">
       <div id="af-bc-name" style="font-size:12px;color:var(--t2);margin-bottom:8px;font-weight:600;"></div>
       <div style="display:flex;align-items:center;gap:8px;">
         <span style="font-size:13px;color:var(--t3);">Quantité</span>
-        <input id="af-bc-grams" type="text" inputmode="decimal" step="any" value="100" oninput="_bcQtyPose=true;_bcApplyGrams()" style="flex:1;box-sizing:border-box;padding:9px;border-radius:8px;background:var(--bg2);border:1px solid var(--sep);color:var(--t1);font-size:15px;font-family:var(--font);">
-        <span style="font-size:13px;color:var(--t3);">g</span>
+        <input id="af-bc-grams" type="text" inputmode="decimal" step="any" value="100" oninput="_bcQtyPose=true;_bcQtyOrigine='tapee';_bcApplyGrams()" style="flex:1;box-sizing:border-box;padding:9px;border-radius:8px;background:var(--bg2);border:1px solid var(--sep);color:var(--t1);font-size:15px;font-family:var(--font);">
+        <span id="af-bc-unite" style="font-size:13px;color:var(--t3);">g</span>
       </div>
       <!-- ⚖️⛔⛔ D'OÙ VIENT LE NOMBRE PRÉ-REMPLI (ft-v1105) — Michel, étiquette à l'appui :
            « c'est cette prot là, toujours le même souci ». Le champ se remplit avec
@@ -2987,6 +3053,9 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
            diverger, et on ne saurait plus lequel croire. -->
       <div id="af-bc-total" style="display:none;font-size:12.5px;line-height:1.45;color:var(--green);margin-top:8px;font-weight:600;"></div>
       <div id="af-etat-note" style="display:none;font-size:11.5px;line-height:1.4;color:var(--orange);margin-top:7px;"></div>
+      <!-- 🥗 V2 (jalon 4) — UNE VALEUR CORRIGÉE À LA MAIN SE VOIT, ET SE RETIRE : elle reste quand la quantité change
+           (contrat du 22/10 : une correction n'est jamais effacée par un recalcul) ; « ↺ Revenir au calcul » l'enlève. -->
+      <div id="af-corr" style="display:none;font-size:11.5px;line-height:1.45;color:var(--t2);margin-top:7px;"></div>
     </div>
     <!-- ⚖️ LA QUANTITÉ SUR UNE PHRASE LIBRE (ft-v975) — Michel, devant une huile d'olive estimée
          par l'IA : « je ne peux pas mettre de poids ». Le bloc « Quantité (g) » juste au-dessus
@@ -2998,10 +3067,10 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
          un réglage qui commande des chiffres doit se voir en même temps qu'eux. -->
     <div id="af-prop-row" style="display:none;background:var(--bg3);border-radius:10px;padding:10px 12px;margin-bottom:14px;"></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;">
-      <div><div style="font-size:11px;color:var(--t3);font-weight:700;margin-bottom:4px;">Calories (kcal)</div><input id="af-kcal" type="number" inputmode="numeric" placeholder="0" oninput="_afCoherence()" onchange="_afMajAncre(true)" style="width:100%;box-sizing:border-box;padding:11px;border-radius:10px;background:var(--bg2);border:1px solid var(--sep);color:var(--t1);font-size:15px;font-family:var(--font);"></div>
-      <div><div style="font-size:11px;color:var(--t3);font-weight:700;margin-bottom:4px;">Protéines (g)</div><input id="af-prot" type="number" inputmode="numeric" placeholder="0" oninput="_afCoherence()" onchange="_afMajAncre(true)" style="width:100%;box-sizing:border-box;padding:11px;border-radius:10px;background:var(--bg2);border:1px solid var(--sep);color:var(--t1);font-size:15px;font-family:var(--font);"></div>
-      <div><div style="font-size:11px;color:var(--t3);font-weight:700;margin-bottom:4px;">Glucides (g)</div><input id="af-carbs" type="number" inputmode="numeric" placeholder="0" oninput="_afCoherence()" onchange="_afMajAncre(true)" style="width:100%;box-sizing:border-box;padding:11px;border-radius:10px;background:var(--bg2);border:1px solid var(--sep);color:var(--t1);font-size:15px;font-family:var(--font);"></div>
-      <div><div style="font-size:11px;color:var(--t3);font-weight:700;margin-bottom:4px;">Lipides (g)</div><input id="af-fat" type="number" inputmode="numeric" placeholder="0" oninput="_afCoherence()" onchange="_afMajAncre(true)" style="width:100%;box-sizing:border-box;padding:11px;border-radius:10px;background:var(--bg2);border:1px solid var(--sep);color:var(--t1);font-size:15px;font-family:var(--font);"></div>
+      <div><div style="font-size:11px;color:var(--t3);font-weight:700;margin-bottom:4px;">Calories (kcal)</div><input id="af-kcal" type="number" inputmode="numeric" placeholder="?" oninput="_afSaisieValeur(this)" onchange="_afMajAncre(true)" style="width:100%;box-sizing:border-box;padding:11px;border-radius:10px;background:var(--bg2);border:1px solid var(--sep);color:var(--t1);font-size:15px;font-family:var(--font);"></div>
+      <div><div style="font-size:11px;color:var(--t3);font-weight:700;margin-bottom:4px;">Protéines (g)</div><input id="af-prot" type="number" inputmode="numeric" placeholder="?" oninput="_afSaisieValeur(this)" onchange="_afMajAncre(true)" style="width:100%;box-sizing:border-box;padding:11px;border-radius:10px;background:var(--bg2);border:1px solid var(--sep);color:var(--t1);font-size:15px;font-family:var(--font);"></div>
+      <div><div style="font-size:11px;color:var(--t3);font-weight:700;margin-bottom:4px;">Glucides (g)</div><input id="af-carbs" type="number" inputmode="numeric" placeholder="?" oninput="_afSaisieValeur(this)" onchange="_afMajAncre(true)" style="width:100%;box-sizing:border-box;padding:11px;border-radius:10px;background:var(--bg2);border:1px solid var(--sep);color:var(--t1);font-size:15px;font-family:var(--font);"></div>
+      <div><div style="font-size:11px;color:var(--t3);font-weight:700;margin-bottom:4px;">Lipides (g)</div><input id="af-fat" type="number" inputmode="numeric" placeholder="?" oninput="_afSaisieValeur(this)" onchange="_afMajAncre(true)" style="width:100%;box-sizing:border-box;padding:11px;border-radius:10px;background:var(--bg2);border:1px solid var(--sep);color:var(--t1);font-size:15px;font-family:var(--font);"></div>
     </div>
     <!-- ⛔⛔ LES CALORIES QUI NE COLLENT PAS À LEURS PROPRES MACROS — EN DIRECT (ft-v972).
          Michel : « et en direct, pas au moment de l'enregistrer ». Il avait noté « 30g de
@@ -3048,6 +3117,9 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
     </div>
     <div id="af-coherence" style="display:none;font-size:12px;line-height:1.45;color:var(--orange);background:var(--bg3);border-radius:10px;padding:10px 11px;margin-bottom:10px;"></div>
     <button class="btn btn-red" onclick="addFoodEntry()" style="width:100%;margin-bottom:8px;">✅ Ajouter au journal</button>
+    <!-- NV2-FIAB (24/10, Michel : « une saisie personnelle doit pouvoir être corrigée… sans réécrire le journal ») — visible seulement
+         quand l'écran reprend un FAVORI : il le remplace par ce qui est à l'écran (calculé par le moteur), le journal ne bouge pas. -->
+    <button id="af-fav-maj" class="btn btn-bg2" onclick="majFavoriDepuisEcran()" style="display:none;width:100%;margin-bottom:8px;">⭐ Corriger ce favori avec ces valeurs (ton journal ne change pas)</button>
     <button class="btn btn-bg2" onclick="closeAddFood()" style="width:100%;">Annuler</button>
   </div>
 </div>
@@ -4036,6 +4108,11 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
      ⚠️ AUCUN APPEL RÉSEAU : c'est un `<script>`, pas un `fetch` — l'ouverture reste
      instantanée, même hors ligne (règle d'or 4). -->
 <script src="capacites-ia.js"></script>
+<!-- 🥗 NUTRITION V2 — le moteur (D-096, jalon 4). Il calcule les valeurs consommées, écrit les lignes nouvelles et
+     lit les anciennes SANS les modifier. Pur comme `capacites-ia.js` : aucun écran, aucun stockage, aucun réseau —
+     chargé avant `app.js`, qui est le seul à l'appeler. ⛔ Précaché dans `sw.js` dans le même mouvement (leçon de
+     `supabase.js`). -->
+<script src="nutrition-v2.js"></script>
 <script src="constants.js"></script>
 <script src="state.js"></script>
 <script src="supabase.js"></script>

@@ -52,7 +52,7 @@ function _synthConstantes(refTs){
   const out={pret:false, nSeances:0, nJours:0, lignes:[]};
   try{
     const auj=(typeof today==='function')?today(refTs):null;
-    const sess=(S.sessions||[]).filter(s=>s&&s.date&&(!auj||s.date<=auj));
+    const sess=_seancesTrain().filter(s=>s&&s.date&&(!auj||s.date<=auj));   // 🚶 sans les activités (`_estAutre`) : « ce que ton histoire montre » parle d'entraînement
     out.nSeances=sess.length;
     if(!sess.length) return out;
     const dates=sess.map(s=>s.date).sort();
@@ -302,6 +302,19 @@ function _histoLignes(avecDebriefs){
       const nom=s.name||s.label||'';
       const sid=(typeof _dbfCle==='function')?_dbfCle(s):String(s.id||s.ts||s.date);
       const _n0=out.length;
+      /* 🚶 AUTRE ACTIVITÉ (05/11/2026) — UNE LIGNE `type = ACTIVITE`, jamais une « séance de 0 série ».
+         ⛔ Une activité (marche, vélo…) n'a ni série, ni charge, ni tonnage : son enregistrement porte `exs:[]`, donc sans
+         cette ligne elle serait ABSENTE du fichier (même défaut que le cardio avant le 04/09). La DURÉE va dans `reps`,
+         `kg`/`volume` restent à 0, la distance et l'intensité sont dites dans le libellé (le format du fichier ne change
+         pas : mêmes colonnes que l'onglet `Sessions`, R2/R33). Les calories n'y entrent pas, comme pour le cardio. */
+      if(typeof _estAutre==='function'&&_estAutre(s)){
+        const a=s.autre;
+        out.push({date:s.date, seance:'Autre activité',
+                  exercise:(typeof autreLabel==='function'?autreLabel(a):String(a.type||'Activité'))
+                    +(a.distance!=null&&isFinite(+a.distance)?' — '+String(+a.distance).replace('.',',')+' km':'')
+                    +(a.intensity&&typeof CARDIO_INTENSITES!=='undefined'&&CARDIO_INTENSITES[a.intensity]?' ('+CARDIO_INTENSITES[a.intensity]+')':''),
+                  set_num:1, type:'ACTIVITE', kg:0, reps:+a.duration||0, rir:'', volume:0});
+      }
       /* 🏃 LE CARDIO ENTRE DANS L'EXPORT (04/09/2026). Michel, en regardant son fichier :
          *« il faut que le cardio soit sur l'export de l'historique »*.
          ⛔⛔ IL N'Y ÉTAIT PAS DU TOUT, et pas par oubli de filtrage : ce producteur ne parcourt
@@ -337,9 +350,12 @@ function _histoLignes(avecDebriefs){
              (une répétition a été TENTÉE et n'est pas passée, c'est au-delà de RIR 0), et un
              fichier exporté se relit ailleurs, sans personne pour rattraper la nuance. */
           const r=(typeof _rirDeSet==='function')?_rirDeSet(st):null;
+          /* 🧮 L'export suit la convention de la séance (mission Séance du 24/10/2026) : une série unilatérale notée par
+             côté (`uniConv`) porte le volume des DEUX côtés, comme la séance enregistrée — la colonne kg, elle, reste ce qui
+             a été noté (par côté). Sans ça, la somme des lignes ne refaisait pas le volume de la séance. */
           out.push({date:s.date, seance:nom, exercise:ex.name, set_num:i+1,
                     type:st.type||'N', kg:kg, reps:reps,
-                    rir:(r===null?'':r), volume:Math.round(kg*reps)});
+                    rir:(r===null?'':r), volume:Math.round(kg*reps*_facteurUni(s, ex.name))});
         });
       });
       for(let k=_n0;k<out.length;k++) out[k].seance_id=sid;     // lu seulement par l'export « avec »
@@ -441,7 +457,7 @@ async function exportHistoCsv(){
      empêchait `canShare` de reconnaître le fichier sur iPhone (voir `_donnerFichier`). */
   closeHistoExport();                     // on referme AVANT : la feuille de partage iOS prend la main
   const etat=await _donnerFichier(csv,'forcetracker-historique_'+today()+'.csv','text/csv');
-  _toastFichier(etat, L.filter(r=>r.type!=='DEBRIEF').length, 'séries');
+  _toastFichier(etat, L.filter(r=>r.type!=='DEBRIEF').length, L.some(r=>r.type==='ACTIVITE')?'lignes':'séries');   // avec une activité le fichier n'a plus que des séries : « lignes »
 }
 /* 📤 EXPORTS DATÉS — NUTRITION ET POIDS (02/09/2026) — demande de Michel : « il faudra créer
    un export daté de la nutrition et aussi côté poids ».
@@ -472,9 +488,22 @@ async function _csvFichier(colonnes, lignes, nomCourt, unite){
    elle, toutes les lignes se ressemblent et on ne peut plus juger laquelle croire (R33). */
 /* 🏷️ ft-v1186 — DEUX COLONNES DE PLUS : sans elles, l'export perd exactement l'information
    qu'on vient de sauver — « 2 portions » sans dire de QUOI ne vaut pas mieux qu'avant. */
-const NUTRI_COLONNES = ['date','repas','aliment','quantite','unite','portion_label','portion_poids_g','kcal','proteines_g','glucides_g','lipides_g','saisie','source'];
+const NUTRI_COLONNES = ['date','repas','aliment','quantite','unite','portion_label','portion_poids_g','kcal','proteines_g','glucides_g','lipides_g','saisie','source','statut','valeurs_inconnues',
+  /* 🔎 TRAÇABILITÉ (26/10/2026, après le cas POM'POTES / riz Taureau Ailé) — AJOUTÉES EN FIN : les 15 premières colonnes, leur ordre et leurs
+     valeurs ne bougent pas. `source_id` = l'identité de la ligne telle que STOCKÉE (code-barres, `ciqual:N`…), `*_100` = son pour-100 g / 100 ml
+     tel que stocké (`per100`). ⛔ Une donnée absente sort VIDE — jamais 0, jamais déduite d'un autre champ ni du nom. Décimales à la VIRGULE
+     (Excel FR lit « 388,5 » comme un nombre ; avec un point il lit du texte ou une date). Lecture seule : rien n'est écrit dans le journal. */
+  'source_id','kcal_100','proteines_100','glucides_100','lipides_100'];
+/* Un pour-100 g STOCKÉ, à la française ; absent, illisible ou non fini → '' (jamais 0). */
+function _csvPour100(e, k){
+  const v = e && e.per100 && typeof e.per100 === 'object' ? e.per100[k] : null;
+  return (typeof v === 'number' && isFinite(v)) ? String(v).replace('.', ',') : '';
+}
 async function exportNutritionCsv(){
-  const REPAS = {matin:'Petit-déjeuner', midi:'Déjeuner', soir:'Dîner', collation:'Collation'};
+  /* 🥗 V2 (jalon 4) — LES NOMS DE REPAS SONT CEUX DE L'APP (`FOOD_MEALS`). La table d'avant utilisait des clés
+     qui n'existent pas (matin, midi, soir) : trois repas sur cinq sortaient sous leur clé brute (STR-14).
+     ⛔ Une clé inconnue reste ce qu'elle est — jamais rangée d'office en déjeuner (D-050). */
+  const REPAS = {}; (typeof FOOD_MEALS!=='undefined' ? FOOD_MEALS : []).forEach(m => { REPAS[m.k] = m.lbl; });
   const L = (S.foodLog || [])
     .slice()
     .sort((a,b) => String(b && b.date || '').localeCompare(String(a && a.date || ''))
@@ -489,7 +518,13 @@ async function exportNutritionCsv(){
       proteines_g: (e && e.prot != null) ? e.prot : '',
       glucides_g: (e && e.carbs != null) ? e.carbs : '',
       lipides_g: (e && e.fat != null) ? e.fat : '',
-      saisie: e && e.saisie || '', source: e && e.origine || ''
+      saisie: e && e.saisie || '', source: e && e.origine || '',
+      /* 🥗 V2 : fiable · estimee · declaree pour une ligne V2 ; « ancienne » pour une ligne d'avant V2 (lue telle quelle). */
+      statut: (e && e.n2 && e.n2.st) ? e.n2.st : 'ancienne',
+      valeurs_inconnues: (e && e.n2 && Array.isArray(e.n2.manque)) ? e.n2.manque.join(' ') : '',
+      source_id: (e && typeof e.sourceId === 'string') ? e.sourceId : '',
+      kcal_100: _csvPour100(e, 'kcal'), proteines_100: _csvPour100(e, 'prot'),
+      glucides_100: _csvPour100(e, 'carbs'), lipides_100: _csvPour100(e, 'fat')
     }));
   await _csvFichier(NUTRI_COLONNES, L, 'nutrition', 'lignes');
 }
@@ -525,6 +560,23 @@ function _pdfTexte(t){
     .replace(_PDF_A_TRADUIRE, c=>_PDF_TRADUIT[c])
     .replace(/[^\x00-\xFF\u20AC\u201A\u0192\u201E\u2026\u2020\u2021\u02C6\u2030\u0160\u2039\u0152\u017D\u2018\u2019\u201C\u201D\u2022\u2013\u2014\u02DC\u2122\u0161\u203A\u0153\u017E\u0178]/g,'');
 }
+/* 🧾 F23 (mission Séance du 24/10/2026) — L'EN-TÊTE DU PDF COMPTE DES SÉANCES ET DES JOURS, SÉPARÉMENT. Il comptait les
+   DATES et les appelait « séances » : deux séances le même jour en faisaient une. Une séance = sa clé (`seance_id`, posée
+   sur chaque ligne par `_histoLignes`) ; un jour d'entraînement = une date. Les séries restent les lignes de séries. */
+/* Les comptes d'un export, UN SEUL propriétaire (R2) : l'en-tête du PDF et le message de fin le lisent tous les deux. Les activités (type ACTIVITE) ne sont NI des séances NI des
+   séries : elles se comptent à part. */
+function _histoCompte(L){
+  const LS=L.filter(r=>r.type!=='ACTIVITE'), LA=L.filter(r=>r.type==='ACTIVITE');
+  return {seances:new Set(LS.map(r=>r.seance_id||r.date)).size, jours:new Set(L.map(r=>r.date)).size,
+          series:LS.filter(r=>r.type!=='CARDIO'&&r.type!=='DEBRIEF').length, activites:LA.length};
+}
+function _histoEntete(L){
+  const C=_histoCompte(L), seances=C.seances, jours=C.jours, series=C.series;
+  // sans activité, la phrase est mot pour mot celle d'avant
+  return seances+' séance'+(seances>1?'s':'')+(C.activites?' · '+C.activites+' activité'+(C.activites>1?'s':''):'')
+    +' sur '+jours+' jour'+(jours>1?'s':'')+' d\'entraînement · '
+    +series+' série'+(series>1?'s':'')+' · exporté le '+new Date().toLocaleDateString('fr-FR');
+}
 async function exportHistoPdf(){
   const L=_histoLignes();
   if(!L.length){ toast('Aucune séance à exporter','info'); return; }
@@ -539,8 +591,7 @@ async function exportHistoPdf(){
     doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(120);
     /* ⛔ LE DOCUMENT DIT CE QU'IL CONTIENT ET CE QU'IL NE CONTIENT PAS — il va sortir de l'app
        (mail, coach, kiné) et il doit se lire seul, sans l'app à côté. */
-    const seances=[...new Set(L.map(r=>r.date))].length;
-    doc.text(seances+' séances · '+L.length+' séries · exporté le '+new Date().toLocaleDateString('fr-FR'),M,y); y+=12;
+    doc.text(_histoEntete(L),M,y); y+=12;
     doc.text('Séries validées uniquement. Aucune donnée de santé (ni poids de corps, ni âge, ni sexe).'
       +(_histoAvecDebriefs?' Débriefs Milo inclus, sous leur séance.':''),M,y); y+=6;
     doc.setTextColor(0);
@@ -618,7 +669,10 @@ async function exportHistoPdf(){
        plus donner le même résultat, et on ne sait plus laquelle croire.* */
     closeHistoExport();                   // avant le partage : la feuille iOS prend la main
     const etat=await _donnerFichier(doc.output('blob'), nom, 'application/pdf');
-    _toastFichier(etat, seances, 'séances');
+    /* ⛔⛔ CORRIGÉ LE 05/11/2026 (mesuré sur la version publiée ft-v1263) : cette ligne lisait `seances`, une variable qui n'existe QUE dans `_histoEntete` — `ReferenceError`,
+       attrapé par le `catch` plus bas : le PDF était bien remis, puis l'app affichait « Export PDF impossible ». Le message lit maintenant le propriétaire des comptes. */
+    const _C=_histoCompte(L);
+    _toastFichier(etat, _C.seances, 'séance'+(_C.seances>1?'s':'')+(_C.activites?' et '+_C.activites+' activité'+(_C.activites>1?'s':''):''));
     return;
   }catch(e){ toast('Export PDF impossible','error'); }
   closeHistoExport();
@@ -875,7 +929,7 @@ function goSessionsHistory(cles){
   _sessCibles=Array.isArray(cles)?cles.filter(k=>k!=null&&k!==0):[];
   const vis=_sessCibles.length?(S.sessions||[]).filter(s=>_sessCibles.indexOf(s.ts||s.id||0)>=0):[];
   const mois=vis.length?vis.map(_sessMoisDe):[_sessMoisDe({date:today()})];
-  _sessFiltres=[];
+  _sessFiltres=[]; _sessGenre='';   // 🚶 la porte montre TOUT : l'enregistrement visé (peut-être une activité) ne doit jamais être filtré
   _sessOuvrir(mois);
   _progTab='seances'; _progCibleNav=true;
   goScreen('progress',document.getElementById('nb-progress'));
@@ -1034,10 +1088,173 @@ function showChartTooltip(i){
 // ─── SESSION DETAIL / EDIT ───────────────────────────────────
 let _sessId=null,_sessEdits=null,_sdDelConfirm=false,_sdDelTimer=null;
 
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+   📨 NUT-SYNC-01 FINAL — L'ACCUSÉ DE RÉCEPTION DU SERVEUR. Trois états de la suppression, jamais confondus (voir `_foodSupprimesNormaliser`) : en attente · confirmée · rejetée.
+   ⛔ Règles : « Synchronisation réussie » n'est JAMAIS affiché sur une requête sans accusé valide (il n'existe d'ailleurs aucun message de succès ici) · une suppression non confirmée n'est
+   JAMAIS effacée · un échec se dit clairement mais sans spammer (un message par cause toutes les 10 minutes, sauf un conflit : chaque conflit est une information nouvelle).
+   ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
+const _N_MSG_SYNC_DIFFEREE='Une suppression est gardée sur ce téléphone : le registre des suppressions du compte est plein. Le repas reste visible sur tes autres appareils tant qu\'elle n\'est pas enregistrée. Rien n\'est perdu, et tes autres repas se synchronisent normalement.';
+const _N_MSG_SYNC_INCOMPAT='Cette version de l\'application ne peut plus synchroniser la Nutrition avec ton compte. Rien n\'est perdu : tes repas restent sur ce téléphone. Ferme puis rouvre l\'application pour la mettre à jour.';
+const _N_MSG_SYNC_INTERNE='La synchronisation Nutrition a rencontré une erreur côté serveur. Rien n\'est perdu, elle sera retentée.';
+const _N_MSG_SYNC_SUSPENDUE='La synchronisation Nutrition est suspendue momentanément (maintenance). Rien n\'est perdu : tes repas et tes suppressions restent sur ce téléphone et partiront dès la reprise.';
+const _N_MSG_SYNC_ZONE='Synchronisation Nutrition incomplète : la sauvegarde de sécurité du serveur est indisponible. Rien n\'est perdu, elle sera retentée.';
+const _N_MSG_SYNC_ATTENTE='Suppression pas encore confirmée par le serveur : elle est gardée sur ce téléphone et sera renvoyée.';
+const _N_MSG_SYNC_CONFLIT='Ce repas a été modifié sur un autre appareil en même temps : les deux versions sont gardées dans ton journal. Supprime celle que tu ne veux pas.';
+const _N_MSG_SYNC_SUPPRIME_AILLEURS='Un repas que tu venais de modifier avait été supprimé sur un autre appareil : il a été retiré d\'ici.';
+const _nutAvertis=Object.create(null);
+/* `dureeMs` : le silence entre deux messages de la MÊME cause (10 minutes par défaut ; un état durable comme « registre plein » ne se répète pas toutes les 10 minutes). */
+function _nutAvertir(code,msg,dureeMs){
+  const t=Date.now();
+  if(_nutAvertis[code] && t-_nutAvertis[code]<(dureeMs||600000)) return;
+  _nutAvertis[code]=t;
+  try{ toast(msg,'error'); }catch(e){}
+}
+/* ⚙️ NUT-SYNC-02 phase A — LA REPRISE. `_nutAConfirmer` : la dernière synchronisation n'a PAS reçu d'accusé valide (réseau coupé, serveur occupé, erreur réessayable) — vrai tant qu'un accusé valide n'est pas revenu. Il sert au retour réseau et au retour
+   à l'écran (voir plus bas) : ce sont les SEULS déclencheurs qu'un iPhone permet quand l'application est fermée ou en veille — aucune synchronisation en arrière-plan n'est promise, ni faite. */
+let _nutAConfirmer=false;
+let _nutRelance={n:0,timer:null};
+/* Une nouvelle tentative PLANIFIÉE à TEMPORISATION CROISSANTE : 30 s, 1 min, 2 min, 5 min, puis toutes les 15 min (avant : 5 fois 30 s, puis plus rien jusqu'à la prochaine action). Tant que l'application est ouverte, le réseau ou le serveur peuvent
+   revenir sans que la personne touche à rien ; fermée, aucun minuteur ne survit — la reprise se fait alors à la réouverture. Elle repart de zéro dès qu'un accusé valide revient (`_nutRelance.n=0`). */
+const _NUT_RELANCES_MS=[30000,60000,120000,300000,900000];
+function _nutDelaiRelance(n){ return _NUT_RELANCES_MS[Math.max(0,Math.min(n,_NUT_RELANCES_MS.length-1))]; }
+function _nutPlanifierRelance(){
+  if(_nutRelance.timer) return;
+  const n=_nutRelance.n; _nutRelance.n=n+1;
+  _nutRelance.timer=setTimeout(function(){ _nutRelance.timer=null; try{ _cloudSync(); }catch(e){} },_nutDelaiRelance(n));
+}
+/* Pas d'accusé valide (réseau coupé, réponse illisible, ce n'est pas la réponse à CETTE requête) : on ne SAIT pas. Rien n'est confirmé, rien n'est effacé. */
+function _nutNonConfirme(envoi,code){
+  _nutAConfirmer=true;
+  if(_foodSupprimesEnAttente().length){ _nutAvertir('ATTENTE',_N_MSG_SYNC_ATTENTE); _nutPlanifierRelance(); }
+  return 'non_confirme';
+}
+function _nutTraiterReponse(d,envoi){
+  if(!d || typeof d!=='object' || d.requestId!==envoi.requestId) return _nutNonConfirme(envoi,'ACCUSE_ABSENT');
+  const sup=new Set(envoi.sup||[]);
+  if(d.ok!==true){
+    const code=String(d.code||'REFUS').replace(/[^0-9A-Za-z_]/g,'').slice(0,40)||'REFUS';
+    if(d.retryable===true){                                    // verrou occupé, zone de sécurité indisponible, erreur interne… : réessayable, rien n'est rejeté, rien n'est confirmé
+      _nutAConfirmer=true;
+      if(code==='NUT_ZONE_DRIVE') _nutAvertir(code,_N_MSG_SYNC_ZONE);
+      if(code==='NUT_INTERNE') _nutAvertir(code,_N_MSG_SYNC_INTERNE);
+      if(code==='NUT_SUSPENDU') _nutAvertir(code,_N_MSG_SYNC_SUSPENDUE,10800000);   // NUT-SYNC-02 correction : suspension voulue côté serveur — au plus un message toutes les 3 heures ; les opérations en attente restent en attente
+      _nutPlanifierRelance();
+      return 'refuse_reessayable';
+    }
+    if(code!=='REFUS' && d.status==='nut_refuse'){             // refus explicite et définitif DU VOLET (ex. version incompatible) : RIEN n'est confirmé et RIEN n'est effacé — les suppressions restent en attente, intactes (NUT-SYNC-02 phase A : plus de marquage « rejetée »)
+      _nutAConfirmer=true;
+      if(code==='NUT_CLIENT_INCOMPATIBLE') _nutAvertir(code,_N_MSG_SYNC_INCOMPAT,86400000);
+      return 'refuse';
+    }
+    return _nutNonConfirme(envoi,code);                        // erreur serveur sans code métier : non confirmé
+  }
+  /* ✅ ACCUSÉ VALIDE (ok:true, notre requestId). */
+  _nutRelance.n=0; _nutAConfirmer=false;
+  /* 🪞 MIROIR, FAVORIS ET MASQUAGES (finalisation Nutrition, 03/11/2026) — du MÊME volet que le journal : Apps Script les refuse ou les suspend avec lui, et un envoi qu'il n'a pas acquitté n'est pas une sauvegarde. Ils n'arrivent donc au miroir QU'ICI, et seulement si
+     l'accusé rend compte du volet (`d.nut` : Apps Script l'a APPLIQUÉ). Ce sont les deux listes que CET envoi portait. Tout refus (suspension, version incompatible, zone de sécurité, erreur interne, verrou), toute réponse illisible ou sans notre `requestId` est sorti plus
+     haut : le miroir n'en reçoit rien, et rattrape à l'accusé valide suivant (chaque envoi porte les listes entières). Placé ICI, avant le traitement des conflits : il ne dépend de rien d'autre que de la validité de l'accusé. */
+  try{ if(d.nut && typeof d.nut==='object' && envoi.favoris && typeof sbEnvoyerFavoris==='function') sbEnvoyerFavoris(envoi.favoris.savedFoods,envoi.favoris.hiddenFoods); }catch(e){}
+  const nut=(d.nut && typeof d.nut==='object') ? d.nut : {};
+  let journal=false, registre=false, conflits=0, retires=0;
+  const maintenant=Date.now();
+  /* ⭐⭐ NUT-SYNC-02 phase A — UNE SUPPRESSION N'EST CONFIRMÉE QUE SI LE SERVEUR LA NOMME. Avant : un accusé valide confirmait TOUT ce qui avait été envoyé — y compris ce qu'un serveur n'avait pas pu inscrire. Maintenant : `nut.tomb.ok` liste les identités
+     désormais au registre (déjà connues ou ajoutées) ; `nut.tomb.diff` celles qui n'ont pas pu l'être (`{i, code}`, ex. NUT_TOMBSTONE_LIMIT : registre plein). Une entrée envoyée qui n'est dans AUCUNE des deux listes (accusé tronqué, serveur plus ancien sans `tomb`)
+     reste EN ATTENTE. Une différée garde son code (`x`), n'est jamais effacée, et repart à chaque synchronisation. Le repas, lui, ne bloque rien : le reste du volet a été appliqué par le serveur. */
+  const tomb=(nut.tomb && typeof nut.tomb==='object' && nut.tomb.v===1) ? nut.tomb : null;
+  if(tomb){
+    const okSet=new Set(Array.isArray(tomb.ok)?tomb.ok.filter(x=>typeof x==='string'):[]);
+    const difMap=new Map((Array.isArray(tomb.diff)?tomb.diff:[]).filter(x=>x && typeof x.i==='string').map(x=>[x.i,String(x.code||'DIFFERE').replace(/[^0-9A-Za-z_]/g,'').slice(0,40)||'DIFFERE']));
+    S.foodSupprimes=_foodSupprimesNormaliser(S.foodSupprimes).map(e=>{
+      if(!sup.has(e.i)) return e;
+      if(difMap.has(e.i)){ if(!e.c && e.x!==difMap.get(e.i)){ registre=true; return Object.assign({},e,{x:difMap.get(e.i)}); } return e; }
+      if(okSet.has(e.i) && (!e.c || e.x)){ registre=true; const o=Object.assign({},e,{c:maintenant}); delete o.x; return o; }
+      return e;
+    });
+    /* La GUÉRISON : le serveur annonce MOINS d'entrées que l'appareil n'en a confirmé — il en a perdu (compte restauré d'une ancienne sauvegarde). Il ne perd jamais une entrée de lui-même : l'écart est l'anomalie. Les confirmées repassent « en attente »,
+       repartent au prochain envoi, et sont confirmées de nouveau (ou différées) par l'accusé suivant. */
+    const nConf=S.foodSupprimes.filter(e=>e.c).length;
+    if(Number.isSafeInteger(Number(tomb.n)) && Number(tomb.n)<nConf){
+      S.foodSupprimes=S.foodSupprimes.map(e=>{ if(!e.c) return e; const o=Object.assign({},e); delete o.c; return o; });
+      registre=true; try{ _cloudSyncDebounced(); }catch(e){}
+    }
+    if(difMap.size) _nutAvertir('DIFFEREE',_N_MSG_SYNC_DIFFEREE,86400000);   // un état durable (jusqu'à la phase B) : au plus un message par jour
+  }else if(sup.size){
+    _nutAvertir('ATTENTE',_N_MSG_SYNC_ATTENTE);                              // serveur qui n'annonce pas ses suppressions : rien n'est confirmé
+  }
+  const parId=new Map(); (S.foodLog||[]).forEach(l=>{ if(l && typeof l.id==='string') parId.set(l.id,l); });
+  (Array.isArray(nut.acks)?nut.acks:[]).forEach(a=>{                                       // la révision du serveur : jamais en arrière
+    const l=a && parId.get(a.i);
+    if(l && Number.isSafeInteger(a.r) && a.r>=0 && a.r>=(Number.isSafeInteger(l.rev)?l.rev:0) && l.rev!==a.r){ l.rev=a.r; journal=true; }
+  });
+  (Array.isArray(nut.conflits)?nut.conflits:[]).forEach(c=>{                               // DEUX modifications du même repas : on garde les deux
+    const l=c && parId.get(c.i); if(!l || !c.ligne || typeof c.ligne!=='object') return;
+    if(_empreinteFood(l)===_empreinteFood(c.ligne)) { if(Number.isSafeInteger(c.r) && l.rev!==c.r){ l.rev=c.r; journal=true; } return; }   // déjà identiques
+    const copie=JSON.parse(JSON.stringify(l)); delete copie.rev; delete copie.modifiedAt; copie.id=_foodLineId();                       // la version de la PERSONNE devient un repas neuf
+    const k=S.foodLog.indexOf(l);
+    S.foodLog[k]=Object.assign({},c.ligne);                                                // la ligne d'origine reprend la version du serveur (avec sa révision)
+    S.foodLog.push(copie); conflits++; journal=true;
+  });
+  (Array.isArray(nut.rejets)?nut.rejets:[]).forEach(r=>{                                   // modifié ici, supprimé ailleurs : la suppression gagne, la ligne part
+    if(r && r.code==='NUT_ENTRY_DELETED' && parId.has(r.i)){
+      S.foodSupprimes=_foodSupprimesFusion(S.foodSupprimes,[{i:r.i,t:maintenant}],true); registre=true; retires++;
+    }
+  });
+  if(retires){ _foodAppliquerSuppressions(); journal=true; }
+  /* ⚙️ NUT-SYNC-03 (A2) — UN ACCUSÉ QUI N'APPREND QU'UNE RÉVISION NE RELANCE PAS UN ENVOI COMPLET. Avant : `_journalPersister()` → `persist()` → `_cloudSyncDebounced()` : chaque accusé qui faisait avancer une révision
+     déclenchait, 4 s plus tard, un 2ᵉ envoi de tout le profil (mesuré : 11 envois au lieu de 6 pour 6 gestes ; +83 % de données, sans rien à dire au serveur — il connaît déjà ces révisions). Maintenant : on ÉCRIT sur le
+     téléphone ce que l'accusé a changé (le registre AVANT le journal, comme `persist()`, et avec le même statut d'écriture `_journalOk`) sans toucher au minuteur de synchronisation.
+     ⛔ CE QUI DOIT ENCORE REPARTIR REPART : un conflit (la copie de la personne devient un repas neuf que le serveur n'a pas) et la guérison du registre demandent chacun leur envoi, plus bas et plus haut — inchangés.
+     Un repas retiré parce que supprimé ailleurs n'en demande pas : sa suppression vient du COMPTE, donc elle est déjà marquée confirmée (`_foodSupprimesFusion(…,true)`) — mesuré : la mutation « on ne renvoie plus » ne fait
+     rougir aucun témoin. Une VRAIE modification en attente n'est pas touchée : elle a déjà son minuteur (ou sa demande gardée si un envoi est en vol). */
+  if(journal||registre){
+    /* ⛔ LA FUSION « DEUX ONGLETS » DE `persist()` (ft-v1094) : un autre onglet a écrit sur le disque depuis notre dernière sauvegarde → on AJOUTE, on n'écrase pas. Sans elle, cet accusé aurait réécrit le journal depuis la mémoire
+       de CET onglet et effacé le repas que l'autre venait d'y mettre (relu par une relecture indépendante, reproduit). Si la fusion a ramené des lignes, elles repartent comme avant (`persist()` finissait toujours par une synchro différée). */
+    const fusion=_ftAutreOnglet; if(fusion){ _ftAutreOnglet=false; try{ _fusionnerAvecLeDisque(); }catch(e){} }
+    if(registre) _ecrireSuppressionsLocal();
+    if(journal){ try{ _ecrireJournalLocal(); }catch(e){} }
+    if(fusion){ try{ _cloudSyncDebounced(); }catch(e){} }
+  }
+  if(journal){ try{ if(typeof renderFoodJournal==='function') renderFoodJournal(); }catch(e){} }
+  if(conflits){ try{ toast(_N_MSG_SYNC_CONFLIT,'error'); }catch(e){} try{ _cloudSyncDebounced(); }catch(e){} }
+  if(retires){ try{ toast(_N_MSG_SYNC_SUPPRIME_AILLEURS,'error'); }catch(e){} }
+  /* 🪞 MIROIR : le journal et le registre n'y vont QU'APRÈS un accusé valide qui dit que l'envoi couvrait tout le journal du compte (`complet`) et que ce téléphone connaît au moins autant de
+     suppressions que le compte. Un instantané partiel ne remplace jamais un historique complet : la porte du miroir retire ces deux champs de tout autre envoi (voir `sbEnvoyer`, supabase.js). */
+  try{
+    if(nut.complet===true && typeof sbEnvoyerJournal==='function' && (S.foodSupprimes||[]).length>=(Number(nut.supprimes)||0)){
+      sbEnvoyerJournal((S.foodLog||[]).slice(-8000),_foodSupprimesTous());   // le miroir REMPLACE son champ : le registre COMPLET, jamais seulement les non confirmées
+    }
+  }catch(e){}
+  return 'confirme';
+}
+/* ⚙️⚙️ NUT-SYNC-03 (05/11/2026) — UN SEUL ENVOI DE SYNCHRONISATION ACTIF À LA FOIS, PAR APPAREIL.
+   ⛔ POURQUOI. MESURÉ (rapport C1–C6 du 05/11, VRAI client + VRAI Code.js, serveur simulé) : dès qu'une réponse tarde (~10 s et plus) ou qu'un téléversement est lent, `_cloudSync` repartait sans attendre — la
+   synchro différée n'a que 4 s et aucune garde. Le 2ᵉ envoi porte alors la révision APPRISE AVANT le 1ᵉʳ (l'accusé du 1ᵉʳ n'est pas revenu), donc le serveur le traite en CONFLIT contre l'appareil lui-même et garde
+   les deux versions : jusqu'à 8 « Pates » sur le téléphone ET sur le serveur, avec le faux message « modifié sur un autre appareil ». ft-v1263 (sans révisions) n'en souffrait pas : c'était une RÉGRESSION de ft-v1264.
+   ⭐ LA RÈGLE. Un envoi en vol : toute nouvelle demande (minuteur de 4 s, relance, retour réseau, retour à l'écran, appel direct) est GARDÉE (`redemande`) — jamais abandonnée — et repart UNE fois, à la fin du
+   vol, avec ce que l'accusé vient d'apprendre (les révisions). Les modifications faites pendant l'envoi sont donc déjà sur le téléphone (local d'abord) et partent ensuite, regroupées.
+   ⏱️ LA TEMPORISATION (`_SYNC_VOL_MAX_MS`) : une requête qui ne répond jamais ne bloque pas la synchro à vie. Passé ce délai l'envoi est tenu pour NON CONFIRMÉ (rien n'est effacé, ses suppressions restent en attente), la garde
+   est libérée et la demande gardée repart. Choisi > 120 s (un envoi de 4 Mo à 0,3 Mbit/s en dure ~110) ; Safari iOS rejette de lui-même bien avant sur une requête morte. Un accusé qui arrive APRÈS cette échéance reste traité
+   (il porte son propre `requestId` ; ses révisions ne reculent jamais) mais ne libère rien d'autre : l'identifiant de vol compare.
+   ⛔ LIMITE ÉCRITE (non corrigée ici, elle relève du protocole) : un accusé PERDU (réponse illisible : lecture CORS bloquée, page fermée) laisse le téléphone ignorer la révision de ce que le serveur a appliqué ; retoucher ensuite
+   CE MÊME repas donne un conflit (les deux versions gardées, rien de perdu). Cette garde ne le crée pas, ne l'aggrave pas, et ne prétend pas le guérir.
+   Aucune donnée persistée : l'état est en mémoire — fermer l'application le remet à zéro, et la réouverture synchronise tout. */
+let _syncVol={id:0,t0:0,actif:false,redemande:false,minuteur:null,envoi:null};
+const _SYNC_VOL_MAX_MS=180000;
+function _syncVolFin(id,delai){
+  if(!_syncVol.actif || _syncVol.id!==id) return;       // un envoi plus récent a pris la place (ou celui-ci est déjà libéré) : rien à faire
+  clearTimeout(_syncVol.minuteur); _syncVol.minuteur=null; _syncVol.actif=false;
+  const envoi=_syncVol.envoi; _syncVol.envoi=null;
+  if(delai){ try{ _nutNonConfirme(envoi,'DELAI'); }catch(e){} }
+  if(_syncVol.redemande){ _syncVol.redemande=false; try{ _cloudSyncDebounced(); }catch(e){} }
+}
 function _cloudSync(){
   if(window._demoMode)return; // mode démo : aucune écriture cloud
   if(!S.email||!S.url)return;
   if(typeof _restauAttendue==='function'&&_restauAttendue())return;   // COOKIE-PROFILE-01 : rien pour un compte pas encore récupéré
+  if(_syncVol.actif){                                                  // NUT-SYNC-03 : un envoi est en vol — cette demande est gardée, jamais perdue
+    if(Date.now()-_syncVol.t0<_SYNC_VOL_MAX_MS){ _syncVol.redemande=true; return; }
+    _syncVol.redemande=false; _syncVolFin(_syncVol.id,true);          // la minuterie n'a pas pu tourner (application en veille) : même décision, ici — et CET appel est l'envoi suivant
+  }
   // ⚠️ Le corps du message est construit UNE SEULE FOIS et servi aux DEUX destinations
   // (Apps Script + miroir Supabase). Deux constructions séparées finiraient par diverger,
   // et on enverrait deux versions différentes du même compte (R2).
@@ -1052,6 +1269,7 @@ function _cloudSync(){
      ⭐ LA CORRECTION NE CASSE PAS R2, ELLE LE PRÉCISE : on ne duplique pas le corps métier,
      on retire les justificatifs du corps COMMUN et on les ajoute au SEUL transport qui en a
      besoin. *Un justificatif de transport n'appartient pas aux données de la personne.* */
+  const _supEnvoi=_foodSupprimesPourEnvoi();   // NUT-SYNC-02 phase A : calculée UNE fois — le corps et l'ensemble que l'accusé pourra confirmer sont la même liste
   const _corpsSync={
       action:'saveProfile',email:S.email,
       name:S.name,bw:S.bw,age:S.age,height:S.height,gender:S.gender,goal:S.goal,goal2:S.goal2||'',priorities:S.priorities||[],discipline:S.discipline,level:S.level||'',coachTone:S.coachTone||'',registre:S.registre||{facts:{},observations:[]},
@@ -1127,7 +1345,19 @@ function _cloudSync(){
       dietRestrictions:S.dietRestrictions||[],
       dietNotes:S.dietNotes||'',
       foodLog:(S.foodLog||[]).slice(-8000), // ~journal nutrition sur plusieurs annees (entrees minuscules)
+      /* 🗑️ NUT-SYNC-01 — LES SUPPRESSIONS VOLONTAIRES VOYAGENT EN CLAIR (l'identité et l'instant, jamais l'état local). Le drapeau « je sais déclarer et lire un accusé » (`foodLogV:3`) et l'identifiant
+         d'opération s'ajoutent AU TRANSPORT Apps Script seulement, ci-dessous.
+         ⛔ NUT-SYNC-01 FINAL — CE CORPS RESTE LE SEUL CONSTRUCTEUR (R2), servi aux deux destinations. Mais le miroir Supabase REMPLACE un champ présent (migration 0003 : « un champ absent garde sa
+         valeur ») : un journal plus COURT que celui du compte — appareil neuf, historique local raccourci par une panne — y remplacerait l'historique complet. La PORTE du miroir (`sbEnvoyer`,
+         supabase.js) retire donc `foodLog` et `foodSupprimes` de tout envoi, comme elle retire déjà les justificatifs (la règle appartient à la porte, pas à l'appelant) ; ils n'y vont que par
+         `sbEnvoyerJournal`, appelée plus bas APRÈS un accusé valide qui dit que l'envoi couvrait tout le journal du compte (`complet`).
+         🪞 FINALISATION NUTRITION (03/11/2026) : `savedFoods` et `hiddenFoods` sont du MÊME volet — Apps Script les refuse ou les suspend avec le journal (`NUT_SUSPENDU`, `NUT_CLIENT_INCOMPATIBLE`…) alors que ce corps partait au miroir sans attendre sa réponse. La porte
+         les retire aussi ; ils n'y vont que par `sbEnvoyerFavoris`, APRÈS un accusé valide, avec CES deux listes (`_envoi.favoris`, plus bas) — celles que cet envoi portait, pas celles que le téléphone contient quand l'accusé revient. */
+      foodSupprimes:_supEnvoi,
       savedFoods:(S.savedFoods||[]).slice(0,200), // aliments favoris (re-ajout rapide)
+      /* NV2-FIAB (24/10) — les masquages (« ✕ ») et la remise à zéro voyagent : des dates de départ, fusionnées par le max
+         (`_nutMasquesNormaliser`). Sans eux, un aliment retiré revenait sur un autre appareil ou après « Restaurer » (N2). */
+      hiddenFoods:_nutMasquesNormaliser(S.hiddenFoods),
       /* 🫙 L'ANCIEN POT PART TOUJOURS — gelé, mais pas retiré du transport : un appareil
          resté sur l'ancienne version le lit encore. Les trois pots séparés partent à côté
          (19/09/2026, phase 3.1). ⛔ Sans eux, une restauration rendrait 25 essais neufs sur
@@ -1144,12 +1374,26 @@ function _cloudSync(){
      Apps Script en a besoin : c'est le jeton qui décide du compte écrit (S1), et le code
      perso qui autorise l'écriture d'un compte protégé. Il est donc ajouté ICI, au moment de
      l'envoi, et jamais posé dans `_corpsSync` — qui part aussi ailleurs. */
-  fetch(S.url,{method:'POST',mode:'no-cors',
-    headers:{'Content-Type':'text/plain;charset=utf-8'},
-    body:JSON.stringify(Object.assign({},_corpsSync,{
-      authCode:_authCode(), token:_ftToken()
-    }))
-  }).catch(()=>{});
+  /* 📨 NUT-SYNC-01 FINAL — LA RÉPONSE DU SERVEUR EST LUE. Avant : `mode:'no-cors'`, une réponse OPAQUE — l'app ne pouvait pas savoir si le serveur avait écrit, refusé ou jeté, et la sauvegarde
+     « réussissait » dans tous les cas. Maintenant : `redirect:'follow'` + `text/plain` (pas de requête préliminaire CORS), exactement le schéma des appels qui lisent déjà leur réponse en production
+     (`loadProfile` en POST, `_protectPost`, `sendConfirmCode`). L'authentification est celle de l'envoi lui-même (jeton + code perso) : un accusé n'est la réponse qu'à SA requête (`requestId`).
+     ⛔ Une requête dont la réponse n'est pas lisible n'est JAMAIS une sauvegarde confirmée : elle est « non confirmée », rien n'est effacé, tout est renvoyé à la synchronisation suivante
+     (le serveur est idempotent). */
+  const _requestId=_nutNouvelIdOperation();
+  const _envoi={requestId:_requestId, sup:_supEnvoi.map(e=>e.i), favoris:{savedFoods:_corpsSync.savedFoods, hiddenFoods:_corpsSync.hiddenFoods}};   // `favoris` : les deux listes que CET envoi porte — le miroir ne les reçoit qu'à l'accusé (voir `_nutTraiterReponse`)
+  const _idVol=++_syncVol.id; _syncVol.actif=true; _syncVol.t0=Date.now(); _syncVol.redemande=false; _syncVol.envoi=_envoi;   // NUT-SYNC-03 : le vol commence ICI, avant le fetch
+  clearTimeout(_syncVol.minuteur); _syncVol.minuteur=setTimeout(function(){ _syncVolFin(_idVol,true); },_SYNC_VOL_MAX_MS);
+  let _p;
+  try{
+    _p=fetch(S.url,{method:'POST',redirect:'follow',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify(Object.assign({},_corpsSync,{
+        foodLogV:3, requestId:_requestId,
+        authCode:_authCode(), token:_ftToken()
+      }))
+    });
+  }catch(e){ _p=Promise.reject(e); }
+  Promise.resolve(_p).then(r=>r.json()).then(d=>_nutTraiterReponse(d,_envoi)).catch(()=>{ try{ _nutNonConfirme(_envoi,'RESEAU'); }catch(e){} }).then(function(){ _syncVolFin(_idVol,false); });   // NUT-SYNC-03 : accusé traité OU échec — le vol est fini, la demande gardée repart
   /* MIROIR SUPABASE — deuxième copie, en écriture seule. Apps Script reste la source de
      vérité ; ceci n'ajoute qu'un filet. Non configuré ou injoignable → il ne se passe rien,
      et surtout : ça ne retarde ni ne bloque JAMAIS la sauvegarde principale (règle d'or #3).
@@ -1158,13 +1402,24 @@ function _cloudSync(){
      jeton S1 résolu côté serveur. ⛔ `sbMirror` n'est PAS supprimée : elle reste disponible
      pour le retour en arrière, qui tient en une ligne (`SB_VOIE` dans `supabase.js`).
      ⛔ Le corps reste le MÊME que celui d'Apps Script (R2) : on ne construit pas un second
-     instantané métier, qui finirait par diverger. */
+     instantané métier, qui finirait par diverger. (NUT-SYNC-01 FINAL : la porte en retire le journal et le registre ; finalisation Nutrition : aussi les favoris et les masquages — voir plus haut.) */
   try{ if(typeof sbEnvoyer==='function')sbEnvoyer(_corpsSync); }catch(e){}
 }
 // Alias pour compatibilité
 function _cloudSyncSessions(){_cloudSync();}
 let _syncTimer=null;
 function _cloudSyncDebounced(){clearTimeout(_syncTimer);_syncTimer=setTimeout(_cloudSync,4000);}
+/* ⚙️ NUT-SYNC-02 phase A — REPRISE AU RETOUR RÉSEAU ET AU RETOUR À L'ÉCRAN. Avant : la réouverture synchronisait (après le chargement du profil), et c'était tout — l'événement `online` ne relançait que la file des séances, jamais la Nutrition ; une
+   application laissée ouverte hors ligne plus de 2 minutes 30 n'envoyait plus rien avant la prochaine action. Maintenant : au retour du réseau et quand l'application redevient visible, s'il reste quelque chose à confirmer (une suppression en attente
+   ou une synchronisation sans accusé), UNE synchronisation différée est lancée. Rien d'autre : pas de synchronisation en arrière-plan sur iPhone (Safari n'a pas d'API pour cela), pas de promesse en ce sens. Application fermée : la reprise se fait à la réouverture. */
+function _nutReprendre(){
+  try{
+    if(window._demoMode || !S || !S.email || !S.url) return;
+    if(_nutAConfirmer || _foodSupprimesEnAttente().length) _cloudSyncDebounced();
+  }catch(e){}
+}
+try{ window.addEventListener('online',_nutReprendre); }catch(e){}
+try{ document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='visible') _nutReprendre(); }); }catch(e){}
 
 
 /* ⏱️ UNE DURÉE INVRAISEMBLABLE EST SIGNALÉE, PAS CORRIGÉE (15/08/2026)
@@ -1204,23 +1459,11 @@ function _dureeDouteuse(sess){
   return false;
 }
 
-function openSessDetail(id){
-  const sess=S.sessions.find(s=>(s.ts||s.id)===id);
-  if(!sess)return;
-  _sessId=id;
-  _sessEdits=JSON.parse(JSON.stringify(sess));
-  /* ⚠️ UNE SEULE remise à zéro, et c'est MESURÉ : j'en avais posé deux (ici et à la fermeture).
-     Le contrôle négatif a montré qu'aucune des deux ne pouvait faire rougir un témoin — elles se
-     couvraient l'une l'autre. La seconde est donc retirée (R19). ⛔ Et je dis ce que la mesure
-     dit VRAIMENT : même celle-ci n'a aucun cas d'échec atteignable, parce que le garde
-     `encoreLa` fait déjà le travail — une séance fermée sans enregistrer porte encore l'ancien
-     nom, donc aucun record ne bouge. Elle reste parce qu'elle garantit qu'une fenêtre s'ouvre
-     TOUJOURS propre, pas parce qu'un témoin l'exige. */
-  _sessRenames=[];
-  _sdDelConfirm=false;
-  if(_sdDelTimer)clearTimeout(_sdDelTimer);
-  const db=document.getElementById('sd-del-btn');
-  if(db){db.textContent='🗑️ Supprimer';db.style.color='var(--red)';}
+/* 🧾 L'EN-TÊTE DU DÉTAIL D'UNE SÉANCE (titre, volume, durée, calories) — sorti d'`openSessDetail` le 24/10/2026 (mission
+   Séance, K2) pour pouvoir le REDESSINER sans rouvrir le détail. ⛔ Rouvrir le détail recopie la séance enregistrée dans
+   `_sessEdits` et efface ce que la personne a tapé sans l'enregistrer encore : c'est exactement ce que faisait la correction
+   de la durée (une charge tapée 120 revenait à 100). Le contenu de l'en-tête n'a pas changé. */
+function _sdEntete(sess){
   document.getElementById('sd-title').textContent=fmtD(sess.date);
   const cals=sess.calories?` · 🔥 ${sess.calories} kcal`:'';
   /* ⏱️ LA DURÉE RÉELLE DE LA SÉANCE — elle EXISTAIT et ne remontait jamais (13/08/2026).
@@ -1281,11 +1524,34 @@ function openSessDetail(id){
   }
   /* 🧮 D-093 (décision de Michel, 19/10/2026 — affichage seul) — « 4200 kg total » désignait le TRAVAIL : les paliers
      d'échauffement n'y étaient pas. Le total les compte maintenant, et le travail est dit à part quand il diffère.
-     ⛔ Rien n'est recalculé ni réécrit : le travail affiché est `sess.volume` tel qu'enregistré (la carte de l'historique
-     le montre aussi) ; seuls les échauffements s'y ajoutent, par LA règle de volume (`_workVol`, R2). */
-  const _vTrav=Math.round(sess.volume||0), _vEch=(typeof _workVol==='function')?Math.max(0,Math.round(_workVol(sess,true)-_workVol(sess))):0;
+     ⛔ Rien n'est réécrit : le travail affiché est lu sur les séries par LA règle de volume (`_volTravail` → `_workVol`,
+     R2) — le même chiffre que la carte de l'historique et le calendrier ; seuls les échauffements s'y ajoutent.
+     ↪️ 24/10/2026 (mission Séance, F02 · Q5) : il lisait la copie rangée `sess.volume`, que le défaut F02 avait réduite de
+     moitié sur des séances unilatérales éditées — le détail disait alors 300 kg là où les séries en faisaient 600. */
+  const _vTrav=_volTravail(sess), _vEch=(typeof _workVol==='function')?Math.max(0,Math.round(_workVol(sess,true)-_workVol(sess))):0;
   const _kgfr=n=>n.toLocaleString('fr-FR');
   document.getElementById('sd-sub').innerHTML=`${_kgfr(_vTrav+_vEch)} kg total${_vEch>0?' · dont '+_kgfr(_vTrav)+' kg de travail':''}${duree}${cals}${eff}${estim}`;
+}
+
+function openSessDetail(id){
+  const sess=S.sessions.find(s=>(s.ts||s.id)===id);
+  if(!sess)return;
+  if(_estAutre(sess)){ openAutreActivite(id); return; }   // 🚶 une activité s'ouvre dans SON formulaire (pas de séries à éditer) — le seul chemin, pour la carte comme pour le calendrier
+  _sessId=id;
+  _sessEdits=JSON.parse(JSON.stringify(sess));
+  /* ⚠️ UNE SEULE remise à zéro, et c'est MESURÉ : j'en avais posé deux (ici et à la fermeture).
+     Le contrôle négatif a montré qu'aucune des deux ne pouvait faire rougir un témoin — elles se
+     couvraient l'une l'autre. La seconde est donc retirée (R19). ⛔ Et je dis ce que la mesure
+     dit VRAIMENT : même celle-ci n'a aucun cas d'échec atteignable, parce que le garde
+     `encoreLa` fait déjà le travail — une séance fermée sans enregistrer porte encore l'ancien
+     nom, donc aucun record ne bouge. Elle reste parce qu'elle garantit qu'une fenêtre s'ouvre
+     TOUJOURS propre, pas parce qu'un témoin l'exige. */
+  _sessRenames=[];
+  _sdDelConfirm=false;
+  if(_sdDelTimer)clearTimeout(_sdDelTimer);
+  const db=document.getElementById('sd-del-btn');
+  if(db){db.textContent='🗑️ Supprimer';db.style.color='var(--red)';}
+  _sdEntete(sess);
 
   _renderHealthInbox(sess);
   _updateSdMuscles(sess);
@@ -1382,6 +1648,14 @@ function utiliserActiviteMontre(i){
 }
 /* Le nom d'Apple Santé (« Walking », « Marche à pied », « Indoor Cycling »…) vers les types que
    l'app connaît. ⚠️ Inconnu → « autre », jamais un type deviné : le barème calorique en dépend. */
+/* ⌚ F22 (mission Séance du 24/10/2026) — trois types produits ici n'ont PAS de barème dans `CARDIO_MET` : ils se calculent
+   avec celui d'« Autre » (`calcCardioKcal` y retombe) — ⛔ aucun barème inventé, le moteur est gelé (le diagnostic MET dit
+   ce que ça coûte). Mais ils GARDENT LEUR NOM à l'écran : « marche » brut dans l'historique et « Elliptique » dans le
+   détail, c'était faux deux fois.
+   ⛔ Un TAPIS de course reste « course » (calculé comme « Autre »), comme en ft-v1260 : le barème « Tapis » existe, mais il
+   compte l'intensité forte à 9,5 au lieu de 8,0 — ce sont des calories, donc une décision de Michel (D-119), pas un
+   correctif d'affichage. (Retour de Claude Principal, 25/10 : la passe sur l'arbre intégré l'avait vu.) */
+const CARDIO_NOMS_MONTRE={marche:'Marche', course:'Course', natation:'Natation'};
 function _typeCardioDepuisMontre(nom){
   const n=String(nom||'').toLowerCase();
   if(/march|walk|randonn|hik/.test(n))            return 'marche';
@@ -1399,7 +1673,7 @@ function _updateSdMuscles(sess){
   const exs=sess.exs||sess.exercises||[];
   const muscleEl=document.getElementById('sd-muscles');
   if(!muscleEl)return;
-  const res=_mscScores(exs);
+  const res=_mscScoresVus(exs);
   if(!Object.keys(res.sc).length){muscleEl.style.display='none';return;}
   muscleEl.style.display='flex';
   muscleEl.style.alignItems='center';
@@ -1413,8 +1687,12 @@ function _updateSdMuscles(sess){
 }
 
 /* Saisie de la durée d'une séance — sert aux séances importées (photo d'une feuille) et à
-   celles d'avant les horodatages. ⚠️ Elle ne recalcule AUCUNE calorie : `sess.calories` reste
-   figé (même principe qu'`uniConv`). Elle alimente l'estimation 🔬 et les comparaisons. */
+   celles d'avant les horodatages. Elle alimente aussi l'estimation 🔬 et les comparaisons.
+   ↪️ 24/10/2026 (mission Séance de Michel, K1 · K2) — ce commentaire disait « elle ne recalcule AUCUNE calorie :
+   `sess.calories` reste figé ». Michel demande l'inverse : *« la durée modifiée sans actualisation cohérente des calories »*
+   est un défaut. La durée fait partie de l'effort : ses calories suivent maintenant, par la règle de `_kcalApresEdition`
+   (la VARIATION d'effort appliquée aux calories d'origine — jamais un recalcul au poids du jour). Et le détail ouvert n'est
+   plus rouvert : une modification tapée et pas encore enregistrée y reste (K2). */
 function editSessDuree(){
   // ⚠️ Même clé que `openSessDetail` : (ts || id), pas `id` seul — sinon on éditerait la
   //    mauvaise séance sur les entrées où les deux diffèrent.
@@ -1444,15 +1722,28 @@ function editSessDuree(){
   const v=prompt(entete,cur);
   if(v===null)return;
   const t=String(v).trim();
+  const m=t?parseInt(t.replace(/[^0-9]/g,''),10):0;
+  if(t && (!m||m<1||m>600)){ toast('Durée attendue entre 1 et 600 minutes','error'); return; }
+  /* Confirmer la durée déjà affichée n'est pas une correction : rien n'est écrit. Sans cette garde, la séance passerait en
+     durée « saisie » et le calcul pourrait changer ses calories pour une durée identique (signalé par le diagnostic MET du
+     24/10 ; le moteur, lui, n'est pas touché). */
+  if(t && s.duration && m===Math.round(s.duration/60)){ toast('Durée inchangée','info'); return; }
+  const _avant=JSON.parse(JSON.stringify(s));
   if(!t){ delete s.duration; delete s.durationDite; }
-  else{
-    const m=parseInt(t.replace(/[^0-9]/g,''),10);
-    if(!m||m<1||m>600){ toast('Durée attendue entre 1 et 600 minutes','error'); return; }
-    s.duration=m*60; s.durationDite=true;
-  }
+  else{ s.duration=m*60; s.durationDite=true; }
+  const _k=_kcalApresEdition(_avant,s);   // K1 : les calories suivent la durée, à l'échelle de la séance d'origine
+  s.calories=_k.calories; s.calData=_k.calData;
   persist();
   try{ if(typeof _cloudSyncSessions==='function')_cloudSyncSessions(); }catch(e){}
-  openSessDetail(s.ts||s.id);
+  /* K2 — le détail ouvert sur CETTE séance n'est pas rouvert : `openSessDetail` recopierait la séance enregistrée dans
+     `_sessEdits` et effacerait ce qui a été tapé sans être enregistré. On y reporte seulement la durée (et les calories
+     qui vont avec), puis on redessine l'en-tête. « Enregistrer » enregistrera ensuite le tout. */
+  if(_sessEdits && (_sessEdits.ts||_sessEdits.id)===(s.ts||s.id)){
+    if(s.duration){ _sessEdits.duration=s.duration; _sessEdits.durationDite=true; }
+    else{ delete _sessEdits.duration; delete _sessEdits.durationDite; }
+    _sessEdits.calories=s.calories; _sessEdits.calData=s.calData;
+    _sdEntete(s);
+  }else openSessDetail(s.ts||s.id);
   renderSessions();
   toast(t?'Durée enregistrée ✅':'Durée effacée — mieux vaut rien qu\'un chiffre faux','success');
 }
@@ -1502,16 +1793,20 @@ function _renderSessDetailContent(){
   // Cardio de la séance — DEUX moments depuis le 02/08 (« avant et après séance ce n'est pas
   // pareil »). `cardio` = APRÈS (champ historique) · `cardioAvant` = échauffement. Une séance
   // enregistrée avant ce jour n'a que `cardio` : elle s'affiche donc dans « Après », inchangée.
-  const ckTot=(typeof calcCardioKcal==='function')
-    ? calcCardioKcal(_sessEdits.cardioAvant||null)+calcCardioKcal(_sessEdits.cardio||null) : 0;
+  /* 🔥 Les calories RETENUES de chaque bloc (`kcalCardioAffichage`, app.js) : la part rangée à l'enregistrement pour un bloc ancien — plus le poids du jour (le défaut
+     d'affichage que `docs/AUTRE-ACTIVITE-CALORIES.md` F3 décrit) — ou l'estimation figée / la valeur saisie pour un bloc récent. */
+  const _aff=kcalCardioAffichage(_sessEdits,(S.sessions||[]).find(x=>(x.ts||x.id)===_sessId));
+  const ckTot=_aff.total;
   const selSty='padding:6px 8px;border-radius:8px;border:1px solid var(--bg3);background:var(--bg2);color:var(--t1);font-size:13px;font-family:var(--font)';
   const voletSess=(moment,titre)=>{
     const c=(moment==='avant'?_sessEdits.cardioAvant:_sessEdits.cardio)||null;
-    const k=(c&&c.duration&&typeof calcCardioKcal==='function')?calcCardioKcal(c):0;
+    const kb=(c&&c.duration)?(moment==='avant'?_aff.avant:_aff.apres):null;
+    const k=kb?kb.retenue:0;
     return `<div style="margin-top:7px;">
-      <div style="font-size:12px;font-weight:700;color:var(--t2);margin-bottom:5px;">${titre}${k?` <span style="font-weight:600;color:var(--green)">· ~${k} kcal</span>`:''}</div>
+      <div style="font-size:12px;font-weight:700;color:var(--t2);margin-bottom:5px;">${titre}${(k||(kb&&kb.remplacee))?` <span style="font-weight:600;color:var(--green)">· ${kb.remplacee?'':'~'}${k} kcal${kb.remplacee?' ✎':''}</span>`:''}</div>
       <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
         <select onchange="setSessCardio('type',this.value,'${moment}')" style="${selSty}">
+          ${(c&&c.type&&!CARDIO_LABELS[c.type]&&CARDIO_NOMS_MONTRE[c.type])?`<option value="${c.type}" selected>${CARDIO_NOMS_MONTRE[c.type]} (calculé comme « Autre »)</option>`:''}
           ${Object.keys(CARDIO_LABELS).map(t=>`<option value="${t}" ${(c?c.type:'elliptique')===t?'selected':''}>${CARDIO_LABELS[t]}</option>`).join('')}
         </select>
         <select onchange="setSessCardio('intensity',this.value,'${moment}')" style="${selSty}">
@@ -1521,6 +1816,7 @@ function _renderSessDetailContent(){
         <span style="font-size:12px;color:var(--t3)">min</span>
         ${c&&c.duration?`<button class="btn btn-bg2" style="padding:3px 9px;font-size:11px;color:var(--red)" onclick="setSessCardio('duration',0,'${moment}')">Retirer</button>`:''}
       </div>
+      ${kb?_kcalEditeurHtml({k:kb,onSaisie:"setSessCardioKcal(this.value,'"+moment+"')",onRetour:"setSessCardioKcal('','"+moment+"')"}):''}
     </div>`;
   };
   html+=`<div class="card" style="margin-bottom:8px;padding:10px 12px">
@@ -1553,9 +1849,29 @@ function _addSessExPick(name){
 function setSessCardio(field,val,moment){
   if(!_sessEdits)return;
   const k=(moment==='avant')?'cardioAvant':'cardio';
+  const figee=_kcalAvecSaisie(_sessEdits);   // l'enregistrement porte-t-il déjà des calories figées ou saisies ? (avant ce geste)
   if(!_sessEdits[k])_sessEdits[k]={type:'elliptique',intensity:'modere',duration:0};
   _sessEdits[k][field]=field==='duration'?Math.max(0,Math.min(300,parseInt(val)||0)):val;
   if(field==='duration'&&!_sessEdits[k].duration)delete _sessEdits[k]; // 0 → pas de cardio
+  /* 🔥 Un enregistrement « à valeurs figées » (mécanisme commun, app.js) : l'estimation du bloc touché suit son type / son intensité / sa durée, avec le poids RANGÉ
+     sur le bloc (celui d'un bloc voisin pour un bloc neuf, à défaut le poids actuel) — jamais le poids du jour pour un bloc qui a déjà le sien. Un enregistrement ANCIEN
+     reste dans l'ancienne règle F21 (`_kcalApresEdition`) tant qu'on n'y saisit rien. */
+  if(figee&&_sessEdits[k]){
+    const voisin=[_sessEdits.cardioAvant,_sessEdits.cardio].find(b=>b&&b!==_sessEdits[k]&&+b.kcalPoids>0);
+    kcalPoserEstimation(_sessEdits[k],'cardio',_sessEdits[k].kcalPoids?undefined:(voisin?voisin.kcalPoids:undefined));
+  }
+  _renderSessDetailContent();
+}
+/* 🔥 La valeur de la montre saisie sur un bloc cardio d'une séance PASSÉE. Un enregistrement ancien reçoit d'abord, sur tous ses blocs, leur estimation figée (ce que l'écran
+   montrait, part rangée à l'enregistrement — jamais le poids du jour) ; puis la valeur remplace celle du bloc. Vide = retour à l'estimation. Invalide = rien ne bouge. */
+function setSessCardioKcal(val,moment){
+  if(!_sessEdits)return;
+  const k=(moment==='avant')?'cardioAvant':'cardio';
+  const b=_sessEdits[k]; if(!b)return;
+  const v=kcalSaisieValide(val);
+  if(v.etat==='invalide'){ toast(v.raison,'error'); _renderSessDetailContent(); return; }
+  if(v.etat==='ok'){ const orig=(S.sessions||[]).find(x=>(x.ts||x.id)===_sessId); kcalNormaliserSeance(_sessEdits,orig); }
+  kcalPoserManuelle(b,val);
   _renderSessDetailContent();
 }
 
@@ -1668,6 +1984,52 @@ function _deplacerRecordsRenommes(){
   _sessRenames=[];
 }
 
+/* 🏅 F08 (mission Séance de Michel du 24/10/2026) — UN RECORD QUI VENAIT D'UNE SÉANCE SUPPRIMÉE OU MODIFIÉE N'EST PLUS GARDÉ
+   EN SILENCE. Mesuré le 23/10 : la séance du 100 × 5 supprimée (ou corrigée à la baisse), le record restait 100 × 5 — et il
+   sert de référence aux charges de Milo, à la montée en charge et au % du max des calories.
+   ⛔⛔ LES CONSIGNES : *« réutiliser l'outil de recalcul existant · préparer un aperçu avant toute opération ayant un impact sur
+   les records · ne pas supprimer automatiquement des records dont l'origine reste incertaine »*.
+   ⭐ D'où trois règles : ① on ne regarde QUE les records dont l'origine est CERTAINE — même date que la séance ET une série
+   valable aux mêmes kg × répétitions dedans (`_serieFaitFoiPourPR`, la règle de la fin de séance) ; un record importé, d'un
+   autre jour ou d'un autre appareil n'est jamais touché ; ② la proposition vient du recalcul existant (`_prsDepuisSeances`) ;
+   ③ RIEN n'est écrit sans le geste de la personne : un aperçu « avant → après », « Mettre à jour » ou « Garder ». */
+function _recordsVenantDe(avant, apres){
+  const out=[];
+  if(!avant||!avant.date) return out;
+  const memeSerie=(st,pr)=>_serieFaitFoiPourPR(st)&&+st.kg===+pr.kg&&+st.reps===+pr.reps;
+  (avant.exs||avant.exercises||[]).forEach(ex=>{
+    const pr=ex&&S.prs&&S.prs[ex.name];
+    if(!pr||pr.date!==avant.date||out.indexOf(ex.name)>=0) return;
+    if(!(ex.sets||[]).some(st=>memeSerie(st,pr))) return;                      // ce n'est pas CETTE séance qui l'a fait
+    const encore=apres&&(apres.exs||apres.exercises||[]).some(e=>e&&e.name===ex.name&&(e.sets||[]).some(st=>memeSerie(st,pr)));
+    if(!encore) out.push(ex.name);
+  });
+  return out;
+}
+function _proposerRecordsRecalcules(noms){
+  if(!noms||!noms.length) return;
+  const r=_prsDepuisSeances();
+  const props=[];
+  noms.forEach(n=>{
+    const avant=S.prs[n]; if(!avant) return;
+    let apres=r.calc[n]?Object.assign({},r.calc[n]):null;
+    if(apres&&r.premiere[n]&&r.premiere[n]===apres.date) apres.premiere=true;   // une 1ʳᵉ fois reste une 1ʳᵉ fois (D-045)
+    if(apres&&Math.abs((+avant.rm1||0)-apres.rm1)<=0.05&&+avant.kg===+apres.kg&&+avant.reps===+apres.reps) return;   // déjà juste
+    props.push({nom:n, avant, apres});
+  });
+  if(!props.length) return;
+  const f=p=>p.kg+' kg × '+p.reps+' ('+fmtD(p.date)+')';
+  const lignes=props.map(p=>p.nom+' : '+f(p.avant)+' → '+(p.apres?f(p.apres):'aucune autre séance ne le porte')).join(' · ');
+  showConfirm(props.length>1?'Records à vérifier':'Record à vérifier',
+    (props.length>1?'Ces records venaient':'Ce record venait')+' de cette séance. D\'après ton historique : '+lignes+'. Rien ne change si tu le gardes.',
+    ()=>{
+      props.forEach(p=>{ if(p.apres) S.prs[p.nom]=p.apres; else delete S.prs[p.nom]; });
+      persist();
+      try{ if(typeof _cloudSync==='function') _cloudSync(); }catch(e){}
+      toast(props.length>1?'Records mis à jour ✅':'Record mis à jour ✅','success');
+    }, 'Mettre à jour', 'Garder');
+}
+
 function deleteSessOrConfirm(){
   if(!_sdDelConfirm){
     _sdDelConfirm=true;
@@ -1684,15 +2046,69 @@ function deleteSessOrConfirm(){
   if(typeof _dbfOublier==='function') _parties.forEach(s=>_dbfOublier(_dbfCle(s)));
   persist();_cloudSyncSessions();renderSessions();closeSessDetail();
   toast('Séance supprimée','info');
+  // F08 : un record qui venait de cette séance → aperçu « avant → après », rien sans le geste de la personne
+  const _rec=[]; _parties.forEach(s=>_recordsVenantDe(s,null).forEach(n=>{ if(_rec.indexOf(n)<0)_rec.push(n); }));
+  _proposerRecordsRecalcules(_rec);
+}
+
+/* 🔥 F21 · K1 (mission Séance de Michel du 24/10/2026) — LES CALORIES D'UNE SÉANCE PASSÉE NE BOUGENT QUE SI L'EFFORT BOUGE.
+   ⛔⛔ LE DÉFAUT, MESURÉ (contre-vérification du 23/10) : « Enregistrer » sans rien changer recalculait les calories avec le
+   poids, les records et le repos par défaut D'AUJOURD'HUI — une séance faite à 82 kg passait de 97 à 112 kcal après une prise
+   de poids à 95 kg. Et corriger la durée (60 → 90 min) ne les recalculait pas du tout (317 gardés au lieu de 440).
+   ⭐ LA RÈGLE : le moteur (APPELÉ, jamais modifié — gelé) calcule l'avant et l'après DANS LE MÊME CONTEXTE (poids, records,
+   repos d'aujourd'hui). Même résultat → l'effort n'a pas changé → les calories d'origine et leur détail restent tels quels.
+   Résultat différent → on applique aux calories D'ORIGINE la seule VARIATION d'effort (rapport après / avant) : tout ce que
+   la séance avait de propre (le poids de ce jour-là, ses records, son repos) reste dans l'échelle, et le poids du jour n'y
+   entre pas. Tout le moteur est proportionnel au poids : une séance faite à 82 kg et corrigée à 95 kg retombe exactement sur
+   le calcul à 82 kg.
+   ⛔ Aucune donnée nouvelle (pas de poids rangé dans la séance, règle #17) et rien de rétroactif : seule la séance que la
+   personne modifie elle-même change. Sans calories d'origine (une séance qui n'en a jamais eu), on ne peut garder aucune
+   échelle : on prend le calcul du jour, comme avant. */
+function _kcalApresEdition(avant, apres){
+  const ref=+(avant&&avant.calories)||0;
+  /* 🔥 UN BLOC PORTE DES CALORIES FIGÉES OU SAISIES (mécanisme commun cardio / activité, `app.js`) : ces calories-là sont ABSOLUES — la valeur de la montre ne se
+     met jamais à l'échelle d'un poids, et une estimation figée ne bouge que si le bloc change. Le total se reconstruit PAR PARTIES : la part du moteur (musculation
+     et forfaits), traitée comme F21 (seule la variation d'effort s'applique à SA part d'origine), plus la somme des blocs retenus. Sans aucun bloc de ce genre,
+     on tombe dans l'ancien chemin ci-dessous, identique à l'octet (banc F21 : `C-NUM-A`). */
+  if(_kcalAvecSaisie(avant)||_kcalAvecSaisie(apres)){
+    const cardioRef=+((avant&&avant.calData&&avant.calData.cardio)||0);          // la part cardio RETENUE d'origine
+    const moteurRef=Math.max(0, ref-cardioRef);                                   // le reste : musculation et forfaits du moteur
+    const mA=calcSessionCalories(avant), mN=calcSessionCalories(apres);           // le moteur gelé, APPELÉ seul, dans le même contexte
+    const seul=!(apres.exs||apres.exercises||[]).length;                          // cardio seul : valeur = somme de ses blocs (voir `_calDataSeance`)
+    let moteur;
+    if(seul) moteur=0;
+    else if(mA.total===mN.total) moteur=moteurRef;                                // l'effort du moteur n'a pas bougé : sa part d'origine reste telle quelle
+    else if(moteurRef>0&&mA.total>0) moteur=Math.round(mN.total*moteurRef/mA.total);   // seule la VARIATION d'effort
+    else moteur=mN.total;                                                         // pas de calories d'origine : le calcul du jour, comme F21
+    const kcA=kcalBloc(apres.cardioAvant||null), kcB=kcalBloc(apres.cardio||null);
+    const cardio=kcA.retenue+kcB.retenue;
+    const total=moteur+cardio;
+    const base=(mA.total===mN.total&&avant&&avant.calData)?avant.calData:mN;      // métadonnées du moteur : celles d'origine tant que l'effort n'a pas bougé
+    const calData=Object.assign({}, base, {total});
+    if(cardio>0||kcA.remplacee||kcB.remplacee) calData.cardio=cardio; else delete calData.cardio;   // 0 saisi = une part cardio RANGÉE à 0 (voir `_calDataSeance`)
+    if(mA.total!==mN.total&&mN.breakdown&&mN.total>0){ const k2=moteur/mN.total; calData.breakdown={}; Object.keys(mN.breakdown).forEach(n=>{ calData.breakdown[n]=Math.round(mN.breakdown[n]*k2); }); }
+    return {calories:total, calData};
+  }
+  const cA=_calDataSeance(avant), cN=_calDataSeance(apres);
+  if(cA.total===cN.total) return {calories:avant.calories, calData:avant.calData};   // même effort : rien ne bouge
+  if(!(ref>0) || !(cA.total>0)) return {calories:cN.total, calData:cN};
+  const k=ref/cA.total, sc=v=>Math.round(v*k);
+  const calData=Object.assign({}, cN, {total:sc(cN.total)});
+  if(cN.cardio) calData.cardio=sc(cN.cardio);
+  if(cN.breakdown){ calData.breakdown={}; Object.keys(cN.breakdown).forEach(n=>{ calData.breakdown[n]=sc(cN.breakdown[n]); }); }
+  return {calories:calData.total, calData};
 }
 
 function saveSessEdits(){
   if(!_sessEdits||_sessId===null)return;
+  if(typeof kcalValiderChampsEnAttente==='function'&&!kcalValiderChampsEnAttente('#sd-content'))return;   // la valeur de la montre tapée à l'instant (champ pas encore quitté) est lue AVANT d'enregistrer
   const idx=S.sessions.findIndex(s=>(s.ts||s.id)===_sessId);
   if(idx===-1)return;
-  let vol=0;
-  _sessEdits.exs.forEach(ex=>ex.sets.forEach(s=>{if(s.done&&s.type!=='É'&&s.type!=='W')vol+=(s.kg||0)*(s.reps||0);}));
-  _sessEdits.volume=Math.round(vol);
+  const _avant=S.sessions[idx];
+  /* 🧮 F02 (mission Séance du 24/10/2026) — LA RÈGLE DE VOLUME N'EST PLUS RECOPIÉE ICI : la copie ignorait la convention
+     unilatérale (`uniConv`) et divisait par deux, à chaque « Enregistrer », le volume d'une séance unilatérale (600 → 300,
+     pendant que le résumé de la semaine disait toujours 600). C'est `_workVol`, la règle de la fin de séance. */
+  _sessEdits.volume=Math.round(_workVol(_sessEdits));
   /* 🏅 C1 (13/09/2026) — LA RÈGLE D'ÉLIGIBILITÉ N'EST PLUS RECOPIÉE ICI. Elle disait exactement
      la même chose que `_serieFaitFoiPourPR` (log.js), et c'est précisément le problème : deux
      écritures d'une même règle finissent par diverger, la seule question est quand (**R2**).
@@ -1708,15 +2124,15 @@ function saveSessEdits(){
       if(!cur||s.rm1>cur.rm1)S.prs[ex.name]={kg:s.kg,reps:s.reps,rm1:s.rm1,date:_sessEdits.date};
     }
   }));
-  const calData=calcSessionCalories(_sessEdits);
-  const cardioKcal=(typeof calcCardioKcal==='function')?(calcCardioKcal(_sessEdits.cardioAvant||null)+calcCardioKcal(_sessEdits.cardio||null)):0;
-  if(cardioKcal){calData.total+=cardioKcal;calData.cardio=cardioKcal;}
-  _sessEdits.calories=calData.total;
-  _sessEdits.calData=calData;
+  const _k=_kcalApresEdition(_avant,_sessEdits);   // F21 : rien ne bouge si l'effort n'a pas bougé
+  _sessEdits.calories=_k.calories;
+  _sessEdits.calData=_k.calData;
   S.sessions[idx]=_sessEdits;
   _deplacerRecordsRenommes();   // ⚠️ APRÈS l'écriture : avant, la séance porterait encore l'ancien nom
+  const _rec=_recordsVenantDe(_avant,_sessEdits);   // F08 : la série qui portait le record a changé (calculé avant de fermer)
   persist();_cloudSyncSessions();renderSessions();closeSessDetail();
   toast('Séance mise à jour ✓','success');
+  _proposerRecordsRecalcules(_rec);
 }
 
 function closeSessDetail(){
@@ -1730,9 +2146,10 @@ function closeSessDetail(){
    donc rien n'est recalculé ni deviné. Cadrage : le même décalage que la grande figurine (`_mscSVG`, vue avant centrée en x 17,
    vue arrière en x 52), même taille (32 × 94).
    ⛔ Sans `vue`, la sortie reste la vue avant À L'OCTET PRÈS : l'Accueil, Progrès et la carte du jour l'appellent ainsi. */
-function _mscSVGmini({sc,ind},vue){
+function _mscSVGmini(o,vue){
+  const sc=(o&&o.sc)||{}, ind=(o&&o.ind)||{};   // F04 (24/10/2026) : rouge = muscle MOTEUR (`_mscNiveau`), pas un secondaire cumulé
   const pd={};
-  Object.entries(_MG).forEach(([g,d])=>{const v=sc[g]||0;const isI=ind[g]&&!v;const[f,k]=v>=2?['#FF5555','#AA0010']:v>=1?['#FF9500','#AA5500']:isI?['#8FA9C4','#5B7C9E']:['#C07060','#7A3828'];d.paths.forEach(id=>{pd[id]={f,k};});});
+  Object.entries(_MG).forEach(([g,d])=>{const v=sc[g]||0;const isI=ind[g]&&!v;const nv=_mscNiveau(o,g);const[f,k]=nv>=2?['#FF5555','#AA0010']:nv>=1?['#FF9500','#AA5500']:isI?['#8FA9C4','#5B7C9E']:['#C07060','#7A3828'];d.paths.forEach(id=>{pd[id]={f,k};});});
   const pt=([id,d])=>{const c=id?(pd[id]||{f:'#C07060',k:'#7A3828'}):{f:'#D89070',k:'#A86040'};return `<path d="${d}" fill="${c.f}" stroke="${c.k}" stroke-width="${id?'0.28':'0.18'}" stroke-linejoin="round"/>`;};
   const dos=vue==='dos';
   return `<svg viewBox="${dos?36:1} 0 32 94" xmlns="http://www.w3.org/2000/svg" style="width:32px;height:auto;display:block;flex-shrink:0" stroke-linecap="round">${(dos?_BP:_FP).map(pt).join('')}</svg>`;
@@ -1752,15 +2169,20 @@ function showSessMuscleMap(i,ev){
    Accueil / calendrier (`goSessionsHistory`).
    ⚠️ Inchangé, et exprès hors de ce lot : les pastilles viennent des muscles DOMINANTS, le filtre teste la PRÉSENCE. */
 let _sessFiltres=[];
+/* 🚶 Le filtre de TYPE (05/11/2026) : Tout · Musculation · Cardio · Activités. En mémoire seulement (aucune clé), comme les zones ; remis à « Tout » par les portes. Il ne s'affiche
+   que s'il y a au moins deux types dans l'historique — avec de la musculation seule, l'écran est celui d'avant. */
+let _sessGenre='';
+const _SESS_GENRES=[['muscu','Musculation'],['cardio','Cardio'],['autre','Activités']];
+function setSessGenre(g){ _sessGenre=(_sessGenre===g)?'':g; renderSessions(); }
 function _sessTopMuscle(s){
-  const sc=_mscScores(s.exs||s.exercises||[]);const _sc=sc.sc||{};
+  const sc=_mscScoresVus(s.exs||s.exercises||[]);const _sc=sc.sc||{};
   let b='',bv=0;for(const g in _sc){if(_sc[g]>bv){bv=_sc[g];b=g;}}
   return b;
 }
 // Muscles réellement TRAVAILLÉS dans la séance (score ≥ 2 = primaire dans ≥1 exo, ou secondaire ≥2×)
 // → utilisé pour le FILTRE (présence), pas pour le titre. Chips = muscles dominants (jeu compact).
 function _sessMusclesPresent(s){
-  const sc=_mscScores(s.exs||s.exercises||[]).sc||{};
+  const sc=_mscScoresVus(s.exs||s.exercises||[]).sc||{};
   return Object.keys(sc).filter(m=>sc[m]>=2);
 }
 function setSessFilter(code){
@@ -1780,20 +2202,30 @@ function renderSessions(){
   // Sécurité : un muscle filtré qui n'existe plus est retiré (s'il n'en reste aucun, on est sur « Tous »)
   _sessFiltres=_sessFiltres.filter(m=>present.includes(m));
   const nomM=m=>_MG[m]?_MG[m].label:m;
+  const _genresVus=new Set(S.sessions.map(_genreSeance));
+  if(!_genresVus.has(_sessGenre))_sessGenre='';   // un type qui n'existe plus dans l'historique est retiré (on revient à « Tout »)
+  const _chipsGenre=(_genresVus.size>=2)
+    ? '<span style="flex-basis:100%;font-size:11px;font-weight:700;color:var(--t3);letter-spacing:.04em;">TYPE</span>'
+      +'<button class="sessf-chip'+(!_sessGenre?' on':'')+'" aria-pressed="'+!_sessGenre+'" onclick="setSessGenre(\'\')">Tout</button>'
+      +_SESS_GENRES.filter(x=>_genresVus.has(x[0])).map(x=>'<button class="sessf-chip'+(_sessGenre===x[0]?' on':'')+'" aria-pressed="'+(_sessGenre===x[0])+'" data-genre="'+x[0]+'" onclick="setSessGenre(\''+x[0]+'\')">'+x[1]+'</button>').join('')
+    : '';
   if(fEl){
-    if(present.length>=2){
-      fEl.innerHTML='<button class="sessf-chip'+(!_sessFiltres.length?' on':'')+'" aria-pressed="'+!_sessFiltres.length+'" onclick="setSessFilter(null)">Tous</button>'+
+    if(_chipsGenre&&present.length<2){ fEl.innerHTML=_chipsGenre; }
+    else if(present.length>=2){
+      fEl.innerHTML=(_chipsGenre?_chipsGenre+'<span style="flex-basis:100%;font-size:11px;font-weight:700;color:var(--t3);letter-spacing:.04em;margin-top:4px;">MUSCLE</span>':'')+'<button class="sessf-chip'+(!_sessFiltres.length?' on':'')+'" aria-pressed="'+!_sessFiltres.length+'" onclick="setSessFilter(null)">Tous</button>'+
         present.map(m=>{const on=_sessFiltres.indexOf(m)>=0;
           return '<button class="sessf-chip'+(on?' on':'')+'" aria-pressed="'+on+'" data-m="'+m+'" onclick="setSessFilter(\''+m+'\')">'+_escNote(nomM(m))+'</button>';}).join('');
     } else fEl.innerHTML='';
   }
   /* Le panneau n'existe que s'il y a de quoi filtrer ; fermé, il dit ce qui est filtré (une ligne). */
   if(fAcc)fAcc.hidden=!(fEl&&fEl.innerHTML);
-  if(fRes)fRes.textContent='Filtrer les séances · '+(!_sessFiltres.length?'Tous'
-    :_sessFiltres.length<=2?_sessFiltres.map(nomM).join(' + '):nomM(_sessFiltres[0])+' + '+(_sessFiltres.length-1)+' autres');
+  const _gTxt=_sessGenre?(_SESS_GENRES.find(x=>x[0]===_sessGenre)||['',''])[1]:'';
+  if(fRes)fRes.textContent='Filtrer les séances · '+(!_sessFiltres.length&&!_gTxt?'Tous'
+    :[_gTxt].concat(_sessFiltres.length?[_sessFiltres.length<=2?_sessFiltres.map(nomM).join(' + '):nomM(_sessFiltres[0])+' + '+(_sessFiltres.length-1)+' autres']:[]).filter(Boolean).join(' · '));
   let flist=S.sessions;
+  if(_sessGenre)flist=flist.filter(s=>_genreSeance(s)===_sessGenre);
   if(_sessFiltres.length)flist=flist.filter(s=>{const p=_sessMusclesPresent(s);return _sessFiltres.some(m=>p.includes(m));});
-  if(!flist.length){el.innerHTML='<div class="empty">Aucune séance pour '+(_sessFiltres.length>1?'ces muscles':'ce muscle')+'</div>';return;}
+  if(!flist.length){el.innerHTML='<div class="empty">'+(_sessFiltres.length?'Aucune séance pour '+(_sessFiltres.length>1?'ces muscles':'ce muscle'):'Aucun enregistrement de ce type')+'</div>';return;}
   /* 🗂️ PROGRES-SEANCES-01 — ANNÉE → MOIS → SÉANCE, ET PLUS DE PLAFOND DE 20 (contrat UX-HIST du 08/10).
      Avant : `slice(0,20)` — la 21ᵉ séance n'était atteignable NULLE PART dans l'app (63 séances réelles
      chez Michel le 14/10). Maintenant toutes le sont ; pour ne pas dessiner 1 500 cartes, on ne dessine
@@ -1803,20 +2235,27 @@ function renderSessions(){
      et la carte reste produite par une seule fonction (`_sessCarteHtml`). Rien n'est stocké. */
   const ans=[],parAn={};
   flist.forEach(s=>{const m=_sessMoisDe(s),an=m==='?'?'?':m.slice(0,4);
-    if(!parAn[an]){parAn[an]={mois:[],parMois:{},n:0};ans.push(an);}
-    const A=parAn[an];if(!A.parMois[m]){A.parMois[m]=[];A.mois.push(m);}A.parMois[m].push(s);A.n++;});
+    if(!parAn[an]){parAn[an]={mois:[],parMois:{},n:0,g:{muscu:0,cardio:0,autre:0}};ans.push(an);}
+    const A=parAn[an];if(!A.parMois[m]){A.parMois[m]=[];A.mois.push(m);}A.parMois[m].push(s);A.n++;A.g[_genreSeance(s)]++;});
   const desc=(a,b)=>a==='?'?1:b==='?'?-1:(a<b?1:a>b?-1:0);   // le plus récent d'abord, « sans date » à la fin
   ans.sort(desc);
   const chev=o=>'<span class="sess-chev'+(o?' ouvert':'')+'">›</span>';
-  const nb=n=>n+' séance'+(n>1?'s':'');
+  /* 🚶 Le compteur DIT ce qu'il compte : « 3 séances · 1 cardio · 2 activités » (séances de musculation, cardio seul, autres activités). Tant qu'il n'y a ni cardio seul ni
+     activité, le texte est celui d'avant : « N séances ». */
+  const nbG=g=>{const m=g.muscu||0,c=g.cardio||0,a=g.autre||0,t=[];
+    if(m||(!c&&!a))t.push(m+' séance'+(m>1?'s':''));
+    if(c)t.push(c+' cardio');
+    if(a)t.push(a+' activité'+(a>1?'s':''));
+    return t.join(' · ');};
+  const gDe=L=>{const g={muscu:0,cardio:0,autre:0};L.forEach(s=>{g[_genreSeance(s)]++;});return g;};
   el.innerHTML=ans.map(an=>{const A=parAn[an],ouvert=_sessAnEstOuvert(an);A.mois.sort(desc);
     return '<div class="sess-an-bloc" data-an="'+an+'">'
       +'<button class="sess-an" data-an="'+an+'" aria-expanded="'+ouvert+'" onclick="basculerSessAnnee(\''+an+'\')">'
-        +chev(ouvert)+'<span class="sess-an-nom">'+(an==='?'?'Sans date':an)+'</span><span class="sess-n">'+nb(A.n)+'</span></button>'
+        +chev(ouvert)+'<span class="sess-an-nom">'+(an==='?'?'Sans date':an)+'</span><span class="sess-n">'+nbG(A.g)+'</span></button>'
       +(!ouvert?'':A.mois.map(m=>{const o=_sessMoisEstOuvert(m),L=A.parMois[m];
         return '<div class="sess-mois-bloc" data-mois="'+m+'">'
           +'<button class="sess-mois" data-mois="'+m+'" aria-expanded="'+o+'" onclick="basculerSessMois(\''+m+'\')">'
-            +chev(o)+'<span class="sess-mois-nom">'+_sessMoisNom(m)+'</span><span class="sess-n">'+nb(L.length)+'</span></button>'
+            +chev(o)+'<span class="sess-mois-nom">'+_sessMoisNom(m)+'</span><span class="sess-n">'+nbG(gDe(L))+'</span></button>'
           +(o?'<div class="sess-mois-cartes">'+L.map(_sessCarteHtml).join('')+'</div>':'')
           +'</div>';}).join(''))
       +'</div>';}).join('');
@@ -1839,9 +2278,35 @@ function _sessMoisEstOuvert(m){return Object.prototype.hasOwnProperty.call(_sess
 function _sessOuvrir(mois){(mois||[]).forEach(m=>{_sessMoisOuvert[m]=true;_sessAnOuvert[m==='?'?'?':m.slice(0,4)]=true;});}
 function basculerSessAnnee(an){_sessAnOuvert[an]=!_sessAnEstOuvert(an);renderSessions();}
 function basculerSessMois(m){_sessMoisOuvert[m]=!_sessMoisEstOuvert(m);renderSessions();}
+/* ⭐ L'ENVELOPPE d'une carte d'historique — l'UNIQUE endroit qui écrit la balise de carte (classe `sess-card`) (témoin PS-S3 : « pas de 2ᵉ moteur de carte »).
+   Une séance et une activité n'ont pas le même INTÉRIEUR (figurine et série ici ; type, durée, distance là) mais la même identité (`ts||id`), le même geste
+   (`openSessDetail`) et la même marque `sess-cible` quand une porte d'entrée la vise. Pour une séance la chaîne produite est IDENTIQUE à l'octet à celle d'avant. */
+function _sessCarteEnveloppe(s,autre,interieur){
+  const _cible=_sessCibles.indexOf(s.ts||s.id||0)>=0;
+  return`<div class="sess-card${autre?' sess-card-autre':''}${_cible?' sess-cible':''}"${autre?' data-genre="autre"':''} onclick="openSessDetail(${s.ts||s.id||0})" style="cursor:pointer;padding:12px 14px;">${interieur}</div>`;
+}
+/* 🚶 La carte d'une AUTRE ACTIVITÉ (05/11/2026) : son type et son icône, sa date (et son heure), sa durée, sa distance, son intensité, ses calories RETENUES
+   (« ✎ » quand c'est la valeur de la montre) et ses notes. Aucune ligne « kg de travail », aucune figurine : elle n'a ni série ni muscle. Même `onclick` que toute carte
+   (`openSessDetail`, qui l'ouvre dans SON formulaire). */
+function _autreCarteHtml(s){
+  const a=s.autre||{};
+  const kb=kcalBloc({duration:a.duration,kcalEst:a.kcalEst,kcalMan:a.kcalMan,kcalPoids:a.kcalPoids});
+  const kcal=(typeof s.calories==='number')?s.calories:kb.retenue;
+  const dur=+a.duration||0;
+  const parts=['<span class="sess-date2">'+fmtD(s.date)+(a.heure?' · '+_escNote(a.heure):'')+'</span>'];
+  if(dur)parts.push('<span class="sess-dur2">⏱️'+(dur>=60?Math.floor(dur/60)+'h'+String(dur%60).padStart(2,'0'):dur+' min')+'</span>');
+  if(a.distance!=null)parts.push('<span class="sess-date2">'+String(a.distance).replace('.',',')+' km</span>');
+  if(a.intensity)parts.push('<span class="sess-date2">'+_escNote(CARDIO_INTENSITES[a.intensity]||a.intensity)+'</span>');
+  parts.push('<span class="sess-cal2">🔥'+kcal+' kcal'+(kb.remplacee?' ✎':'')+'</span>');
+  const note=a.notes?'<div class="sess-exs2">'+_escNote(a.notes)+'</div>':'';
+  return _sessCarteEnveloppe(s,true,
+    '<div style="display:flex;align-items:flex-start;gap:10px;"><div style="flex:1;min-width:0;"><div class="sess-title">'+_escNote(autreIcone(a)+' '+autreLabel(a))+'</div>'
+    +'<div class="sess-meta">'+parts.join('<span style="opacity:.4">·</span>')+'</div>'+note+'</div></div>');
+}
 /* La carte d'UNE séance — l'unique producteur (inchangé : même contenu, même identité `ts||id`,
-   même bouton de débrief). Seule nouveauté : la marque `sess-cible` quand une porte d'entrée la vise. */
+   même bouton de débrief). Seule nouveauté : la marque `sess-cible` quand une porte d'entrée la vise (elle vit maintenant dans `_sessCarteEnveloppe`). */
 function _sessCarteHtml(s){
+    if(_estAutre(s))return _autreCarteHtml(s);
     const i=S.sessions.indexOf(s);
     const exs=(s.exs||s.exercises||[]).map(e=>e.name).join(', ');
     // ⚠️ NUAGE DESSINÉ, PAS L'EMOJI ☁️ (05/08/2026, signalé par Michel : « le petit nuage est
@@ -1855,7 +2320,7 @@ function _sessCarteHtml(s){
       +'<svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" aria-hidden="true">'
       +'<path d="M19.35 10.04A7.49 7.49 0 0 0 12 4C9.11 4 6.6 5.64 5.35 8.04A5.994 5.994 0 0 0 0 14c0 3.31 2.69 6 6 6h13a5 5 0 0 0 .35-9.96z"/>'
       +'</svg></span>':'';
-    const sc=_mscScores(s.exs||s.exercises||[]);
+    const sc=_mscScoresVus(s.exs||s.exercises||[]);
     const mini=_mscSVGmini(sc).replace('width:32px','width:46px'); // figurine plus grande sur les cartes (retour GPT, ft-v570)
     // Étiquette : nom de la séance du programme si dispo, sinon muscle le plus travaillé → devient le TITRE de la carte
     let _topLbl='';{let _b='',_bv=0;const _sc=sc.sc||{};for(const g in _sc){if(_sc[g]>_bv){_bv=_sc[g];_b=g;}}if(_b&&_MG[_b])_topLbl=_MG[_b].label;}
@@ -1875,7 +2340,7 @@ function _sessCarteHtml(s){
     if(_tag)parts.push('<span class="sess-date2">'+fmtD(s.date)+'</span>');
     // ⛔ « 0 kg » n'apprend rien sur un cardio, et laisse croire à une séance vide. On le retire
     //    UNIQUEMENT dans ce cas — une séance avec exercices garde sa ligne de volume, même à 0.
-    if(!_cardioSeul)parts.push('<span class="sess-vol2">'+Math.round(s.volume||0)+' kg</span>');
+    if(!_cardioSeul)parts.push('<span class="sess-vol2">'+_volTravail(s)+' kg de travail</span>');   // lot final ft-v1257 (Michel) : `volume` = le travail — le même nombre que « dont … kg de travail » du détail, qui dit le total
     // ⏱️ La durée était stockée depuis toujours et n'apparaissait NULLE PART (voir le
     //    commentaire du détail de séance plus haut). Ici on la met dans la liste : c'est
     //    là qu'on compare plusieurs séances d'un coup d'œil.
@@ -1910,8 +2375,7 @@ function _sessCarteHtml(s){
       : _dbfEnVol(_dbfId) ? '<button class="sess-dbf-go" disabled>⏳ Milo analyse…</button>'
       : _dbfInterrompue(_dbfId) ? '<button class="sess-dbf-go" onclick="analyserSeanceMilo('+_dbfArg+',event)">⏸️ Analyse interrompue — relancer</button>'
       : '<button class="sess-dbf-go" onclick="analyserSeanceMilo('+_dbfArg+',event)">✨ Analyser avec Milo</button>';
-    const _cible=_sessCibles.indexOf(s.ts||s.id||0)>=0;
-    return`<div class="sess-card${_cible?' sess-cible':''}" onclick="openSessDetail(${s.ts||s.id||0})" style="cursor:pointer;padding:12px 14px;"><div style="display:flex;align-items:flex-start;gap:10px;"><div style="flex:1;min-width:0;"><div class="sess-title">${_escNote(headline)}</div><div class="sess-meta">${metaHtml}</div>${_exsHtml}${_dbfBtn}</div><div onclick="showSessMuscleMap(${i},event)" style="cursor:zoom-in;flex-shrink:0">${mini}</div></div></div>`;
+    return _sessCarteEnveloppe(s,false,`<div style="display:flex;align-items:flex-start;gap:10px;"><div style="flex:1;min-width:0;"><div class="sess-title">${_escNote(headline)}</div><div class="sess-meta">${metaHtml}</div>${_exsHtml}${_dbfBtn}</div><div onclick="showSessMuscleMap(${i},event)" style="cursor:zoom-in;flex-shrink:0">${mini}</div></div>`);
 }
 /* 💬 LA LECTURE D'UN DÉBRIEF — LOCALE, SANS APPEL, SANS TOUCHER À LA SÉANCE (D-043).
    ⛔ Elle ne relit aucune conversation et n'ouvre pas le Coach : elle lit le magasin canonique
@@ -1923,7 +2387,7 @@ function _dbfFenetre(id){
   if(sub){
     const nEx=s?(s.exs||s.exercises||[]).length:0;
     sub.textContent=s?[(s.progLabel||''),fmtD(s.date),nEx?nEx+' exercice'+(nEx>1?'s':''):'',
-                       s.volume?Math.round(s.volume)+' kg':''].filter(Boolean).join(' · ')
+                       _volTravail(s)?_volTravail(s)+' kg':''].filter(Boolean).join(' · ')
                      :'Séance introuvable dans l\'historique';
   }
   const ov=document.getElementById('ov-debrief-milo');if(ov)ov.classList.add('open');
@@ -3351,7 +3815,10 @@ function renderSetup(){
   /* D-021 : un 1,55 à confirmer le DIT sous le sélecteur — prérempli n'est pas choisi. */
   {const h=document.getElementById('act-src-hint'); if(h){ const _e=(typeof etatActivite==='function')?etatActivite():''; h.style.display=_e==='a_confirmer'?'':'none'; }}
   const barEl=document.getElementById('bar-inp');if(barEl)barEl.value=S.barW;
-  const restEl=document.getElementById('rest-sel');if(restEl)restEl.value=S.defRest;
+  /* ⏱️ Mission Séance du 24/10/2026 : les durées viennent de la même liste que le menu ⋯ de la séance (`reposDefautChoix`,
+     log.js) — 130 s compris, sinon le sélecteur s'affichait VIDE pour tous ceux qui n'avaient jamais rien réglé. */
+  const restEl=document.getElementById('rest-sel');
+  if(restEl){ if(typeof reposDefautChoix==='function') restEl.innerHTML=reposDefautChoix().map(v=>'<option value="'+v+'">'+v+'s</option>').join(''); restEl.value=String(reposDefaut()); }
   const emailEl=document.getElementById('email-inp');if(emailEl)emailEl.value=S.email||'';
   const profilEmailLbl=document.getElementById('profil-email-lbl');
   const profilSyncDot=document.getElementById('profil-sync-dot');
@@ -3463,7 +3930,7 @@ function saveProfile(){
   }
   if(act!=null){ choisirActivite(act); actEl.dataset.touche=''; }   // D-021 : valeur ET provenance, un seul écrivain
   // (poids de la barre : propriétaire unique = setBarWeight(), dans le calculateur de plaques)
-  if(rest) S.defRest=rest;
+  if(rest){ if(typeof choisirReposDefaut==='function') choisirReposDefaut(rest); else S.defRest=rest; }   // un seul écrivain (log.js)
   const csEl=document.getElementById('cycle-start-inp');
   const cdEl=document.getElementById('cycle-dur-inp');
   const contraEl2=document.getElementById('contra-sel');
@@ -3692,7 +4159,16 @@ function _applyRestoreData(raw){
      gagne » : celle-ci effaçait une ligne locale jamais synchronisée dès que le cloud avait autant de
      lignes (`_fusionnerFoodLogRestauration`, state.js). Puis l'identité canonique (`_foodLogIdentifier`). */
   try{if(Array.isArray(d.foodLog)){S.foodLog=_fusionnerFoodLogRestauration(S.foodLog,d.foodLog).liste;_foodLogIdentifier(S.foodLog);}}catch(e){console.warn('[FT restore] foodLog',e);}
+  /* 🗑️ NUT-SYNC-01 — UNE RESTAURATION NE RAMÈNE PAS CE QUI A ÉTÉ SUPPRIMÉ À DESSEIN : les suppressions du compte s'ajoutent à celles du téléphone (union), puis le registre fait foi sur le journal
+     fusionné — les lignes du cloud comme celles du téléphone. */
+  try{ if(Array.isArray(d.foodSupprimes)) S.foodSupprimes=_foodSupprimesFusion(S.foodSupprimes,d.foodSupprimes,true); _foodAppliquerSuppressions(); }catch(e){console.warn('[FT restore] suppressions',e);}   // venues du COMPTE : déjà confirmées
   try{if(Array.isArray(d.savedFoods)&&d.savedFoods.length)S.savedFoods=d.savedFoods;}catch(e){console.warn('[FT restore] savedFoods',e);}
+  /* 🙈 NV2-FIAB (24/10, décision de Michel) — CE QUI A ÉTÉ MASQUÉ OU REMIS À ZÉRO NE REVIENT PAS PAR LA RESTAURATION. Les dates
+     de départ du cloud s'AJOUTENT à celles du téléphone (le plus tard gagne : rien n'est démasqué), puis les favoris qui en
+     datent d'avant sortent de la liste — le serveur garde les siens (un envoi vide ne remplace jamais sa liste, P1) : sans ce
+     tri, « Restaurer » ramenait les anciens favoris après une remise à zéro. ⛔ Le journal n'est pas touché. */
+  try{if(Array.isArray(d.hiddenFoods))S.hiddenFoods=_nutMasquesFusion(S.hiddenFoods,d.hiddenFoods);}catch(e){console.warn('[FT restore] hiddenFoods',e);}
+  try{if(typeof _n2Cle==='function')S.savedFoods=_nutFavorisVivants(S.savedFoods,S.hiddenFoods,_n2Cle);}catch(e){console.warn('[FT restore] favoris masqués',e);}
   try{if(typeof d.foodAiUses==='number')S.foodAiUses=Math.max(S.foodAiUses||0,d.foodAiUses);}catch(e){}
   /* 🫙 LES TROIS POTS SÉPARÉS (19/09/2026) — même geste que la ligne au-dessus : un MAXIMUM,
      jamais un remplacement, pour qu'une restauration ne puisse pas RENDRE des essais déjà
@@ -4389,6 +4865,7 @@ function _recalerAnciennesSeances(){
   let n=0, deja=0, avant=0, apres=0; const lignes=[];
   (S.sessions||[]).forEach(s=>{
     if(!s || !s.calories) return;
+    if(_estAutre(s)) return;                            // 🚶 jamais une activité : sa valeur est celle de la personne (retenue), pas un effort de moteur à recaler
     if(_seanceHorodatee(s)){ deja++; return; }          // durée déjà réelle
     if(s.caloriesAvant===undefined) s.caloriesAvant=s.calories;   // 🛟 une seule fois
     const car=(s.calData&&s.calData.cardio)||0;

@@ -4,7 +4,7 @@
    (une mise à jour du clone se voit tout de suite) ; les ressources de la prod (images,
    données, polices, bibliothèques) sont lues à la racine ; aucune PAGE de la prod n'est
    servie sous /clone/ (elle tournerait sans l'isolement). */
-const PROPRES = new Set(["", "index.html", "style.css", "manifest.json", "sw.js", "capacites-ia.js", "constants.js", "state.js", "supabase.js", "screens.js", "log.js", "setup.js", "tracking.js", "coach.js", "food-health.js", "app.js"]);
+const PROPRES = new Set(["", "index.html", "style.css", "manifest.json", "sw.js", "capacites-ia.js", "nutrition-v2.js", "constants.js", "state.js", "supabase.js", "screens.js", "log.js", "setup.js", "tracking.js", "coach.js", "food-health.js", "app.js"]);
 const BASE = self.location.pathname.replace(/[^\/]*$/, '');
 const PARENT = BASE.replace(/[^\/]+\/$/, '');
 self.addEventListener('install', () => self.skipWaiting());
