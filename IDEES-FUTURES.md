@@ -65,6 +65,7 @@ soulevé de terre) : « Ta séance jusqu'ici » ne montre que la silhouette **de
 
 **FUTUR — Autre activité : idée produit validée comme piste à étudier, mais non implémentée dans ce chantier.**
 ↪️ **05/11/2026 — CONSTRUITE sur ordre explicite de Michel** (branche `claude/dreamy-bell-pu88ia`, NON fusionnée, NON publiée) : une tuile « Autre activité » sous « Programme » + des calories personnalisables communes au cardio — voir `docs/AUTRE-ACTIVITE-CALORIES.md`. **La décision L de `D-085` est remplacée** (D-ACT-6) ; le témoin `B-UXI-F4`, qui gardait l'ABSENCE, garde maintenant la PLACE de la tuile. Le texte ci-dessous reste tel qu'il était (R30).
+↪️ **08/11/2026 (soir) — recette iPhone faite par Michel (clone `3bac5474`, parcours principaux ✅).** **Idées consignées, reportées APRÈS la publication de `ft-v1266` (décision de Michel, `D-155`) — pas un chantier sans son accord explicite (règle d'or #15)** : contraste et lisibilité du formulaire « Autre activité » · sélection automatique de la valeur numérique à la prise de focus · confirmation discrète d'un `0 kcal` enregistré (à traiter séparément). Rien n'est codé.
 **PISTE · NON CONSTRUITE.** Pouvoir noter une activité qui n'est ni de la musculation ni du cardio
 (un sport, une sortie, une activité de la vie). Rien n'est construit : ni écran, ni donnée, ni clé.
 - **Aujourd'hui (mesuré sur `claude/ux-seance-02`)** : l'écran Séance propose « Séance libre »,

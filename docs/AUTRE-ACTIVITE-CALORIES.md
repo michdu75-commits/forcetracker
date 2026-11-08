@@ -324,7 +324,7 @@ Garde-fous du dépôt : `tests/donnees/runner.js` (R4a) non déclenché (aucun c
 - **Ajouts autorisés, et eux seuls** : `state.js::_persistRepli` dans la liste blanche de `C-ACT-J30` ; le **correctif « 0 kcal »** (`BUGS.md` §144 ; +7 −3 lignes dans `log.js::_calDataSeance` et `setup.js::_kcalApresEdition`, témoins `C-ACT-B16` à `B20`, mutations M63 / M64) ; `sw.js` ; documentation et suivi (`D-151`, `D-152`).
 - **Périmètre** (garde automatique, relue dans le journal de cette session) : 30 fichiers, **10 fichiers applicatifs + `sw.js`**, aucun fichier interdit, ni lot T / T-bis, ni TDEE V2, ni cardio multi-activités. **Compteurs R17** (code applicatif) : 10 fichiers (+ `sw.js`) · +900 −132 lignes (+768) · 0 clé de stockage ni champ racine ajouté · 0 ancien chemin supprimé.
 - **Résultats** : banc du lot 136 ✅ / 0 ❌ · contrôle négatif 64/64 · 33 bancs voisins (29 verts, 4 rouges connus identiques à master) · D-031 classique 8 337 ✅ / 7 ❌ (les 7 connus, identiques à master) · suite annexe 12 PASS, 1 défaut connu, 2 FAIL identiques à master. Les 7 rouges de D-031 (`PS-E29`, plantage `seance_ux`, `B-UXI-G2/G3/G5/G7`, `B-FFD-⑧e`) sont **identiques sur master et sur la branche** (mêmes libellés, mêmes détails, mesurés le même jour). Suite annexe hors D-031 : `calculs` (un témoin Nutrition) et `dates` (fixtures UTC de `nut_sync01.js:40` / `nut_sync02_clients.js:236`) rouges **aussi sur master**, `discussions` défaut connu (taille du prompt) — **non couverts par l'exception de Michel (D-031)** : à lui de décider.
-- **États** : corrigé sur branche **oui** · intégré sur la branche isolée **oui**, sur master **non** · publié **non** · vérifié sur iPhone **non**.
+- **États** : corrigé sur branche **oui** · intégré sur la branche isolée **oui**, sur master **non** · publié **non** · vérifié sur iPhone **non** *(↪️ 08/11/2026, soir : **oui pour les parcours principaux**, par Michel sur son iPhone, clone `3bac5474` — voir § 11 ; appareil et version d'iOS à compléter ; reste non vérifié sur iPhone : la ligne 16, hors ligne, qui se joue après publication)*.
 
 ## 10. Recette iPhone (méthode, 08/11/2026)
 
@@ -333,3 +333,26 @@ Obligatoire avant publication (décision de Michel). **Voie A** (sans push, sans
 Les 16 lignes (N = estimation affichée ; X = calories actives de la montre, ex. 255) : **1** marche 60 min → « Estimation FT ≈ 312 kcal · Retenu 312 · estimation » · **2** taper 255 → « Retenu 255 · valeur saisie », 312 reste affiché sans s'ajouter, bouton « ↩︎ Revenir à l'estimation » · **3** Enregistrer → « Activité enregistrée ✓ — 255 kcal », carte « 🔥 255 kcal ✎ » · **4** rouvrir, 300 → +45 sur le total de la semaine · **5** « Revenir » → 312 sans ✎ · **6** taper 0 → « Retenu 0 kcal · valeur saisie », carte « 🔥 0 kcal ✎ », bilan +0 ; vider → 312 · **7** « abc » / « 99999 » refusés avec un message, « 255,6 » → 256 · **8** taper X puis « Enregistrer » sans quitter le champ → la valeur est prise · **9** le bouton « + » central n'a pas bougé · **10** séance du 04/11 (cardio seul ancien) → « ≈ 379 kcal · Retenu 379 » · **11** séance du 03/11 (musculation + cardio ancien) → cardio « ≈ 150 » · **12** y taper 0 → la séance passe de 500 à **350**, le bilan du mois **ne dit pas** « non séparable » ; « Revenir » → 500 · **13** y taper 120 → 350 + 120 = **470** (jamais 500 + 120) · **14** séance neuve avec cardio saisi → pas d'addition · **15** cardio seul 45 min → « ≈ 338 kcal » (plus de forfait fictif) · **16** *(en production, après publication)* mode avion → l'activité survit, synchro au retour du réseau ; l'écran Nutrition est inchangé.
 
 *La voie A prouve le vrai code sur le moteur WebKit de l'iPhone (clavier numérique, virgule, champ non quitté) ; elle ne prouve pas la synchro réelle ni le hors ligne d'une app installée : ligne 16, en production.*
+
+## 11. Recette iPhone de Michel — résultats (08/11/2026, soir) et améliorations reportées
+
+**Faite par Michel sur son iPhone, dans son clone « FT clone » mis à jour en `3bac5474`** (le clone ne parle à aucun serveur et range ses données sous le préfixe `cl_`). Le profil du clone est celui d'« Aude », **52 kg** : c'est ce poids qui explique les estimations affichées. **Modèle d'iPhone et version d'iOS : à compléter par Michel** (non communiqués ; l'état « vérifié sur iPhone » ne s'écrit complet qu'avec eux — règle d'or #19).
+
+| Parcours (constaté par Michel) | Résultat |
+|---|---|
+| Affichage et ouverture d'« Autre activité » | ✅ |
+| Création d'une marche de 60 minutes | ✅ |
+| Estimation calorique selon l'activité et l'intensité | ✅ — 198 kcal |
+| Calories de la montre : 150 kcal | ✅ remplacent l'estimation de 198 (jamais additionnées) |
+| Enregistrement dans l'historique | ✅ |
+| Modification de 150 à 250 kcal | ✅ |
+| Saisie et sauvegarde de 0 kcal | ✅ |
+| Retour à l'estimation (198 kcal) | ✅ |
+| Suppression d'une activité | ✅ — compteur revenu à « 14 séances et 1 activité » |
+| Accès à Nutrition | ✅ — aucun dysfonctionnement évident |
+
+**Rejeu automatique du même scénario** (hors dépôt ; code du candidat `c2d6b389`, profil 52 kg, 14 séances + 1 activité de départ, horloge figée au 08/11/2026 à 19 h) : **27/27** sur l'application à la racine et **28/28** sur le clone du dépôt (bandeau `3bac5474` lu comme sur l'iPhone). Il retrouve : la marche de 60 min à 52 kg = **198 kcal** (légère 156 · modérée 198 · intense 250) ; 150 qui remplace ; 250 qui fait bouger le total de **+100**, pas de +250 ; 0 kcal compté 0 ; la case vidée qui revient à 198 sans ✎ ; la suppression en deux touchers qui ramène « 14 séances · 1 activité » ; l'écran Nutrition **identique** avant, pendant et après ; la valeur tapée puis « Enregistrer » sans quitter le champ. **Contrôle négatif** : trois mutations volontaires (arrondi à l'entier inférieur, valeur de la montre additionnée, 0 traité comme un champ vide) font rougir 8, 10 et 3 points ; le code d'avant « Autre activité » plante. ⛔ Chromium n'est pas un iPhone : le rejeu confirme la logique, pas le toucher.
+
+**Non couvert par l'iPhone de Michel (couvert par l'automatisation seulement)** : lignes 14 et 15 (cardio d'une séance de musculation ; cardio seul à 338 kcal), correctif « 0 kcal » d'une séance de musculation avec cardio, anciens enregistrements (lignes 10 à 13, impossibles à jouer sur un clone) et **ligne 16 (mode avion, application installée, Nutrition) : à jouer sur la vraie application, après publication**.
+
+**Améliorations reportées APRÈS la publication — décision de Michel du 08/11/2026 (`D-155`)** : le contraste et la lisibilité du formulaire, la sélection automatique de la valeur numérique à la prise de focus, et — à traiter séparément — une confirmation discrète quand on enregistre `0 kcal`. **Elles ne sont pas dans le candidat, rien n'est codé** : `ft-v1266` est clôturé tel qu'il a été recetté.
