@@ -46,6 +46,379 @@ function calcCardioKcal(c){
   const met=(CARDIO_MET[c.type||'elliptique']||CARDIO_MET.autre)[c.intensity||'modere'];
   return Math.round(met*(S.bw||80)*(c.duration/60));
 }
+
+/* ═══ 🔥 CALORIES D'UNE ACTIVITÉ — ESTIMÉE · SAISIE · RETENUE (05/11/2026, mission de Michel — `docs/AUTRE-ACTIVITE-CALORIES.md`) ═══
+   LA RÈGLE, UNE SEULE POUR LE CARDIO ET POUR « AUTRE ACTIVITÉ » : l'app ESTIME ; la personne peut SAISIR la valeur de sa montre
+   (calories d'ACTIVITÉ seulement — le métabolisme de repos n'en fait pas partie) ; cette valeur REMPLACE l'estimation, elle ne s'y ajoute
+   JAMAIS. Une seule valeur est RETENUE, et c'est elle que tous les écrans, bilans et Milo lisent (`calories`, `calData.cardio|autre`).
+   Sur un bloc (`cardio`, `cardioAvant`, `autre`) :
+     · kcalEst   — l'estimation FT, FIGÉE. Elle ne change que si la personne change le type, l'intensité ou la durée : jamais parce que le poids
+                   a changé, jamais parce qu'on rouvre et réenregistre (même principe que F21, `setup.js`) ;
+     · kcalPoids — le poids (kg) avec lequel elle a été calculée : c'est LUI, et non le poids du jour, qui sert à la recalculer ;
+     · kcalMode  — comment elle a été calculée (`met1` = MET × poids × durée) ;
+     · kcalMan   — la valeur SAISIE ; absente tant que rien n'est saisi. ⛔ 0 est une saisie : `kcalMan===0` existe et se lit 0 (≠ absent).
+   Un bloc ANCIEN n'a aucun de ces champs : il se lit exactement comme avant (`calcCardioKcal`) tant qu'on n'y saisit rien.
+   ⛔ Le moteur de la musculation n'est PAS touché (`calcSessionCalories` reste gelé, consigne de Michel) : il est seulement APPELÉ. */
+const KCAL_MAN_MAX=10000;   // borne d'une valeur saisie (kcal) : au-delà, c'est une faute de frappe (12 h de course à 11 MET et 150 kg ≈ 19 800 — hors usage)
+const KCAL_MODE='met1';     // « MET × poids × durée » : le mode d'estimation d'aujourd'hui (un autre mode aurait sa propre étiquette)
+/* Le barème des « autres activités » — Compendium of Physical Activities, édition 2024 (valeurs lues dans des extraits du site, qui n'est pas joignable
+   depuis le conteneur : À VALIDER par Michel, décision E1 de `docs/AUTRE-ACTIVITE-CALORIES.md`). Léger / modéré / intense, comme `CARDIO_MET`.
+   marche 2,5 mph = 3,0 · 2,8-3,4 mph = 3,8 · 3,5-3,9 mph = 4,8 ; marche sportive 3,5-3,9 = 4,8 · 4,0-4,4 = 5,5 · 4,5-4,9 = 7,0 ;
+   randonnée « hiking, cross country » = 6,0 ; balade <2 mph = 2,0 · 2,5 mph = 3,0 · « walking for pleasure » = 3,5 ;
+   vélo de loisir 5,5 mph = 3,5 · <10 mph = 4,0 · 10-11,9 mph = 6,8 ; vélo sportif 10-11,9 = 6,8 · 12-13,9 = 8,0 · 14-15,9 = 10,0 ;
+   course 4-4,2 mph = 6,5 · 5-5,2 mph = 8,5 · 7 mph = 11,0.
+   ⛔ `CARDIO_MET` n'est pas modifié (aucun correctif MET sans décision de Michel) ; « Autre » réutilise SON barème — pas un deuxième barème générique. */
+const AUTRE_MET={
+  marche:         {leger:3.0, modere:3.8, intense:4.8},
+  marche_sportive:{leger:4.8, modere:5.5, intense:7.0},
+  randonnee:      {leger:4.8, modere:6.0, intense:7.0},
+  balade:         {leger:2.0, modere:3.0, intense:3.5},
+  velo_loisir:    {leger:3.5, modere:4.0, intense:6.8},
+  velo_sportif:   {leger:6.8, modere:8.0, intense:10.0},
+  course:         {leger:6.5, modere:8.5, intense:11.0},
+  autre:          CARDIO_MET.autre,
+};
+/* Les types proposés, dans l'ordre d'affichage : [clé, libellé, icône]. La liste est OUVERTE : un nouveau type = une ligne ici et une ligne dans AUTRE_MET. */
+const AUTRE_TYPES=[['marche','Marche','🚶'],['marche_sportive','Marche sportive','⚡'],['randonnee','Randonnée','🥾'],['balade','Balade','🌳'],
+  ['velo_loisir','Vélo loisir','🚲'],['velo_sportif','Vélo sportif','🚴'],['course','Course à pied','🏃'],['autre','Autre','✨']];
+function autreLabel(a){
+  if(!a)return 'Activité';
+  if(a.type==='autre'&&a.libelle&&String(a.libelle).trim())return String(a.libelle).trim();
+  const t=AUTRE_TYPES.find(x=>x[0]===a.type); return t?t[1]:'Activité';
+}
+function autreIcone(a){ const t=AUTRE_TYPES.find(x=>x[0]===(a&&a.type)); return t?t[2]:'✨'; }
+// Le MET d'un bloc selon sa famille : une intensité inconnue retombe sur « modéré » (jamais NaN).
+function _metBloc(famille,b){
+  const t=famille==='autre'
+    ? (AUTRE_MET[b.type]||AUTRE_MET.autre)
+    : (CARDIO_MET[b.type||'elliptique']||CARDIO_MET.autre);
+  const v=t[b.intensity||'modere'];
+  return (typeof v==='number')?v:t.modere;
+}
+// L'estimation FT d'un bloc (kcal entiers) : MET × poids × durée. `poids` absent → poids actuel, 80 kg à défaut (comme `calcCardioKcal`).
+function kcalEstimerBloc(b,famille,poids){
+  if(!b||!(+b.duration>0))return 0;
+  const w=(+poids>0)?+poids:((+S.bw>0)?+S.bw:80);
+  return Math.round(_metBloc(famille,b)*w*(+b.duration/60));
+}
+// Valide ce que la personne a tapé. Vide = pas de valeur saisie ; « 0 » = une saisie (valide) ; virgule décimale acceptée ; arrondi au kcal.
+function kcalSaisieValide(txt){
+  const t=String(txt==null?'':txt).trim().replace(',','.');
+  if(t==='')return{etat:'vide'};
+  if(!/^\d+(\.\d+)?$/.test(t))return{etat:'invalide',raison:'Entre un nombre de kcal (ex. 255)'};
+  const n=Math.round(parseFloat(t));
+  if(!isFinite(n)||n>KCAL_MAN_MAX)return{etat:'invalide',raison:'Valeur trop grande (maximum '+KCAL_MAN_MAX+' kcal)'};
+  return{etat:'ok',valeur:n};
+}
+/* L'UNIQUE LECTEUR de « quelles calories pour ce bloc ? » (R2). Rend l'estimation, la saisie, la valeur RETENUE, son origine et si elle remplace.
+   Un bloc ancien (sans `kcalEst`) : estimation = `calcCardioKcal` (poids actuel) — exactement l'ancien comportement. */
+function kcalBloc(b){
+  const vide={estimee:0,manuelle:null,retenue:0,origine:'estimee',remplacee:false,ancien:false,mode:null,poids:null};
+  if(!b||!(+b.duration>0))return vide;
+  const ancien=!(typeof b.kcalEst==='number'&&isFinite(b.kcalEst));
+  const man=(typeof b.kcalMan==='number'&&isFinite(b.kcalMan)&&b.kcalMan>=0)?b.kcalMan:null;
+  const est=ancien?calcCardioKcal(b):b.kcalEst;
+  return{estimee:est,manuelle:man,retenue:man!=null?man:est,origine:man!=null?'manuelle':'estimee',remplacee:man!=null,
+         ancien,mode:b.kcalMode||null,poids:(+b.kcalPoids>0)?+b.kcalPoids:null};
+}
+/* (Re)fige l'ESTIMATION d'un bloc. À appeler quand le type, l'intensité ou la durée CHANGENT — jamais pour un simple réenregistrement.
+   `poids` : celui d'une séance en cours (le poids du jour). Absent → le poids déjà rangé sur le bloc, à défaut le poids actuel.
+   Durée nulle : plus d'estimation à figer ; la valeur saisie, elle, est gardée (elle appartient à la personne). */
+function kcalPoserEstimation(b,famille,poids){
+  if(!b)return;
+  if(!(+b.duration>0)){ delete b.kcalEst; delete b.kcalPoids; delete b.kcalMode; return; }
+  const w=(+poids>0)?+poids:((+b.kcalPoids>0)?+b.kcalPoids:((+S.bw>0)?+S.bw:80));
+  b.kcalPoids=Math.round(w*1000)/1000;
+  b.kcalEst=kcalEstimerBloc(b,famille,b.kcalPoids);
+  b.kcalMode=KCAL_MODE;
+}
+// Pose (ou retire, si vide) la valeur saisie. Rend {ok:true,etat:'saisie'|'estimation'} ou {ok:false,raison}. Une saisie invalide ne touche à rien.
+function kcalPoserManuelle(b,txt){
+  if(!b)return{ok:false,raison:'Rien à modifier'};
+  const v=kcalSaisieValide(txt);
+  if(v.etat==='invalide')return{ok:false,raison:v.raison};
+  if(v.etat==='vide'){ delete b.kcalMan; return{ok:true,etat:'estimation'}; }
+  b.kcalMan=v.valeur; return{ok:true,etat:'saisie'};
+}
+/* Les calories RETENUES des blocs cardio d'un enregistrement DÉJÀ RANGÉ, pour l'AFFICHAGE — jamais un recalcul au poids du jour.
+   Un bloc ancien n'a pas d'estimation figée : sa part est celle que `calData.cardio` a rangée à l'enregistrement, répartie au prorata de l'effort
+   (les estimations sont proportionnelles au poids : la répartition ne dépend pas du poids d'aujourd'hui). `original` = l'enregistrement tel qu'il est
+   rangé quand `sess` est une copie en cours de modification : la part suit alors la VARIATION d'effort, comme la règle F21 (`_kcalApresEdition`). */
+function kcalCardioAffichage(sess,original){
+  const out={avant:null,apres:null,total:0,reconstitue:false};
+  if(!sess)return out;
+  const bl=[['avant',sess.cardioAvant],['apres',sess.cardio]].filter(([,b])=>b&&+b.duration>0);
+  const anc=bl.filter(([,b])=>typeof b.kcalEst!=='number');
+  const orig=original||sess;
+  const rangee=+((orig.calData&&orig.calData.cardio)||0);
+  const eCur={}; let sCur=0; anc.forEach(([m,b])=>{ eCur[m]=calcCardioKcal(b); sCur+=eCur[m]; });
+  const oAnc=[orig.cardioAvant,orig.cardio].filter(b=>b&&+b.duration>0&&typeof b.kcalEst!=='number');
+  const sOrig=oAnc.reduce((a,b)=>a+calcCardioKcal(b),0);
+  const totalAnc=(rangee>0&&sOrig>0)?Math.round(rangee*sCur/sOrig):null;
+  let reste=totalAnc, n=anc.length;
+  bl.forEach(([m,b])=>{
+    const kb=kcalBloc(b);
+    if(kb.ancien){
+      let part;
+      if(totalAnc==null||!(sCur>0)){ part=kb.estimee; out.reconstitue=true; }   // rien de rangé : le seul chiffre disponible est celui d'aujourd'hui — et on le dit
+      else { n--; part=(n>0)?Math.round(totalAnc*eCur[m]/sCur):reste; reste-=part; }
+      out[m]=Object.assign({},kb,{estimee:part,retenue:kb.remplacee?kb.retenue:part});
+    }else out[m]=kb;
+    out.total+=out[m].retenue;
+  });
+  return out;
+}
+/* Donne à CHAQUE bloc cardio d'un enregistrement ancien son estimation figée (ce que `kcalCardioAffichage` montre) et le poids IMPLICITE qui la
+   reproduit — jamais le poids du jour. À appeler AVANT de poser une première valeur saisie sur un enregistrement ancien : après, tous ses blocs sont
+   des blocs « à valeurs figées », et le total se reconstruit par parties (`_kcalApresEdition`). Sans effet sur un enregistrement déjà normalisé. */
+function kcalNormaliserSeance(sess,original){
+  if(!sess)return false;
+  const aff=kcalCardioAffichage(sess,original);
+  let fait=false;
+  [['avant',sess.cardioAvant],['apres',sess.cardio]].forEach(([m,b])=>{
+    if(!b||!(+b.duration>0)||typeof b.kcalEst==='number'||!aff[m])return;
+    const brut=_metBloc('cardio',b)*(+b.duration/60);
+    b.kcalEst=aff[m].estimee;
+    b.kcalPoids=(brut>0)?Math.round(1000*b.kcalEst/brut)/1000:((+S.bw>0)?+S.bw:80);
+    b.kcalMode=aff.reconstitue?'reconstitue':KCAL_MODE;
+    fait=true;
+  });
+  return fait;
+}
+// Un enregistrement porte-t-il des calories de bloc figées ou saisies ? (sinon : l'ancienne règle, à l'octet)
+function _kcalAvecSaisie(s){
+  return !!s&&[s.cardio,s.cardioAvant].some(b=>b&&+b.duration>0&&typeof b.kcalEst==='number');
+}
+/* L'éditeur de calories, UN SEUL pour les trois endroits (séance en cours, détail d'une séance, formulaire d'activité) — R2.
+   o.k = `kcalBloc(...)` ou son équivalent d'affichage ; o.onSaisie = code d'un champ (`this.value`) ; o.onRetour = code du bouton « revenir ». */
+function _kcalEditeurHtml(o){
+  const k=o&&o.k; if(!k||!(k.estimee>0||k.remplacee))return '';
+  const man=(k.manuelle!=null)?k.manuelle:'';
+  return `<div class="kcal-ed" data-origine="${k.origine}" style="margin-top:8px;padding:8px 10px;border-radius:10px;background:var(--bg3);">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap;">
+      <span style="font-size:11.5px;color:var(--t3);">Estimation FT <b style="color:var(--t2);">≈ ${k.estimee} kcal</b></span>
+      <span style="font-size:12px;color:var(--t2);">Retenu <b data-kcal-retenu style="color:var(--green);font-size:14px;">${k.retenue} kcal</b> <span style="font-size:10.5px;color:var(--t3);">${k.remplacee?'· valeur saisie':'· estimation'}</span></span>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px;margin-top:6px;">
+      <span style="font-size:11.5px;color:var(--t2);flex:1;line-height:1.3;">Calories de ta montre <span style="color:var(--t3);">(activité seule, sans le repos)</span></span>
+      <input type="text" inputmode="decimal" autocomplete="off" value="${man}" data-kcal-man="${man}" placeholder="—" aria-label="Calories de ta montre pour cette activité, en kcal" onchange="${o.onSaisie}" style="width:74px;padding:6px 8px;border-radius:8px;border:1px solid var(--sep);background:var(--bg2);color:var(--t1);font-size:14px;font-weight:700;font-family:var(--font);text-align:center;">
+      <span style="font-size:11.5px;color:var(--t3);">kcal</span>
+    </div>
+    ${k.remplacee?`<button type="button" class="btn btn-bg2" style="margin-top:6px;padding:5px 10px;font-size:11.5px;" onclick="${o.onRetour}">↩︎ Revenir à l'estimation</button>`:''}
+  </div>`;
+}
+/* Une valeur de montre TAPÉE mais pas encore « validée » : le champ n'a pas perdu le focus (un bouton touché ne retire pas toujours le focus sur iPhone), donc `change` n'a pas eu lieu et le
+   geste d'enregistrer lirait l'ANCIENNE valeur. On la lit AVANT d'enregistrer en rejouant le `change` du champ — le même code que la validation normale, jamais une seconde copie (R2).
+   Rend `false` si la valeur tapée est invalide (le propriétaire du champ a déjà dit pourquoi) : on n'enregistre pas en l'ignorant. */
+function kcalValiderChampsEnAttente(racine){
+  let ok=true;
+  try{
+    const r=(typeof racine==='string')?document.querySelector(racine):racine; if(!r)return true;
+    r.querySelectorAll('.kcal-ed input').forEach(i=>{
+      /* ⛔ On compare à la valeur ENREGISTRÉE (`data-kcal-man`, posée au rendu), JAMAIS à `defaultValue` : l'app aligne `defaultValue` sur chaque frappe (« trick iOS » : plus de boîte
+         « annuler la saisie ? », app.js, écouteur global `input`), donc `defaultValue` vaut toujours ce qui vient d'être tapé. */
+      if(i.value.trim()===String(i.getAttribute('data-kcal-man')||'').trim())return;
+      if(kcalSaisieValide(i.value).etat==='invalide')ok=false;
+      i.dispatchEvent(new Event('change',{bubbles:true}));
+    });
+  }catch(e){}
+  return ok;
+}
+/* ═══ 🚶 AUTRE ACTIVITÉ — créer · consulter · modifier · supprimer (05/11/2026, mission de Michel — `docs/AUTRE-ACTIVITE-CALORIES.md`) ═══
+   Une activité hors musculation (marche, randonnée, vélo, course…) est un ENREGISTREMENT de `S.sessions` portant un bloc `autre` — pas un tableau à part
+   (le Code.js déployé jette tout champ racine inconnu ; il garde tel quel ce qui est DANS une séance). Aucune série, aucune répétition, aucun volume.
+   Ses calories suivent la règle commune (`kcalBloc`) : estimation figée, valeur de la montre qui la remplace, une seule valeur retenue.
+   Le formulaire travaille sur un BROUILLON (`_au`) : rien n'est écrit tant que « Enregistrer » n'est pas pressé, et un refus d'écriture (stockage plein)
+   rend la main avec tout ce qui a été tapé. */
+let _au=null, _auDelConfirm=false, _auDelTimer=null;
+const AU_DUREE_MAX=1440;    // minutes (24 h)
+const AU_DIST_MAX=1000;     // km
+function _auPad(n){ return (n<10?'0':'')+n; }
+function _auHeureMaintenant(){ const d=new Date(); return _auPad(d.getHours())+':'+_auPad(d.getMinutes()); }
+// L'instant (ms) d'une activité : sa date et son heure LOCALES ; midi à défaut d'heure. Jamais d'UTC (une activité de 00 h 30 est du jour local).
+function _auTs(date,heure){
+  const [y,m,d]=String(date).split('-').map(Number);
+  const [hh,mm]=(heure&&/^\d{2}:\d{2}$/.test(heure))?heure.split(':').map(Number):[12,0];
+  return new Date(y,m-1,d,hh,mm,0,0).getTime();
+}
+// `ts` et `id` d'un enregistrement sont UN même nombre, unique : l'interface, le débrief, la fusion d'onglets et la restauration s'en servent chacun à sa façon.
+function _auTsUnique(ts,sauf){
+  let t=ts; const pris=x=>(S.sessions||[]).some(s=>s&&(s.ts===x||s.id===x)&&(s.ts||s.id)!==sauf);
+  while(pris(t)) t++;
+  return t;
+}
+function _auDateValide(d){
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(String(d||'')))return false;
+  const [y,m,j]=d.split('-').map(Number), x=new Date(y,m-1,j);
+  return x.getFullYear()===y&&x.getMonth()===m-1&&x.getDate()===j;
+}
+function _auNouveau(){
+  return{id:null,type:'marche',intensity:'',dureeTxt:'',kcalEst:0,kcalPoids:(+S.bw>0?+S.bw:80),kcalMode:KCAL_MODE,kcalMan:undefined,
+         date:today(),heure:_auHeureMaintenant(),distTxt:'',libelle:'',notes:''};
+}
+function _auDepuis(s){
+  const a=s.autre||{};
+  const man=(typeof a.kcalMan==='number'&&isFinite(a.kcalMan))?a.kcalMan:undefined;
+  let est, poids=(+a.kcalPoids>0?+a.kcalPoids:(+S.bw>0?+S.bw:80));
+  if(typeof a.kcalEst==='number'&&isFinite(a.kcalEst)) est=a.kcalEst;
+  else{
+    /* Un enregistrement venu d'AILLEURS (autre appareil, autre version) sans estimation figée ni valeur saisie : la valeur RANGÉE (`calories`) fait foi. On la garde telle quelle — c'est
+       l'estimation, au poids implicite qui la reproduit — et jamais un recalcul au poids du jour : rouvrir puis réenregistrer ne doit pas la changer en silence. */
+    const brut=_metBloc('autre',a)*((+a.duration||0)/60);
+    if(man===undefined&&typeof s.calories==='number'&&isFinite(s.calories)&&s.calories>=0&&brut>0){ est=s.calories; poids=Math.round(1000*est/brut)/1000; }
+    else est=kcalEstimerBloc(a,'autre',poids);
+  }
+  return{id:(s.ts||s.id),type:a.type||'autre',intensity:a.intensity||'',dureeTxt:String(a.duration||''),
+         kcalEst:est,kcalPoids:poids,kcalMode:a.kcalMode||KCAL_MODE,kcalMan:man,
+         date:s.date||today(),heure:a.heure||'',distTxt:(a.distance!=null?String(a.distance).replace('.',','):''),libelle:a.libelle||'',notes:a.notes||''};
+}
+function _auDuree(){ const d=parseInt(_au&&_au.dureeTxt,10); return d>0?d:0; }
+// L'estimation suit le type, l'intensité et la durée — avec le poids RANGÉ dans le brouillon (celui de la création, jamais celui du jour pour une activité déjà enregistrée).
+function _auRecalcul(){
+  const d=_auDuree();
+  _au.kcalEst=d>0?kcalEstimerBloc({type:_au.type,intensity:_au.intensity||undefined,duration:d},'autre',_au.kcalPoids):0;
+}
+function _auBloc(){ return{duration:_auDuree(),kcalEst:_au.kcalEst,kcalMan:_au.kcalMan,kcalPoids:_au.kcalPoids,kcalMode:_au.kcalMode}; }
+function _auErr(msg){
+  const e=document.getElementById('au-err'); if(!e)return;
+  e.textContent=msg||''; e.style.display=msg?'block':'none';
+}
+function _auChip(actif,txt,onclick,extra){
+  return `<button type="button" onclick="${onclick}" style="flex-shrink:0;padding:6px 12px;border-radius:20px;border:none;font-size:12.5px;font-family:var(--font);cursor:pointer;touch-action:manipulation;background:${actif?'var(--red)':'var(--bg3)'};color:${actif?'#fff':'var(--t2)'};${extra||''}">${txt}</button>`;
+}
+// Les morceaux qui changent avec les choix (jamais les champs de saisie : on ne les redessine pas sous les doigts).
+function _auMaj(){
+  if(!_au)return;
+  const t=document.getElementById('au-types');
+  if(t)t.innerHTML=AUTRE_TYPES.map(x=>_auChip(_au.type===x[0],x[2]+' '+x[1],"_auType('"+x[0]+"')")).join('');
+  const lw=document.getElementById('au-libelle-wrap'); if(lw)lw.style.display=(_au.type==='autre')?'block':'none';
+  const it=document.getElementById('au-int');
+  if(it)it.innerHTML=['leger','modere','intense'].map(k=>_auChip(_au.intensity===k,CARDIO_INTENSITES[k],"_auInt('"+k+"')",'flex:1;')).join('');
+  _auMajKcal();
+  const del=document.getElementById('au-del-btn'); if(del)del.style.display=(_au.id!=null)?'block':'none';
+}
+function _auMajKcal(){
+  const el=document.getElementById('au-kcal'); if(!el||!_au)return;
+  if(!(_auDuree()>0)){ el.innerHTML='<div style="font-size:12px;color:var(--t3);padding:8px 2px;">Entre la durée : l\'estimation des calories apparaît ici.</div>'; return; }
+  el.innerHTML=_kcalEditeurHtml({k:kcalBloc(_auBloc()),onSaisie:"_auSaisieKcal(this.value)",onRetour:"_auSaisieKcal('')"});
+}
+function _auType(k){ _au.type=k; _auRecalcul(); _auMaj(); }
+function _auInt(k){ _au.intensity=(_au.intensity===k)?'':k; _auRecalcul(); _auMaj(); }   // facultative : retaper la même efface
+function _auSurDuree(v){ _au.dureeTxt=v; _auRecalcul(); _auMajKcal(); }
+function _auSaisieKcal(v){
+  const r=kcalSaisieValide(v);
+  if(r.etat==='invalide'){ _auErr(r.raison); _auMajKcal(); return; }
+  _auErr('');
+  _au.kcalMan=(r.etat==='ok')?r.valeur:undefined;
+  _auMajKcal();
+}
+function openAutreActivite(id){
+  const s=(id!=null)?(S.sessions||[]).find(x=>x&&(x.ts||x.id)===id&&_estAutre(x)):null;
+  _au=s?_auDepuis(s):_auNouveau();
+  _auDelConfirm=false; if(_auDelTimer){clearTimeout(_auDelTimer);_auDelTimer=null;}
+  const set=(i,v)=>{ const e=document.getElementById(i); if(e)e.value=v; };
+  set('au-date',_au.date); set('au-heure',_au.heure); set('au-duree',_au.dureeTxt); set('au-dist',_au.distTxt); set('au-libelle',_au.libelle); set('au-notes',_au.notes);
+  const d=document.getElementById('au-date'); if(d)d.max=today();
+  const ti=document.getElementById('au-title'); if(ti)ti.textContent=s?'Modifier l\'activité':'Autre activité';
+  const su=document.getElementById('au-sub'); if(su)su.textContent=s?(autreIcone(s.autre)+' '+autreLabel(s.autre)):'Marche, vélo, randonnée, course…';
+  const db=document.getElementById('au-del-btn'); if(db){db.textContent='🗑️ Supprimer';db.style.color='var(--red)';}
+  _auErr(''); _auMaj();
+  const ov=document.getElementById('ov-autre'); if(ov)ov.classList.add('open');
+}
+function closeAutreActivite(){
+  const ov=document.getElementById('ov-autre'); if(ov)ov.classList.remove('open');
+  _au=null; _auDelConfirm=false; if(_auDelTimer){clearTimeout(_auDelTimer);_auDelTimer=null;}
+}
+// Ce que la personne a tapé → des valeurs vérifiées, ou la raison du refus (rien n'est écrit tant que tout n'est pas bon).
+function _auValider(){
+  const lire=i=>{ const e=document.getElementById(i); return e?String(e.value||'').trim():''; };
+  const date=lire('au-date'), heure=lire('au-heure');
+  if(!_auDateValide(date))return{ok:false,raison:'Choisis la date de l\'activité'};
+  if(date>today())return{ok:false,raison:'La date ne peut pas être dans le futur'};
+  if(heure&&!/^([01]\d|2[0-3]):[0-5]\d$/.test(heure))return{ok:false,raison:'Heure invalide (ex. 14:30)'};
+  const duration=parseInt(_au.dureeTxt,10);
+  if(!(duration>=1)||duration>AU_DUREE_MAX||!/^\d+$/.test(String(_au.dureeTxt).trim()))return{ok:false,raison:'Entre une durée en minutes (1 à '+AU_DUREE_MAX+')'};
+  let distance=null; const dt=lire('au-dist').replace(',','.');
+  if(dt!==''){ if(!/^\d+(\.\d+)?$/.test(dt)||!(parseFloat(dt)>0)||parseFloat(dt)>AU_DIST_MAX)return{ok:false,raison:'Distance invalide (km, de 0,1 à '+AU_DIST_MAX+')'}; distance=Math.round(parseFloat(dt)*100)/100; }
+  return{ok:true,v:{date,heure:heure||'',duration,distance,type:_au.type,intensity:_au.intensity||'',
+                    libelle:(_au.type==='autre')?lire('au-libelle').slice(0,40):'',notes:lire('au-notes').slice(0,500)}};
+}
+// Construit (ou met à jour) l'enregistrement. L'identité (`id` = `ts`) ne change JAMAIS après la création : seule la date/l'heure métier bouge.
+function _auConstruire(v,ancien){
+  const a={type:v.type,duration:v.duration};
+  if(v.distance!=null)a.distance=v.distance;
+  if(v.intensity)a.intensity=v.intensity;
+  if(v.heure)a.heure=v.heure;
+  if(v.libelle)a.libelle=v.libelle;
+  if(v.notes)a.notes=v.notes;
+  a.kcalEst=_au.kcalEst; a.kcalPoids=_au.kcalPoids; a.kcalMode=_au.kcalMode;
+  if(typeof _au.kcalMan==='number')a.kcalMan=_au.kcalMan;
+  const retenue=kcalBloc(a).retenue;
+  const id=ancien?(ancien.ts||ancien.id):_auTsUnique(_auTs(v.date,v.heure));
+  const rec=Object.assign({},ancien||{},{id:ancien?ancien.id:id,ts:ancien?ancien.ts:id,date:v.date,exs:[],exercises:[],volume:0,uniConv:1,
+    duration:v.duration*60,progLabel:'',calories:retenue,calData:{total:retenue,autre:retenue},autre:a});
+  if(v.heure)rec.startHour=+v.heure.slice(0,2); else delete rec.startHour;
+  if(!ancien)rec.synced=true;   // rien à envoyer au classeur Google (pas de série) : la file de rattrapage n'a rien à reprendre
+  return rec;
+}
+/* L'écriture, LOCAL D'ABORD (règle d'or #3) : si le téléphone refuse (stockage plein), tout est remis comme avant et le formulaire reste ouvert avec ce qui a été tapé.
+   Puis la sauvegarde normale (`persist`) et le cloud (non bloquant). */
+function _auPersister(retour){
+  try{ localStorage.setItem('ft4_sessions',JSON.stringify((S.sessions||[]).slice(0,1500))); }
+  catch(e){ try{ retour(); }catch(e2){} toast('Stockage plein : rien n\'a été enregistré. Fais de la place puis réessaie.','error'); return false; }
+  persist();
+  try{ if(typeof _cloudSyncSessions==='function')_cloudSyncSessions(); }catch(e){}
+  return true;
+}
+// Rafraîchit ce qui montre des activités (liste de Progrès, Accueil) ; la navigation reconstruit les autres écrans à l'arrivée.
+function _auRafraichir(){
+  try{ if(document.getElementById('sess-list')&&typeof renderSessions==='function')renderSessions(); }catch(e){}
+  try{ if(typeof renderHome==='function')renderHome(); }catch(e){}
+}
+/* Le filet multi-onglets de `state.js` (`_ftAutreOnglet`) ne couvre que `persist()`. Nos écritures « locales d'abord » (`_auPersister`) passent AVANT lui : un onglet resté ouvert
+   avec une liste périmée aurait écrasé ce qu'un autre onglet venait d'enregistrer. On absorbe donc d'abord ce qui est sur le disque (union par identité, la mémoire gagne à égalité),
+   PUIS on applique le geste — jamais l'inverse : fusionner après une suppression la ressusciterait. */
+function _auAbsorberAutreOnglet(){
+  try{ if(typeof _ftAutreOnglet!=='undefined'&&_ftAutreOnglet&&typeof _fusionnerAvecLeDisque==='function'){ _ftAutreOnglet=false; _fusionnerAvecLeDisque(); } }catch(e){}
+}
+function autreEnregistrer(){
+  if(!_au)return;
+  if(!kcalValiderChampsEnAttente('#ov-autre'))return;   // la valeur de la montre tapée à l'instant compte ; une valeur invalide n'est jamais ignorée en silence
+  const r=_auValider(); if(!r.ok){ _auErr(r.raison); return; }
+  _auErr('');
+  _auAbsorberAutreOnglet();
+  const idx=(_au.id!=null)?(S.sessions||[]).findIndex(x=>x&&(x.ts||x.id)===_au.id&&_estAutre(x)):-1;
+  const ancien=(idx>=0)?S.sessions[idx]:null;
+  if(_au.id!=null&&!ancien){ _auErr('Cette activité n\'existe plus (supprimée sur un autre appareil ?). Ferme et recommence.'); return; }
+  const rec=_auConstruire(r.v,ancien);
+  let retour;
+  if(ancien){ const copie=ancien; S.sessions[idx]=rec; retour=()=>{ S.sessions[idx]=copie; }; }
+  else{ S.sessions.unshift(rec); retour=()=>{ const i=S.sessions.indexOf(rec); if(i>=0)S.sessions.splice(i,1); }; }
+  _trierSeances(S.sessions);
+  if(!_auPersister(retour))return;
+  const nouvelle=!ancien;
+  closeAutreActivite(); _auRafraichir();
+  toast(nouvelle?'Activité enregistrée ✓ — '+rec.calories+' kcal':'Activité mise à jour ✓ — '+rec.calories+' kcal','success');
+}
+function autreSupprimerOuConfirmer(){
+  if(!_au||_au.id==null)return;
+  const btn=document.getElementById('au-del-btn');
+  if(!_auDelConfirm){
+    _auDelConfirm=true;
+    if(btn){ btn.textContent='⚠️ Confirmer ?'; btn.style.color='#FF9500'; }
+    _auDelTimer=setTimeout(()=>{ _auDelConfirm=false; const b=document.getElementById('au-del-btn'); if(b){ b.textContent='🗑️ Supprimer'; b.style.color='var(--red)'; } },3000);
+    return;
+  }
+  if(_auDelTimer){clearTimeout(_auDelTimer);_auDelTimer=null;}
+  _auAbsorberAutreOnglet();
+  const id=_au.id, avant=S.sessions.slice();
+  S.sessions=S.sessions.filter(s=>!(s&&_estAutre(s)&&(s.ts||s.id)===id));
+  if(S.sessions.length===avant.length){ closeAutreActivite(); return; }
+  if(!_auPersister(()=>{ S.sessions=avant; }))return;
+  closeAutreActivite(); _auRafraichir();
+  toast('Activité supprimée','info');
+}
+
 // Deux moments de cardio (02/08) : l'échauffement AVANT et le cardio APRÈS la muscu ne sont
 // pas la même chose — ni la même intention, ni la même durée. `cardio` = APRÈS (champ
 // historique, inchangé pour toutes les séances déjà enregistrées) · `cardioAvant` = nouveau.
@@ -60,6 +433,7 @@ function setCardioField(field,val,moment){
   if(!S.wkt)return;
   const c=_cardioObj(moment||'apres',true);
   c[field]=field==='duration'?Math.max(0,Math.min(300,parseInt(val)||0)):val;
+  kcalPoserEstimation(c,'cardio',S.bw);   // 🔥 l'estimation figée suit le type, l'intensité et la durée — au poids du jour : la séance n'est pas encore enregistrée
   persist();
   // Durée : NE PAS re-render (sinon l'input est détruit à chaque chiffre → focus perdu sur mobile → saisie impossible).
   // On met juste à jour le résumé ; les boutons type/intensité, eux, re-render pour refléter la sélection.
@@ -67,11 +441,22 @@ function setCardioField(field,val,moment){
   else renderCardioBlock();
   if(typeof renderLogFinish==='function')renderLogFinish(); // le cardio seul suffit pour valider → afficher/màj le bouton
 }
+/* 🔥 La valeur de la montre, saisie sur un moment du cardio d'une séance EN COURS. Vide = retour à l'estimation ; invalide = rien ne bouge, on le dit. */
+function setCardioKcalMan(val,moment){
+  if(!S.wkt)return;
+  const c=_cardioObj(moment||'apres',false); if(!c)return;
+  const r=kcalPoserManuelle(c,val);
+  if(!r.ok){ toast(r.raison,'error'); renderCardioBlock(); return; }
+  persist(); renderCardioBlock(); _updateCardioSummary();
+  if(typeof renderLogFinish==='function')renderLogFinish();
+}
+function retourEstimationCardio(moment){ setCardioKcalMan('',moment); }
 // Total des deux moments — utilisé partout où l'on parle des calories du cardio.
+// 🔥 C'est le total des calories RETENUES (`kcalBloc` : la valeur saisie remplace l'estimation, jamais ne s'y ajoute). Sur un bloc sans valeur figée ni
+// saisie, c'est exactement l'ancien `calcCardioKcal`.
 function calcCardioKcalTotal(src){
   const o=src||S.wkt||{};
-  return (typeof calcCardioKcal==='function')
-    ? calcCardioKcal(o.cardioAvant||null)+calcCardioKcal(o.cardio||null) : 0;
+  return kcalBloc(o.cardioAvant||null).retenue+kcalBloc(o.cardio||null).retenue;
 }
 function _cardioResume(){
   const a=S.wkt&&S.wkt.cardioAvant, b=S.wkt&&S.wkt.cardio;
@@ -84,7 +469,10 @@ function _cardioResume(){
 // « Y a-t-il un cardio saisi ? » — UNE seule définition, lue par le rendu ET par la mise à jour
 // en direct (R2 : deux endroits qui répondent à la même question finissent par diverger).
 // ⚠️ Couvre les DEUX moments (avant + après) : le total suffit, ne pas regarder un seul objet.
-function _aUnCardio(){ return calcCardioKcalTotal()>0; }
+function _aUnCardio(){
+  /* 🔥 Par les MINUTES (`_cardioNoteMin`, log.js — le propriétaire de la question), pas par les kcal : une valeur saisie de 0 kcal n'efface pas un cardio de 30 min. */
+  return (typeof _cardioNoteMin==='function')?_cardioNoteMin()>0:calcCardioKcalTotal()>0;
+}
 function _updateCardioSummary(){
   const el=document.getElementById('cardio-summary');
   const oui=_aUnCardio();
@@ -112,12 +500,13 @@ function renderCardioBlock(){
   // avec le cardio de fin de séance.
   const volet=(moment,titre,aide)=>{
     const c=_cardioObj(moment,false)||{type:'elliptique',intensity:'modere',duration:0};
-    const k=calcCardioKcal(c.duration?c:null);
+    const kb=kcalBloc(c.duration?c:null);   // 🔥 retenu = valeur saisie si elle existe, sinon estimation
+    const k=kb.retenue;
     return `<div style="margin-top:10px;">
       <div style="display:flex;align-items:baseline;gap:7px;margin-bottom:6px;">
         <span style="font-size:12.5px;font-weight:700;color:var(--t1);">${titre}</span>
         <span style="font-size:11px;color:var(--t3);flex:1;">${aide}</span>
-        ${k?`<span style="font-size:11.5px;color:var(--green);font-weight:700;">~${k} kcal</span>`:''}
+        ${(k||kb.remplacee)?`<span style="font-size:11.5px;color:var(--green);font-weight:700;">${kb.remplacee?'':'~'}${k} kcal${kb.remplacee?' ✎':''}</span>`:''}
       </div>
       <div style="display:flex;gap:5px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch;scrollbar-width:none;">
         ${types.map(t=>`<button onclick="setCardioField('type','${t}','${moment}')" style="flex-shrink:0;padding:5px 11px;border-radius:20px;border:none;font-size:12px;font-family:var(--font);cursor:pointer;background:${c.type===t?'var(--red)':'var(--bg2)'};color:${c.type===t?'#fff':'var(--t2)'};">${CARDIO_LABELS[t]}</button>`).join('')}
@@ -130,6 +519,7 @@ function renderCardioBlock(){
           <span style="font-size:12px;color:var(--t3);">min</span>
         </div>
       </div>
+      ${c.duration?_kcalEditeurHtml({k:kb,onSaisie:"setCardioKcalMan(this.value,'"+moment+"')",onRetour:"retourEstimationCardio('"+moment+"')"}):''}
     </div>`;
   };
   const aUnCardio=_aUnCardio();   // même définition que la mise à jour en direct (R2)
@@ -157,7 +547,8 @@ function renderCardioBlock(){
    👉 Celui-ci dit maintenant ce qu'il fait (**noter**) et NOMME le geste qui reste — en lisant le
    vrai libellé du bouton du bas (`_labelFinSeance`, R2) plutôt qu'en le recopiant. */
 function saveCardioEntry(){
-  if(!S.wkt||!calcCardioKcalTotal()){toast('Entre une durée de cardio','info');return;}
+  if(!kcalValiderChampsEnAttente('#log-cardio'))return;   // une valeur de montre tapée à l'instant est lue avant de replier le bloc
+  if(!S.wkt||!_aUnCardio()){toast('Entre une durée de cardio','info');return;}
   _cardioOpen=false;persist();renderCardioBlock();
   if(typeof renderLogFinish==='function')renderLogFinish();
   const btn=(typeof _labelFinSeance==='function')?_labelFinSeance():'🏁 Enregistrer le cardio';
@@ -9896,6 +10287,9 @@ function exitDemoMode(){
 // ── GUIDE DE L'APPLICATION (diaporama, Menu → L'application) ────────
 // Guide-film : chaque slide = un vrai écran de l'app (guide/*.jpg) + un doigt animé (tap) + une phrase.
 const APP_GUIDE_SLIDES=[
+  /* 🚶 DIAPO DU GUIDE (règle d'or #11, point 5), SANS IMAGE : la capture de l'écran Séance dépend de l'état (avant / pendant une séance) et des tuiles qui s'y ajoutent ;
+     Michel fournit les captures du Guide. Elle dit ce que la pop-up ne dit pas : OÙ la retrouver, et que les calories de la montre REMPLACENT l'estimation. */
+  {icon:'🚶', t:'Une marche n\'est pas une séance', cap:'<b>Séance → « Autre activité »</b>, juste sous « Programme » : marche, randonnée, vélo, course… <b>sans série ni volume</b>. Tu notes la durée ; l\'app <b>estime</b> les calories. Ta montre dit autre chose ? Tape sa valeur : elle <b>remplace</b> l\'estimation, jamais additionnée.<br><br>Retrouve-la dans le <b>calendrier de l\'Accueil</b> et dans <b>Progrès → Séances</b> (modifier, supprimer). Elle a sa ligne dans les <b>bilans</b> de la semaine et du mois.'},
   /* 🛡️ SESSION-INTEGRITY-01 — DIAPO DU GUIDE (règle d'or #11, point 5), SANS IMAGE : une capture montrerait
      un débrief qui n'est pas celui du lecteur. Elle dit ce que la pop-up ne dit pas : OÙ le retrouver. */
   {icon:'💬', t:'Chaque séance garde son débrief', cap:'À la fin d\'une séance, tes chiffres s\'affichent tout de suite ; l\'avis de Milo se <b>demande</b> : <b>« ✨ Analyser cette séance avec Milo »</b> (rien ne part sans ce geste). Son débrief est alors <b>rangé avec la séance</b>. Retrouve-le quand tu veux : <b>Progrès → Séances → « 💬 Voir le débrief Milo »</b> — sans réseau, sans appel. À l\'export, c\'est toi qui choisis : <b>avec</b> ou <b>sans</b> les débriefs.'},
@@ -10240,8 +10634,11 @@ const BADGES=[
 ];
 
 function _getMaxStreak(){
-  if(!S.sessions||!S.sessions.length)return 0;
-  const dates=[...new Set(S.sessions.map(s=>s.date).filter(Boolean))].sort();
+  /* 🚶 Les badges parlent d'ENTRAÎNEMENT : sans les activités (`_estAutre`, state.js) — une marche ne débloque ni « Premier soulevé » ni « En feu »,
+     et ne prolonge pas une série de jours d'entraînement. Mêmes sorties qu'avant tant qu'aucune activité n'est enregistrée. */
+  const _tr=_seancesTrain();
+  if(!_tr.length)return 0;
+  const dates=[...new Set(_tr.map(s=>s.date).filter(Boolean))].sort();
   if(!dates.length)return 0;
   let max=1,cur=1;
   for(let i=1;i<dates.length;i++){
@@ -10254,20 +10651,20 @@ function _getMaxStreak(){
 function _checkBadgeCond(badge){
   const prCount=Object.keys(S.prs||{}).length;
   switch(badge.id){
-    case 'first_session':return (S.sessions||[]).length>=1;
+    case 'first_session':return _seancesTrain().length>=1;
     case 'fire':{
       const wk={};
-      (S.sessions||[]).forEach(sess=>{
+      _seancesTrain().forEach(sess=>{
         const d=new Date((sess.date||'')+'T12:00:00');if(isNaN(d))return;
         const m=new Date(d);m.setDate(d.getDate()-((d.getDay()+6)%7));
         const k=m.toISOString().slice(0,10);wk[k]=(wk[k]||0)+1;
       });
       return Object.values(wk).some(c=>c>=3);
     }
-    case 'regular_10':return (S.sessions||[]).length>=10;
-    case 'assidu_25':return (S.sessions||[]).length>=25;
-    case 'veteran_50':return (S.sessions||[]).length>=50;
-    case 'legend_100':return (S.sessions||[]).length>=100;
+    case 'regular_10':return _seancesTrain().length>=10;
+    case 'assidu_25':return _seancesTrain().length>=25;
+    case 'veteran_50':return _seancesTrain().length>=50;
+    case 'legend_100':return _seancesTrain().length>=100;
     case 'first_pr':return prCount>=1;
     case 'prog_5':return prCount>=5;
     case 'machine_20':return prCount>=20;
@@ -10279,13 +10676,13 @@ function _checkBadgeCond(badge){
     case 'streak_7':return _getMaxStreak()>=7;
     case 'streak_30':return _getMaxStreak()>=30;
     case 'streak_90':return _getMaxStreak()>=90;
-    case 'early_bird':return (S.sessions||[]).some(s=>{const h=typeof s.startHour==='number'?s.startHour:(s.ts||s.id?new Date(s.ts||s.id).getHours():-1);return h>=0&&h<7;});
-    case 'night_owl':return (S.sessions||[]).some(s=>{const h=typeof s.startHour==='number'?s.startHour:(s.ts||s.id?new Date(s.ts||s.id).getHours():-1);return h>=22;});
+    case 'early_bird':return _seancesTrain().some(s=>{const h=typeof s.startHour==='number'?s.startHour:(s.ts||s.id?new Date(s.ts||s.id).getHours():-1);return h>=0&&h<7;});
+    case 'night_owl':return _seancesTrain().some(s=>{const h=typeof s.startHour==='number'?s.startHour:(s.ts||s.id?new Date(s.ts||s.id).getHours():-1);return h>=22;});
     case 'birthday':{
       if(!S.bday)return false;
       const parts=(S.bday||'').split('/');if(parts.length<2)return false;
       const bd=parseInt(parts[0]),bm=parseInt(parts[1]);
-      return (S.sessions||[]).some(sess=>{
+      return _seancesTrain().some(sess=>{
         if(!sess.date)return false;
         const dt=new Date(sess.date+'T12:00:00');
         return dt.getDate()===bd&&(dt.getMonth()+1)===bm;
@@ -10299,7 +10696,7 @@ function _checkBadgeCond(badge){
 
 // Progression vers un badge verrouillé (compteur + barre). null = badge sans progression (booléen).
 function _badgeProgress(badge){
-  const nS=(S.sessions||[]).length;
+  const nS=_seancesTrain().length;
   const prCount=Object.keys(S.prs||{}).length;
   switch(badge.id){
     case 'first_session':return {cur:Math.min(nS,1),target:1};
@@ -10314,7 +10711,7 @@ function _badgeProgress(badge){
     case 'streak_30':   return {cur:_getMaxStreak(),target:30};
     case 'streak_90':   return {cur:_getMaxStreak(),target:90};
     case 'fire':{
-      const wk={};(S.sessions||[]).forEach(sess=>{const d=new Date((sess.date||'')+'T12:00:00');if(isNaN(d))return;const m=new Date(d);m.setDate(d.getDate()-((d.getDay()+6)%7));const k=m.toISOString().slice(0,10);wk[k]=(wk[k]||0)+1;});
+      const wk={};_seancesTrain().forEach(sess=>{const d=new Date((sess.date||'')+'T12:00:00');if(isNaN(d))return;const m=new Date(d);m.setDate(d.getDate()-((d.getDay()+6)%7));const k=m.toISOString().slice(0,10);wk[k]=(wk[k]||0)+1;});
       const best=Object.values(wk).reduce((a,c)=>Math.max(a,c),0);
       return {cur:Math.min(best,3),target:3};
     }
@@ -10393,6 +10790,50 @@ function saveBday(val){
   checkBadges();
 }
 
+/* 📊 L'AGRÉGAT D'UNE PÉRIODE — UNE SEULE DÉFINITION pour le bilan de la semaine, celui du mois et leur comparaison (R2) (05/11/2026, mission de Michel).
+   ⛔ LE DÉFAUT QU'IL RÉPARE, MESURÉ : le bilan comptait tout enregistrement comme « une séance » et additionnait `calories` — cardio compris. Le mois de référence disait
+   « 4 séances · 3 jours · 49 séries · 26 005 kg · 1 457 kcal » : 3 séances de musculation et 1 séance de cardio mélangées sous le mot « séances ».
+   Ce que l'agrégat sépare, et comment (les mots sont définis, pas laissés à l'intuition) :
+     · séances de musculation (`nMuscu`) — les enregistrements de genre 'muscu' ; seules elles ont des séries, un volume (`_genreSeance`, state.js) ;
+     · activités cardio (`nCardio`) — le nombre de BLOCS de cardio notés (un cardio seul = 1 ; un échauffement + un cardio de fin sur la même séance = 2) ;
+     · autres activités (`nAutre`) — les enregistrements de genre 'autre' ;
+     · jours actifs (`jours`) — les jours DISTINCTS qui portent au moins une séance OU une activité ; `joursMuscu` — ceux qui portent une séance de musculation ;
+     · calories par catégorie — d'après les calories RETENUES et rangées (`calories`, `calData.cardio`) : jamais recalculées (le poids du jour n'y entre pas). Une séance de
+       musculation avec cardio rend sa part cardio (`calData.cardio`) à la catégorie cardio ; un cardio seul et une activité valent leurs `calories`. La somme des trois
+       catégories EST le total (`kcal.total` = Σ `calories`) : rien n'est compté deux fois, rien ne se perd.
+     · ⚠️ un ANCIEN enregistrement de musculation qui porte un bloc cardio mais pas de part cardio rangée (`calData.cardio` absent) : la part ne peut pas être séparée sans
+       l'inventer — il reste en musculation et il est COMPTÉ à part (`cardioNonRepartie`), pour le dire. */
+function _agregatPeriode(list){
+  const r={nMuscu:0,nCardioSeul:0,nCardio:0,nAutre:0,nEnreg:0,jours:0,joursMuscu:0,series:0,vol:0,
+           kcal:{muscu:0,cardio:0,autre:0,total:0},cardioNonRepartie:0};
+  const jours=new Set(), joursM=new Set();
+  (list||[]).forEach(s=>{
+    if(!s)return;
+    r.nEnreg++;
+    if(s.date)jours.add(s.date);
+    const g=_genreSeance(s), cal=+s.calories||0;
+    r.kcal.total+=cal;
+    const blocs=[s.cardioAvant,s.cardio].filter(b=>b&&+b.duration>0).length;
+    if(g==='autre'){ r.nAutre++; r.kcal.autre+=cal; return; }
+    if(g==='cardio'){ r.nCardioSeul++; r.nCardio+=blocs; r.kcal.cardio+=cal; return; }
+    r.nMuscu++; if(s.date)joursM.add(s.date);
+    r.vol+=(typeof _workVol==='function'?_workVol(s):0)||s.volume||0;
+    (s.exs||[]).forEach(e=>(e.sets||[]).forEach(x=>{ if(x&&x.done&&x.type!=='É'&&x.type!=='W')r.series++; }));
+    r.nCardio+=blocs;
+    const rangee=s.calData&&typeof s.calData.cardio==='number';
+    if(blocs&&!rangee){ r.cardioNonRepartie++; r.kcal.muscu+=cal; }
+    else{ const c=Math.min(cal,Math.max(0,+((s.calData&&s.calData.cardio)||0))); r.kcal.cardio+=c; r.kcal.muscu+=cal-c; }
+  });
+  r.jours=jours.size; r.joursMuscu=joursM.size;
+  r.muscuSeul=!(r.nCardio||r.nAutre||r.nCardioSeul);   // vrai pour toute période d'avant : le bilan garde alors exactement son ancien texte
+  return r;
+}
+const _fmtKcal=n=>Math.round(n).toLocaleString('fr-FR');
+// Les lignes « calories par catégorie » (sous la ligne du total) — seulement les catégories non vides.
+function _bilanKcalDetail(a){
+  const p=[]; if(a.kcal.muscu>0)p.push('musculation '+_fmtKcal(a.kcal.muscu)); if(a.kcal.cardio>0)p.push('cardio '+_fmtKcal(a.kcal.cardio)); if(a.kcal.autre>0)p.push('autres '+_fmtKcal(a.kcal.autre));
+  return p;
+}
 let _weekSumText='';
 // Badge « ✅ Application mise à jour » : affiché une fois au reboot qui suit une mise à jour du code
 // (le flag ft4_just_updated est posé juste avant le reload de MAJ). Pas au tout 1er install (on se
@@ -10424,21 +10865,43 @@ function checkWeeklySummary(){
   const lastWeekSess=(S.sessions||[]).filter(s=>s.date&&s.date>=ws&&s.date<=we);
   if(!lastWeekSess.length)return;
   S.lastWeekSummary=thisMonday;persist();
-  const sessCount=lastWeekSess.length;
-  const totalVol=lastWeekSess.reduce((a,s)=>a+(_workVol(s)||s.volume||0),0);
-  const totalCal=lastWeekSess.reduce((a,s)=>a+(s.calories||0),0);
+  const AG=_agregatPeriode(lastWeekSess);   // 📊 une seule définition des catégories (voir `_agregatPeriode`)
+  const sessCount=AG.nMuscu;                // les SÉANCES de musculation — pas tout ce qui a une date
+  const totalVol=AG.vol;
+  const totalCal=AG.kcal.total;
   const newBadges=Object.entries(S.badges||{})
     .filter(([,v])=>v.unlockedAt&&v.unlockedAt>=ws&&v.unlockedAt<=we)
     .map(([id])=>BADGES.find(b=>b.id===id)).filter(Boolean);
   const el=document.getElementById('week-sum-content');if(!el)return;
-  el.innerHTML=`
+  const ligneW=(l,v)=>`<div class="week-sum-row"><span class="week-sum-lbl">${l}</span><span class="week-sum-val">${v}</span></div>`;
+  if(AG.muscuSeul){   // semaine de musculation seule : le gabarit d'AVANT, mot pour mot (espaces et retours à la ligne compris — un témoin le compare à la version publiée)
+    el.innerHTML=`
     <div style="font-size:13px;color:var(--t3);font-weight:700;margin-bottom:4px;">Semaine du ${fmtD(ws)} au ${fmtD(we)}</div>
     <div class="week-sum-row"><span class="week-sum-lbl">🏋️ Séances</span><span class="week-sum-val">${sessCount}</span></div>
     <div class="week-sum-row"><span class="week-sum-lbl">📦 Volume total</span><span class="week-sum-val">${Math.round(totalVol)} kg</span></div>
     ${totalCal?`<div class="week-sum-row"><span class="week-sum-lbl">🔥 Calories</span><span class="week-sum-val">${totalCal} kcal</span></div>`:''}
     ${newBadges.length?`<div class="week-badge-pill">🏅 ${newBadges.map(b=>b.icon+' '+b.name).join(' · ')}</div>`:''}
   `;
-  _weekSumText=`Force Tracker — Semaine du ${fmtD(ws)}\n🏋️ ${sessCount} séance${sessCount>1?'s':''}\n📦 Volume : ${Math.round(totalVol)} kg\n${totalCal?'🔥 Calories : '+totalCal+' kcal\n':''}${newBadges.length?'🏅 Badges : '+newBadges.map(b=>b.icon+' '+b.name).join(', ')+'\n':''}💪 Force Tracker`;
+  }else{              // 🚶 musculation · cardio · autres activités, séparés ; calories par catégorie ET total ; les séries et le volume ne parlent que de la musculation
+    const det=_bilanKcalDetail(AG);
+    const rows=(AG.nMuscu?ligneW('🏋️ Séances de musculation',AG.nMuscu):'')
+        +(AG.nCardio?ligneW('🏃 Activités cardio',AG.nCardio):'')
+        +(AG.nAutre?ligneW('🚶 Autres activités',AG.nAutre):'')
+        +ligneW('📅 Jours actifs',AG.jours)
+        +(AG.nMuscu?ligneW('📦 Volume total (musculation)',Math.round(totalVol)+' kg'):'')
+        +(totalCal?ligneW('🔥 Calories dépensées',_fmtKcal(totalCal)+' kcal')
+          +(det.length>1?'<div data-kcal-detail style="font-size:11.5px;color:var(--t3);text-align:right;margin:-2px 0 4px;">dont '+det.join(' · ')+'</div>':''):'')
+        +'<div style="font-size:11px;color:var(--t3);margin-top:6px;">Jours actifs : jours avec au moins une séance ou une activité.'
+        +(AG.cardioNonRepartie?' '+AG.cardioNonRepartie+' ancienne'+(AG.cardioNonRepartie>1?'s':'')+' séance'+(AG.cardioNonRepartie>1?'s':'')+' avec cardio : sa part de cardio n\'est pas séparable (comptée en musculation).':'')+'</div>';
+    el.innerHTML=`
+    <div style="font-size:13px;color:var(--t3);font-weight:700;margin-bottom:4px;">Semaine du ${fmtD(ws)} au ${fmtD(we)}</div>
+    ${rows}
+    ${newBadges.length?`<div class="week-badge-pill">🏅 ${newBadges.map(b=>b.icon+' '+b.name).join(' · ')}</div>`:''}
+  `;
+  }
+  _weekSumText=AG.muscuSeul
+    ? `Force Tracker — Semaine du ${fmtD(ws)}\n🏋️ ${sessCount} séance${sessCount>1?'s':''}\n📦 Volume : ${Math.round(totalVol)} kg\n${totalCal?'🔥 Calories : '+totalCal+' kcal\n':''}${newBadges.length?'🏅 Badges : '+newBadges.map(b=>b.icon+' '+b.name).join(', ')+'\n':''}💪 Force Tracker`
+    : `Force Tracker — Semaine du ${fmtD(ws)}\n`+(AG.nMuscu?`🏋️ ${AG.nMuscu} séance${AG.nMuscu>1?'s':''} de musculation\n`:'')+(AG.nCardio?`🏃 ${AG.nCardio} activité${AG.nCardio>1?'s':''} cardio\n`:'')+(AG.nAutre?`🚶 ${AG.nAutre} autre${AG.nAutre>1?'s':''} activité${AG.nAutre>1?'s':''}\n`:'')+`📅 ${AG.jours} jour${AG.jours>1?'s':''} actif${AG.jours>1?'s':''}\n`+(AG.nMuscu?`📦 Volume : ${Math.round(totalVol)} kg\n`:'')+(totalCal?`🔥 Calories : ${totalCal} kcal (${_bilanKcalDetail(AG).join(' · ')})\n`:'')+`${newBadges.length?'🏅 Badges : '+newBadges.map(b=>b.icon+' '+b.name).join(', ')+'\n':''}💪 Force Tracker`;
   setTimeout(()=>document.getElementById('ov-week-summary').classList.add('open'),1500);
 }
 
@@ -10477,11 +10940,8 @@ function _moisAvecSeances(){
 function _bilanMois(ym){
   const sess=(S.sessions||[]).filter(s=>s&&s.date&&String(s.date).slice(0,7)===ym);
   if(!sess.length) return null;
-  const vol=sess.reduce((a,s)=>a+((typeof _workVol==='function'?_workVol(s):0)||s.volume||0),0);
-  const kcal=sess.reduce((a,s)=>a+(s.calories||0),0);
-  let series=0; sess.forEach(s=>(s.exs||[]).forEach(e=>(e.sets||[]).forEach(x=>{
-    if(x&&x.done&&x.type!=='É'&&x.type!=='W')series++; })));
-  const jours=new Set(sess.map(s=>s.date)).size;
+  const A=_agregatPeriode(sess);   // 📊 UNE définition des catégories, partagée avec le bilan de la semaine (voir `_agregatPeriode`)
+  const vol=A.vol, kcal=A.kcal.total, series=A.series, jours=A.jours;
   // Records battus DANS le mois (la date du PR fait foi)
   const prs=Object.entries(S.prs||{})
     .filter(([,v])=>v&&v.date&&!v.premiere&&String(v.date).slice(0,7)===ym)   // D-045 : une 1ʳᵉ fois n'est pas un record battu
@@ -10505,13 +10965,16 @@ function _bilanMois(ym){
   const av=(S.sessions||[]).filter(s=>s&&s.date&&String(s.date).slice(0,7)===_moisAvant(ym));
   let comp=null;
   if(av.length){
-    const volAv=av.reduce((a,s)=>a+((typeof _workVol==='function'?_workVol(s):0)||s.volume||0),0);
-    comp={nSess:av.length, vol:volAv,
-          dSess:sess.length-av.length,
+    const P=_agregatPeriode(av);   // le mois d'avant, avec les MÊMES définitions : on compare des séances de musculation à des séances de musculation
+    const volAv=P.vol;
+    comp={nSess:P.nMuscu, vol:volAv,
+          dSess:A.nMuscu-P.nMuscu,
           dVol:volAv?Math.round((vol-volAv)/volAv*100):null};
   }
-  return {ym, label:_moisLisible(ym), nSess:sess.length, vol:Math.round(vol), kcal, series, jours,
-          prs, badges, bw, comp};
+  return {ym, label:_moisLisible(ym), nSess:A.nMuscu, vol:Math.round(vol), kcal, series, jours,
+          prs, badges, bw, comp,
+          nCardio:A.nCardio, nCardioSeul:A.nCardioSeul, nAutre:A.nAutre, joursMuscu:A.joursMuscu,
+          kcalMuscu:A.kcal.muscu, kcalCardio:A.kcal.cardio, kcalAutre:A.kcal.autre, cardioNonRepartie:A.cardioNonRepartie, muscuSeul:A.muscuSeul};
 }
 let _moisVu='';
 function _renderBilanMois(ym){
@@ -10522,12 +10985,26 @@ function _renderBilanMois(ym){
   const fl=(n)=>n>0?('+'+n):String(n);
   const ligne=(l,v)=>`<div class="week-sum-row"><span class="week-sum-lbl">${l}</span><span class="week-sum-val">${v}</span></div>`;
   let h=`<div style="font-size:13px;color:var(--t3);font-weight:700;margin-bottom:4px;text-transform:capitalize;">${b.label}</div>`;
-  h+=ligne('🏋️ Séances', b.nSess+(b.comp?` <span style="font-size:11px;color:${b.comp.dSess>=0?'var(--green)':'var(--gold)'};">${fl(b.comp.dSess)}</span>`:''));
-  h+=ligne('📅 Jours d\'entraînement', b.jours);
-  h+=ligne('🔢 Séries de travail', b.series);
-  h+=ligne('📦 Volume', Math.round(b.vol).toLocaleString('fr-FR')+' kg'
-      +(b.comp&&b.comp.dVol!==null?` <span style="font-size:11px;color:${b.comp.dVol>=0?'var(--green)':'var(--gold)'};">${fl(b.comp.dVol)} %</span>`:''));
-  if(b.kcal) h+=ligne('🔥 Calories', b.kcal.toLocaleString('fr-FR')+' kcal');
+  const dS=b.comp?` <span style="font-size:11px;color:${b.comp.dSess>=0?'var(--green)':'var(--gold)'};">${fl(b.comp.dSess)}</span>`:'';
+  const vV=Math.round(b.vol).toLocaleString('fr-FR')+' kg'+(b.comp&&b.comp.dVol!==null?` <span style="font-size:11px;color:${b.comp.dVol>=0?'var(--green)':'var(--gold)'};">${fl(b.comp.dVol)} %</span>`:'');
+  if(b.muscuSeul){   // un mois de musculation seule : exactement l'affichage d'avant
+    h+=ligne('🏋️ Séances', b.nSess+dS);
+    h+=ligne('📅 Jours d\'entraînement', b.jours);
+    h+=ligne('🔢 Séries de travail', b.series);
+    h+=ligne('📦 Volume', vV);
+    if(b.kcal) h+=ligne('🔥 Calories', b.kcal.toLocaleString('fr-FR')+' kcal');
+  }else{             // 🚶 musculation · cardio · autres activités, séparés ; les séries et le volume ne parlent que de la musculation ; calories par catégorie ET total
+    const det=_bilanKcalDetail({kcal:{muscu:b.kcalMuscu,cardio:b.kcalCardio,autre:b.kcalAutre}});
+    if(b.nSess) h+=ligne('🏋️ Séances de musculation', b.nSess+dS);
+    if(b.nCardio) h+=ligne('🏃 Activités cardio', b.nCardio);
+    if(b.nAutre) h+=ligne('🚶 Autres activités', b.nAutre);
+    h+=ligne('📅 Jours actifs', b.jours+(b.nSess&&b.joursMuscu!==b.jours?` <span style="font-size:11px;color:var(--t3);">(dont ${b.joursMuscu} de musculation)</span>`:''));
+    if(b.nSess){ h+=ligne('🔢 Séries de travail', b.series); h+=ligne('📦 Volume', vV); }
+    if(b.kcal){ h+=ligne('🔥 Calories dépensées', b.kcal.toLocaleString('fr-FR')+' kcal');
+      if(det.length>1) h+=`<div data-kcal-detail style="font-size:11.5px;color:var(--t3);text-align:right;margin:-2px 0 4px;">dont ${det.join(' · ')}</div>`; }
+    h+='<div style="font-size:11px;color:var(--t3);margin-top:6px;">Jours actifs : jours avec au moins une séance ou une activité.'
+      +(b.cardioNonRepartie?' '+b.cardioNonRepartie+' ancienne'+(b.cardioNonRepartie>1?'s':'')+' séance'+(b.cardioNonRepartie>1?'s':'')+' avec cardio : sa part de cardio n\'est pas séparable (comptée en musculation).':'')+'</div>';
+  }
   if(b.bw && b.bw.debut!=null && b.bw.fin!=null && b.bw.debut!==b.bw.fin){
     const d=Math.round((b.bw.fin-b.bw.debut)*10)/10;
     h+=ligne('⚖️ Poids de corps', b.bw.debut+' → '+b.bw.fin+' kg <span style="font-size:11px;color:var(--t3);">('+fl(d)+')</span>');
@@ -10570,9 +11047,18 @@ function checkMonthlySummary(){
 }
 function copyMonthSummary(){
   const b=_bilanMois(_moisVu); if(!b) return;
-  const txt=`Force Tracker — ${b.label}\n🏋️ ${b.nSess} séance${b.nSess>1?'s':''}\n📦 Volume : ${Math.round(b.vol).toLocaleString('fr-FR')} kg`
-    +(b.kcal?`\n🔥 ${b.kcal.toLocaleString('fr-FR')} kcal`:'')
-    +(b.prs.length?`\n🏆 ${b.prs.length} record${b.prs.length>1?'s':''}`:'');
+  const txt=b.muscuSeul
+    ? `Force Tracker — ${b.label}\n🏋️ ${b.nSess} séance${b.nSess>1?'s':''}\n📦 Volume : ${Math.round(b.vol).toLocaleString('fr-FR')} kg`
+      +(b.kcal?`\n🔥 ${b.kcal.toLocaleString('fr-FR')} kcal`:'')
+      +(b.prs.length?`\n🏆 ${b.prs.length} record${b.prs.length>1?'s':''}`:'')
+    : `Force Tracker — ${b.label}`
+      +(b.nSess?`\n🏋️ ${b.nSess} séance${b.nSess>1?'s':''} de musculation`:'')
+      +(b.nCardio?`\n🏃 ${b.nCardio} activité${b.nCardio>1?'s':''} cardio`:'')
+      +(b.nAutre?`\n🚶 ${b.nAutre} autre${b.nAutre>1?'s':''} activité${b.nAutre>1?'s':''}`:'')
+      +`\n📅 ${b.jours} jour${b.jours>1?'s':''} actif${b.jours>1?'s':''}`
+      +(b.nSess?`\n📦 Volume : ${Math.round(b.vol).toLocaleString('fr-FR')} kg`:'')
+      +(b.kcal?`\n🔥 ${b.kcal.toLocaleString('fr-FR')} kcal (${_bilanKcalDetail({kcal:{muscu:b.kcalMuscu,cardio:b.kcalCardio,autre:b.kcalAutre}}).join(' · ')})`:'')
+      +(b.prs.length?`\n🏆 ${b.prs.length} record${b.prs.length>1?'s':''}`:'');
   navigator.clipboard.writeText(txt).then(()=>toast('Bilan copié !','success')).catch(()=>toast('Copie impossible','error'));
 }
 function copyWeekSummary(){

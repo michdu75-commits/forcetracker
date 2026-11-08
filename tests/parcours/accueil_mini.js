@@ -252,9 +252,15 @@ module.exports.source = function(t, ROOT, fs, path){
     /wScore\s*=\s*70\s*;/.test(DET), '');
   t('B-CCCXIX ⑤ ⛔ PÉRIMÈTRE — le moteur rend toujours son score, ses facteurs et ses conseils',
     /return\s*\{score,base,factors,tips:tips\.slice\(0,2\),dayPains,/.test(DET), '');
+  /* RE-VISÉ le 05/11/2026 (« Autre activité » ; R17 : un témoin protège un invariant, pas une écriture). L'INVARIANT n'a pas bougé : le silence exige les DEUX
+     absences — aucune nuit récente ET aucune séance. Seule l'écriture de la seconde a changé : « aucune séance d'ENTRAÎNEMENT » (`_seancesTrain()`, qui laisse de
+     côté les activités) au lieu de « aucune ligne dans `S.sessions` » — une marche ne doit pas faire apparaître un score de récupération (invariant I10 de
+     docs/AUTRE-ACTIVITE-CALORIES.md). Les deux écritures sont acceptées, MAIS cherchées dans l'instruction `_sansDonnee = …;` elle-même (pas dans tout le rendu) :
+     une clause retirée ou remplacée par une autre forme fait toujours rougir. */
+  const _sdInstr = (HERO.match(/_sansDonnee\s*=([^;]*);/) || [])[1] || '';
   t('B-CCCXIX ⑥ ⭐⭐ le silence est décidé AU RENDU, et il exige les DEUX absences',
-    /_sansDonnee\s*=/.test(HERO) && /_nuitsRecentes\(today\(\),3\)\.length===0/.test(HERO)
-    && /!\(\(S\.sessions\|\|\[\]\)\.length\)/.test(HERO), '');
+    /_sansDonnee\s*=/.test(HERO) && /_nuitsRecentes\(today\(\),3\)\.length===0/.test(_sdInstr)
+    && /&&\s*!\(\s*(?:\(S\.sessions\|\|\[\]\)|_seancesTrain\(\))\.length\s*\)\s*$/.test(_sdInstr), JSON.stringify(_sdInstr.slice(0, 200)));
   t('B-CCCXIX ⑦ ⭐ il lit `_nuitsRecentes`, propriétaire unique des nuits (R2) — donc il voit '+
     'aussi les nuits MESURÉES par la montre',
     /_nuitsRecentes/.test(HERO) && /S\.healthDaily/.test(nuC(corps('_nuitsRecentes',srcTrk))), '');

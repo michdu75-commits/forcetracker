@@ -330,7 +330,7 @@ function _renderAvantSeance(){
   if(_seanceOuverte()){ ctx.innerHTML=''; return; }
   let html='';
   try{
-    const der=(S.sessions||[])[0]||null;            // la plus récente : `_trierSeances` range S.sessions (state.js)
+    const der=_seancesTrain()[0]||null;            // la plus récente SÉANCE (sans les activités, `_estAutre`) : `_trierSeances` range S.sessions (state.js)
     let score=null, _sansS=false; try{ if(typeof calcRecoveryDetail==='function'){ const _d=calcRecoveryDetail(); score=_d.score; _sansS=!!_d.sansSommeil; } }catch(e){ score=null; }
     const info=(score!==null&&typeof getRecoveryInfo==='function')?getRecoveryInfo(score,_sansS):null;   // F19
     const parts=[];
@@ -505,7 +505,7 @@ function _renderImportRow(){
   const box=document.getElementById('log-import');
   const tog=document.getElementById('log-import-toggle');
   if(!box||!tog)return;
-  const vierge = !((S.programmes||[]).length) && !((S.sessions||[]).length);
+  const vierge = !((S.programmes||[]).length) && !(_seancesTrain().length);   // 🚶 une activité seule ne fait pas un historique de séances
   if(vierge){                       // rien à lui montrer d'autre : on laisse ouvert, sans ligne
     tog.style.display='none';
     box.style.display='flex';
@@ -4753,7 +4753,7 @@ function _volumeParMuscle(refTs, jours){
     const iso=d=>new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10);
     out.depuis=iso(deb); out.jusqu=auj;
     const cnt={};
-    (S.sessions||[]).forEach(s=>{
+    _seancesTrain().forEach(s=>{   // 🚶 sans les activités (`_estAutre`) : « N séances sur la période » ne compte que des séances
       if(!s||!s.date||s.date<out.depuis||s.date>auj) return;
       out.seances++;
       (s.exs||s.exercises||[]).forEach(ex=>{
@@ -5046,8 +5046,16 @@ function _volTravail(sess){
    seulement APPELÉ (moteur calorique gelé, consigne de Michel). */
 function _calDataSeance(sess){
   const calData=calcSessionCalories(sess);
-  const cardioKcal=calcCardioKcal(sess.cardioAvant||null)+calcCardioKcal(sess.cardio||null);
+  /* 🔥 Les calories RETENUES des blocs cardio (`kcalBloc`, app.js) : la valeur saisie remplace l'estimation, jamais ne s'y ajoute. Sur un bloc sans valeur
+     figée ni saisie, c'est exactement l'ancien `calcCardioKcal` : même total qu'avant, à l'octet. */
+  const kA=kcalBloc(sess.cardioAvant||null), kB=kcalBloc(sess.cardio||null);
+  const cardioKcal=kA.retenue+kB.retenue;
   if(cardioKcal){calData.total+=cardioKcal;calData.cardio=cardioKcal;}
+  /* 🔥 Un CARDIO SEUL dont les blocs portent des calories figées ou saisies (le nouveau mécanisme) VAUT LA SOMME DE SES BLOCS RETENUS : le forfait
+     d'échauffement du moteur (≈ 24 kcal, mesuré — il n'appartient à aucune activité de la personne) n'y est pas ajouté. Sans cela, l'éditeur dirait
+     « estimation 338 kcal » pendant que la carte dit 362, et une valeur de montre de 330 donnerait 354. Un enregistrement ANCIEN (blocs sans valeur figée)
+     garde son total d'origine, forfait compris : c'est une valeur historique. Décision D-ACT-4 de `docs/AUTRE-ACTIVITE-CALORIES.md`, à confirmer. */
+  if(!(sess.exs||sess.exercises||[]).length && _kcalAvecSaisie(sess)) calData.total=cardioKcal;
   return calData;
 }
 
@@ -5061,6 +5069,7 @@ function _serieFaitFoiPourPR(s){
   return !!(s && s.done && s.kg && s.reps && s.type!=='É' && s.type!=='W');
 }
 async function finishWorkout(){
+  if(typeof kcalValiderChampsEnAttente==='function'&&!kcalValiderChampsEnAttente('#log-cardio'))return;   // la valeur de la montre tapée à l'instant (champ pas encore quitté) est lue AVANT d'enregistrer
   if(_finishing)return;
   _finishing=true;
   _stopWktChrono();
@@ -5124,6 +5133,8 @@ async function finishWorkout(){
   // Deux moments possibles (02/08) : `cardio` = APRÈS (champ historique), `cardioAvant` = échauffement.
   if(S.wkt?.cardio?.duration) sess.cardio={...S.wkt.cardio};
   if(S.wkt?.cardioAvant?.duration) sess.cardioAvant={...S.wkt.cardioAvant};
+  /* 🔥 Un bloc venu d'un brouillon d'AVANT la mise à jour n'a pas d'estimation figée : on la fige ici, au poids du jour de cette séance — même chiffre qu'avant. */
+  [sess.cardio,sess.cardioAvant].forEach(b=>{ if(b&&typeof b.kcalEst!=='number') kcalPoserEstimation(b,'cardio',S.bw); });
   const calData=_calDataSeance(sess);   // le même calcul que la modification d'une séance passée (un seul endroit)
   sess.calories=calData.total;sess.calData=calData;
 
@@ -5551,7 +5562,7 @@ async function _runSeDebrief(sess,prCount,slot){
 function _checkLevelUp(hasPr){
   if(!S.level||S.level==='confirme')return;
   const bw=S.bw||0;
-  const nSess=(S.sessions||[]).length;
+  const nSess=_seancesTrain().length;   // 🚶 sans les activités (`_estAutre`) : le niveau se juge sur l'entraînement
   const rm=n=>{const p=S.prs&&S.prs[n];return p&&p.rm1?p.rm1:0;};
   const sq=rm('Squat à la Barre'),dc=rm('Développé Couché'),sdt=rm('Soulevé de Terre');
   let target=null,from='';
@@ -8537,7 +8548,7 @@ function _renderHistPreview(){
   // Détection conflits
   _histConflicts=[];
   sessions.forEach((sess,i)=>{
-    const existing=(S.sessions||[]).find(s=>s.date===sess.date);
+    const existing=_seancesTrain().find(s=>s.date===sess.date);   // 🚶 une activité du même jour n'est pas une séance en conflit (`_estAutre`)
     if(existing)_histConflicts.push({idx:i,existing,resolution:'add'});
   });
 
@@ -8673,7 +8684,7 @@ function finalImportHist(){
     // ⛔ une séance SANS aucun exercice est du bruit dans l'historique — et elle fausse le compte
     if(!(Array.isArray(sess.exercises)&&sess.exercises.length)){ _seancesVides++; return; }
     if(conflict&&conflict.resolution==='replace'){
-      const idx=(S.sessions||[]).findIndex(s=>s.date===sess.date);
+      const idx=(S.sessions||[]).findIndex(s=>s.date===sess.date&&!_estAutre(s));   // 🚶 « Remplacer » ne supprime jamais une activité (`_estAutre`)
       if(idx>=0)S.sessions.splice(idx,1);
     }
 
