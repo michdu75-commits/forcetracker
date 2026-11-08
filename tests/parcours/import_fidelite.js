@@ -115,7 +115,8 @@ module.exports.ecran = async function (t, b, PORT) {
   const CP = L('Chest Press inclinée', 3, 8, 0, 'Charge : à calibrer | RIR 1-2', { rest: '2 min' });
   const ROW = L('Rowing poitrine appuyée', 3, 8, 52, 'RIR 1-2', { rest: '2 min' });
   const FP = L('Face Pull', 3, 12, 28, 'Reps 12-15 | RIR 2', { rest: '60-90 s' });
-  await importer({ name: 'Programme test', weeks: 4, startDate: '', days: [{ label: 'J1 - Pectoraux / Dos', exercises: [DC, CP, ROW, FP] }] });
+  const NR = L('Curl marteau', 3, 10, 14, '', { rest: 'libre' });                  // un texte SANS durée : rien n'est écrit, les réglages de la personne s'appliquent (B07 / B08)
+  await importer({ name: 'Programme test', weeks: 4, startDate: '', days: [{ label: 'J1 - Pectoraux / Dos', exercises: [DC, CP, ROW, FP, NR] }] });
   const p1 = await enregistrer();
   const dc = trouve(p1, 0, 'Développé couché')[0] || { sets: [] };
   t('IIF-A01 ⭐ l\'exercice à 4 échauffements + 3 séries de travail reste UN exercice de 7 séries, types ÉÉÉÉNNN, ordre et charges conservés',
@@ -165,10 +166,15 @@ module.exports.ecran = async function (t, b, PORT) {
   // priorité : repos exact de la série > préférence de l'exercice > réglage global
   const seqCP = await sequence(S_IDX(0), 0, 1, { defRest: 100, pref: [['chest press', 75]] });
   t('IIF-B06 ⭐⭐ PRIORITÉ — un repos ÉCRIT (2 min) bat la préférence de l\'exercice (75 s) ET le réglage global (100 s)', seqCP.every(x => x.appel[0] === 120), js(seqCP.map(x => x.appel)));
-  const seqFP = await sequence(S_IDX(0), 0, 3, { defRest: 100, pref: [['face pull', 75]] });
-  t('IIF-B07 ⭐ PRIORITÉ — sans repos chiffré : la préférence de l\'exercice (75 s) passe avant le réglage global (100 s)', seqFP.every(x => x.appel[0] === 75), js(seqFP.map(x => x.appel)));
-  const seqFP2 = await sequence(S_IDX(0), 0, 3, { defRest: 100, pref: [] });
+  // ⚠️ 08/11/2026 : B07 / B08 visaient « Face Pull » (plage « 60-90 s »). Une plage vaut désormais sa borne basse (60 s) et compte comme un repos ÉCRIT : ces deux témoins ont donc été
+  //    reportés sur un exercice dont le document n'écrit AUCUNE durée (« libre ») — l'invariant testé est le même : sans durée écrite, préférence de l'exercice > réglage global.
+  const seqFP = await sequence(S_IDX(0), 0, 4, { defRest: 100, pref: [['marteau', 75]] });   // le catalogue renomme « Curl marteau » en « Marteau »
+  t('IIF-B07 ⭐ PRIORITÉ — sans repos chiffré (texte « libre ») : la préférence de l\'exercice (75 s) passe avant le réglage global (100 s)', seqFP.every(x => x.appel[0] === 75), js(seqFP.map(x => x.appel)));
+  const seqFP2 = await sequence(S_IDX(0), 0, 4, { defRest: 100, pref: [] });
   t('IIF-B08 ⭐ PRIORITÉ — ni repos écrit ni préférence : le réglage global (100 s)', seqFP2.every(x => x.appel[0] === 100), js(seqFP2.map(x => x.appel)));
+  const seqFPp = await sequence(S_IDX(0), 0, 3, { defRest: 100, pref: [['face pull', 75]] });
+  t('IIF-B07b ⭐⭐ DÉCISION DE MICHEL (08/11/2026) — une PLAGE écrite (« 60-90 s ») compte comme un repos écrit : sa borne basse (60 s) passe avant la préférence de l\'exercice (75 s) ET le réglage global (100 s) ; la consigne écrite reste affichée',
+    seqFPp.every(x => x.appel[0] === 60 && /60-90 s/.test(x.consigne)), js(seqFPp.map(x => [x.appel, x.consigne])));
   t('IIF-B09 ⛔ l\'import n\'a ÉCRIT AUCUNE préférence de repos (`exRestPref` reste vide) et n\'a pas touché au réglage global',
     await pg.evaluate(() => { S.exRestPref = {}; S.defRest = 130; persist(); return true; }) && p1.days.length === 1, '');
   // les bornes de la consigne sont proposées dans « Régler », la personne décide
@@ -836,15 +842,15 @@ module.exports.ecran = async function (t, b, PORT) {
   //    « X - échauffement » + « X » = UN exercice · plages « 4-5 min » = 4:00 au chrono, consigne d'origine gardée et modifiable · top set / back-offs lisibles · 4 séances dont la facultative · commentaires conservés.
   //    ⛔ TOUT EST INVENTÉ (le dépôt est public) : seule la FORME du document est reprise (noms de lignes, nombres de séries, plages d'écriture) — jamais ses valeurs réelles ni sa mise en page.
   const POUSSEE = [
-    L('Développé Couché - échauffement', 5, 0, 0, 'Barre à vide pour la 1ʳᵉ série', { repsPerSet: [10, 5, 3, 1, 1], kgPerSet: [0, 60, 80, 95, 100] }),
-    L('Développé Couché', 3, 0, 0, 'RIR 2 | top set puis deux back-offs', { repsPerSet: [2, 3, 3], kgPerSet: [105, 100, 100], rest: '4-5 min' }),
+    L('Développé Couché - échauffement', 5, 0, 0, 'Barre à vide pour la 1ʳᵉ série', { repsPerSet: [10, 5, 3, 1, 1], kgPerSet: [0, 40, 55, 70, 80] }),
+    L('Développé Couché', 3, 0, 0, 'RIR 2 | top set puis deux back-offs', { repsPerSet: [2, 3, 3], kgPerSet: [90, 85, 85], rest: '4-5 min' }),
     L('Chest Press inclinée', 3, 8, 40, '', { rest: '2 min' })];
   const TIRAGE = [
-    L('Soulevé de Terre - échauffement', 5, 0, 0, '', { repsPerSet: [8, 5, 3, 1, 1], kgPerSet: [0, 60, 90, 110, 130] }),
-    L('Soulevé de Terre', 3, 0, 0, 'RIR 2', { repsPerSet: [3, 3, 3], kgPerSet: [150, 140, 140], rest: '4-5 min' })];
+    L('Soulevé de Terre - échauffement', 5, 0, 0, '', { repsPerSet: [8, 5, 3, 1, 1], kgPerSet: [0, 50, 80, 100, 120] }),
+    L('Soulevé de Terre', 3, 0, 0, 'RIR 2', { repsPerSet: [3, 3, 3], kgPerSet: [140, 130, 130], rest: '4-5 min' })];
   const JAMBES = [
-    L('Squat à la Barre - échauffement', 5, 0, 0, '', { repsPerSet: [10, 5, 3, 2, 1], kgPerSet: [0, 50, 70, 90, 100] }),
-    L('Squat à la Barre', 3, 0, 0, 'RIR 2', { repsPerSet: [3, 3, 3], kgPerSet: [120, 110, 110], rest: '4-5 min' })];
+    L('Squat à la Barre - échauffement', 5, 0, 0, '', { repsPerSet: [10, 5, 3, 2, 1], kgPerSet: [0, 40, 60, 80, 90] }),
+    L('Squat à la Barre', 3, 0, 0, 'RIR 2', { repsPerSet: [3, 3, 3], kgPerSet: [110, 100, 100], rest: '4-5 min' })];
   const BRAS = [L('Curl Biceps Haltères', 3, 12, 14, 'Séance facultative', { rest: '90 s' })];
   const PDF = { name: 'Jumeau inventé de la forme du PDF', weeks: 8, startDate: '', days: [
     { label: 'SÉANCE 1 — Poussée', exercises: POUSSEE }, { label: 'SÉANCE 2 — Tirage', exercises: TIRAGE },
@@ -863,16 +869,16 @@ module.exports.ecran = async function (t, b, PORT) {
     ap.cartes.length === 5 && ap.cartes.every(c => !/chauffement/i.test(c.nom)) && cDC.ech === 5 && cDC.trav === 3 && (ap.cartes[2] || {}).ech === 5 && (ap.cartes[3] || {}).ech === 5, js({ jours: ap.jours, cDC }));
   t('IPDF-A02 ⭐ le rattachement ne propose plus de « ≈ Rattacher… » pour une carte d\'échauffement qui n\'existe plus : les trois mouvements de force sont « Reconnu », aucune proposition en attente',
     [0, 2, 3].every(i => (ap.cartes[i] || {}).statut === 'ok'), js(ap.cartes.map(c => [c.nom, c.statut])));
-  t('IPDF-B01 ⭐⭐ L\'APERÇU est fidèle : échauffements ET travail avec leurs charges, reps (jamais « ×0 »), top set 105 × 2 puis back-offs 100 × 3, repos « 4 min (écrit : 4-5 min) »',
-    /Échauffement/.test(cDC.texte) && /Travail/.test(cDC.texte) && /60 kg × 5/.test(cDC.texte) && /105 kg × 2/.test(cDC.texte) && /100 kg × 3/.test(cDC.texte)
+  t('IPDF-B01 ⭐⭐ L\'APERÇU est fidèle : échauffements ET travail avec leurs charges, reps (jamais « ×0 »), top set 90 × 2 puis back-offs 85 × 3, repos « 4 min (écrit : 4-5 min) »',
+    /Échauffement/.test(cDC.texte) && /Travail/.test(cDC.texte) && /40 kg × 5/.test(cDC.texte) && /90 kg × 2/.test(cDC.texte) && /85 kg × 3/.test(cDC.texte)
     && /4 min \(écrit : 4-5 min\)/.test(cDC.texte) && !/×\s*0\b/.test(cDC.texte) && !/\b0 reps\b/.test(cDC.texte), js(cDC));
   t('IPDF-B02 ⭐ le décompte annonce les QUATRE séances et les 15 échauffements regroupés, et dit que 9 repos sont écrits en plage (borne basse proposée)',
     /4 séances/.test(ap.total) && /dont 15 d.échauffement/.test(ap.total) && /9 repos écrits/.test(ap.total) && /borne basse/.test(ap.total), js(ap.total));
   const prog = await enregistrer();
   const dcP = trouve(prog, 0, 'Développé couché');
   const d0 = dcP[0] || { sets: [] };
-  t('IPDF-A03 ⭐⭐ ENREGISTRÉ : UN exercice « Développé Couché » de 8 séries, types ÉÉÉÉÉNNN, charges 0·60·80·95·100 puis 105·100·100, reps 10·5·3·1·1 puis 2·3·3, dans l\'ordre du document',
-    dcP.length === 1 && TYPES(d0) === 'ÉÉÉÉÉNNN' && d0.sets.map(s => s.kg).join() === '0,60,80,95,100,105,100,100' && d0.sets.map(s => s.reps).join() === '10,5,3,1,1,2,3,3', js(SERIES(d0)));
+  t('IPDF-A03 ⭐⭐ ENREGISTRÉ : UN exercice « Développé Couché » de 8 séries, types ÉÉÉÉÉNNN, charges 0·40·55·70·80 puis 90·85·85, reps 10·5·3·1·1 puis 2·3·3, dans l\'ordre du document',
+    dcP.length === 1 && TYPES(d0) === 'ÉÉÉÉÉNNN' && d0.sets.map(s => s.kg).join() === '0,40,55,70,80,90,85,85' && d0.sets.map(s => s.reps).join() === '10,5,3,1,1,2,3,3', js(SERIES(d0)));
   t('IPDF-A04 ⭐⭐ ENREGISTRÉ : les repos « 4-5 min » deviennent 240 s sur les 3 séries de travail (borne basse) ET la consigne « 4-5 min » est CONSERVÉE série par série ; les échauffements, sans repos écrit, n\'en reçoivent pas',
     d0.sets.map(s => s.rest).join() === '0,0,0,0,0,240,240,240' && d0.sets.map(s => s.restTxt || '').join('|') === '|||||4-5 min|4-5 min|4-5 min', js(SERIES(d0)));
   const noms = prog.days.map(d => d.exs.map(e => e.name));
@@ -927,7 +933,7 @@ module.exports.ecran = async function (t, b, PORT) {
   const mini = (nomEch, nomTrav, extraEch, extraTrav) => [
     L(nomEch, 2, 0, 0, '', Object.assign({ repsPerSet: [8, 4], kgPerSet: [40, 60] }, extraEch || {})), L(nomTrav, 3, 5, 100, '', Object.assign({ rest: '3 min' }, extraTrav || {}))];
   const resume = async (exs) => { const v = await vue(exs); return { n: v.ex.length, noms: v.ex.map(e => e.name), types: v.ex.map(e => TYPES(e)) }; };
-  const FORMES = ['Squat à la Barre – ECH', 'Squat à la Barre : échauffement', 'Squat à la Barre | warm-up', 'Squat à la Barre - échauffement léger', 'Squat à la Barre - Montée en charge', 'Squat à la Barre - ECH 1', 'Squat à la Barre / échauffement progressif'];
+  const FORMES = ['Squat à la Barre – ECH', 'Squat à la Barre : échauffement', 'Squat à la Barre | warm-up', 'Squat à la Barre - warm-up', 'Squat à la Barre - échauffement léger', 'Squat à la Barre - Montée en charge', 'Squat à la Barre - ECH 1', 'Squat à la Barre / échauffement progressif'];
   const ecartF = [];
   for (const f of FORMES) { const r = await resume(mini(f, 'Squat à la Barre')); if (!(r.n === 1 && r.types[0] === 'ÉÉNNN' && /^squat/.test(_naz(r.noms[0])))) ecartF.push(f + ' → ' + js(r)); }
   t('IPDF-F01 ⭐⭐ le marqueur à la FIN du nom est reconnu sous toutes ses formes (' + FORMES.length + ') : tiret, tiret long, deux-points, barre, « warm-up », « léger / progressif », « Montée en charge », numéro → UN exercice ÉÉNNN', ecartF.length === 0, ecartF.join(' | '));

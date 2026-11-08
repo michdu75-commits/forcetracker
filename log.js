@@ -7759,11 +7759,16 @@ function _echNomTete(name){
    sur un autre). */
 const _MARQUEUR_ECH_FIN=/^(?:ech|echauff\w*|warm[\s-]?up|warmup|mont[e]{1,2}s? en charge|montee|series? (?:longues? )?(?:de |d')?e?chauff\w*|chauffe)(?:\s+(?:leger|legere|legers|legeres|progressi[fv]e?s?|general|generale|specifique|series?|n\s?\d+|\d+))*$/;
 function _echNomQueue(name){
-  const m=String(name==null?'':name).trim().match(/^(.+?)\s*[-–—:|\/]\s*([^-–—:|\/]+)$/);
-  if(!m)return null;
-  if(!_MARQUEUR_ECH_FIN.test(_naz(m[2]).replace(/\s+/g,' ').trim()))return null;
-  const base=m[1].trim();
-  return base||null;        // un nom qui ne serait QUE « - échauffement » n'a pas de base : on ne touche pas
+  /* On parcourt les séparateurs de DROITE À GAUCHE et on garde le premier dont TOUT ce qui suit est le marqueur : « warm-up » contient lui-même un tiret
+     (« Squat | warm-up », « Squat - warm-up »), donc couper au tout dernier séparateur ne laisserait que « up ». Mesuré au premier banc (IPDF-F01). */
+  const s=String(name==null?'':name).trim(), re=/\s*[-–—:|\/]\s*/g, seps=[];
+  let m;
+  while((m=re.exec(s))!==null)seps.push({deb:m.index,fin:m.index+m[0].length});
+  for(let k=seps.length-1;k>=0;k--){
+    const base=s.slice(0,seps[k].deb).trim();
+    if(base&&_MARQUEUR_ECH_FIN.test(_naz(s.slice(seps[k].fin)).replace(/\s+/g,' ').trim()))return base;   // un nom qui ne serait QUE « - échauffement » n'a pas de base : on ne touche pas
+  }
+  return null;
 }
 // La NOTE ne prouve un échauffement que si elle COMMENCE par lui : « après l'échauffement général, 3 séries lourdes » est du travail.
 function _noteEch(note){

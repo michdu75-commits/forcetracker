@@ -334,3 +334,44 @@ Aucune donnée utilisateur lue ni modifiée · aucun programme existant touché 
 | Anciens chemins supprimés / fusionnés | **1** supprimé — `_impSignalerRepsAbsentes` + `repsDef` · **1** resserré — l'enchaînement d'un dropset à la séance (de « tout palier D » à « palier D d'un exercice marqué ») |
 
 Bilan cumulé de la branche (vs `e2b942f3`) : **2** données persistées ajoutées (`restTxt`, `dropChaine`) · **6** fichiers applicatifs touchés (`log.js` +568 −161 · `worker.js` +379 −3 · `constants.js` +89 −24 · `style.css` +49 −0 · `index.html` +5 −2 · `coach.js` +1 −1) · **+1 091 − 191 = +900** · **7** anciens chemins supprimés ou fusionnés (les 6 du §12 + le signalement des reps).
+
+## 20. Reprise du 08/11/2026 — « X - échauffement », repos en plage, séance facultative, commentaires (« GO CORRECTIF IMPORT PDF » de Michel)
+
+> **Branche isolée `claude/import-pdf-fidelite-2026-11-08`** — base master `be04f04c` (`ft-v1265`) + ce lot (`59226805`, fusionné tel quel : `97a73641`) + la reprise. **Aucune fusion sur master, aucun déploiement du Worker, aucune migration de données, aucune publication** (interdictions de Michel). États : corrigé sur branche · **non intégré** · **non publié** · **non vérifié sur iPhone**. Décisions : **D-153** (plage = borne basse, Michel) et **D-154** (mécanique, Claude ; G3 / G4 à confirmer) · fiche de bug : `BUGS.md` §145 · études séparées : `docs/IMPORT-PDF-ETUDE-CONSIGNE-IA-2026-11-08.md` et `docs/IMPORT-PDF-ETUDE-TEXTE-DU-PDF-2026-11-08.md`.
+
+**Pourquoi une reprise.** Le diagnostic en lecture seule du même jour, face au PDF réel de Michel (captures iPhone du 08/11), a trouvé quatre lacunes que ce lot ne couvrait pas : la forme **« X - échauffement »** (marqueur à la FIN du nom) n'était reconnue ni par master ni par ce lot (0 témoin) ; une **plage de repos « 4-5 min »** valait 0 s ; la **séance facultative** n'existait pas (fusion par numéro) ; un **commentaire importé** de plus de 300 caractères était coupé à la première frappe.
+
+### 20.1 Ce qui a été fait, par priorité du GO
+
+| # | Demande de Michel | Ce que fait le code | Témoins |
+|---|---|---|---|
+| 3 | Regrouper « X - échauffement » + « X » en UN exercice, séries d'échauffement et de travail distinctes | `_echNomQueue` : 3ᵉ forme de preuve (le mot À LA FIN, après un séparateur ; TOUT ce qui suit le séparateur ; balayage de droite à gauche). Branchée dans `_typesLigneImport` et `_nomBlocImport` (clé d'identité sans suffixe). Sans ligne de travail du même exercice derrière, rien n'est regroupé ni retypé | `IPDF-A01` à `A03`, `F01` à `F07` |
+| 4 | Aperçu fidèle : charges, reps, top sets, back-offs, repos par série | L'aperçu par série vient du lot (§ 7) ; la reprise y ajoute le repos de plage « 4 min (écrit : 4-5 min) » et le décompte « ⚑ N repos écrits en plage » | `IPDF-B01`, `B02` |
+| 5 | Plage « 4-5 min » → 4 min au chrono, consigne d'origine conservée et modifiable | `prop` (borne basse) dans `_reposLire` ; `_secRepos` — lu aussi par Milo — **ne change pas** ; `rest = prop` et `restTxt` conservé à la création ; éditeur « repos écrit dans le document » ; séance « chrono réglé sur 4:00 » ; « Régler » propose 4:00 et 5:00 | `IIF-R07`, `R08`, `B03`, `B05`, `B07b`, `IPDF-A04`, `C01` à `C03` |
+| 6 | Quatre séances dont la facultative, et les commentaires | `_marqueSeance` : « facultative » / « bis » ne sont jamais collées à la séance de même numéro, le mot reste dans le libellé (fusion par numéro des sections d'une MÊME séance intacte) ; `_setProgExNote` : une note importée n'est plus coupée (2 000 ; 300 si tapée) | `IPDF-A05`, `A06`, `D01`, `E01` |
+| — | Prompt du Worker | deux phrases : la séance facultative est une séance à part entière ; garder les DEUX lignes d'une forme « X - échauffement ». **Non déployé** | `IIF-W-N` (×2) |
+
+**Jumeau de test.** Tout est **inventé** (le dépôt est public) : un document de 4 séances (3 + 1 « (facultative) »), des lignes « Développé Couché - échauffement » puis « Développé Couché » (idem soulevé de terre et squat), 5 échauffements puis 3 séries de travail, des repos « 4-5 min ». Seule la FORME du document de Michel est reprise, jamais ses valeurs.
+
+### 20.2 Ce que cette reprise NE corrige PAS (à ne pas redécouvrir)
+
+1. **Ce que l'IA rend.** Le client rattrape la forme du document avec ou sans l'aide du modèle ; une séance non lue ou un chiffre mal lu sur une image à 1 200 px restent la lecture du modèle. Voir les deux études : écho de contrôle, recoupement avec le texte du PDF.
+2. **Sans le Worker, aucun repos n'arrive.** Le prompt publié n'a aucun champ repos : la plage « 4-5 min » ne s'affichera qu'après le déploiement du Worker (automatique à la fusion de `worker.js` sur master — `deploy-worker.yml`) : **GO distinct**.
+3. **Au-delà de la 8ᵉ page, les pages sont ignorées sans un mot** (`_pdfToImages`). Décision de Michel du 07/10 (D-056 de la branche parquée `claude/import-programme-lot1-client`) jamais arrivée sur master : **non traité ici**, à décider.
+4. **« Facultative » est un libellé** (G3) : le programme proposera cette séance comme les autres. **Un commentaire par série** n'existe pas au niveau programme (G4) : le commentaire reste celui de l'exercice.
+5. **Une plage compte comme un repos écrit** : sa borne basse passe avant la préférence de l'exercice (`IIF-B07b`) — un exercice dont le texte n'écrit AUCUNE durée garde, lui, la préférence puis le réglage global (`IIF-B07`, `B08`).
+
+### 20.3 Validation — ce qui a RÉELLEMENT tourné (08/11/2026, machine seule, sous le garde réseau)
+
+<<RESULTATS>>
+
+### 20.4 Compteurs règle d'or #17 de cette reprise (code applicatif uniquement, vs `97a73641`)
+
+| Compteur | Valeur |
+|---|---|
+| Données persistées ajoutées | **0** (`restTxt` vient du lot ; `rest` porte désormais la borne basse d'une plage ; l'indication de l'éditeur n'est pas stockée) |
+| Fichiers applicatifs touchés | **3** — `log.js` (+79 −18) · `constants.js` (+10 −0) · `worker.js` (+2 −2, non déployé) |
+| Lignes ajoutées − retirées | **+91 − 20 = +71** (une majorité de commentaires « pourquoi ») |
+| Anciens chemins supprimés / fusionnés | **1** remplacé — la règle du lot « une plage vaut 0 s » (consigne seulement) devient « une plage vaut sa borne basse » : un seul chemin, pas un second |
+
+↩️ **Retour arrière** : la branche n'a rien changé hors d'elle-même ; `master` reste `be04f04c`. Aucune donnée n'est migrée : un programme importé par cette version garde ses champs `rest` et `restTxt` ; une version plus ancienne de l'app ignore `restTxt` et lit `rest` (un nombre).

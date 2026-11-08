@@ -14,19 +14,19 @@
 |---|---|---|
 | Import d'un programme (PDF) | `addImportFile` → **`_pdfToImages` seul** : 8 pages au plus, 1 200 px, JPEG 0,85. **La couche texte n'est jamais lue.** Au-delà de 8 pages, les suivantes sont **ignorées sans rien dire** (pas de message) | `log.js` `addImportFile`, `_pdfToImages` |
 | Lecture de la couche texte | `_pdfToText` existe : 100 % local, 0 IA, contrat `COMPLETE / PARTIAL / UNKNOWN`, 15 pages au plus. **Un seul appelant** : le Mode Test VM (`_vmCustomPdf`), qui en tire des noms d'exercices pour un banc | `log.js` `_pdfToText` · `coach.js` `_vmCustomPdf` |
-| Regroupement des fragments | par ordonnée (`|Δy| ≤ 3`), triés par abscisse, **joints par un espace** : les colonnes d'un tableau (« Barre · 60 · 10-15 · 4-5 min ») deviennent une seule ligne sans séparateur | `log.js` `_pdfToText` |
+| Regroupement des fragments | par ordonnée (`|Δy| ≤ 3`), triés par abscisse, **joints par un espace** : les colonnes d'un tableau (« Barre · 40 · 10-15 · 4-5 min ») deviennent une seule ligne sans séparateur | `log.js` `_pdfToText` |
 | Transport du texte vers l'IA | Le Worker **accepte déjà** une entrée `{isText:true, name, data}` : elle devient un bloc `text` « [Fichier : nom] … » placé avant les images. **Aucun code client ne la produit aujourd'hui** (recherche faite dans `app/log/setup/coach/tracking.js`) | `worker.js` `docContent` |
 | Choix du modèle | plusieurs pages ou un texte joint → Sonnet (un PDF de 6 pages passe déjà par Sonnet : joindre du texte ne change pas le modèle) | `worker.js` `importDoc` |
 | PDF protégé par mot de passe | `_pdfOuvrir` est la porte d'entrée **commune** aux deux lectures (R2) : le mot de passe ne quitte pas le téléphone | `log.js` `_pdfOuvrir` |
 
 ## 2. Ce que la couche texte apporte — et ce qu'elle ne sait pas faire
 
-**Apporte** : les **caractères exacts** (« 10-15 », « 105 × 2 », « 4-5 min », les accents, un nom terminé par « - échauffement »), sans le flou d'un JPEG réduit à 1 200 px (une page A4
+**Apporte** : les **caractères exacts** (« 10-15 », « 90 × 2 », « 4-5 min », les accents, un nom terminé par « - échauffement »), sans le flou d'un JPEG réduit à 1 200 px (une page A4
 rendue ainsi fait ≈ 145 points par pouce : un petit corps de tableau peut se lire de travers) · une couverture **plus longue** (15 pages au lieu de 8) · un **état de lecture** déjà
 écrit (`PARTIAL` dit « tout n'est pas lu ») · zéro coût d'IA, hors ligne, mot de passe compris.
 
 **Ne sait pas faire** : (a) **un PDF sans texte** (capture d'écran, scan) rend `UNKNOWN` — l'app retombe sur les images, comme aujourd'hui ; *on ignore si le PDF de Michel a une couche
-texte* (voir la question Q5) · (b) **la structure** : sans séparateur, on ne sait pas toujours à quelle colonne appartient un nombre (« 60 80 95 100 » : charges ou répétitions ?) ·
+texte* (voir la question Q5) · (b) **la structure** : sans séparateur, on ne sait pas toujours à quelle colonne appartient un nombre (« 40 55 70 80 » : charges ou répétitions ?) ·
 (c) **l'ordre de lecture** d'une mise en page à plusieurs blocs côte à côte peut être mélangé.
 → Le texte est **excellent pour VÉRIFIER** une lecture (« ce nombre est-il dans le document ? »), **médiocre pour la REMPLACER** (« quelle colonne ? »).
 
@@ -50,7 +50,7 @@ texte* (voir la question Q5) · (b) **la structure** : sans séparateur, on ne s
 ## 5. Recommandation
 
 1. **U1 en premier, dans une étape à part, une fois le correctif de regroupement validé** : c'est le seul usage qui apporte ce que ni le code actuel ni le prompt ne peuvent faire seuls — **savoir combien de séances et de lignes le document contient** — pour zéro jeton et zéro Worker. Il n'exige pas **G5** (rien de plus n'est envoyé à l'IA).
-2. **Signaler dès maintenant les pages ignorées au-delà de la 8ᵉ** (même cause, même signal : `pagesTotal` de `_pdfToText` contre les images envoyées) — c'est la décision D-056 du lot 1 d'import, parqué : « pas de troncature silencieuse ». ⚠️ **Ne pas relever `MAX_PAGES`** : consigne de Michel du 13/09, *« pas de correction silencieuse du plafond de pages sans d'abord rendre la troncature observable »* — rendre observable d'abord, décider ensuite.
+2. **Appliquer la décision déjà prise sur les pages au-delà de la 8ᵉ** : aujourd'hui elles sont ignorées **sans un mot**, alors que Michel a tranché le 07/10 (numérotée D-056 sur la branche parquée `claude/import-programme-lot1-client` — *sur master D-056 désigne une autre décision*) : **« jamais silencieuse : un document qui dépasse la limite est refusé avec un message clair, jamais tronqué »**. Cette décision n'a jamais atteint master (le lot 1 est parqué). Le signal existe déjà : `pagesTotal` de `_pdfToText` contre les pages réellement envoyées. ⚠️ **Ne pas relever `MAX_PAGES`** : consigne de Michel du 13/09, *« pas de correction silencieuse du plafond de pages sans d'abord rendre la troncature observable »* — rendre observable d'abord, décider ensuite. *(Le PDF de Michel fait 6 pages : il n'est pas concerné ; un programme plus long perdrait ses dernières séances sans prévenir.)*
 3. **U2 seulement après les mesures de U1 et un banc réel** ; il suppose un déploiement du Worker (GO distinct) et la décision **G5**.
 4. **U3 : non.** (R33 / R19.)
 

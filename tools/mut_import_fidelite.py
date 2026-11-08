@@ -193,7 +193,7 @@ MUT = [
     ('M82 le nom de base ne perd plus son suffixe « - échauffement » : la clé d\'identité diffère, rien n\'est regroupé',
      [(LO, "function _nomBlocImport(ex){ return _nomSansEch(ex.name)||_echNomTete(ex.name)||_echNomQueue(ex.name)||String(ex.name||'').trim(); }", "function _nomBlocImport(ex){ return _nomSansEch(ex.name)||_echNomTete(ex.name)||String(ex.name||'').trim(); }")], 'GARDE'),
     ('M83 N\'IMPORTE QUELLE fin de nom devient un marqueur : « Squat - Bulgare » est pris pour un échauffement du squat classique',
-     [(LO, "  if(!_MARQUEUR_ECH_FIN.test(_naz(m[2]).replace(/\\s+/g,' ').trim()))return null;", "  if(false)return null;")], 'GARDE'),
+     [(LO, "if(base&&_MARQUEUR_ECH_FIN.test(_naz(s.slice(seps[k].fin)).replace(/\\s+/g,' ').trim()))return base;", "if(base)return base;")], 'GARDE'),
     ('M84 une séance facultative / « bis » est de nouveau collée à sa voisine de même numéro (elle disparaît dans la précédente)',
      [(LO, " && _ma===_mb){", "){")], 'GARDE'),
     ('M85 une plage n\'a plus de durée proposée (`prop` vaut 0) : le chrono retombe sur le réglage de la personne devant un « 4-5 min » écrit',
@@ -218,6 +218,8 @@ MUT = [
      [(LO, "|mont[e]{1,2}s? en charge|montee|series? (?:longues? )?(?:de |d')?e?chauff\\w*|chauffe)(?:\\s+(?:leger", "|series? (?:longues? )?(?:de |d')?e?chauff\\w*|chauffe)(?:\\s+(?:leger")], 'GARDE'),
     ('M95 le nombre de plages écrites n\'est plus annoncé dans le décompte de l\'aperçu (⚑ N repos écrits en plage)',
      [(LO, "if(x.repos.txt)nPlage++; }); }));", "if(false)nPlage++; }); }));")], 'GARDE'),
+    ('M96 le balayage des séparateurs ne regarde que le DERNIER : « Squat | warm-up » (le mot contient lui-même un tiret) n\'est plus reconnu',
+     [(LO, "for(let k=seps.length-1;k>=0;k--){", "for(let k=seps.length-1;k>=seps.length-1;k--){")], 'GARDE'),
 ]
 
 BANC = os.path.join('tools', 'banc_import_fidelite.js')

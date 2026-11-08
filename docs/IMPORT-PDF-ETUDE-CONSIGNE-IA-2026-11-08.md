@@ -22,7 +22,7 @@
 ## 2. Ce que la consigne ne peut pas garantir
 
 1. **L'obéissance.** Une règle écrite dans un prompt est lue, pas appliquée : le 07/09 le modèle a relu la règle `setTypePerSet` et ne l'a pas suivie (`docs/IMPORT-IA-FIDELITE-01.md`, §4). Aucun banc hors-ligne ne le prouve — **seule une recette avec l'IA réelle le mesure**.
-2. **La lecture de l'image.** Le Worker reçoit des pages rendues en JPEG ≤ 1 200 px (`_pdfToImages`, 8 pages au plus) : un « 10-15 » ou un « 105 × 2 » peuvent être mal lus, et rien dans la consigne ne l'empêche. C'est l'objet de l'autre étude (le TEXTE du PDF, qui est exact).
+2. **La lecture de l'image.** Le Worker reçoit des pages rendues en JPEG ≤ 1 200 px (`_pdfToImages`, 8 pages au plus) : un « 10-15 » ou un « 90 × 2 » peuvent être mal lus, et rien dans la consigne ne l'empêche. C'est l'objet de l'autre étude (le TEXTE du PDF, qui est exact).
 3. **La longueur.** Chaque règle ajoutée dilue les autres (R20). Le lot est déjà à +1 697 caractères au-dessus de `Code.js` pour un budget de +3 000 (témoin `IIF-W-C budget`).
 
 ## 3. Pistes, classées (bénéfice · risque · coût · comment on le mesure)
