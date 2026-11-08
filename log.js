@@ -6175,12 +6175,14 @@ function _restConsigneMontrer(){
   try{
     const c=Array.isArray(_rirCible)?_rirCible[_rirCible.length-1]:_rirCible;
     const ex=c&&S.wkt&&S.wkt.exs&&S.wkt.exs[c.ei], set=ex&&ex.sets&&ex.sets[c.si];
-    // un repos CHIFFRÉ gagne toujours : la consigne n'a de sens que si rien de ferme n'a été écrit pour cette série
-    if(set&&!(set.rest>0)&&set.restTxt){ const r=_reposLire(set.restTxt); _restConsigne={txt:String(set.restTxt),min:r.min,max:r.max}; }
+    /* ⚠️ MIS À JOUR LE 08/11/2026 (décision de Michel) : le chrono de la série est réglé sur la BORNE BASSE de la plage (`set.rest`, posé à l'import) ET la
+       consigne d'origine reste AFFICHÉE (`set.restTxt`) — avant, elle n'apparaissait que si aucun repos chiffré n'existait. Un repos chiffré qui vient d'un
+       choix de la personne (éditeur) n'a pas de `restTxt` si elle a remplacé la plage par un nombre à l'import : la consigne est alors dans la note. */
+    if(set&&set.restTxt){ const r=_reposLire(set.restTxt); _restConsigne={txt:String(set.restTxt),min:r.min,max:r.max,reglee:set.rest>0?set.rest:0}; }
   }catch(e){}
   const el=document.getElementById('rest-consigne');
   if(el){
-    if(_restConsigne){ el.textContent='Consigne du programme : '+_restConsigne.txt+(_restConsigne.min?' · touche le temps pour choisir':''); el.style.display='block'; }
+    if(_restConsigne){ el.textContent='Consigne du programme : '+_restConsigne.txt+(_restConsigne.reglee?' · chrono réglé sur '+_fmtMmSs(_restConsigne.reglee):'')+(_restConsigne.min?' · touche le temps pour choisir':''); el.style.display='block'; }
     else { el.textContent=''; el.style.display='none'; }
   }
 }
@@ -7624,9 +7626,10 @@ function _mergeImportSeances(){
        semaine sur deux — jamais une seule séance. Sans ce garde, deux libellés « Jour 3 — Semaine A / B » portant le même
        numéro auraient été collés (les exercices de la A mêlés à ceux de la B). */
     const _va=prev?_varianteSemaine(prev.label):null, _vb=_varianteSemaine(day.label);
-    if(prev && n!=null && _seanceNum(prev.label)===n && !(_va&&_vb&&_va!==_vb)){
+    const _ma=prev?_marqueSeance(prev.label):null, _mb=_marqueSeance(day.label);   // ⛔ une facultative / « bis » ne se colle JAMAIS à sa voisine (IMPORT PDF)
+    if(prev && n!=null && _seanceNum(prev.label)===n && !(_va&&_vb&&_va!==_vb) && _ma===_mb){
       prev.exercises=(prev.exercises||[]).concat(day.exercises||[]);
-      prev.label=_seanceKw(prev.label)+' '+n;   // « Séance N » propre (groupes musculaires = sections internes)
+      prev.label=_seanceKw(prev.label)+' '+n+(_ma==='facultative'?' (facultative)':(_ma==='bis'?' bis':''));   // « Séance N » propre (groupes musculaires = sections internes) — le mot « facultative » / « bis » reste dans le libellé
       merged++;
     } else out.push(day);
   });
@@ -7742,6 +7745,26 @@ function _echNomTete(name){
   const m=String(name==null?'':name).trim().match(/^(?:ech|[ée]chauffement|warm[\s-]?up)\s*[-–—:|]\s*(.+)$/i);
   return m&&m[1].trim()?m[1].trim():null;
 }
+/* ✂️ LE MARQUEUR À LA FIN DU NOM, APRÈS UN SÉPARATEUR — « Développé Couché - échauffement » (IMPORT PDF, 08/11/2026, « GO CORRECTIF IMPORT PDF »).
+   ⛔⛔ LE CAS RÉEL, MESURÉ PAR LA LECTURE DU CODE ET LES CAPTURES DE MICHEL (iPhone, 08/11). Son programme écrit la ligne d'échauffement
+   « Développé Couché - échauffement » (5 séries) puis « Développé Couché » (3 séries) — et idem pour le soulevé de terre et le squat. Les deux
+   reconnaissances de marqueur dans un NOM n'admettaient que « X (ECH) » (parenthèse, en fin : `_nomSansEch`) et « ECH - X » (en TÊTE, avec
+   séparateur : `_echNomTete`) : la forme « X - échauffement » n'était ni l'une ni l'autre. Résultat : deux cartes, et l'écran « ≈ Rattacher à
+   Développé Couché ? » renommait la première SANS rien regrouper (le filet passe avant le rattachement, jamais après). Aucun témoin ne couvrait
+   cette forme (0 occurrence dans les tests de master ni du lot).
+   ⭐ LA RÈGLE, LA MÊME QUE POUR LES DEUX AUTRES FORMES : c'est une PREUVE d'échauffement, rien de plus — sans ligne de travail du même exercice
+   juste derrière, rien n'est regroupé ni retypé (`_mergeImportBlocsEch`). Le nom de base est ce qui précède le DERNIER séparateur.
+   ⛔ Le mot doit être TOUT ce qui suit le séparateur (avec, au plus, un qualificatif : « léger », « progressif », un numéro) : « Squat - Bulgare »,
+   « Presse - Zeta » ou « Curl - échelle » ne sont jamais touchés (R29 : un faux regroupement mettrait les charges d'échauffement d'un exercice
+   sur un autre). */
+const _MARQUEUR_ECH_FIN=/^(?:ech|echauff\w*|warm[\s-]?up|warmup|mont[e]{1,2}s? en charge|montee|series? (?:longues? )?(?:de |d')?e?chauff\w*|chauffe)(?:\s+(?:leger|legere|legers|legeres|progressi[fv]e?s?|general|generale|specifique|series?|n\s?\d+|\d+))*$/;
+function _echNomQueue(name){
+  const m=String(name==null?'':name).trim().match(/^(.+?)\s*[-–—:|\/]\s*([^-–—:|\/]+)$/);
+  if(!m)return null;
+  if(!_MARQUEUR_ECH_FIN.test(_naz(m[2]).replace(/\s+/g,' ').trim()))return null;
+  const base=m[1].trim();
+  return base||null;        // un nom qui ne serait QUE « - échauffement » n'a pas de base : on ne touche pas
+}
 // La NOTE ne prouve un échauffement que si elle COMMENCE par lui : « après l'échauffement général, 3 séries lourdes » est du travail.
 function _noteEch(note){
   /* IMPORT-IA-FIDELITE-01 : « Montée en charge » ET « Monté en charge » (une faute courante :
@@ -7754,11 +7777,11 @@ function _typesLigneImport(ex){
   const n=_seriesImport(ex).n;
   if(Array.isArray(ex.setTypePerSet)&&ex.setTypePerSet.length)   // le structuré passe AVANT le texte
     return Array.from({length:n},(_,s)=>String(ex.setTypePerSet[s]||'').toUpperCase()==='W'?'W':'');
-  const w=String(ex.setType||'').toUpperCase()==='W'||_nomSansEch(ex.name)!==null||_echNomTete(ex.name)!==null||_noteEch(ex.note);
+  const w=String(ex.setType||'').toUpperCase()==='W'||_nomSansEch(ex.name)!==null||_echNomTete(ex.name)!==null||_echNomQueue(ex.name)!==null||_noteEch(ex.note);
   return Array(n).fill(w?'W':'');
 }
 function _wPuisTravail(T){ let trav=false; for(const v of T){ if(v!=='W')trav=true; else if(trav)return false; } return true; }
-function _nomBlocImport(ex){ return _nomSansEch(ex.name)||_echNomTete(ex.name)||String(ex.name||'').trim(); }
+function _nomBlocImport(ex){ return _nomSansEch(ex.name)||_echNomTete(ex.name)||_echNomQueue(ex.name)||String(ex.name||'').trim(); }
 function _cleBlocImport(ex){
   let nom=_nomBlocImport(ex);
   try{ const r=(typeof _matchExercise==='function')?_matchExercise(nom):null; if(r&&r.tier==='auto'&&r.match)nom=r.match; }catch(e){}
@@ -8177,9 +8200,13 @@ function _fmtReposDit(sec){
 }
 function _impReposLib(r){
   if(r.sec)return _fmtReposDit(r.sec);
-  if(r.txt)return r.txt;                  // une plage / un texte : tel qu'écrit dans le document
+  if(r.prop)return _fmtReposDit(r.prop);  // une PLAGE : sa BORNE BASSE est proposée (décision de Michel, 08/11/2026) — le texte écrit reste affiché à côté (`_impReposEcrit`)
+  if(r.txt)return r.txt;                  // un texte sans chiffre : tel qu'écrit dans le document, aucun chiffre appliqué
   return '—';
 }
+/* La CONSIGNE D'ORIGINE d'un repos écrit en plage (« 4-5 min »), ou '' : c'est elle qu'on affiche à côté du chiffre proposé, pour que la personne voie d'où il vient
+   et puisse le changer. Un texte sans chiffre n'a pas de chiffre proposé : il s'affiche déjà tel quel (`_impReposLib`). */
+function _impReposEcrit(r){ return (r&&r.txt&&r.prop)?r.txt:''; }
 /* Le détail par série devient ÉDITABLE : avant toute correction, on écrit explicitement dans l'exercice ce que l'aperçu montre
    (type et repos de CHAQUE série), à la longueur des séries. Rien ne change à l'enregistrement : `_typeSerieImport` /
    `_restBrutSerieImport` relisent exactement les mêmes valeurs. ⛔ Le repos d'un palier de dropset non écrit reste « rien ». */
@@ -8248,7 +8275,7 @@ function _impLigneGroupe(g,avecLib){
   const corps=memes
     ?(s[0].reps==null?_escNote(n+(n>1?' séries':' série')+' · reps ')+_repsHtml(null)+_escNote(kgTxt):_escNote(n+' × '+s[0].reps+' reps'+kgTxt))
     :s.slice(0,7).map(x=>_escNote(x.kg?x.kg+' kg × ':'')+_repsHtml(x.reps)).join(' · ')+(n>7?' …':'');
-  const rp=[]; s.forEach(x=>{ const l=_impReposLib(x.repos); if(!rp.includes(l))rp.push(l); });
+  const rp=[]; s.forEach(x=>{ const e=_impReposEcrit(x.repos); const l=_impReposLib(x.repos)+(e?' (écrit : '+e+')':''); if(!rp.includes(l))rp.push(l); });
   const repos=(rp.length===1&&rp[0]==='—')?'repos non précisé':'repos '+rp.filter(l=>l!=='—').join(' · ')+(rp.includes('—')?' · —':'');
   return `<div>${avecLib?`<b>${lib}</b> · `:''}${n>1&&!memes?n+' séries : ':''}${corps} <span style="color:var(--t3);">— ${_escNote(repos)}</span></div>`;
 }
@@ -8257,10 +8284,10 @@ function _impDetailSeries(di,ei,v){
     const ouvert=_impRepos&&_impRepos.di===di&&_impRepos.ei===ei&&_impRepos.si===si;
     const ty=x.type==='É'?'É':(x.type==='D'?'D':'T'), cls=x.type==='É'?'ech':(x.type==='D'?'drop':'trav');
     const titre=x.type==='É'?'Échauffement — touche pour passer en travail':(x.type==='D'?'Palier de dropset':'Travail — touche pour passer en échauffement');
-    const flag=!x.repos.sec&&x.repos.txt;
+    const flag=!!x.repos.txt;                  // un repos écrit en plage ou en texte : marqué ⚑ (le chiffre proposé n'est PAS celui du document)
     let h=`<div class="imp-set"><button class="imp-ty imp-ty-${cls}" ${x.type==='D'?'disabled':`onclick="impBasculerType(${di},${ei},${si})"`} title="${titre}">${ty}</button>`
       +`<span class="imp-kr">${x.kg?x.kg+' kg':'—'} × ${_repsHtml(x.reps)}</span>`
-      +`<button class="imp-rp${flag?' imp-rp-flag':''}" onclick="impEditRepos(${di},${ei},${si})" title="Corriger le repos">${flag?'⚑ ':''}${_escNote(_impReposLib(x.repos))}</button></div>`;
+      +`<button class="imp-rp${flag?' imp-rp-flag':''}" onclick="impEditRepos(${di},${ei},${si})" title="${_impReposEcrit(x.repos)?'Écrit dans le document : '+_escNote(_impReposEcrit(x.repos))+' — touche pour corriger':'Corriger le repos'}">${flag?'⚑ ':''}${_escNote(_impReposLib(x.repos))}</button></div>`;
     if(ouvert){
       h+=`<div class="imp-rpe"><div class="imp-rpe-t">Repos de la série ${si+1}${x.repos.txt?` · écrit : « ${_escNote(x.repos.txt)} »`:''}</div><div class="imp-rpe-c">`
         +(x.repos.min?`<button class="imp-rpe-b" onclick="impFixerRepos(${di},${ei},${si},${x.repos.min})">${_fmtReposDit(x.repos.min)}</button><button class="imp-rpe-b" onclick="impFixerRepos(${di},${ei},${si},${x.repos.max})">${_fmtReposDit(x.repos.max)}</button>`:'')
@@ -8300,10 +8327,10 @@ function _renderImpConfirm(){
   (d.days||[]).forEach(day=>(day.exercises||[]).forEach(ex=>{ if(_neuf(ex))_vus.add(_cleNom(ex.name)); }));
   const _nbNeuf=_vus.size;
   let nEx=0,nSer=0,nEch=0,nPlage=0;
-  (d.days||[]).forEach(day=>(day.exercises||[]).forEach(ex=>{ nEx++; _impVueSeries(ex).forEach(x=>{ nSer++; if(x.type==='É')nEch++; if(!x.repos.sec&&x.repos.txt)nPlage++; }); }));
+  (d.days||[]).forEach(day=>(day.exercises||[]).forEach(ex=>{ nEx++; _impVueSeries(ex).forEach(x=>{ nSer++; if(x.type==='É')nEch++; if(x.repos.txt)nPlage++; }); }));
   const nj=(d.days||[]).length;
   const total=`<div style="font-size:12px;color:var(--t2);line-height:1.5;margin-bottom:8px;"><b style="color:var(--t1);">${nj} séance${nj>1?'s':''} · ${nEx} exercice${nEx>1?'s':''} · ${nSer} série${nSer>1?'s':''}</b> (dont ${nEch} d'échauffement)`
-    +(nPlage?`<br>⚑ ${nPlage} repos écrit${nPlage>1?'s':''} en plage ou en texte : conservé${nPlage>1?'s':''} tel${nPlage>1?'s':''} qu'écrit${nPlage>1?'s':''}, jamais converti${nPlage>1?'s':''} en durée. Touche un repos pour en choisir un.`:'')
+    +(nPlage?`<br>⚑ ${nPlage} repos écrit${nPlage>1?'s':''} en plage ou en texte : pour une plage (« 4-5 min »), la <b>borne basse</b> est proposée au chrono (4 min) et la consigne écrite est conservée ; un texte sans durée n'applique rien. Touche un repos pour le changer.`:'')
     +(_impPertes(d)?`<br><span class="imp-perte">⚠️ ${_escNote(_impPertes(d))}</span>`:'')+`</div>`;
   const carte=(di,ei)=>{
     const ex=d.days[di].exercises[ei], o=_impOuverts.has(di+'-'+ei);
@@ -8534,10 +8561,12 @@ function finalImportProg(){
         let sets;
         /* ⏱️ LE REPOS DE LA SÉRIE, LU UNE SEULE FOIS (IMPORT-IA-FIDELITE-01). `_restBrut` choisit le texte du document pour CETTE série
            (la sienne, sinon celle de l'exercice) ; `_reposLire` le lit : une valeur ferme devient `rest` (secondes) ; une PLAGE ou un
-           texte (« 3-4 min », « selon ressenti ») n'est JAMAIS converti en nombre — `rest` reste 0 et le texte est CONSERVÉ dans `restTxt`
-           (la séance le montrera, la personne choisira). Rien n'est supprimé ni inventé. */
+           texte (« 3-4 min », « selon ressenti ») : ⚠️ MIS À JOUR LE 08/11/2026 (décision de Michel, « GO CORRECTIF IMPORT PDF ») — une PLAGE devient sa BORNE
+           BASSE (`r.prop` : « 4-5 min » → 240 s au chrono) ET son texte est CONSERVÉ dans `restTxt` (la séance l'affiche, « Régler » propose les deux
+           bornes, l'éditeur permet de changer le chiffre) ; un texte SANS chiffre (« selon ressenti ») garde `rest` à 0 et son texte. Rien n'est
+           supprimé ni inventé : le chiffre est celui du document (sa borne basse), pas un réglage deviné. */
         const _restAt=si=>_reposSerieImport(ex,si);  // IMPORT-IA-FIDELITE-01 : la MÊME fonction que l'aperçu (R2) — voir `_restBrutSerieImport`
-        const _setDe=(si,kg,reps)=>{ const r=_restAt(si); const o={kg,reps,type:_typeAt(si) /* échec auto à l'import désactivé (ft-v292) — ex.specialSets plus converti en 'E' */,rest:r.sec}; if(r.txt)o.restTxt=r.txt; return o; };
+        const _setDe=(si,kg,reps)=>{ const r=_restAt(si); const o={kg,reps,type:_typeAt(si) /* échec auto à l'import désactivé (ft-v292) — ex.specialSets plus converti en 'E' */,rest:r.prop}; if(r.txt)o.restTxt=r.txt; return o; };
         const _SI=_seriesImport(ex);        // IMPORT-IA-FIDELITE-01 : la MÊME lecture que l'aperçu (nombre de séries, reps, charges) — R2
         sets=_SI.reps.map((r,si)=>_setDe(si,_SI.kgs[si],r));
         const obj={name:ex.name,note:ex.note||'',sets};
@@ -9185,6 +9214,19 @@ function _varianteSemaine(label){
   if(m)return m[1].toUpperCase();
   m=s.match(/^\s*J\s*\d+\s*([AB])\b/i);          // « J3A », « J 3 B »
   return m?m[1].toUpperCase():null;
+}
+/* 🟡 UNE SÉANCE FACULTATIVE (OU « BIS ») N'EST JAMAIS COLLÉE À SA VOISINE DE MÊME NUMÉRO — IMPORT PDF, 08/11/2026 (« GO CORRECTIF IMPORT PDF » :
+   « préserver les quatre séances du PDF, dont la quatrième facultative »). `_mergeImportSeances` colle deux jours consécutifs de même NUMÉRO
+   (« Séance 1 - Dorsaux » + « Séance 1 - Biceps » = une séance) : « Séance 3 – facultative » ou « Séance 3 bis » après « Séance 3 » y aurait
+   été fusionnée dans la 3, et la séance facultative aurait DISPARU sans un mot. Le mot qui la désigne est un MARQUEUR de variante, comme
+   « Semaine A / B » (`_varianteSemaine`) : deux jours ne sont fusionnés que s'ils portent le MÊME marqueur (ou aucun).
+   ⛔ Aucun nouveau champ : la séance facultative reste un jour ordinaire, son LIBELLÉ la dit (décision de Michel attendue G3, recommandation :
+   libellé seul) — l'aperçu l'annonce (« N séances »), le sélecteur de jour l'affiche telle quelle. */
+function _marqueSeance(label){
+  const n=_naz(String(label==null?'':label));
+  if(/\bfacultati[fv]e?s?\b|\boptionnel(?:le)?s?\b|\boptional\b|\ben option\b|\bbonus\b/.test(n))return 'facultative';
+  if(/\bbis\b/.test(n))return 'bis';
+  return null;
 }
 // La « base » d'un jour = son NUMÉRO (J3A et J3B partagent J3). C'est le seul appariement
 // accepté : deux jours ne forment une paire que s'ils portent le même numéro.
@@ -10901,7 +10943,7 @@ function _renderProgEdit(){
         <span style="font-size:11px;color:var(--t3);white-space:nowrap;min-width:44px;">s${s.rest>0?' '+_fmtRest(s.rest):''}</span>
       </span>
       <button onclick="_removeProgSet(${di},${ei},${si})" title="Retirer la série" style="width:22px;background:none;border:none;color:var(--t3);font-size:16px;line-height:1;cursor:pointer;padding:0;">×</button>
-    </div>`).join('')}
+    </div>${_hintReposEcrit(sets,si)}`).join('')}
     <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:5px;">
       <button onclick="_addProgSet(${di},${ei})" style="padding:5px 12px;background:transparent;border:1px dashed var(--sep);border-radius:8px;color:var(--t2);font-size:12px;cursor:pointer;">+ série</button>
       ${hasNext?`<button onclick="_toggleProgSuperset(${di},${ei})" style="padding:5px 12px;border-radius:8px;font-size:12px;cursor:pointer;background:${linkedNext?'rgba(255,109,0,.14)':'transparent'};border:1px ${linkedNext?'solid var(--orange)':'dashed var(--sep)'};color:${linkedNext?'var(--orange)':'var(--t2)'};">⚡ ${linkedNext?'En superset ✓':'Superset avec le suivant'}</button>`:''}
@@ -10938,6 +10980,16 @@ function _cleanProgEditExercises(){
   if(n){ _renderProgEdit(); toast(n+' exercice'+(n>1?'s':'')+' rattaché'+(n>1?'s':'')+' — 💾 enregistre pour valider','success'); }
   else toast('Aucun doublon évident à rattacher 👍','info');
 }
+/* 📝 LA CONSIGNE DE REPOS D'ORIGINE, VISIBLE DANS L'ÉDITEUR (IMPORT PDF, 08/11/2026 : « conserver la consigne d'origine et permettre sa modification »).
+   Le chiffre proposé à l'import (la borne basse d'une plage) est dans le champ et se change ; le TEXTE du document (`restTxt`) reste lisible sous la série.
+   Une seule ligne pour une suite de séries qui portent le même texte (« séries 6 à 8 »), pas une ligne par série. Affichage seul : rien n'est écrit. */
+function _hintReposEcrit(sets,si){
+  const t=sets&&sets[si]&&sets[si].restTxt;
+  if(!t)return '';
+  if(si>0&&sets[si-1]&&sets[si-1].restTxt===t)return '';         // la suite a déjà sa ligne
+  let j=si; while(j+1<sets.length&&sets[j+1]&&sets[j+1].restTxt===t)j++;
+  return `<div style="font-size:10.5px;line-height:1.35;color:var(--gold);padding:0 2px 4px 38px;">⚑ repos écrit dans le document : « ${_escNote(t)} »${j>si?' (séries '+(si+1)+' à '+(j+1)+')':''}${sets[si].rest>0?' · proposé : '+_fmtRest(sets[si].rest):''}</div>`;
+}
 // Repos par défaut selon le type de série (pour le placeholder de l'éditeur)
 /* ⚠️ LA JUMELLE (R8, 31/08/2026) — ce placeholder de l'éditeur de programmes annonçait **90 s**
    pour une série normale, alors que la séance applique le repos RÉGLÉ par la personne (mesuré :
@@ -10968,7 +11020,11 @@ function _setProgSetRest(di,ei,si,val){
 function _setProgExNote(di,ei,val){
   const ex=_progEditEx(di,ei);if(!ex)return;
   const v=(val||'').trim();
-  if(v)ex.note=v.slice(0,300);else delete ex.note;
+  /* ⛔ IMPORT PDF (08/11/2026, « préserver les commentaires ») : le plafond de 300 caractères vaut pour un commentaire TAPÉ. Une note IMPORTÉE plus longue
+     (les commentaires de plusieurs lignes regroupées, « Échauffement : … | RIR … ») était COUPÉE à la première frappe, en silence. On ne coupe jamais un texte
+     qui existait déjà plus long que le plafond. */
+  const cap=String(ex.note||'').length>300?2000:300;
+  if(v)ex.note=v.slice(0,cap);else delete ex.note;
 }
 // Édite les reps d'une série — pas de re-render (garde le focus)
 /* 🔢 IMPORT-IA-FIDELITE-01 (correction D) : un champ VIDÉ (ou illisible) dans l'éditeur dit « Non renseigné » (`null`) — plus « 0 », que la séance

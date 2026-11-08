@@ -2659,7 +2659,17 @@ function _reposQte(s, indice){
   }
   return null;
 }
+/* ⏱️ `prop` — LA DURÉE QUE L'APP PROPOSE AU CHRONOMÈTRE (décision de Michel, 08/11/2026, « GO CORRECTIF IMPORT PDF » ; même esprit que la D-058
+   du Lot 1 Import, 07/10 : « plage conservée ; valeur utilisée = borne basse »). Une valeur FERME → elle-même ; une PLAGE (« 4-5 min ») → sa
+   BORNE BASSE (4 min), pendant que le TEXTE écrit reste conservé (`txt`) et que les deux bornes (`min`, `max`) restent proposées à la personne ;
+   un texte sans chiffre (« selon ressenti ») → 0. ⛔ `sec` NE CHANGE PAS (0 pour une plage) : `_secRepos` — qui sert aussi aux séances de Milo —
+   garde exactement son sens d'avant ; seul l'IMPORT (aperçu et programme enregistré) lit `prop`. Une seule fonction de lecture (R2). */
 function _reposLire(v){
+  const r=_reposLireBrut(v);
+  r.prop=r.sec>0?r.sec:(r.min>0?r.min:0);
+  return r;
+}
+function _reposLireBrut(v){
   const vide={sec:0,min:0,max:0,txt:''};
   if(v==null) return vide;
   if(typeof v==='number') return (v>0&&isFinite(v)&&v<=3600)?{sec:Math.round(v),min:0,max:0,txt:''}:vide;
