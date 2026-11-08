@@ -5050,7 +5050,10 @@ function _calDataSeance(sess){
      figée ni saisie, c'est exactement l'ancien `calcCardioKcal` : même total qu'avant, à l'octet. */
   const kA=kcalBloc(sess.cardioAvant||null), kB=kcalBloc(sess.cardio||null);
   const cardioKcal=kA.retenue+kB.retenue;
-  if(cardioKcal){calData.total+=cardioKcal;calData.cardio=cardioKcal;}
+  /* ⛔ 0 est une VALEUR (D-ACT-2) : un cardio saisi à 0 kcal sur une séance de musculation range quand même sa part (`calData.cardio` = 0, un nombre). Rangée « absente », le bilan de la semaine et du mois
+     la lisait comme « ancienne séance dont la part de cardio n'est pas séparable » (`_agregatPeriode`) : un texte inexact, aucun chiffre faux (écart relevé le 08/11/2026). Seul un bloc qui porte une valeur
+     saisie (`remplacee`) entre dans l'exception : un bloc sans valeur saisie garde l'ancien comportement à l'octet. */
+  if(cardioKcal||kA.remplacee||kB.remplacee){calData.total+=cardioKcal;calData.cardio=cardioKcal;}
   /* 🔥 Un CARDIO SEUL dont les blocs portent des calories figées ou saisies (le nouveau mécanisme) VAUT LA SOMME DE SES BLOCS RETENUS : le forfait
      d'échauffement du moteur (≈ 24 kcal, mesuré — il n'appartient à aucune activité de la personne) n'y est pas ajouté. Sans cela, l'éditeur dirait
      « estimation 338 kcal » pendant que la carte dit 362, et une valeur de montre de 330 donnerait 354. Un enregistrement ANCIEN (blocs sans valeur figée)

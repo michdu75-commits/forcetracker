@@ -2078,11 +2078,12 @@ function _kcalApresEdition(avant, apres){
     else if(mA.total===mN.total) moteur=moteurRef;                                // l'effort du moteur n'a pas bougé : sa part d'origine reste telle quelle
     else if(moteurRef>0&&mA.total>0) moteur=Math.round(mN.total*moteurRef/mA.total);   // seule la VARIATION d'effort
     else moteur=mN.total;                                                         // pas de calories d'origine : le calcul du jour, comme F21
-    const cardio=kcalBloc(apres.cardioAvant||null).retenue+kcalBloc(apres.cardio||null).retenue;
+    const kcA=kcalBloc(apres.cardioAvant||null), kcB=kcalBloc(apres.cardio||null);
+    const cardio=kcA.retenue+kcB.retenue;
     const total=moteur+cardio;
     const base=(mA.total===mN.total&&avant&&avant.calData)?avant.calData:mN;      // métadonnées du moteur : celles d'origine tant que l'effort n'a pas bougé
     const calData=Object.assign({}, base, {total});
-    if(cardio>0) calData.cardio=cardio; else delete calData.cardio;
+    if(cardio>0||kcA.remplacee||kcB.remplacee) calData.cardio=cardio; else delete calData.cardio;   // 0 saisi = une part cardio RANGÉE à 0 (voir `_calDataSeance`)
     if(mA.total!==mN.total&&mN.breakdown&&mN.total>0){ const k2=moteur/mN.total; calData.breakdown={}; Object.keys(mN.breakdown).forEach(n=>{ calData.breakdown[n]=Math.round(mN.breakdown[n]*k2); }); }
     return {calories:total, calData};
   }

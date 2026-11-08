@@ -51,6 +51,7 @@ const SC = {
   'D09': 'DÉCOUVERT — la valeur « 0 kcal » saisie est une valeur (≠ champ vide)',
   'D10': 'DÉCOUVERT — l\'historique : filtre « Activités », compteurs, aucune ligne « 0 kg de travail », aucun bouton d\'analyse muscu',
   'D11': 'DÉCOUVERT — un enregistrement d\'activité venu d\'ailleurs, sans estimation figée, garde sa valeur rangée quand on le rouvre puis l\'enregistre',
+  'D12': 'DÉCOUVERT (08/11/2026) — un cardio saisi à 0 kcal sur une séance de musculation est RANGÉ à 0 (calData.cardio) : le bilan ne le dit pas « non séparable »',
 };
 const MX = {};   // la matrice, remplie par les témoins
 function W(id, nom, attendu, cond, observe, preuve, extra) {
@@ -498,6 +499,64 @@ async function blocB(c) {
       const c = calcSessionCalories(s); return Math.round(c.total + calcCardioKcal(s.cardio)); });
     t(P + '15 T37 : un brouillon d\'avant la mise à jour (cardio sans estimation figée) se termine au MÊME total que l\'ancien calcul (moteur + MET × poids × durée), le bloc est figé à la fin',
       W('T37', 'brouillon ancien', 'même total que l\'ancienne formule', !!r && r.calories === attendu && typeof r.cardio.kcalEst === 'number' && r.cardio.kcalPoids === 82, { cal: r && r.calories, attendu }, 'banc C-ACT-B15'), _det({ cal: r && r.calories, attendu }));
+    await fermer(X);
+  }
+
+  // ── T44 / D12 : un cardio saisi à 0 kcal — sur une séance de MUSCULATION (écart relevé le 08/11/2026, correctif autorisé par Michel), sur une séance PASSÉE modifiée, puis sur un cardio SEUL ──
+  /* 0 est une VALEUR (D-ACT-2) : sa part est RANGÉE à 0 (`calData.cardio` = 0, un nombre), comme une part non nulle. Rangée « absente », le bilan de la semaine et du mois disait à tort
+     « 1 ancienne séance avec cardio : sa part de cardio n'est pas séparable » (un texte inexact, aucun chiffre faux). */
+  const bilanZero = X => X.pg.evaluate(() => { const ym = S.sessions[0].date.slice(0, 7); openMonthReports(ym); const a = _agregatPeriode(S.sessions);
+    const r = { nonRep: a.cardioNonRepartie, cardio: a.kcal.cardio, muscu: a.kcal.muscu, total: a.kcal.total, nMuscu: a.nMuscu, nCardio: a.nCardio, pied: document.getElementById('month-sum-content').textContent.replace(/\s+/g, ' ') };
+    document.querySelectorAll('.overlay.open').forEach(o => o.classList.remove('open'));      // le bilan du mois resterait ouvert PAR-DESSUS le détail rouvert : il intercepterait le clic suivant
+    return r; });
+  const unBloc = (X, avecMuscu, minutes) => X.pg.evaluate(([m, d]) => { startWorkout();
+    if (m) Object.assign(S.wkt, { exs: [{ name: 'Squat Barre', sets: [1, 2, 3].map(i => ({ kg: 100, reps: 5, type: 'N', done: true, at: 60000 * i })) }], startTs: Date.now() - 30 * 60000 });
+    _cardioOpen = true; setCardioField('type', 'tapis', 'apres'); setCardioField('intensity', 'modere', 'apres'); setCardioField('duration', d, 'apres'); renderCardioBlock(); }, [avecMuscu, minutes]);
+  const enregistrerDetail = async X => { await X.pg.evaluate(() => { const bt = [...document.querySelectorAll('#ov-sess-detail button')].find(x => /Enregistrer/.test(x.textContent)); bt.click(); }); await X.pg.waitForTimeout(200); };
+  {
+    const X = await ouvrir(sess([])); const pg = X.pg;
+    await unBloc(X, true, 30);
+    const inp = pg.locator('#log-cardio .kcal-ed input'); await inp.fill('0'); await inp.press('Tab'); await pg.waitForTimeout(60);
+    const e1 = await txt(X, '#log-cardio .kcal-ed');
+    const r = await pg.evaluate(async () => { await finishWorkout(); return JSON.parse(JSON.stringify(S.sessions[0])); });
+    const mo = await pg.evaluate(() => calcSessionCalories(S.sessions[0]).total); const bz = await bilanZero(X);
+    t(P + '16 ⭐ T44 / D12 : séance de squat + cardio de fin 30 min dont la montre dit « 0 » → « Retenu 0 kcal · valeur saisie » ; enregistrée : kcalMan 0, estimation 226 conservée, calData.cardio = 0 (RANGÉE, un nombre), calories = la part du moteur (musculation) — pas 226 de plus',
+      W('T44', 'zéro sur muscu + cardio', 'retenu 0 ; part cardio rangée à 0', /Retenu 0 kcal/.test(e1) && /valeur saisie/.test(e1) && /Revenir/.test(e1) && !!r && r.cardio.kcalMan === 0 && r.cardio.kcalEst === 226 && r.calData.cardio === 0 && r.calories === mo && r.calories !== mo + 226, { e1, cal: r && r.calories, cardio: r && r.cardio, part: r && r.calData && r.calData.cardio, moteur: mo }, 'banc C-ACT-B16')
+      && W('D12', 'part rangée', 'calData.cardio est un nombre (0), pas absent', !!r && typeof r.calData.cardio === 'number', r && r.calData, 'banc C-ACT-B16'), _det({ e1, cal: r && r.calories, part: r && r.calData && r.calData.cardio, moteur: mo }));
+    t(P + '17 ⭐ D12 : le bilan du mois ne dit PAS « ancienne séance avec cardio : part non séparable » pour ce cardio à 0 — non répartie 0 · cardio 0 · musculation = les calories de la séance · 1 séance · 1 bloc cardio',
+      W('D12', 'bilan', 'aucune part « non répartie » ; cardio 0 ; muscu = calories', bz.nonRep === 0 && bz.cardio === 0 && !!r && bz.muscu === r.calories && bz.total === r.calories && bz.nMuscu === 1 && bz.nCardio === 1 && !/séparable/.test(bz.pied), { nonRep: bz.nonRep, cardio: bz.cardio, muscu: bz.muscu, nMuscu: bz.nMuscu, nCardio: bz.nCardio }, 'banc C-ACT-B17'), _det({ nonRep: bz.nonRep, cardio: bz.cardio, muscu: bz.muscu, pied: bz.pied.slice(-120) }));
+    await fermer(X);
+  }
+  // une séance PASSÉE (cardio estimé 226, déjà rangé) dont on tape 0 dans le détail, puis « Revenir à l'estimation »
+  {
+    const X = await ouvrir(sess([])); const pg = X.pg;
+    const r0 = await terminer(X, { exs: [squat()], cardio: { type: 'tapis', intensity: 'modere', duration: 30 } }); const id = r0.ts;
+    const lire = () => pg.evaluate(i => ({ s: JSON.parse(JSON.stringify(S.sessions.find(x => (x.ts || x.id) === i))), mo: calcSessionCalories(S.sessions.find(x => (x.ts || x.id) === i)).total }), id);
+    await pg.evaluate(i => openSessDetail(i), id); await pg.waitForTimeout(250);
+    const inp = pg.locator('#sd-content .kcal-ed input'); await inp.fill('0'); await inp.press('Tab'); await pg.waitForTimeout(100);
+    const d1 = await txt(X, '#sd-content .kcal-ed'); await enregistrerDetail(X);
+    const z = await lire(); const bz = await bilanZero(X);
+    t(P + '18 ⭐ T44 / D12 / T05 : séance PASSÉE (cardio estimé 226) → on tape « 0 » dans le détail → « Retenu 0 kcal · valeur saisie » ; enregistrée : calData.cardio = 0 (rangée), calories = la part du moteur, le bilan ne dit pas « non séparable »',
+      W('T44', 'zéro sur séance passée', 'retenu 0 ; part cardio rangée à 0 ; bilan sans note', /Retenu 0 kcal/.test(d1) && /valeur saisie/.test(d1) && z.s.cardio.kcalMan === 0 && z.s.cardio.kcalEst === 226 && z.s.calData.cardio === 0 && z.s.calories === z.mo && r0.calories === z.mo + 226
+        && bz.nonRep === 0 && bz.cardio === 0 && bz.muscu === z.s.calories && !/séparable/.test(bz.pied), { d1, cal: z.s.calories, avant: r0.calories, part: z.s.calData.cardio, moteur: z.mo, nonRep: bz.nonRep }, 'banc C-ACT-B18')
+      && W('D12', 'séance passée', 'calData.cardio rangé à 0 après modification', typeof z.s.calData.cardio === 'number', z.s.calData, 'banc C-ACT-B18'), _det({ d1, cal: z.s.calories, avant: r0.calories, part: z.s.calData.cardio, moteur: z.mo, nonRep: bz.nonRep }));
+    await pg.evaluate(i => openSessDetail(i), id); await pg.waitForTimeout(250);
+    await pg.click('#sd-content .kcal-ed button:has-text("Revenir")'); await pg.waitForTimeout(80); await enregistrerDetail(X);
+    const b = await lire();
+    t(P + '19 ⭐ T45 / T44 : « Revenir à l\'estimation » après un 0 → l\'estimation 226 revient (kcalMan retiré, ≠ 0) : calData.cardio 226, calories = moteur + 226 (le total d\'origine)',
+      W('T45', 'retour après zéro', 'retour à 226 ; kcalMan retiré', !('kcalMan' in b.s.cardio) && b.s.calData.cardio === 226 && b.s.calories === b.mo + 226 && b.s.calories === r0.calories, { cal: b.s.calories, part: b.s.calData.cardio, origine: r0.calories }, 'banc C-ACT-B19'), _det({ cal: b.s.calories, part: b.s.calData.cardio, origine: r0.calories }));
+    await fermer(X);
+  }
+  // un cardio SEUL dont la montre dit « 0 » : total 0, aucun forfait d'échauffement
+  {
+    const X = await ouvrir(sess([])); const pg = X.pg;
+    await unBloc(X, false, 45);
+    const inp = pg.locator('#log-cardio .kcal-ed input'); await inp.fill('0'); await inp.press('Tab'); await pg.waitForTimeout(60);
+    const e1 = await txt(X, '#log-cardio .kcal-ed');
+    const r = await pg.evaluate(async () => { await finishWorkout(); return JSON.parse(JSON.stringify(S.sessions[0])); });
+    const g = await pg.evaluate(() => _genreSeance(S.sessions[0])); const a = await ag(X);
+    t(P + '20 ⭐ T44 : cardio SEUL de 45 min dont la montre dit « 0 » → « Retenu 0 kcal » ; enregistré : calories 0, calData.total 0, calData.cardio 0, estimation 338 conservée — aucun forfait d\'échauffement (pas 24), genre « cardio », agrégat cardio 0 · 1 bloc',
+      W('T44', 'zéro cardio seul', 'retenu 0 ; total 0 ; pas de forfait', /Retenu 0 kcal/.test(e1) && !!r && r.calories === 0 && r.calData.total === 0 && r.calData.cardio === 0 && r.cardio.kcalMan === 0 && r.cardio.kcalEst === 338 && g === 'cardio' && a.cardio === 0 && a.total === 0 && a.nCardio === 1 && a.nMuscu === 0, { e1, r: r && { cal: r.calories, cd: r.calData }, a }, 'banc C-ACT-B20'), _det({ e1, cal: r && r.calories, cd: r && r.calData, a }));
     await fermer(X);
   }
 }
@@ -1434,7 +1493,9 @@ async function blocJ(c) {
   // ── J30 : témoin de SOURCE — toute lecture BRUTE de `S.sessions` (une marche y est comptée comme une ligne) doit être CONNUE et justifiée ──
   /* Le recensement du 05/11/2026 : 80 fonctions des fichiers servis lisent `S.sessions` sans passer par `_seancesTrain()`. Chacune est classée ci-dessous (4 familles), avec sa raison. Une 81ᵉ fait rougir :
      son auteur doit soit passer par `_seancesTrain()`, soit l'inscrire ici en disant POURQUOI elle peut voir les activités. C'est la famille « comptage silencieux » de BUGS.md §140 : une ligne neuve posée
-     dans une liste dont les lecteurs comptent des lignes — et `_repartitionReps` (fenêtre de 25 enregistrements) en était un, trouvé par ce recensement et corrigé. */
+     dans une liste dont les lecteurs comptent des lignes — et `_repartitionReps` (fenêtre de 25 enregistrements) en était un, trouvé par ce recensement et corrigé.
+     08/11/2026 (intégration sur ft-v1265) : `state.js::_persistRepli` — le repli « stockage plein » que Nutrition a SORTI de `persist()` (NUT-REF-HIST-02, 3B) — rejoint la 1re famille, comme `persist()`
+     qui le portait : il réécrit la liste ramenée à 50 enregistrements, il n'en compte aucun. */
   const LISTE_BLANCHE = {
     'persistance, synchronisation, fusion, restauration, import, outils d\'administration : elles déplacent des enregistrements ou lisent leur identité, elles n\'en comptent aucun': [
     'app.js::_brouillonDejaEnregistre', 'app.js::_saveEmailRedundant', 'app.js::_ftBootstrapJeton',
@@ -1442,7 +1503,7 @@ async function blocJ(c) {
     'log.js::L', 'setup.js::_cloudSync', 'setup.js::_fus',
     'setup.js::doRestoreAccount', 'setup.js::_annulerRecalageCalories', 'setup.js::_recalerAnciennesSeances',
     'setup.js::_prsDepuisSeances', 'setup.js::_deplacerRecordsRenommes', 'setup.js::mergeExercises',
-    'setup.js::detectDuplicates', 'state.js::_ecrireSessionsLocal', 'state.js::_migSet',
+    'setup.js::detectDuplicates', 'state.js::_ecrireSessionsLocal', 'state.js::_persistRepli', 'state.js::_migSet',
     'state.js::load', 'state.js::persist', 'state.js::renKeys',
     'state.js::sigSess', 'tracking.js::_countUnsyncedSessions', 'tracking.js::_retrySheetQueue',
     'tracking.js::_updateAdminSyncInfo', 'coach.js::_vcApplyPersona', 'coach.js::startPt001Test',

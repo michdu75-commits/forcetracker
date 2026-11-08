@@ -157,6 +157,11 @@ MUT = [
      [(TR, 'const sessDates=new Set(_seancesTrain().map(s=>s.date));', 'const sessDates=new Set((S.sessions||[]).map(s=>s.date));')], 'GARDE', 'C-ACT-J5', 'J'),
     ('M62 [deguisee] Milo croit qu\'une SEANCE a eu lieu aujourd\'hui parce qu\'une marche l\'a ete (ligne des pas)',
      [(CO, 'const seanceAuj=_seancesTrain().some(x=>x&&x.date===today());', 'const seanceAuj=(S.sessions||[]).some(x=>x&&x.date===today());')], 'GARDE', 'C-ACT-J6', 'J'),
+    # ── T44 / D12 · un cardio saisi a 0 kcal (ecart relevé le 08/11/2026, correctif autorise par Michel) ───────────────────
+    ('M63 [deguisee] un cardio saisi a 0 kcal sur une seance de MUSCULATION n\'est plus RANGE (la part cardio redevient « absente » : le bilan la dit « non separable »)',
+     [(LO, 'if(cardioKcal||kA.remplacee||kB.remplacee){calData.total+=cardioKcal;calData.cardio=cardioKcal;}', 'if(cardioKcal){calData.total+=cardioKcal;calData.cardio=cardioKcal;}')], 'GARDE', 'C-ACT-B16', 'B'),
+    ('M64 [deguisee] meme regle en MODIFIANT une seance passee : le 0 saisi retire la part cardio rangee (`delete calData.cardio`)',
+     [(SE, 'if(cardio>0||kcA.remplacee||kcB.remplacee) calData.cardio=cardio; else delete calData.cardio;', 'if(cardio>0) calData.cardio=cardio; else delete calData.cardio;')], 'GARDE', 'C-ACT-B18', 'B'),
     # ── equivalente ────────────────────────────────────────────────────────────────────────────────────────────────
     ('M37 [equivalente] l\'ordre de trois affectations independantes est inverse (meme resultat)',
      [(AP, 'a.kcalEst=_au.kcalEst; a.kcalPoids=_au.kcalPoids; a.kcalMode=_au.kcalMode;', 'a.kcalMode=_au.kcalMode; a.kcalPoids=_au.kcalPoids; a.kcalEst=_au.kcalEst;')], 'OK', None, 'A'),
