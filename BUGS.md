@@ -6103,3 +6103,17 @@ Rejoué SEUL sur la version publiée : **rouge à l'heure réelle (21 h), vert d
 figer l'horloge du contexte (`page.clock.setFixedTime`, comme le fait le banc `C-ACT`). **À quoi on le reconnaît.** Un rouge sans commit : la passe verte à une heure ou une date, rouge à la suivante, et
 `git stash` ne change rien. *Un témoin qui parle d'« il y a N jours » ou qui lit l'horloge réelle parle en réalité d'une date qui change toute seule (famille « fuseaux horaires » de
 `BUGS.md` : une durée relative cache une date absolue).*
+
+---
+
+## §144 — ⛔ « 0 » EST UNE VALEUR, PAS UNE ABSENCE : UN CARDIO SAISI À 0 KCAL SUR UNE SÉANCE DE MUSCULATION N'ÉTAIT PAS RANGÉ, ET LE BILAN LE DISAIT « NON SÉPARABLE » *(08/11/2026, trouvé en vérifiant la condition « 0 kcal » de Michel avant l'intégration d'« Autre activité » ; corrigé sur la branche d'intégration `claude/integration-autre-activite-2026-11-08`)*
+
+**Ce qui se passait.** Michel demande de pouvoir remplacer l'estimation par les calories actives de sa Garmin, et de vérifier « la saisie de 0 kcal ». Le mécanisme commun (`kcalBloc`, `app.js`) retient bien 0 (`man != null`, D-ACT-2), et le formulaire d'activité aussi (témoin `C-ACT-A25`). Mais **deux endroits décidaient de « ranger la part cardio » avec un test de vérité** :
+`log.js::_calDataSeance` (`if(cardioKcal)`) à l'enregistrement d'une séance, `setup.js::_kcalApresEdition` (`if(cardio>0)`) à la modification d'une séance passée. Sur une séance de **musculation + cardio** dont le cardio est saisi à **0**, la part cardio n'était donc **pas rangée** (`calData.cardio` absent) ; `app.js::_agregatPeriode` lit « part cardio absente » comme
+« ancienne séance dont la part n'est pas séparable », et le bilan de la semaine ou du mois affichait **« 1 ancienne séance avec cardio : sa part de cardio n'est pas séparable (comptée en musculation) »** — pour une séance neuve dont la part est parfaitement connue : zéro.
+**Effet : un texte de bilan inexact ; aucun chiffre faux** (les calories de la séance étaient justes, le cardio comptait pour 0). Le cardio SEUL à 0 n'avait pas ce défaut (son total vaut la somme de ses blocs, et le bilan le classe par son genre) mais n'avait aucun témoin.
+
+**Le remède** — ranger la part cardio dès qu'un bloc porte une valeur saisie (`kcalBloc(b).remplacee`), 0 compris : 2 conditions, 2 fonctions, aucune donnée nouvelle. Un bloc sans valeur saisie garde l'ancien comportement à l'octet (même total, même rangement).
+**Ce qui le protège** — `C-ACT-B16` à `B20` (T44 / T45 / D12) : le cardio à 0 sur une séance de musculation (fin de séance, éditeur de la séance en cours), le bilan du mois sans la note, la séance PASSÉE modifiée (0 puis « Revenir à l'estimation »), le cardio seul à 0 (total 0, aucun forfait). **Éprouvés avant/après** : sans le correctif, B16, B17, B18 et B20 rougissent (le défaut est reproduit) ; avec, le bloc B passe 21/21. Mutations `M63` / `M64` (une par site) : GARDE.
+**À quoi on le reconnaît.** Une valeur « zéro » (0 kcal, 0 kg, 0 min, 0 %) qui disparaît d'un rangement ou change un classement alors qu'« absent » et « zéro » ne sont pas la même chose : on cherche `if(x)`, `x||…`, `x>0` sur une grandeur qui peut valoir 0 légitimement. *Un 0 saisi par la personne est une réponse, pas un blanc (D-ACT-2) — famille « valeurs par défaut qui écrasent une réponse ».*
+Voisin non touché : les cartes de séances (hors activités) masquent le chiffre quand les calories valent 0 (`if(s.calories)`, convention existante) ; la carte d'une activité l'affiche (« 🔥0 kcal ✎ »).
