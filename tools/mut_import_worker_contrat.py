@@ -191,6 +191,10 @@ MUT = [
      [('const d = await callClaudeDiag(apiKey, { model, max_tokens: 1024, system, messages }, meta);',
        'const d = await callClaudeDiag(apiKey, { model, max_tokens: 4096, system, messages }, meta);')], 'GARDE'),
     # ── les témoins ne doivent PAS épingler l'implémentation : ces changements, tolérés par le contrat, restent verts ─
+    ('M80 IMPORT PDF (08/11/2026) : la phrase « une séance facultative est un jour à part entière, même sans numéro » disparaît du prompt',
+     [('est une séance À PART ENTIÈRE, même sans numéro : elle fait un jour distinct, ne la fusionne JAMAIS avec la précédente, et elle garde son libellé, avec', 'garde son libellé, avec')], 'GARDE'),
+    ('M81 IMPORT PDF (08/11/2026) : la phrase « une ligne dont le NOM porte le mot d\'échauffement : garde les deux lignes, l\'app les regroupe » disparaît du prompt',
+     [(" Même chose quand le NOM porte le mot d\\'échauffement (« Développé Couché - échauffement » puis « Développé Couché », « Squat (échauffement) » puis « Squat ») : garde les DEUX lignes avec leurs noms exacts, dans l\\'ordre du document — c\\'est l\\'app qui les regroupe en un seul exercice.", '')], 'GARDE'),
     ('N01 [neutre] plafond de la liste à 11 000 au lieu de 12 000 (« ≈ 12 000 »)',
      [('const PROG_CATALOGUE_MAX = 12000;', 'const PROG_CATALOGUE_MAX = 11000;')], 'NEUTRE'),
     ('N02 [neutre] le nombre d\'entrées examinées du catalogue passe de 5000 à 4000',

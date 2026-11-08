@@ -291,6 +291,8 @@ module.exports.source = function (t, ROOT, fs, path) {
     ['colonnes sans champ (RIR, tempo, RPE) → la note', /Colonnes sans champ propre \(RIR, RPE, tempo, côté, consigne\)[^\n]*"RIR 2-3", "Tempo 3-1-1", "RPE 8"/],
     ['semaine A / semaine B : deux jours distincts', /"J3A - <titre> - Semaine A", puis "J3B - <titre> - Semaine B"/],
     ['séance facultative : la mention dans le label', /"\(facultative\)" dans le label/],
+    ['séance facultative : un jour à part entière, même sans numéro, jamais fusionné avec la précédente (IMPORT PDF, 08/11/2026)', /Une séance facultative\/optionnelle[^\n]*À PART ENTIÈRE, même sans numéro[^\n]*ne la fusionne JAMAIS avec la précédente/],
+    ['ligne d\'échauffement nommée « X - échauffement » : garder les DEUX noms exacts, l\'app regroupe (IMPORT PDF, 08/11/2026)', /Même chose quand le NOM porte le mot d.échauffement[^\n]*Développé Couché - échauffement[^\n]*garde les DEUX lignes avec leurs noms exacts[^\n]*l.app les regroupe en un seul exercice/],
     ['repos : TEL QU\'ÉCRIT, plages comprises, rien calculé', /Recopie le texte TEL QU'ÉCRIT dans le document[^\n]*NE RIEN CALCULER, NE PAS CHOISIR dans une plage/],
     ['repos : les écritures de coach (1.30 mins…)', /"3 mins", "1\.30 mins", "2\.30 mins", "repos 40 sec"/],
     ['sans colonne de type : UNE LIGNE = UN EXERCICE', /UNE LIGNE = UN EXERCICE/],

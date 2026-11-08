@@ -64,10 +64,12 @@ module.exports.source = function (t) {
     const ech = a.jours.reduce((n, j) => n + j.exercices.reduce((m, e) => m + e.series.filter(s => s.type === 'É').length, 0), 0);
     if (a.totaux && (a.totaux.jours !== a.jours.length || a.totaux.exercices !== exs || a.totaux.series !== ser || a.totaux.seriesEch !== ech)) bad.push(x.id + ' totaux ' + js(a.totaux) + ' ≠ ' + js({ j: a.jours.length, e: exs, s: ser, ech }));
     a.jours.forEach(j => j.exercices.forEach(e => e.series.forEach(s => {
-      if (!(s.repos >= 0) || (s.repos > 0 && s.reposTxt) ) bad.push(x.id + ' ' + e.nom + ' repos incohérent ' + js(s));
+      // ⚠️ MIS À JOUR LE 08/11/2026 (décision de Michel) : un repos chiffré PEUT porter un texte — c'est une PLAGE écrite, et le chiffre est sa BORNE BASSE (« 3-4 min » → 180).
+      //    Un repos chiffré avec un texte qui n'est pas une plage (tiret ou « à ») est incohérent ; un texte SANS chiffre (« selon ressenti ») garde repos 0.
+      if (!(s.repos >= 0) || (s.repos > 0 && s.reposTxt && !/\d\s*(?:[-–—]|à)\s*\d/.test(s.reposTxt))) bad.push(x.id + ' ' + e.nom + ' repos incohérent ' + js(s));
     })));
   });
-  t('IIC-S04 les totaux déclarés par chaque `attendu` sont ceux qu\'on recalcule (jours, exercices, séries, échauffements) ; un repos ferme n\'a pas de texte', bad.length === 0, bad.slice(0, 3).join(' | '));
+  t('IIC-S04 les totaux déclarés par chaque `attendu` sont ceux qu\'on recalcule (jours, exercices, séries, échauffements) ; un repos chiffré n\'a de texte que si c\'est une plage écrite (sa borne basse)', bad.length === 0, bad.slice(0, 3).join(' | '));
   // les noms de catalogue attendus existent TOUS dans le catalogue de l'application
   let exlib = [];
   try {

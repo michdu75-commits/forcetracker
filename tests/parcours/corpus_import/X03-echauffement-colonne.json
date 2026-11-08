@@ -183,7 +183,7 @@
         "type": "É",
         "kg": 60,
         "reps": 5,
-        "repos": 0,
+        "repos": 60,
         "reposTxt": "60-90 s"
        },
        {
@@ -197,21 +197,21 @@
         "type": "N",
         "kg": 100,
         "reps": 5,
-        "repos": 0,
+        "repos": 180,
         "reposTxt": "3-4 min"
        },
        {
         "type": "N",
         "kg": 100,
         "reps": 5,
-        "repos": 0,
+        "repos": 180,
         "reposTxt": "3-4 min"
        },
        {
         "type": "N",
         "kg": 100,
         "reps": 5,
-        "repos": 0,
+        "repos": 180,
         "reposTxt": "3-4 min"
        }
       ],
