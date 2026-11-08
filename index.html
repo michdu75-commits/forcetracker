@@ -629,6 +629,9 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
       <div class="la-glow" aria-hidden="true"></div>
       <button class="la-cta1 ft-press" onclick="openExPicker()"><span class="la-cta1-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span><span class="la-cta-t"><b>Séance libre</b><small>Ajoute tes exercices un à un</small></span><svg class="la-arr" viewBox="0 0 24 24" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></button>
       <button class="la-cta2 ft-press" onclick="openProgModal()"><span class="la-cta2-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg></span><span class="la-cta-t"><b>Programme</b><small id="la-prog-sub"></small></span><svg class="la-chev" viewBox="0 0 24 24" aria-hidden="true"><polyline points="9 6 15 12 9 18"/></svg></button>
+      <!-- 🚶 AUTRE ACTIVITÉ (05/11/2026, mission de Michel) — JUSTE SOUS « Programme », même gabarit (`.la-cta2`) : distincte de « Séance libre » et du cardio d'une séance.
+           Marche, vélo, randonnée, course… : aucune série, aucun volume. docs/AUTRE-ACTIVITE-CALORIES.md -->
+      <button class="la-cta2 ft-press" id="la-autre" onclick="openAutreActivite()"><span class="la-cta2-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="19" r="3"/><path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15"/><circle cx="18" cy="5" r="3"/></svg></span><span class="la-cta-t"><b>Autre activité</b><small>Marche, vélo, randonnée, course…</small></span><svg class="la-chev" viewBox="0 0 24 24" aria-hidden="true"><polyline points="9 6 15 12 9 18"/></svg></button>
     </div>
     <div id="la-ctx"></div>
   </div>
@@ -2576,6 +2579,49 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
       <div style="display:flex;gap:8px;margin-top:14px">
         <button class="btn" id="sd-del-btn" style="flex:1;padding:12px;background:var(--bg3);color:var(--red);border:none" onclick="deleteSessOrConfirm()">🗑️ Supprimer</button>
         <button class="btn btn-red" style="flex:2;padding:12px" onclick="saveSessEdits()">💾 Enregistrer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 🚶 OVERLAY: AUTRE ACTIVITÉ (05/11/2026, mission de Michel) — un seul formulaire pour créer, consulter, modifier ET supprimer (R13 : pas deux chemins).
+     Aucune série, aucune répétition, aucun volume. Les calories suivent la règle commune (estimation FT · valeur de la montre qui la REMPLACE · valeur retenue). -->
+<div class="overlay" id="ov-autre" onclick="if(event.target===this)closeAutreActivite()">
+  <div class="modal" style="max-width:420px;max-height:92dvh;display:flex;flex-direction:column;padding:0;overflow:hidden">
+    <div style="position:sticky;top:0;z-index:5;background:var(--bg2);border-radius:16px 16px 0 0;padding:14px 16px 12px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--sep);flex-shrink:0">
+      <div>
+        <div style="font-weight:700;font-size:17px" id="au-title">Autre activité</div>
+        <div style="font-size:13px;color:var(--t2)" id="au-sub">Marche, vélo, randonnée, course…</div>
+      </div>
+      <button onclick="closeAutreActivite()" aria-label="Fermer" style="width:36px;height:36px;border-radius:50%;background:var(--bg3);border:none;font-size:18px;font-weight:700;color:var(--t2);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;touch-action:manipulation">✕</button>
+    </div>
+    <div style="overflow-y:auto;flex:1;padding:14px 16px 16px">
+      <div style="font-size:12px;font-weight:700;color:var(--t2);margin-bottom:6px;">Quelle activité ?</div>
+      <div id="au-types" style="display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch;scrollbar-width:none;"></div>
+      <div id="au-libelle-wrap" style="display:none;margin-top:8px;">
+        <input type="text" id="au-libelle" maxlength="40" placeholder="Nom de l'activité (facultatif) — ex. Football" aria-label="Nom de l'activité" style="width:100%;box-sizing:border-box;padding:9px 11px;border-radius:10px;border:1px solid var(--sep);background:var(--bg2);color:var(--t1);font-size:15px;font-family:var(--font);">
+      </div>
+      <div style="display:flex;gap:10px;margin-top:12px;">
+        <label style="flex:1;font-size:12px;font-weight:700;color:var(--t2);">Date
+          <input type="date" id="au-date" aria-label="Date de l'activité" style="display:block;width:100%;box-sizing:border-box;margin-top:5px;padding:9px 10px;border-radius:10px;border:1px solid var(--sep);background:var(--bg2);color:var(--t1);font-size:15px;font-family:var(--font);"></label>
+        <label style="flex:1;font-size:12px;font-weight:700;color:var(--t2);">Heure <span style="font-weight:500;color:var(--t3);">(facultatif)</span>
+          <input type="time" id="au-heure" aria-label="Heure de l'activité" style="display:block;width:100%;box-sizing:border-box;margin-top:5px;padding:9px 10px;border-radius:10px;border:1px solid var(--sep);background:var(--bg2);color:var(--t1);font-size:15px;font-family:var(--font);"></label>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:12px;">
+        <label style="flex:1;font-size:12px;font-weight:700;color:var(--t2);">Durée (min)
+          <input type="number" inputmode="numeric" min="1" max="1440" step="1" autocomplete="off" id="au-duree" placeholder="60" oninput="_auSurDuree(this.value)" aria-label="Durée en minutes" style="display:block;width:100%;box-sizing:border-box;margin-top:5px;padding:9px 10px;border-radius:10px;border:1px solid var(--sep);background:var(--bg2);color:var(--t1);font-size:15px;font-weight:700;font-family:var(--font);"></label>
+        <label style="flex:1;font-size:12px;font-weight:700;color:var(--t2);">Distance (km) <span style="font-weight:500;color:var(--t3);">(facultatif)</span>
+          <input type="text" inputmode="decimal" autocomplete="off" id="au-dist" placeholder="5,2" aria-label="Distance en kilomètres" style="display:block;width:100%;box-sizing:border-box;margin-top:5px;padding:9px 10px;border-radius:10px;border:1px solid var(--sep);background:var(--bg2);color:var(--t1);font-size:15px;font-family:var(--font);"></label>
+      </div>
+      <div style="font-size:12px;font-weight:700;color:var(--t2);margin:12px 0 6px;">Intensité <span style="font-weight:500;color:var(--t3);">(facultatif — « modérée » sinon)</span></div>
+      <div id="au-int" style="display:flex;gap:6px;"></div>
+      <div id="au-kcal"></div>
+      <label style="display:block;font-size:12px;font-weight:700;color:var(--t2);margin-top:12px;">Notes <span style="font-weight:500;color:var(--t3);">(facultatif)</span>
+        <textarea id="au-notes" rows="3" maxlength="500" placeholder="Parcours, sensations, météo…" aria-label="Notes" style="display:block;width:100%;box-sizing:border-box;margin-top:5px;padding:9px 11px;border-radius:10px;border:1px solid var(--sep);background:var(--bg2);color:var(--t1);font-size:14px;font-family:var(--font);resize:vertical;"></textarea></label>
+      <div id="au-err" role="alert" aria-live="polite" style="display:none;margin-top:10px;font-size:12.5px;font-weight:600;color:var(--red);line-height:1.4;"></div>
+      <div style="display:flex;gap:8px;margin-top:14px">
+        <button class="btn" id="au-del-btn" style="flex:1;padding:12px;background:var(--bg3);color:var(--red);border:none;display:none" onclick="autreSupprimerOuConfirmer()">🗑️ Supprimer</button>
+        <button class="btn btn-red" id="au-save-btn" style="flex:2;padding:12px" onclick="autreEnregistrer()">💾 Enregistrer</button>
       </div>
     </div>
   </div>

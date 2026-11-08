@@ -118,7 +118,7 @@ function _memoireLargeOn(){ return true; }
    mesurer le rythme reviendrait à mesurer le réglage de la personne avec ce même réglage. */
 function _rythmeSeance(){
   try{
-    const sess=(S.sessions||[]).slice(0,12);
+    const sess=_seancesTrain().slice(0,12);   // 🚶 sans les activités (`_estAutre`) : une marche ne doit pas pousser une vraie séance hors de la fenêtre
     const pts=[];
     for(const s of sess){
       const nSets=(s.exs||s.exercises||[]).reduce((a,e)=>a+((e.sets||[]).filter(x=>x&&x.done).length),0);
@@ -239,7 +239,7 @@ function _ctxReposRegles(){
     // Pertinence d'abord : ce qu'il/elle fait EN CE MOMENT. Un réglage posé sur un exercice
     // abandonné depuis six mois encombrerait le contexte sans rien changer à la réponse.
     const recents=new Set();
-    (S.sessions||[]).slice(0,15).forEach(s=>(s.exs||s.exercices||[]).forEach(e=>{ if(e&&e.name) recents.add(e.name); }));
+    _seancesTrain().slice(0,15).forEach(s=>(s.exs||s.exercices||[]).forEach(e=>{ if(e&&e.name) recents.add(e.name); }));   // 🚶 sans les activités (`_estAutre`)
     noms.sort((a,b)=>{
       const ra=recents.has(a)?0:1, rb=recents.has(b)?0:1;
       if(ra!==rb) return ra-rb;              // les exercices récents devant
@@ -271,9 +271,33 @@ function _ctxReposRegles(){
 // on ne corrige jamais en silence — on donne les DEUX et on laisse Milo (et la personne)
 // arbitrer. Et on ne dit RIEN tant qu'on n'a pas assez de séances pour parler d'une
 // tendance : une séance courte n'est pas une habitude (R12 · Constitution P19).
+/* 🚶 LES AUTRES ACTIVITÉS, POUR MILO (05/11/2026, mission de Michel — `docs/AUTRE-ACTIVITE-CALORIES.md`).
+   ⛔ R4 : l'app SAIT qu'une randonnée a été faite hier ; si Milo ne le sait pas, il redemande ou dit « aucune séance ». Mais une activité n'est PAS une séance : les 9 lecteurs de
+   séances de ce fichier ne la voient pas (`_seancesTrain`), et elle arrive ICI, dans un bloc à elle — sans série, sans charge, sans volume. Ses calories sont celles RETENUES
+   (la valeur de la montre si la personne l'a saisie, sinon l'estimation) avec leur origine DITE (MILO-CTX1 : un chiffre sans statut se fait réinterpréter). La règle de fourchettes
+   (anti-faux-précis) ne s'applique pas à une mesure donnée par la personne : le bloc le dit. Bloc conditionnel aux données (comme `_memoireLongue`) : sans activité, le contexte
+   est identique à l'octet. Il est dans la partie PERSONNELLE (jamais dans le commun, dont la marge est de ≈ 1 100 caractères) ; 8 lignes au plus, 28 jours. */
+function _ctxAutresActivites(){
+  try{
+    const L=(S.sessions||[]).filter(_estAutre);
+    if(!L.length)return '';
+    const t=today();
+    const ecart=d=>Math.round((new Date(t+'T12:00:00')-new Date(d+'T12:00:00'))/864e5);
+    const rec=L.filter(s=>s&&s.date&&ecart(s.date)>=0&&ecart(s.date)<=28).sort(_cmpSeances).slice(0,8);
+    if(!rec.length)return '';
+    const lignes=rec.map(s=>{
+      const a=s.autre||{}, kb=kcalBloc({duration:a.duration,kcalEst:a.kcalEst,kcalMan:a.kcalMan}), d=ecart(s.date);
+      const quand=d===0?"aujourd'hui":(d===1?'hier':'il y a '+d+' jours');
+      return s.date+' ('+quand+') : '+autreLabel(a)+' '+a.duration+' min'+(a.distance!=null?', '+a.distance+' km':'')+(a.intensity?', intensité '+(CARDIO_INTENSITES[a.intensity]||a.intensity):'')
+        +' — '+(+s.calories||0)+' kcal ('+(kb.remplacee?'valeur saisie par la personne, relevée sur sa montre':"estimation de l'app")+')';
+    });
+    return '\n🚶 AUTRES ACTIVITÉS (hors musculation) — enregistrées à part, sur les 28 derniers jours :\n  · '+lignes.join('\n  · ')
+      +'\n→ Ce ne sont PAS des séances de musculation : aucune série, aucune charge, aucun volume — n\'en invente pas et ne les compte pas comme des séances. Leurs calories sont celles RETENUES par la personne : cite-les telles quelles (c\'est sa mesure, sans fourchette) et ne les ajoute pas à sa dépense (elles sont déjà comprises dans son niveau d\'activité).';
+  }catch(e){ return ''; }
+}
 function _ctxDureeSeance(){
   try{
-    const sess=(S.sessions||[]).filter(s=>s&&+s.duration>0).slice(0,12);
+    const sess=_seancesTrain().filter(s=>s&&+s.duration>0).slice(0,12);   // 🚶 sans les activités (`_estAutre`) : la durée type d'une SÉANCE
     const mins=[];
     for(const s of sess){
       const m=+s.duration/60;
@@ -320,10 +344,12 @@ function _ctxDureeSeance(){
    c'est la personne qui a le dernier mot (R29 : montrer ce qu'on voit, ne pas décider). */
 function _repartitionReps(){
   try{
-    const S_=(typeof S!=='undefined')?S:null; if(!S_||!S_.sessions) return null;
+    const S_=(typeof S!=='undefined')?S:null; if(!S_) return null;
     let force=0, moyen=0, hypertrophie=0, longues=0, tot=0, big3=0;
     const BIG3=/squat à la barre|développé couché|soulevé de terre/i;
-    for(const se of S_.sessions.slice(0,25))
+    /* 🚶 La fenêtre est de 25 SÉANCES, pas de 25 enregistrements : trois marches récentes en retireraient trois vraies séances et déplaceraient la répartition
+       (même famille que `_rythmeSeance` et `_ctxReposRegles`). Trouvé par le recensement des lectures brutes de `S.sessions` (témoin de source `C-ACT-J30`). */
+    for(const se of _seancesTrain().slice(0,25))
       for(const e of (se.exs||se.exercises||[]))
         for(const x of (e.sets||[])){
           if(!x||!x.done||x.type==='É'||x.type==='W'||x.type==='E') continue;
@@ -464,7 +490,7 @@ function _historiqueCompact(){
   try{
     if(!_memoireLargeOn())return '';
     const S_=(typeof S!=='undefined')?S:null; if(!S_)return '';
-    const sess=(S_.sessions||[]).filter(s=>s&&s.date);
+    const sess=(typeof _seancesTrain==='function'?_seancesTrain():(S_.sessions||[])).filter(s=>s&&s.date);   // 🚶 sans les activités (`_estAutre`)
     // Les 5 premières sont déjà envoyées EN DÉTAIL — on ne les répète pas (R2 : jamais deux fois
     // la même information, sinon les deux versions finissent par diverger).
     const reste=sess.slice(5);
@@ -504,7 +530,7 @@ function _historiqueCompact(){
 function _memoireLongue(){
   try{
     const S_ = (typeof S!=='undefined')?S:null; if(!S_)return '';
-    const sess=(S_.sessions||[]).filter(s=>s&&s.date);
+    const sess=(typeof _seancesTrain==='function'?_seancesTrain():(S_.sessions||[])).filter(s=>s&&s.date);   // 🚶 sans les activités (`_estAutre`) : la mémoire longue parle de séances
     if(sess.length<3)return '';   // en dessous, la « tendance » n'aurait aucun sens (R12)
     // les séances sont stockées les plus RÉCENTES en premier — on travaille sur une copie triée
     const parDate=sess.slice().sort((a,b)=>String(a.date).localeCompare(String(b.date)));
@@ -3574,7 +3600,7 @@ function buildCoachContext(msg, opts) {
      n'existe pas. C'est `_serieDeTravail()` qui décide, pas une liste recopiée ici. */
   let _rirNotes = 0, _rirTrav = 0, _rirEchec = 0;
   const _sessVues = _seancesRecentes(_NB_DETAIL);   // LOT 3 : les 5 plus récentes PAR DATE, pas les 5 premières du tableau
-  const _nbTotalSess = (S.sessions||[]).length;
+  const _nbTotalSess = _seancesTrain().length;   // 🚶 sans les activités (`_estAutre`) : « a fait N séances » ne compte que des séances
   const _depuisQuand = _sessVues.length ? _sessVues[_sessVues.length-1].date : '';
   const _ligneSeance = (s, _compter) => {
     const _exsS = (s.exs||s.exercises||[]);
@@ -3884,7 +3910,7 @@ ${(()=>{
   try{
     const e=(typeof _pasEcart==='function')?_pasEcart():null;
     if(!e||e.kcal<=0) return '';
-    const seanceAuj=(S.sessions||[]).some(x=>x&&x.date===today());
+    const seanceAuj=_seancesTrain().some(x=>x&&x.date===today());   // 🚶 sans les activités (`_estAutre`) : une marche enregistrée n'est pas une séance (elle est dite dans le bloc des activités)
     return `- 🚶 AUJOURD'HUI IL/ELLE A BEAUCOUP MARCHÉ : ${e.pas.toLocaleString('fr-FR')} pas, soit `
       + `${e.surplus.toLocaleString('fr-FR')} de plus que sa base habituelle (${e.base.toLocaleString('fr-FR')}/j sur ${e.n} jours). `
       + (tdee !== '—' ? `Ces ~${e.kcal} kcal sont DÉJÀ ajoutées à son TDEE ci-dessus — ne les recompte pas.` : `(Ses besoins caloriques ne sont pas calculés : n'en tire AUCUN chiffre de dépense.)`)
@@ -4078,7 +4104,7 @@ ${(()=>{
 })()}
 ${_coachQuizContext()}
 ${_memoireLongue()}
-${_historiqueCompact()}
+${_historiqueCompact()}${_ctxAutresActivites()}
 ${_ctxDiscipline()}
 ${_ctxRythme()}
 ${_ctxCharges()}
@@ -8529,7 +8555,9 @@ const _DRAWER_CONTENT = {
         {ic:'📊',t:'Historique par exercice',d:'En séance, ⋯ d\'un exercice → « 📊 Statistiques » : graphique du poids max sur les 5 dernières séances. Pratique pour calibrer sa charge du jour.'},
         {ic:'🧍',t:'La figurine des muscles travaillés',d:'Après ta séance (et sur chaque carte d\'historique), la figurine colore ce que tu as travaillé : ROUGE = muscle moteur, ORANGE = muscle secondaire, BLEU = sollicité indirectement, brun = pas travaillé. Depuis le 03/08 elle dessine 41 muscles au lieu de 18 zones : le pectoral en 3 faisceaux, la cuisse en 3, le trapèze en 3 étages, plus les adducteurs, le soléaire et le trapèze inférieur. Tape un muscle pour lire son nom précis. ⚠️ Plusieurs faisceaux d\'un même muscle s\'allument encore ensemble (un développé couché allume les 3 bandes du pectoral) : le dessin a pris de l\'avance sur les fiches d\'exercices, qui seront affinées ensuite.'},
         {ic:'🔬',t:'D\'où viennent les muscles affichés',d:'Chaque exercice du catalogue a ses muscles ÉCRITS à la main, pas devinés d\'après son nom. Les 337 fiches ont été relues une par une début août : environ 120 corrigées. Exemples de ce qui était faux — le leg curl comptait les fessiers alors que la hanche ne bouge pas ; les crunchs comptaient les fléchisseurs de hanche alors que le bassin reste au sol ; les rowings à poitrine appuyée comptaient le bas du dos, que ces machines servent justement à soulager. Ça compte, parce que ces muscles servent aussi à estimer tes calories et à renseigner Milo. Si tu vois une fiche qui te paraît fausse, dis-le : c\'est comme ça qu\'elles se corrigent.'},
-        {ic:'🏃',t:'Cardio en séance',d:'Bloc cardio sous tes exercices (replié par défaut). Choisis le type (elliptique, tapis, vélo, rameur, corde...), l\'intensité (léger/modéré/intense) et la durée. Les calories brûlées sont calculées et ajoutées à ton TDEE.'},
+        {ic:'🏃',t:'Cardio en séance',d:'Bloc cardio sous tes exercices (replié par défaut). Choisis le type (elliptique, tapis, vélo, rameur, corde...), l\'intensité (léger/modéré/intense) et la durée. L\'app <b>estime</b> les calories de l\'activité (sans le repos). Tu as une montre ? Tape ses calories dans <b>« Calories de ta montre »</b> : cette valeur <b>remplace</b> l\'estimation, elle ne s\'y ajoute jamais, et <b>« ↩︎ Revenir à l\'estimation »</b> la retire. ⛔ Ces calories ne s\'ajoutent <b>pas</b> à ta cible du jour (Nutrition) : ton niveau d\'activité du Profil compte déjà ton entraînement.'},
+        /* 🚶 Mission « Autre activité » (05/11/2026) — règle d'or #11, point 4 : l'aide détaillée est l'endroit du POURQUOI. */
+        {ic:'🚶',t:'Autre activité : marche, vélo, randonnée, course…',d:'<b>Séance → « Autre activité »</b> (juste sous « Programme ») enregistre une sortie qui n\'est pas une séance de musculation : <b>marche, marche sportive, randonnée, balade, vélo loisir ou sportif, course à pied</b>, ou un nom à toi. La <b>durée</b> est obligatoire ; la date, l\'heure, la distance, l\'intensité et les notes sont facultatives. Elle apparaît dans le <b>calendrier de l\'Accueil</b> et dans <b>Progrès → Séances</b> (filtre « Activités »), où tu peux la <b>modifier</b> ou la <b>supprimer</b>.<br><br>🔥 <b>Les calories</b> : l\'app estime (barème MET × ton poids × la durée). Si ta montre donne mieux, tape sa valeur dans <b>« Calories de ta montre »</b> : <b>elle remplace l\'estimation, jamais additionnée</b> (estimation 300, montre 255 → <b>255</b>). Ce sont des calories d\'<b>activité</b>, sans le repos. Un <b>poids qui change</b> ne recalcule jamais une activité déjà enregistrée ; changer la durée ou le type refait l\'estimation, pas ta valeur de montre.<br><br>⛔ <b>Ce qu\'elle ne fait pas</b> : aucune série, aucun volume, aucun record ; elle ne compte pas comme une « séance » (badges, fréquence, niveau d\'activité conseillé), ne change pas ton score de récupération et <b>ne change pas ta cible du jour</b> en Nutrition — ton niveau d\'activité tient déjà compte de ton entraînement, y ajouter la marche serait la compter deux fois. Dans les <b>bilans</b> de la semaine et du mois, elle a sa ligne à part (musculation · cardio · autres), et les séries et le volume ne parlent que de la musculation.'},
         {ic:'📋',t:'Programmes',d:'<b>QUATRE FAÇONS D\'EN OBTENIR UN, et elles sont toutes dans 📋 Mes Programmes</b> (Séance → « Programme ») : <b>📷 Importer</b> une photo ou un <b>PDF</b> — l\'IA le lit et <b>garde tes jours</b> (Push, Pull, Legs…) ; <b>🏗️ Générer</b> un programme complet avec Milo ; <b>+ Créer</b> le tien à la main ; ou <b>💾 Sauvegarder</b> la séance en cours. ⚠️ <b>Si ton programme a PLUSIEURS JOURS, passe par l\'import</b> : un programme créé à la main est forcément une séance unique — l\'éditeur sait afficher les jours, il ne sait pas en ajouter. \u26a0\ufe0f L\'aper\u00e7u d\'import <b>marque en orange</b> les exercices qu\'il ne conna\u00eet pas et qui vont \u00eatre <b>cr\u00e9\u00e9s</b>. Un exercice cr\u00e9\u00e9 n\'a <b>ni photo, ni figurine, ni historique</b> \u2014 le bouton <b>\u00ab \ud83d\udd17 Rattacher \u00bb</b> le relie \u00e0 celui de ton catalogue et tout revient. <i>Exemple : \u00ab Presse 45 degr\u00e9s \u00bb \u2192 <b>Press Jambes 45\u00b0</b>.</i> \ud83c\udfc3 <b>Le cardio d\'un programme va dans le bloc Cardio</b>, plus dans la liste des exercices. Une ligne du genre \u00ab Cardio l\u00e9ger \u2014 8 minutes \u00bb n\'est pas un exercice : elle n\'a ni charge ni figurine, et elle faussait ton tonnage. \u2b50 \u00c7a marche AUSSI sur les programmes d\u00e9j\u00e0 import\u00e9s, au moment de les charger \u2014 rien \u00e0 r\u00e9importer. \u26d4 Deux limites : un cardio au MILIEU de la s\u00e9ance reste un exercice, et un exercice qui porte une CHARGE n\'est jamais d\u00e9plac\u00e9, m\u00eame si sa note parle de minutes. ⓘ L\'import lit <b>8 pages au maximum</b> et <b>15 Mo</b> par fichier, et demande une connexion. Sauvegarde ta séance en cours comme programme réutilisable. Charge-le pour retrouver les exercices avec les poids de la dernière fois. Bouton 🤖 (Premium) pour une analyse IA de ton programme. Bouton ✏️ pour modifier les exercices. Bouton 📄 PDF pour exporter le programme en vrai fichier PDF (feuille propre avec une colonne « Poids » à remplir à la salle). Sur iPhone, le menu Partager s\'ouvre (Enregistrer dans Fichiers, envoyer…) ; sur ordi, le PDF se télécharge. Marche aussi hors-ligne. Astuce : dans l\'éditeur, le bouton « max » à côté des reps met une série en « maxi » (nombre max de répétitions) au lieu d\'un chiffre. L\'éditeur règle aussi le TEMPS DE REPOS série par série (colonne « Repos ») et, nouveau, un champ 💬 Commentaire par exercice (consigne, réglage machine, prise…) qui s\'affichera sous l\'exercice à chaque séance.'},
         /* 🚪 AIDE DÉTAILLÉE (règle d'or #11, point 4) — elle est posée JUSTE APRÈS
            « Programmes », parce que c'est là qu'on vient chercher pourquoi une question
@@ -9021,7 +9049,8 @@ function _ecrireExport(avecConversations, seancesSeules){
     setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(url);},500);
     const nb=Object.keys(payload.donnees).length;
     toast(seancesSeules
-      ? ((S.sessions||[]).length)+' séances exportées · sans tes données de santé ✓'
+      ? (()=>{ const nA=(S.sessions||[]).filter(_estAutre).length, nT=(S.sessions||[]).length-nA;   // 🚶 identique à l'ancien texte tant qu'il n'y a aucune activité
+          return nT+' séances'+(nA?' et '+nA+' activité'+(nA>1?'s':''):'')+' exportées · sans tes données de santé ✓'; })()
       : nb+' catégories exportées'+(avecConversations?' · conversations comprises':'')+' ✓','success');
   }catch(e){toast('Erreur export : '+e.message,'error');}
 }

@@ -6032,3 +6032,88 @@ resserré, les deux autres corrigés dans l'outil, et rejoués. ④ Les mutation
 **Limites écrites (à ne pas redécouvrir).** ① `_escAttrJs` (`log.js`) **laisse passer un retour à la ligne brut** : corrigé ici à l'appel, pas dans l'échappeur partagé (autres consommateurs : exercices, programmes — hors périmètre). ② `setup.js` L1733 (`openExHistory('${_escNote(ex.name).replace(/'/g,…)}')`) est de la **même famille** (noms d'exercices) : **non corrigé, hors périmètre Nutrition**. ③ La médiane de DEUX valeurs est leur moyenne : la protection « une grosse saisie isolée » ne joue pas — décision produit (P3) non engagée. ④ Non engagés : B (identité d'une habitude par nom seul, collisions `+` / `::`), D, E, P3, G.
 
 **Leçon de méthode.** ① Mon propre oracle était faux deux fois : un horodatage inversé dans ma fabrique de lignes (« il y a k jours » donnait un `ts` plus GRAND) et une portion nominale écrite de tête (100 g au lieu de 150 g) — **l'oracle se calcule à la main, avec les multiples en regard**. ② Un témoin vérifiait qu'une ligne conservait son nom entier ; le moteur écrit 80 caractères au plus (comportement existant) : *un oracle se confronte au comportement documenté avant d'accuser le code*.
+
+---
+
+## §140 — ⛔⛔ « TOUT ENREGISTREMENT DATÉ VAUT UNE SÉANCE » : UNE SIMPLE MARCHE AURAIT CHANGÉ LA CIBLE ALIMENTAIRE, LA FRÉQUENCE ET LE NIVEAU D'ACTIVITÉ CONSEILLÉ *(05/11/2026, mission « Autre activité » de Michel — `docs/AUTRE-ACTIVITE-CALORIES.md`)*
+
+**Ce que rien n'avait écrit, et qu'on a MESURÉ avant de coder.** Une quarantaine de lecteurs de `S.sessions` (Nutrition, fréquence, récupération,
+badges, registre, Milo, calendrier, bilans, export…) comptent « une séance » dès qu'un enregistrement porte une date : **aucun ne regarde son
+contenu**. Une activité sans exercice (`exs:[]`) ne plante rien — elle est **comptée partout**. Expérience sur l'app réelle, 9 marches de
+60 min / 255 kcal ajoutées SANS garde : fréquence `[5,3,3,3]` → `[6,5,5,5]` ; **macros : glucides 377 → 371 g, lipides 69 → 72 g** (calories
+inchangées, 2 786) ; la carte « Passer en Actif (5-6 j) » apparaît ; Milo demande « tu t'entraînes plus que déclaré » ; le bilan du mois passe de
+4 à 5 séances ; la tuile Nutrition passe de « 303 kcal / Séance » à « 558 kcal / 2 séances » ; la carte d'historique dit « 0 kg de travail ».
+*Aucun de ces changements n'est une erreur de code : c'est une donnée neuve posée dans une liste dont les lecteurs comptent des lignes.*
+
+**Le remède** — un seul prédicat (`_estAutre`, `state.js`), un classement dérivé (`_genreSeance` : `autre` · `cardio` · `muscu`, jamais stocké pour
+l'ancien) et une vue (`_seancesTrain()`) que ~30 lecteurs « séance » lisent à la place de `S.sessions`. L'activité est un BLOC dans l'enregistrement
+(le `Code.js` déployé jette tout champ racine inconnu et garde tel quel ce qui est DANS une séance — prouvé en exécutant le vrai fichier).
+
+**Ce qui le protège** — un test DIFFÉRENTIEL, pas un témoin par lecteur : le même historique, avec et sans 9 activités (dont la plus récente est
+une activité), lu par ~25 lecteurs → sorties identiques à l'octet (`C-ACT-D2` à `D5`, `D7`, `D10`) ; le bloc J (un compte neuf à qui l'on ajoute 120 marches, un
+compte établi dont les fenêtres de lecture ne doivent pas se remplir d'activités, la page `dashboard.html`) ; et un témoin de **SOURCE** (`C-ACT-J30` / `J31`) :
+toute fonction qui lit `S.sessions` sans passer par `_seancesTrain()` est classée (81, avec sa raison) ou fait rougir.
+**Ce que la première version de cette protection ne voyait pas — et qu'on n'a vu qu'en la ROUGISSANT.** Le contrôle négatif complet a donné 44/53 : quatre témoins étaient
+**vacueux** (le registre athlète : la fonction écrit et ne rend rien, le banc comparait `undefined` à `undefined` ; la séance annoncée : aucune annonce dans le jeu de départ ;
+l'historique compact de Milo : vide sur 4 séances ; la couleur du calendrier : le rouge par défaut d'une activité est AUSSI la couleur « haut du corps »). Puis un balayage
+(`tools/mut_sites_garde.py` : retirer la garde de chacun des 52 sites de lecture, un à la fois) a montré que **29 gardes sur 52 ne tombaient sous aucun témoin** — et deux
+d'entre elles cachaient de vrais défauts, corrigés : `_repartitionReps` (la répartition des répétitions de Milo prenait les 25 premiers *enregistrements*) et la page du
+tableau de bord ordinateur (« 31 séances lues » pour 28 séances et 3 marches). Après le bloc J (et ces deux correctifs, qui ajoutent chacun un site), **les 54 sites sont protégés**.
+**À quoi on le reconnaît.** Une ligne nouvelle apparaît dans une liste ancienne, et un chiffre « de séance » bouge sans que personne n'ait fait de
+séance. *Avant d'ajouter une ligne à une liste partagée, mesurer lesquels de ses lecteurs la verront (R5 à l'envers), puis protéger par différentiel.*
+
+---
+
+## §141 — ⛔ APRÈS UN EXPORT PDF RÉUSSI, L'APP AFFICHAIT « EXPORT PDF IMPOSSIBLE » *(05/11/2026, trouvé en testant l'export des activités — défaut PUBLIÉ en `ft-v1263`)*
+
+**Mesuré sur la version publiée (`e2b942f3`)** : le fichier est remis (`_donnerFichier` répond « ok »), puis le message de fin lit `seances` — une
+variable qui n'existe QUE dans `_histoEntete` — : `ReferenceError`, attrapée par le `catch` de `exportHistoPdf`, qui affiche « Export PDF impossible »
+juste après avoir donné le fichier. **Corrigé** : les comptes d'un export ont un seul propriétaire (`_histoCompte`, `setup.js`) que l'en-tête et le
+message de fin lisent ; message « N séances » (« N séances et M activités » s'il y en a). Témoin `C-ACT-H4` ; mutation M42 (elle remet le défaut).
+**À quoi on le reconnaît.** Un message d'erreur alors que le fichier est arrivé : un `try/catch` large autour d'un geste RÉUSSI transforme une faute
+de variable en faux échec. *Le message de fin d'un export se teste aussi.*
+
+---
+
+## §142 — ⛔ FINIR UNE SÉANCE DANS UN ONGLET PÉRIMÉ ÉCRASE LA SÉANCE QU'UN AUTRE ONGLET VIENT D'ENREGISTRER *(05/11/2026, constaté en reprenant le patron pour « Autre activité » — **NON CORRIGÉ, hors périmètre**, à décider)*
+
+**Mesuré sur la version publiée (`e2b942f3`)** : deux onglets du même navigateur ; l'onglet A termine une séance, puis l'onglet B (ouvert avant, donc
+sur une liste périmée) termine la sienne → le stockage local ne contient plus QUE la séance de B. Cause : `finishWorkout` écrit `ft4_sessions` en
+direct AVANT `persist()` ; le filet multi-onglets (`_ftAutreOnglet` → `_fusionnerAvecLeDisque`) ne s'exécute qu'au début de `persist()`, donc trop tard.
+**Les activités n'ont pas ce défaut** : leur écriture absorbe d'abord ce qu'un autre onglet a écrit (`_auAbsorberAutreOnglet`, témoin `C-ACT-G7`,
+mutation M25). **Proposition (1 ligne, règle d'or #3)** : appeler la même absorption au début de `finishWorkout` + un témoin à deux onglets — non
+fait ici : ce n'est pas le périmètre de la mission, et `finishWorkout` est le cœur de la sauvegarde d'une séance.
+**À quoi on le reconnaît.** Une séance qui « disparaît » chez quelqu'un qui garde l'app ouverte dans deux onglets (ou deux fenêtres) du même
+navigateur — un cas rare pour une appli installée, mais c'est celui de la règle d'or #3. *Un filet qui s'exécute après l'écriture qu'il devait
+protéger ne protège rien.*
+
+---
+
+## §143 — ⛔ DEUX TÉMOINS PIÉGÉS PAR LE CALENDRIER : `PS-E29` ROUGIT SUR LE CODE PUBLIÉ DEPUIS LE 02/11/2026, ET « CE QU'IL TE RESTE » DEPUIS 20 H *(05/11/2026, trouvés par les passes répartie de « Autre activité » — **NON CORRIGÉS** : fichiers d'autres sessions)*
+
+**Cas 1 — la DATE (mesuré sur la version publiée `e2b942f3`, `progres_seances.js` joué seul : 68 OK / 1 rouge).** `tests/parcours/progres_seances.js` fixe
+`OFF_DBF = -305` — « la séance au débrief rangé (**année précédente**) » est la séance d'il y a 305 jours. Jusqu'au 01/11/2026 inclus, cette date tombait en
+2025 ; **à partir du 02/11/2026 elle tombe en janvier 2026 — l'année courante, déjà dépliée dans une app fraîche** : `PS-E29` attend un repli
+(`aria-expanded="false"`) et lit `"true"`. Le code de l'app n'a pas bougé ; **c'est le calendrier qui a fait rougir le témoin**. Il le restera jusqu'au
+31/12/2026, puis redeviendra vert le 01/01/2027 — le pire profil de panne : *vert un jour, rouge le lendemain, sur le même code*.
+**Cas 2 — l'HEURE (mesuré le même jour).** Le bloc CXXX du `runner` (« ce qu'il te reste » doit aussi se lire dans le Journal) n'a **pas d'horloge figée** : la 1ʳᵉ passe,
+jouée l'après-midi, était verte ; la passe finale, jouée à 21 h (Paris), est rouge — `_blocResteHTML` ne rend rien le soir (bascule du soir, 20 h, `ft-v1029`).
+Rejoué SEUL sur la version publiée : **rouge à l'heure réelle (21 h), vert dès qu'on fige l'horloge à midi** (`outils_act/base_reste.log`). Toute passe jouée entre 20 h et minuit (Paris) rougit donc, sans qu'aucun commit y soit pour rien.
+**Propositions (non appliquées)** : pour le cas 1, calculer l'écart depuis le calendrier (« le 15 mars de l'année précédente ») et le faire figurer dans la fixture ; pour le cas 2,
+figer l'horloge du contexte (`page.clock.setFixedTime`, comme le fait le banc `C-ACT`). **À quoi on le reconnaît.** Un rouge sans commit : la passe verte à une heure ou une date, rouge à la suivante, et
+`git stash` ne change rien. *Un témoin qui parle d'« il y a N jours » ou qui lit l'horloge réelle parle en réalité d'une date qui change toute seule (famille « fuseaux horaires » de
+`BUGS.md` : une durée relative cache une date absolue).*
+
+---
+
+## §144 — ⛔ « 0 » EST UNE VALEUR, PAS UNE ABSENCE : UN CARDIO SAISI À 0 KCAL SUR UNE SÉANCE DE MUSCULATION N'ÉTAIT PAS RANGÉ, ET LE BILAN LE DISAIT « NON SÉPARABLE » *(08/11/2026, trouvé en vérifiant la condition « 0 kcal » de Michel avant l'intégration d'« Autre activité » ; corrigé sur la branche d'intégration `claude/integration-autre-activite-2026-11-08`)*
+
+**Ce qui se passait.** Michel demande de pouvoir remplacer l'estimation par les calories actives de sa Garmin, et de vérifier « la saisie de 0 kcal ». Le mécanisme commun (`kcalBloc`, `app.js`) retient bien 0 (`man != null`, D-ACT-2), et le formulaire d'activité aussi (témoin `C-ACT-A25`). Mais **deux endroits décidaient de « ranger la part cardio » avec un test de vérité** :
+`log.js::_calDataSeance` (`if(cardioKcal)`) à l'enregistrement d'une séance, `setup.js::_kcalApresEdition` (`if(cardio>0)`) à la modification d'une séance passée. Sur une séance de **musculation + cardio** dont le cardio est saisi à **0**, la part cardio n'était donc **pas rangée** (`calData.cardio` absent) ; `app.js::_agregatPeriode` lit « part cardio absente » comme
+« ancienne séance dont la part n'est pas séparable », et le bilan de la semaine ou du mois affichait **« 1 ancienne séance avec cardio : sa part de cardio n'est pas séparable (comptée en musculation) »** — pour une séance neuve dont la part est parfaitement connue : zéro.
+**Effet : un texte de bilan inexact ; aucun chiffre faux** (les calories de la séance étaient justes, le cardio comptait pour 0). Le cardio SEUL à 0 n'avait pas ce défaut (son total vaut la somme de ses blocs, et le bilan le classe par son genre) mais n'avait aucun témoin.
+
+**Le remède** — ranger la part cardio dès qu'un bloc porte une valeur saisie (`kcalBloc(b).remplacee`), 0 compris : 2 conditions, 2 fonctions, aucune donnée nouvelle. Un bloc sans valeur saisie garde l'ancien comportement à l'octet (même total, même rangement).
+**Ce qui le protège** — `C-ACT-B16` à `B20` (T44 / T45 / D12) : le cardio à 0 sur une séance de musculation (fin de séance, éditeur de la séance en cours), le bilan du mois sans la note, la séance PASSÉE modifiée (0 puis « Revenir à l'estimation »), le cardio seul à 0 (total 0, aucun forfait). **Éprouvés avant/après** : sans le correctif, B16, B17, B18 et B20 rougissent (le défaut est reproduit) ; avec, le bloc B passe 21/21. Mutations `M63` / `M64` (une par site) : GARDE.
+**À quoi on le reconnaît.** Une valeur « zéro » (0 kcal, 0 kg, 0 min, 0 %) qui disparaît d'un rangement ou change un classement alors qu'« absent » et « zéro » ne sont pas la même chose : on cherche `if(x)`, `x||…`, `x>0` sur une grandeur qui peut valoir 0 légitimement. *Un 0 saisi par la personne est une réponse, pas un blanc (D-ACT-2) — famille « valeurs par défaut qui écrasent une réponse ».*
+Voisin non touché : les cartes de séances (hors activités) masquent le chiffre quand les calories valent 0 (`if(s.calories)`, convention existante) ; la carte d'une activité l'affiche (« 🔥0 kcal ✎ »).

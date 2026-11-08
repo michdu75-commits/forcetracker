@@ -50,7 +50,7 @@ function _synthConstantes(refTs){
   const out={pret:false, nSeances:0, nJours:0, lignes:[]};
   try{
     const auj=(typeof today==='function')?today(refTs):null;
-    const sess=(S.sessions||[]).filter(s=>s&&s.date&&(!auj||s.date<=auj));
+    const sess=_seancesTrain().filter(s=>s&&s.date&&(!auj||s.date<=auj));   // 🚶 sans les activités (`_estAutre`) : « ce que ton histoire montre » parle d'entraînement
     out.nSeances=sess.length;
     if(!sess.length) return out;
     const dates=sess.map(s=>s.date).sort();
@@ -300,6 +300,19 @@ function _histoLignes(avecDebriefs){
       const nom=s.name||s.label||'';
       const sid=(typeof _dbfCle==='function')?_dbfCle(s):String(s.id||s.ts||s.date);
       const _n0=out.length;
+      /* 🚶 AUTRE ACTIVITÉ (05/11/2026) — UNE LIGNE `type = ACTIVITE`, jamais une « séance de 0 série ».
+         ⛔ Une activité (marche, vélo…) n'a ni série, ni charge, ni tonnage : son enregistrement porte `exs:[]`, donc sans
+         cette ligne elle serait ABSENTE du fichier (même défaut que le cardio avant le 04/09). La DURÉE va dans `reps`,
+         `kg`/`volume` restent à 0, la distance et l'intensité sont dites dans le libellé (le format du fichier ne change
+         pas : mêmes colonnes que l'onglet `Sessions`, R2/R33). Les calories n'y entrent pas, comme pour le cardio. */
+      if(typeof _estAutre==='function'&&_estAutre(s)){
+        const a=s.autre;
+        out.push({date:s.date, seance:'Autre activité',
+                  exercise:(typeof autreLabel==='function'?autreLabel(a):String(a.type||'Activité'))
+                    +(a.distance!=null&&isFinite(+a.distance)?' — '+String(+a.distance).replace('.',',')+' km':'')
+                    +(a.intensity&&typeof CARDIO_INTENSITES!=='undefined'&&CARDIO_INTENSITES[a.intensity]?' ('+CARDIO_INTENSITES[a.intensity]+')':''),
+                  set_num:1, type:'ACTIVITE', kg:0, reps:+a.duration||0, rir:'', volume:0});
+      }
       /* 🏃 LE CARDIO ENTRE DANS L'EXPORT (04/09/2026). Michel, en regardant son fichier :
          *« il faut que le cardio soit sur l'export de l'historique »*.
          ⛔⛔ IL N'Y ÉTAIT PAS DU TOUT, et pas par oubli de filtrage : ce producteur ne parcourt
@@ -442,7 +455,7 @@ async function exportHistoCsv(){
      empêchait `canShare` de reconnaître le fichier sur iPhone (voir `_donnerFichier`). */
   closeHistoExport();                     // on referme AVANT : la feuille de partage iOS prend la main
   const etat=await _donnerFichier(csv,'forcetracker-historique_'+today()+'.csv','text/csv');
-  _toastFichier(etat, L.filter(r=>r.type!=='DEBRIEF').length, 'séries');
+  _toastFichier(etat, L.filter(r=>r.type!=='DEBRIEF').length, L.some(r=>r.type==='ACTIVITE')?'lignes':'séries');   // avec une activité le fichier n'a plus que des séries : « lignes »
 }
 /* 📤 EXPORTS DATÉS — NUTRITION ET POIDS (02/09/2026) — demande de Michel : « il faudra créer
    un export daté de la nutrition et aussi côté poids ».
@@ -548,10 +561,18 @@ function _pdfTexte(t){
 /* 🧾 F23 (mission Séance du 24/10/2026) — L'EN-TÊTE DU PDF COMPTE DES SÉANCES ET DES JOURS, SÉPARÉMENT. Il comptait les
    DATES et les appelait « séances » : deux séances le même jour en faisaient une. Une séance = sa clé (`seance_id`, posée
    sur chaque ligne par `_histoLignes`) ; un jour d'entraînement = une date. Les séries restent les lignes de séries. */
+/* Les comptes d'un export, UN SEUL propriétaire (R2) : l'en-tête du PDF et le message de fin le lisent tous les deux. Les activités (type ACTIVITE) ne sont NI des séances NI des
+   séries : elles se comptent à part. */
+function _histoCompte(L){
+  const LS=L.filter(r=>r.type!=='ACTIVITE'), LA=L.filter(r=>r.type==='ACTIVITE');
+  return {seances:new Set(LS.map(r=>r.seance_id||r.date)).size, jours:new Set(L.map(r=>r.date)).size,
+          series:LS.filter(r=>r.type!=='CARDIO'&&r.type!=='DEBRIEF').length, activites:LA.length};
+}
 function _histoEntete(L){
-  const seances=new Set(L.map(r=>r.seance_id||r.date)).size, jours=new Set(L.map(r=>r.date)).size;
-  const series=L.filter(r=>r.type!=='CARDIO'&&r.type!=='DEBRIEF').length;
-  return seances+' séance'+(seances>1?'s':'')+' sur '+jours+' jour'+(jours>1?'s':'')+' d\'entraînement · '
+  const C=_histoCompte(L), seances=C.seances, jours=C.jours, series=C.series;
+  // sans activité, la phrase est mot pour mot celle d'avant
+  return seances+' séance'+(seances>1?'s':'')+(C.activites?' · '+C.activites+' activité'+(C.activites>1?'s':''):'')
+    +' sur '+jours+' jour'+(jours>1?'s':'')+' d\'entraînement · '
     +series+' série'+(series>1?'s':'')+' · exporté le '+new Date().toLocaleDateString('fr-FR');
 }
 async function exportHistoPdf(){
@@ -646,7 +667,10 @@ async function exportHistoPdf(){
        plus donner le même résultat, et on ne sait plus laquelle croire.* */
     closeHistoExport();                   // avant le partage : la feuille iOS prend la main
     const etat=await _donnerFichier(doc.output('blob'), nom, 'application/pdf');
-    _toastFichier(etat, seances, 'séances');
+    /* ⛔⛔ CORRIGÉ LE 05/11/2026 (mesuré sur la version publiée ft-v1263) : cette ligne lisait `seances`, une variable qui n'existe QUE dans `_histoEntete` — `ReferenceError`,
+       attrapé par le `catch` plus bas : le PDF était bien remis, puis l'app affichait « Export PDF impossible ». Le message lit maintenant le propriétaire des comptes. */
+    const _C=_histoCompte(L);
+    _toastFichier(etat, _C.seances, 'séance'+(_C.seances>1?'s':'')+(_C.activites?' et '+_C.activites+' activité'+(_C.activites>1?'s':''):''));
     return;
   }catch(e){ toast('Export PDF impossible','error'); }
   closeHistoExport();
@@ -903,7 +927,7 @@ function goSessionsHistory(cles){
   _sessCibles=Array.isArray(cles)?cles.filter(k=>k!=null&&k!==0):[];
   const vis=_sessCibles.length?(S.sessions||[]).filter(s=>_sessCibles.indexOf(s.ts||s.id||0)>=0):[];
   const mois=vis.length?vis.map(_sessMoisDe):[_sessMoisDe({date:today()})];
-  _sessFiltres=[];
+  _sessFiltres=[]; _sessGenre='';   // 🚶 la porte montre TOUT : l'enregistrement visé (peut-être une activité) ne doit jamais être filtré
   _sessOuvrir(mois);
   _progTab='seances'; _progCibleNav=true;
   goScreen('progress',document.getElementById('nb-progress'));
@@ -1510,6 +1534,7 @@ function _sdEntete(sess){
 function openSessDetail(id){
   const sess=S.sessions.find(s=>(s.ts||s.id)===id);
   if(!sess)return;
+  if(_estAutre(sess)){ openAutreActivite(id); return; }   // 🚶 une activité s'ouvre dans SON formulaire (pas de séries à éditer) — le seul chemin, pour la carte comme pour le calendrier
   _sessId=id;
   _sessEdits=JSON.parse(JSON.stringify(sess));
   /* ⚠️ UNE SEULE remise à zéro, et c'est MESURÉ : j'en avais posé deux (ici et à la fermeture).
@@ -1766,14 +1791,17 @@ function _renderSessDetailContent(){
   // Cardio de la séance — DEUX moments depuis le 02/08 (« avant et après séance ce n'est pas
   // pareil »). `cardio` = APRÈS (champ historique) · `cardioAvant` = échauffement. Une séance
   // enregistrée avant ce jour n'a que `cardio` : elle s'affiche donc dans « Après », inchangée.
-  const ckTot=(typeof calcCardioKcal==='function')
-    ? calcCardioKcal(_sessEdits.cardioAvant||null)+calcCardioKcal(_sessEdits.cardio||null) : 0;
+  /* 🔥 Les calories RETENUES de chaque bloc (`kcalCardioAffichage`, app.js) : la part rangée à l'enregistrement pour un bloc ancien — plus le poids du jour (le défaut
+     d'affichage que `docs/AUTRE-ACTIVITE-CALORIES.md` F3 décrit) — ou l'estimation figée / la valeur saisie pour un bloc récent. */
+  const _aff=kcalCardioAffichage(_sessEdits,(S.sessions||[]).find(x=>(x.ts||x.id)===_sessId));
+  const ckTot=_aff.total;
   const selSty='padding:6px 8px;border-radius:8px;border:1px solid var(--bg3);background:var(--bg2);color:var(--t1);font-size:13px;font-family:var(--font)';
   const voletSess=(moment,titre)=>{
     const c=(moment==='avant'?_sessEdits.cardioAvant:_sessEdits.cardio)||null;
-    const k=(c&&c.duration&&typeof calcCardioKcal==='function')?calcCardioKcal(c):0;
+    const kb=(c&&c.duration)?(moment==='avant'?_aff.avant:_aff.apres):null;
+    const k=kb?kb.retenue:0;
     return `<div style="margin-top:7px;">
-      <div style="font-size:12px;font-weight:700;color:var(--t2);margin-bottom:5px;">${titre}${k?` <span style="font-weight:600;color:var(--green)">· ~${k} kcal</span>`:''}</div>
+      <div style="font-size:12px;font-weight:700;color:var(--t2);margin-bottom:5px;">${titre}${(k||(kb&&kb.remplacee))?` <span style="font-weight:600;color:var(--green)">· ${kb.remplacee?'':'~'}${k} kcal${kb.remplacee?' ✎':''}</span>`:''}</div>
       <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
         <select onchange="setSessCardio('type',this.value,'${moment}')" style="${selSty}">
           ${(c&&c.type&&!CARDIO_LABELS[c.type]&&CARDIO_NOMS_MONTRE[c.type])?`<option value="${c.type}" selected>${CARDIO_NOMS_MONTRE[c.type]} (calculé comme « Autre »)</option>`:''}
@@ -1786,6 +1814,7 @@ function _renderSessDetailContent(){
         <span style="font-size:12px;color:var(--t3)">min</span>
         ${c&&c.duration?`<button class="btn btn-bg2" style="padding:3px 9px;font-size:11px;color:var(--red)" onclick="setSessCardio('duration',0,'${moment}')">Retirer</button>`:''}
       </div>
+      ${kb?_kcalEditeurHtml({k:kb,onSaisie:"setSessCardioKcal(this.value,'"+moment+"')",onRetour:"setSessCardioKcal('','"+moment+"')"}):''}
     </div>`;
   };
   html+=`<div class="card" style="margin-bottom:8px;padding:10px 12px">
@@ -1818,9 +1847,29 @@ function _addSessExPick(name){
 function setSessCardio(field,val,moment){
   if(!_sessEdits)return;
   const k=(moment==='avant')?'cardioAvant':'cardio';
+  const figee=_kcalAvecSaisie(_sessEdits);   // l'enregistrement porte-t-il déjà des calories figées ou saisies ? (avant ce geste)
   if(!_sessEdits[k])_sessEdits[k]={type:'elliptique',intensity:'modere',duration:0};
   _sessEdits[k][field]=field==='duration'?Math.max(0,Math.min(300,parseInt(val)||0)):val;
   if(field==='duration'&&!_sessEdits[k].duration)delete _sessEdits[k]; // 0 → pas de cardio
+  /* 🔥 Un enregistrement « à valeurs figées » (mécanisme commun, app.js) : l'estimation du bloc touché suit son type / son intensité / sa durée, avec le poids RANGÉ
+     sur le bloc (celui d'un bloc voisin pour un bloc neuf, à défaut le poids actuel) — jamais le poids du jour pour un bloc qui a déjà le sien. Un enregistrement ANCIEN
+     reste dans l'ancienne règle F21 (`_kcalApresEdition`) tant qu'on n'y saisit rien. */
+  if(figee&&_sessEdits[k]){
+    const voisin=[_sessEdits.cardioAvant,_sessEdits.cardio].find(b=>b&&b!==_sessEdits[k]&&+b.kcalPoids>0);
+    kcalPoserEstimation(_sessEdits[k],'cardio',_sessEdits[k].kcalPoids?undefined:(voisin?voisin.kcalPoids:undefined));
+  }
+  _renderSessDetailContent();
+}
+/* 🔥 La valeur de la montre saisie sur un bloc cardio d'une séance PASSÉE. Un enregistrement ancien reçoit d'abord, sur tous ses blocs, leur estimation figée (ce que l'écran
+   montrait, part rangée à l'enregistrement — jamais le poids du jour) ; puis la valeur remplace celle du bloc. Vide = retour à l'estimation. Invalide = rien ne bouge. */
+function setSessCardioKcal(val,moment){
+  if(!_sessEdits)return;
+  const k=(moment==='avant')?'cardioAvant':'cardio';
+  const b=_sessEdits[k]; if(!b)return;
+  const v=kcalSaisieValide(val);
+  if(v.etat==='invalide'){ toast(v.raison,'error'); _renderSessDetailContent(); return; }
+  if(v.etat==='ok'){ const orig=(S.sessions||[]).find(x=>(x.ts||x.id)===_sessId); kcalNormaliserSeance(_sessEdits,orig); }
+  kcalPoserManuelle(b,val);
   _renderSessDetailContent();
 }
 
@@ -2015,6 +2064,29 @@ function deleteSessOrConfirm(){
    échelle : on prend le calcul du jour, comme avant. */
 function _kcalApresEdition(avant, apres){
   const ref=+(avant&&avant.calories)||0;
+  /* 🔥 UN BLOC PORTE DES CALORIES FIGÉES OU SAISIES (mécanisme commun cardio / activité, `app.js`) : ces calories-là sont ABSOLUES — la valeur de la montre ne se
+     met jamais à l'échelle d'un poids, et une estimation figée ne bouge que si le bloc change. Le total se reconstruit PAR PARTIES : la part du moteur (musculation
+     et forfaits), traitée comme F21 (seule la variation d'effort s'applique à SA part d'origine), plus la somme des blocs retenus. Sans aucun bloc de ce genre,
+     on tombe dans l'ancien chemin ci-dessous, identique à l'octet (banc F21 : `C-NUM-A`). */
+  if(_kcalAvecSaisie(avant)||_kcalAvecSaisie(apres)){
+    const cardioRef=+((avant&&avant.calData&&avant.calData.cardio)||0);          // la part cardio RETENUE d'origine
+    const moteurRef=Math.max(0, ref-cardioRef);                                   // le reste : musculation et forfaits du moteur
+    const mA=calcSessionCalories(avant), mN=calcSessionCalories(apres);           // le moteur gelé, APPELÉ seul, dans le même contexte
+    const seul=!(apres.exs||apres.exercises||[]).length;                          // cardio seul : valeur = somme de ses blocs (voir `_calDataSeance`)
+    let moteur;
+    if(seul) moteur=0;
+    else if(mA.total===mN.total) moteur=moteurRef;                                // l'effort du moteur n'a pas bougé : sa part d'origine reste telle quelle
+    else if(moteurRef>0&&mA.total>0) moteur=Math.round(mN.total*moteurRef/mA.total);   // seule la VARIATION d'effort
+    else moteur=mN.total;                                                         // pas de calories d'origine : le calcul du jour, comme F21
+    const kcA=kcalBloc(apres.cardioAvant||null), kcB=kcalBloc(apres.cardio||null);
+    const cardio=kcA.retenue+kcB.retenue;
+    const total=moteur+cardio;
+    const base=(mA.total===mN.total&&avant&&avant.calData)?avant.calData:mN;      // métadonnées du moteur : celles d'origine tant que l'effort n'a pas bougé
+    const calData=Object.assign({}, base, {total});
+    if(cardio>0||kcA.remplacee||kcB.remplacee) calData.cardio=cardio; else delete calData.cardio;   // 0 saisi = une part cardio RANGÉE à 0 (voir `_calDataSeance`)
+    if(mA.total!==mN.total&&mN.breakdown&&mN.total>0){ const k2=moteur/mN.total; calData.breakdown={}; Object.keys(mN.breakdown).forEach(n=>{ calData.breakdown[n]=Math.round(mN.breakdown[n]*k2); }); }
+    return {calories:total, calData};
+  }
   const cA=_calDataSeance(avant), cN=_calDataSeance(apres);
   if(cA.total===cN.total) return {calories:avant.calories, calData:avant.calData};   // même effort : rien ne bouge
   if(!(ref>0) || !(cA.total>0)) return {calories:cN.total, calData:cN};
@@ -2027,6 +2099,7 @@ function _kcalApresEdition(avant, apres){
 
 function saveSessEdits(){
   if(!_sessEdits||_sessId===null)return;
+  if(typeof kcalValiderChampsEnAttente==='function'&&!kcalValiderChampsEnAttente('#sd-content'))return;   // la valeur de la montre tapée à l'instant (champ pas encore quitté) est lue AVANT d'enregistrer
   const idx=S.sessions.findIndex(s=>(s.ts||s.id)===_sessId);
   if(idx===-1)return;
   const _avant=S.sessions[idx];
@@ -2094,6 +2167,11 @@ function showSessMuscleMap(i,ev){
    Accueil / calendrier (`goSessionsHistory`).
    ⚠️ Inchangé, et exprès hors de ce lot : les pastilles viennent des muscles DOMINANTS, le filtre teste la PRÉSENCE. */
 let _sessFiltres=[];
+/* 🚶 Le filtre de TYPE (05/11/2026) : Tout · Musculation · Cardio · Activités. En mémoire seulement (aucune clé), comme les zones ; remis à « Tout » par les portes. Il ne s'affiche
+   que s'il y a au moins deux types dans l'historique — avec de la musculation seule, l'écran est celui d'avant. */
+let _sessGenre='';
+const _SESS_GENRES=[['muscu','Musculation'],['cardio','Cardio'],['autre','Activités']];
+function setSessGenre(g){ _sessGenre=(_sessGenre===g)?'':g; renderSessions(); }
 function _sessTopMuscle(s){
   const sc=_mscScoresVus(s.exs||s.exercises||[]);const _sc=sc.sc||{};
   let b='',bv=0;for(const g in _sc){if(_sc[g]>bv){bv=_sc[g];b=g;}}
@@ -2122,20 +2200,30 @@ function renderSessions(){
   // Sécurité : un muscle filtré qui n'existe plus est retiré (s'il n'en reste aucun, on est sur « Tous »)
   _sessFiltres=_sessFiltres.filter(m=>present.includes(m));
   const nomM=m=>_MG[m]?_MG[m].label:m;
+  const _genresVus=new Set(S.sessions.map(_genreSeance));
+  if(!_genresVus.has(_sessGenre))_sessGenre='';   // un type qui n'existe plus dans l'historique est retiré (on revient à « Tout »)
+  const _chipsGenre=(_genresVus.size>=2)
+    ? '<span style="flex-basis:100%;font-size:11px;font-weight:700;color:var(--t3);letter-spacing:.04em;">TYPE</span>'
+      +'<button class="sessf-chip'+(!_sessGenre?' on':'')+'" aria-pressed="'+!_sessGenre+'" onclick="setSessGenre(\'\')">Tout</button>'
+      +_SESS_GENRES.filter(x=>_genresVus.has(x[0])).map(x=>'<button class="sessf-chip'+(_sessGenre===x[0]?' on':'')+'" aria-pressed="'+(_sessGenre===x[0])+'" data-genre="'+x[0]+'" onclick="setSessGenre(\''+x[0]+'\')">'+x[1]+'</button>').join('')
+    : '';
   if(fEl){
-    if(present.length>=2){
-      fEl.innerHTML='<button class="sessf-chip'+(!_sessFiltres.length?' on':'')+'" aria-pressed="'+!_sessFiltres.length+'" onclick="setSessFilter(null)">Tous</button>'+
+    if(_chipsGenre&&present.length<2){ fEl.innerHTML=_chipsGenre; }
+    else if(present.length>=2){
+      fEl.innerHTML=(_chipsGenre?_chipsGenre+'<span style="flex-basis:100%;font-size:11px;font-weight:700;color:var(--t3);letter-spacing:.04em;margin-top:4px;">MUSCLE</span>':'')+'<button class="sessf-chip'+(!_sessFiltres.length?' on':'')+'" aria-pressed="'+!_sessFiltres.length+'" onclick="setSessFilter(null)">Tous</button>'+
         present.map(m=>{const on=_sessFiltres.indexOf(m)>=0;
           return '<button class="sessf-chip'+(on?' on':'')+'" aria-pressed="'+on+'" data-m="'+m+'" onclick="setSessFilter(\''+m+'\')">'+_escNote(nomM(m))+'</button>';}).join('');
     } else fEl.innerHTML='';
   }
   /* Le panneau n'existe que s'il y a de quoi filtrer ; fermé, il dit ce qui est filtré (une ligne). */
   if(fAcc)fAcc.hidden=!(fEl&&fEl.innerHTML);
-  if(fRes)fRes.textContent='Filtrer les séances · '+(!_sessFiltres.length?'Tous'
-    :_sessFiltres.length<=2?_sessFiltres.map(nomM).join(' + '):nomM(_sessFiltres[0])+' + '+(_sessFiltres.length-1)+' autres');
+  const _gTxt=_sessGenre?(_SESS_GENRES.find(x=>x[0]===_sessGenre)||['',''])[1]:'';
+  if(fRes)fRes.textContent='Filtrer les séances · '+(!_sessFiltres.length&&!_gTxt?'Tous'
+    :[_gTxt].concat(_sessFiltres.length?[_sessFiltres.length<=2?_sessFiltres.map(nomM).join(' + '):nomM(_sessFiltres[0])+' + '+(_sessFiltres.length-1)+' autres']:[]).filter(Boolean).join(' · '));
   let flist=S.sessions;
+  if(_sessGenre)flist=flist.filter(s=>_genreSeance(s)===_sessGenre);
   if(_sessFiltres.length)flist=flist.filter(s=>{const p=_sessMusclesPresent(s);return _sessFiltres.some(m=>p.includes(m));});
-  if(!flist.length){el.innerHTML='<div class="empty">Aucune séance pour '+(_sessFiltres.length>1?'ces muscles':'ce muscle')+'</div>';return;}
+  if(!flist.length){el.innerHTML='<div class="empty">'+(_sessFiltres.length?'Aucune séance pour '+(_sessFiltres.length>1?'ces muscles':'ce muscle'):'Aucun enregistrement de ce type')+'</div>';return;}
   /* 🗂️ PROGRES-SEANCES-01 — ANNÉE → MOIS → SÉANCE, ET PLUS DE PLAFOND DE 20 (contrat UX-HIST du 08/10).
      Avant : `slice(0,20)` — la 21ᵉ séance n'était atteignable NULLE PART dans l'app (63 séances réelles
      chez Michel le 14/10). Maintenant toutes le sont ; pour ne pas dessiner 1 500 cartes, on ne dessine
@@ -2145,20 +2233,27 @@ function renderSessions(){
      et la carte reste produite par une seule fonction (`_sessCarteHtml`). Rien n'est stocké. */
   const ans=[],parAn={};
   flist.forEach(s=>{const m=_sessMoisDe(s),an=m==='?'?'?':m.slice(0,4);
-    if(!parAn[an]){parAn[an]={mois:[],parMois:{},n:0};ans.push(an);}
-    const A=parAn[an];if(!A.parMois[m]){A.parMois[m]=[];A.mois.push(m);}A.parMois[m].push(s);A.n++;});
+    if(!parAn[an]){parAn[an]={mois:[],parMois:{},n:0,g:{muscu:0,cardio:0,autre:0}};ans.push(an);}
+    const A=parAn[an];if(!A.parMois[m]){A.parMois[m]=[];A.mois.push(m);}A.parMois[m].push(s);A.n++;A.g[_genreSeance(s)]++;});
   const desc=(a,b)=>a==='?'?1:b==='?'?-1:(a<b?1:a>b?-1:0);   // le plus récent d'abord, « sans date » à la fin
   ans.sort(desc);
   const chev=o=>'<span class="sess-chev'+(o?' ouvert':'')+'">›</span>';
-  const nb=n=>n+' séance'+(n>1?'s':'');
+  /* 🚶 Le compteur DIT ce qu'il compte : « 3 séances · 1 cardio · 2 activités » (séances de musculation, cardio seul, autres activités). Tant qu'il n'y a ni cardio seul ni
+     activité, le texte est celui d'avant : « N séances ». */
+  const nbG=g=>{const m=g.muscu||0,c=g.cardio||0,a=g.autre||0,t=[];
+    if(m||(!c&&!a))t.push(m+' séance'+(m>1?'s':''));
+    if(c)t.push(c+' cardio');
+    if(a)t.push(a+' activité'+(a>1?'s':''));
+    return t.join(' · ');};
+  const gDe=L=>{const g={muscu:0,cardio:0,autre:0};L.forEach(s=>{g[_genreSeance(s)]++;});return g;};
   el.innerHTML=ans.map(an=>{const A=parAn[an],ouvert=_sessAnEstOuvert(an);A.mois.sort(desc);
     return '<div class="sess-an-bloc" data-an="'+an+'">'
       +'<button class="sess-an" data-an="'+an+'" aria-expanded="'+ouvert+'" onclick="basculerSessAnnee(\''+an+'\')">'
-        +chev(ouvert)+'<span class="sess-an-nom">'+(an==='?'?'Sans date':an)+'</span><span class="sess-n">'+nb(A.n)+'</span></button>'
+        +chev(ouvert)+'<span class="sess-an-nom">'+(an==='?'?'Sans date':an)+'</span><span class="sess-n">'+nbG(A.g)+'</span></button>'
       +(!ouvert?'':A.mois.map(m=>{const o=_sessMoisEstOuvert(m),L=A.parMois[m];
         return '<div class="sess-mois-bloc" data-mois="'+m+'">'
           +'<button class="sess-mois" data-mois="'+m+'" aria-expanded="'+o+'" onclick="basculerSessMois(\''+m+'\')">'
-            +chev(o)+'<span class="sess-mois-nom">'+_sessMoisNom(m)+'</span><span class="sess-n">'+nb(L.length)+'</span></button>'
+            +chev(o)+'<span class="sess-mois-nom">'+_sessMoisNom(m)+'</span><span class="sess-n">'+nbG(gDe(L))+'</span></button>'
           +(o?'<div class="sess-mois-cartes">'+L.map(_sessCarteHtml).join('')+'</div>':'')
           +'</div>';}).join(''))
       +'</div>';}).join('');
@@ -2181,9 +2276,35 @@ function _sessMoisEstOuvert(m){return Object.prototype.hasOwnProperty.call(_sess
 function _sessOuvrir(mois){(mois||[]).forEach(m=>{_sessMoisOuvert[m]=true;_sessAnOuvert[m==='?'?'?':m.slice(0,4)]=true;});}
 function basculerSessAnnee(an){_sessAnOuvert[an]=!_sessAnEstOuvert(an);renderSessions();}
 function basculerSessMois(m){_sessMoisOuvert[m]=!_sessMoisEstOuvert(m);renderSessions();}
+/* ⭐ L'ENVELOPPE d'une carte d'historique — l'UNIQUE endroit qui écrit la balise de carte (classe `sess-card`) (témoin PS-S3 : « pas de 2ᵉ moteur de carte »).
+   Une séance et une activité n'ont pas le même INTÉRIEUR (figurine et série ici ; type, durée, distance là) mais la même identité (`ts||id`), le même geste
+   (`openSessDetail`) et la même marque `sess-cible` quand une porte d'entrée la vise. Pour une séance la chaîne produite est IDENTIQUE à l'octet à celle d'avant. */
+function _sessCarteEnveloppe(s,autre,interieur){
+  const _cible=_sessCibles.indexOf(s.ts||s.id||0)>=0;
+  return`<div class="sess-card${autre?' sess-card-autre':''}${_cible?' sess-cible':''}"${autre?' data-genre="autre"':''} onclick="openSessDetail(${s.ts||s.id||0})" style="cursor:pointer;padding:12px 14px;">${interieur}</div>`;
+}
+/* 🚶 La carte d'une AUTRE ACTIVITÉ (05/11/2026) : son type et son icône, sa date (et son heure), sa durée, sa distance, son intensité, ses calories RETENUES
+   (« ✎ » quand c'est la valeur de la montre) et ses notes. Aucune ligne « kg de travail », aucune figurine : elle n'a ni série ni muscle. Même `onclick` que toute carte
+   (`openSessDetail`, qui l'ouvre dans SON formulaire). */
+function _autreCarteHtml(s){
+  const a=s.autre||{};
+  const kb=kcalBloc({duration:a.duration,kcalEst:a.kcalEst,kcalMan:a.kcalMan,kcalPoids:a.kcalPoids});
+  const kcal=(typeof s.calories==='number')?s.calories:kb.retenue;
+  const dur=+a.duration||0;
+  const parts=['<span class="sess-date2">'+fmtD(s.date)+(a.heure?' · '+_escNote(a.heure):'')+'</span>'];
+  if(dur)parts.push('<span class="sess-dur2">⏱️'+(dur>=60?Math.floor(dur/60)+'h'+String(dur%60).padStart(2,'0'):dur+' min')+'</span>');
+  if(a.distance!=null)parts.push('<span class="sess-date2">'+String(a.distance).replace('.',',')+' km</span>');
+  if(a.intensity)parts.push('<span class="sess-date2">'+_escNote(CARDIO_INTENSITES[a.intensity]||a.intensity)+'</span>');
+  parts.push('<span class="sess-cal2">🔥'+kcal+' kcal'+(kb.remplacee?' ✎':'')+'</span>');
+  const note=a.notes?'<div class="sess-exs2">'+_escNote(a.notes)+'</div>':'';
+  return _sessCarteEnveloppe(s,true,
+    '<div style="display:flex;align-items:flex-start;gap:10px;"><div style="flex:1;min-width:0;"><div class="sess-title">'+_escNote(autreIcone(a)+' '+autreLabel(a))+'</div>'
+    +'<div class="sess-meta">'+parts.join('<span style="opacity:.4">·</span>')+'</div>'+note+'</div></div>');
+}
 /* La carte d'UNE séance — l'unique producteur (inchangé : même contenu, même identité `ts||id`,
-   même bouton de débrief). Seule nouveauté : la marque `sess-cible` quand une porte d'entrée la vise. */
+   même bouton de débrief). Seule nouveauté : la marque `sess-cible` quand une porte d'entrée la vise (elle vit maintenant dans `_sessCarteEnveloppe`). */
 function _sessCarteHtml(s){
+    if(_estAutre(s))return _autreCarteHtml(s);
     const i=S.sessions.indexOf(s);
     const exs=(s.exs||s.exercises||[]).map(e=>e.name).join(', ');
     // ⚠️ NUAGE DESSINÉ, PAS L'EMOJI ☁️ (05/08/2026, signalé par Michel : « le petit nuage est
@@ -2252,8 +2373,7 @@ function _sessCarteHtml(s){
       : _dbfEnVol(_dbfId) ? '<button class="sess-dbf-go" disabled>⏳ Milo analyse…</button>'
       : _dbfInterrompue(_dbfId) ? '<button class="sess-dbf-go" onclick="analyserSeanceMilo('+_dbfArg+',event)">⏸️ Analyse interrompue — relancer</button>'
       : '<button class="sess-dbf-go" onclick="analyserSeanceMilo('+_dbfArg+',event)">✨ Analyser avec Milo</button>';
-    const _cible=_sessCibles.indexOf(s.ts||s.id||0)>=0;
-    return`<div class="sess-card${_cible?' sess-cible':''}" onclick="openSessDetail(${s.ts||s.id||0})" style="cursor:pointer;padding:12px 14px;"><div style="display:flex;align-items:flex-start;gap:10px;"><div style="flex:1;min-width:0;"><div class="sess-title">${_escNote(headline)}</div><div class="sess-meta">${metaHtml}</div>${_exsHtml}${_dbfBtn}</div><div onclick="showSessMuscleMap(${i},event)" style="cursor:zoom-in;flex-shrink:0">${mini}</div></div></div>`;
+    return _sessCarteEnveloppe(s,false,`<div style="display:flex;align-items:flex-start;gap:10px;"><div style="flex:1;min-width:0;"><div class="sess-title">${_escNote(headline)}</div><div class="sess-meta">${metaHtml}</div>${_exsHtml}${_dbfBtn}</div><div onclick="showSessMuscleMap(${i},event)" style="cursor:zoom-in;flex-shrink:0">${mini}</div></div>`);
 }
 /* 💬 LA LECTURE D'UN DÉBRIEF — LOCALE, SANS APPEL, SANS TOUCHER À LA SÉANCE (D-043).
    ⛔ Elle ne relit aucune conversation et n'ouvre pas le Coach : elle lit le magasin canonique
@@ -4743,6 +4863,7 @@ function _recalerAnciennesSeances(){
   let n=0, deja=0, avant=0, apres=0; const lignes=[];
   (S.sessions||[]).forEach(s=>{
     if(!s || !s.calories) return;
+    if(_estAutre(s)) return;                            // 🚶 jamais une activité : sa valeur est celle de la personne (retenue), pas un effort de moteur à recaler
     if(_seanceHorodatee(s)){ deja++; return; }          // durée déjà réelle
     if(s.caloriesAvant===undefined) s.caloriesAvant=s.calories;   // 🛟 une seule fois
     const car=(s.calData&&s.calData.cardio)||0;
