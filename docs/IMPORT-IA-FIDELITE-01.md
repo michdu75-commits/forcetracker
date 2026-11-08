@@ -363,7 +363,18 @@ Bilan cumulé de la branche (vs `e2b942f3`) : **2** données persistées ajouté
 
 ### 20.3 Validation — ce qui a RÉELLEMENT tourné (08/11/2026, machine seule, sous le garde réseau)
 
-<<RESULTATS>>
+| Niveau | Quoi | Résultat |
+|---|---|---|
+| **A — client, IA simulée** | `tools/banc_import_fidelite.js` : lecture des repos (`IIF-R*`, pur) ; chaîne document → programme → séance → **chrono réel**, aperçu, jumeau du PDF (blocs `B-IIF` et `P`) | **9 + 135 OK / 0 rouge** · sur le code d'AVANT la reprise (`97a73641`) : **22 rouges** (les témoins de la décision sur les plages, tous ceux du jumeau) |
+| **A — Worker** | `tools/banc_import_worker_contrat.js` : le vrai `worker.js` conduit dans un `vm`, réseau simulé | **198 OK / 0 rouge** (196 d'origine + 2 pour les deux phrases ajoutées) |
+| **B — corpus** | `tools/banc_import_corpus.js` : 16 programmes inventés, structure série par série, chrono de chaque série validée | **58 OK / 0 rouge** |
+| **C — contre-tests** | `tools/mut_import_fidelite.py` (client, **96** : les 80 du lot — M14 et M21 ré-ancrées — + M81 à M96) · `tools/mut_import_corpus.py` (14, C03 réécrite) · `tools/mut_import_worker_contrat.py` (80, + M80 / M81) | **96/96** · **14/14** · **80/80** conformes (chaque mutation fait rougir au moins un témoin) |
+| **Bancs voisins** | 40 bancs rejoués sous le garde réseau : import (`d088`, `import_echauffement`, `import_map`, `import_map2`, `import_map_alias`), séance et chrono, programmes, Milo, `nut_punch01` | **36 verts · 4 rouges (fig_face_dos, progres_seances, seance_ux, ux_integration) = les rouges déjà connus, identiques à master** (mêmes libellés : `PS-E29`, `B-UXI-G2/G3/G5/G7`, `B-FFD-⑧e`, plantage de `seance_ux`) |
+| **Aperçu de démonstration** | clone de test isolé + réponse de l'IA **simulée** pour le jumeau inventé : aperçu, enregistrement (4 séances), séance (chrono 4:00 + consigne) à la taille d'un iPhone | conforme (Chromium 390 × 844 : **pas** une validation iPhone) |
+| **Fusion à blanc** | cette branche + la tête d'« Autre activité » (`3bac5474`) | **0 conflit de code** ; conflits de suivi seulement : `BUGS.md`, `docs/DECISIONS.md`, `docs/INVENTAIRE.md`, `docs/JOURNAL-DE-PARTAGE.md` |
+| **Non joué** | la passe D-031 **complète** (à jouer sur l'arbre à publier) ; l'IA réelle ; un iPhone | — |
+
+*Historique honnête du contrôle* : au premier passage réel des bancs, **131 ✅ / 3 ❌** côté écran (`IIF-B07` et `B08` prenaient une plage pour « sans repos chiffré » ; `IPDF-F01` : « warm-up » contient un tiret, le séparateur coupait « up ») et **197 ✅ / 1 ❌** côté Worker (expression du témoin trop éloignée de la phrase exacte). Corrigés ; les mutations M14 et M21 ont été ré-ancrées parce que le code qu'elles visaient avait changé.
 
 ### 20.4 Compteurs règle d'or #17 de cette reprise (code applicatif uniquement, vs `97a73641`)
 
