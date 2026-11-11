@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
     inputs:
       etape:
-        description: 'deployer (pousse + crée le déploiement de TEST) | diag (lecture seule : ce que Google répond) | c1 (vrai client A/A2 contre le TEST) | c5 (suspension/reprise) | essais (scénarios P1) | suspension (scénario P1-09, après avoir posé NUT_SUSPENDU) | sonde (sonde du verrou, ZÉRO donnée écrite : adresse de TEST ou, par défaut, de la production APRÈS son déploiement) | ecrasement (P0 : témoins des séances écrasées, par HTTP, comptes fictifs, TEST seulement) | verdict (P0 : lecture seule du verdict de la recette et des dossiers)'
+        description: 'deployer (pousse + crée le déploiement de TEST) | diag (lecture seule : ce que Google répond) | c1 (vrai client A/A2 contre le TEST) | c5 (suspension/reprise) | essais (scénarios P1) | suspension (scénario P1-09, après avoir posé NUT_SUSPENDU) | sonde (sonde du verrou, ZÉRO donnée écrite : adresse de TEST ou, par défaut, de la production APRÈS son déploiement) | ecrasement (P0 : témoins des séances écrasées, par HTTP, comptes fictifs, TEST seulement) | verdict (P0 : lecture seule du verdict de la recette et des dossiers) | recette (P0 : tente de lancer la recette R1-R10 par l API Apps Script, TEST seulement ; Google peut refuser)'
         required: true
         default: 'deployer'
       script_id:
@@ -36,7 +36,7 @@ jobs:
           set -euo pipefail
           echo "=== ESSAI P1 — workflow D'ESSAI (ce n'est PAS le workflow de production) · ref ${GITHUB_REF} · étape ${ETAPE} ==="
           [ "${GITHUB_REF}" != "refs/heads/master" ] || { echo "::error::refus : ce workflow d'essai ne tourne pas sur master"; exit 1; }
-          case "$ETAPE" in deployer|pousser|essais|suspension|sonde|diag|diag2|verifier|isolement|echo|webkit|ping-prod|deploiements|c1|c1seul|c5|ecrasement|verdict) ;; *) echo "::error::etape inconnue : $ETAPE"; exit 1;; esac
+          case "$ETAPE" in deployer|pousser|essais|suspension|sonde|diag|diag2|verifier|isolement|echo|webkit|ping-prod|deploiements|c1|c1seul|c5|ecrasement|verdict|recette) ;; *) echo "::error::etape inconnue : $ETAPE"; exit 1;; esac
           if [ "$ETAPE" = "deployer" ] || [ "$ETAPE" = "pousser" ]; then
             # (le .clasp.json de CETTE branche pointe lui-même vers le projet de TEST — ceinture : si GitHub exécutait par erreur le workflow de PRODUCTION sur cette branche, il pousserait dans le projet de TEST et échouerait au redéploiement)
             [ -n "$SCRIPT_ID" ] || { echo "::error::script_id vide"; exit 1; }
@@ -268,6 +268,18 @@ jobs:
           [ "$SCRIPT_ID" != "1RwE46hNmZrykInYcrMgm1OZWt4NmS6NjTqttvAevZLuqo2v6EEb1Drw" ] || { echo "::error::REFUS : Script ID de production"; exit 1; }
           printf '%s' "$CLASPRC_JSON" > "$HOME/.clasprc.json"
           node p1/lire_verdict_p0.js "$SCRIPT_ID"
+
+      # P0 SAUVEGARDES — règle d'or n°16 : MESURER si la recette R1–R10 peut se lancer sans clic de Michel (API `scripts.run`, TEST seulement, la même fonction que l'éditeur). Si Google refuse, l'erreur exacte est la preuve ; rien n'est écrit dans ce cas.
+      - name: "Tenter de lancer la recette P0 par l'API Apps Script (TEST seulement ; Google peut refuser : l'erreur exacte est alors la preuve que le clic est nécessaire)"
+        if: ${{ inputs.etape == 'recette' }}
+        env:
+          SCRIPT_ID: ${{ inputs.script_id }}
+          CLASPRC_JSON: ${{ secrets.CLASPRC_JSON }}
+        run: |
+          set -euo pipefail
+          [ "$SCRIPT_ID" != "1RwE46hNmZrykInYcrMgm1OZWt4NmS6NjTqttvAevZLuqo2v6EEb1Drw" ] || { echo "::error::REFUS : Script ID de production"; exit 1; }
+          printf '%s' "$CLASPRC_JSON" > "$HOME/.clasprc.json"
+          node p1/lancer_recette_p0.js "$SCRIPT_ID"
 
       - name: "Garder le rapport"
         if: ${{ always() && (inputs.etape == 'essais' || inputs.etape == 'suspension' || inputs.etape == 'c1' || inputs.etape == 'c5' || inputs.etape == 'c1seul' || inputs.etape == 'ecrasement') }}
