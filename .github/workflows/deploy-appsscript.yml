@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
     inputs:
       etape:
-        description: 'deployer (pousse + crée le déploiement de TEST) | diag (lecture seule : ce que Google répond) | c1 (vrai client A/A2 contre le TEST) | c5 (suspension/reprise) | essais (scénarios P1) | suspension (scénario P1-09, après avoir posé NUT_SUSPENDU) | sonde (sonde du verrou, ZÉRO donnée écrite : adresse de TEST ou, par défaut, de la production APRÈS son déploiement)'
+        description: 'deployer (pousse + crée le déploiement de TEST) | diag (lecture seule : ce que Google répond) | c1 (vrai client A/A2 contre le TEST) | c5 (suspension/reprise) | essais (scénarios P1) | suspension (scénario P1-09, après avoir posé NUT_SUSPENDU) | sonde (sonde du verrou, ZÉRO donnée écrite : adresse de TEST ou, par défaut, de la production APRÈS son déploiement) | ecrasement (P0 : témoins des séances écrasées, par HTTP, comptes fictifs, TEST seulement)'
         required: true
         default: 'deployer'
       script_id:
@@ -36,7 +36,7 @@ jobs:
           set -euo pipefail
           echo "=== ESSAI P1 — workflow D'ESSAI (ce n'est PAS le workflow de production) · ref ${GITHUB_REF} · étape ${ETAPE} ==="
           [ "${GITHUB_REF}" != "refs/heads/master" ] || { echo "::error::refus : ce workflow d'essai ne tourne pas sur master"; exit 1; }
-          case "$ETAPE" in deployer|pousser|essais|suspension|sonde|diag|diag2|verifier|isolement|echo|webkit|ping-prod|deploiements|c1|c1seul|c5) ;; *) echo "::error::etape inconnue : $ETAPE"; exit 1;; esac
+          case "$ETAPE" in deployer|pousser|essais|suspension|sonde|diag|diag2|verifier|isolement|echo|webkit|ping-prod|deploiements|c1|c1seul|c5|ecrasement) ;; *) echo "::error::etape inconnue : $ETAPE"; exit 1;; esac
           if [ "$ETAPE" = "deployer" ] || [ "$ETAPE" = "pousser" ]; then
             # (le .clasp.json de CETTE branche pointe lui-même vers le projet de TEST — ceinture : si GitHub exécutait par erreur le workflow de PRODUCTION sur cette branche, il pousserait dans le projet de TEST et échouerait au redéploiement)
             [ -n "$SCRIPT_ID" ] || { echo "::error::script_id vide"; exit 1; }
@@ -246,8 +246,19 @@ jobs:
           case "$URL_EXEC" in *AKfycbxWUsEFIlmx*) echo "::error::REFUS : adresse de production"; exit 1;; esac
           node p1/c1_reel.js "$URL_EXEC" --c5 --rapport p1/rapport_c5.json
 
+      # P0 SAUVEGARDES (11/11/2026, « GO TEST P0 » de Michel) — les cas d'écrasement des séances, par HTTP, comptes FICTIFS seulement ; refuse l'adresse de la production (rien d'autre n'est touché : ni propriété, ni dossier, ni déclencheur).
+      - name: "Témoins d'écrasement des séances P0 (par HTTP, comptes fictifs @example.invalid seulement)"
+        if: ${{ inputs.etape == 'ecrasement' }}
+        env:
+          URL_EXEC: ${{ inputs.url_exec }}
+        run: |
+          set -euo pipefail
+          [ -n "$URL_EXEC" ] || { echo "::error::url_exec vide"; exit 1; }
+          case "$URL_EXEC" in *AKfycbxWUsEFIlmx*) echo "::error::REFUS : adresse de production"; exit 1;; esac
+          node p1/p0_ecrasement.js "$URL_EXEC" --rapport p1/rapport_p0.json
+
       - name: "Garder le rapport"
-        if: ${{ always() && (inputs.etape == 'essais' || inputs.etape == 'suspension' || inputs.etape == 'c1' || inputs.etape == 'c5' || inputs.etape == 'c1seul') }}
+        if: ${{ always() && (inputs.etape == 'essais' || inputs.etape == 'suspension' || inputs.etape == 'c1' || inputs.etape == 'c5' || inputs.etape == 'c1seul' || inputs.etape == 'ecrasement') }}
         uses: actions/upload-artifact@v4
         with:
           name: "rapport-p1"
