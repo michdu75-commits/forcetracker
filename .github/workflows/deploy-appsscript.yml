@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
     inputs:
       etape:
-        description: 'deployer (pousse + crée le déploiement de TEST) | diag (lecture seule : ce que Google répond) | c1 (vrai client A/A2 contre le TEST) | c5 (suspension/reprise) | essais (scénarios P1) | suspension (scénario P1-09, après avoir posé NUT_SUSPENDU) | sonde (sonde du verrou, ZÉRO donnée écrite : adresse de TEST ou, par défaut, de la production APRÈS son déploiement) | ecrasement (P0 : témoins des séances écrasées, par HTTP, comptes fictifs, TEST seulement)'
+        description: 'deployer (pousse + crée le déploiement de TEST) | diag (lecture seule : ce que Google répond) | c1 (vrai client A/A2 contre le TEST) | c5 (suspension/reprise) | essais (scénarios P1) | suspension (scénario P1-09, après avoir posé NUT_SUSPENDU) | sonde (sonde du verrou, ZÉRO donnée écrite : adresse de TEST ou, par défaut, de la production APRÈS son déploiement) | ecrasement (P0 : témoins des séances écrasées, par HTTP, comptes fictifs, TEST seulement) | verdict (P0 : lecture seule du verdict de la recette et des dossiers)'
         required: true
         default: 'deployer'
       script_id:
@@ -36,7 +36,7 @@ jobs:
           set -euo pipefail
           echo "=== ESSAI P1 — workflow D'ESSAI (ce n'est PAS le workflow de production) · ref ${GITHUB_REF} · étape ${ETAPE} ==="
           [ "${GITHUB_REF}" != "refs/heads/master" ] || { echo "::error::refus : ce workflow d'essai ne tourne pas sur master"; exit 1; }
-          case "$ETAPE" in deployer|pousser|essais|suspension|sonde|diag|diag2|verifier|isolement|echo|webkit|ping-prod|deploiements|c1|c1seul|c5|ecrasement) ;; *) echo "::error::etape inconnue : $ETAPE"; exit 1;; esac
+          case "$ETAPE" in deployer|pousser|essais|suspension|sonde|diag|diag2|verifier|isolement|echo|webkit|ping-prod|deploiements|c1|c1seul|c5|ecrasement|verdict) ;; *) echo "::error::etape inconnue : $ETAPE"; exit 1;; esac
           if [ "$ETAPE" = "deployer" ] || [ "$ETAPE" = "pousser" ]; then
             # (le .clasp.json de CETTE branche pointe lui-même vers le projet de TEST — ceinture : si GitHub exécutait par erreur le workflow de PRODUCTION sur cette branche, il pousserait dans le projet de TEST et échouerait au redéploiement)
             [ -n "$SCRIPT_ID" ] || { echo "::error::script_id vide"; exit 1; }
@@ -256,6 +256,18 @@ jobs:
           [ -n "$URL_EXEC" ] || { echo "::error::url_exec vide"; exit 1; }
           case "$URL_EXEC" in *AKfycbxWUsEFIlmx*) echo "::error::REFUS : adresse de production"; exit 1;; esac
           node p1/p0_ecrasement.js "$URL_EXEC" --rapport p1/rapport_p0.json
+
+      # P0 SAUVEGARDES — LECTURE SEULE du verdict de la recette (nom du marqueur « P0-VERDICT-PASS|FAIL-… » dans le dossier de TEST) et des nombres du dossier de production (à comparer à « verifier » d'avant). Aucun nom de compte affiché.
+      - name: "Lire le verdict de la recette P0 et l'état des dossiers (LECTURE SEULE : API Apps Script + API Drive ; noms de fichiers de sauvegarde et nombres, jamais un compte)"
+        if: ${{ inputs.etape == 'verdict' }}
+        env:
+          SCRIPT_ID: ${{ inputs.script_id }}
+          CLASPRC_JSON: ${{ secrets.CLASPRC_JSON }}
+        run: |
+          set -euo pipefail
+          [ "$SCRIPT_ID" != "1RwE46hNmZrykInYcrMgm1OZWt4NmS6NjTqttvAevZLuqo2v6EEb1Drw" ] || { echo "::error::REFUS : Script ID de production"; exit 1; }
+          printf '%s' "$CLASPRC_JSON" > "$HOME/.clasprc.json"
+          node p1/lire_verdict_p0.js "$SCRIPT_ID"
 
       - name: "Garder le rapport"
         if: ${{ always() && (inputs.etape == 'essais' || inputs.etape == 'suspension' || inputs.etape == 'c1' || inputs.etape == 'c5' || inputs.etape == 'c1seul' || inputs.etape == 'ecrasement') }}
