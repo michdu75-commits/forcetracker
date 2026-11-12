@@ -177,6 +177,40 @@ function recetteP0Handlers_() { return ScriptApp.getProjectTriggers().map(functi
 function recetteP0Stockage_(props) {
   var n = 0; Object.keys(props).forEach(function (k) { n += k.length + String(props[k]).length; }); return n;
 }
+/* ── GARDE DES PROPRIÉTÉS — « GO CODE OPTION A » de Michel (12/11/2026), après l'arrêt de la recette à 11:52 sur une propriété « PRE… » ──
+   POURQUOI : le serveur de production, servi tel quel par ce projet de TEST, RÉÉCRIT la propriété `PREMIUM_EMAILS` à CHAQUE POST (`ensurePremiumEmails_()`, appelée par `doPost`) avec la liste codée
+   en dur `PREMIUM_HARDCODED_`. Les essais par HTTP (scénarios P1, C1, C5, témoins d'écrasement) l'y ont donc créée : une COPIE d'une constante du code, aucune donnée de la production (rejoué en local
+   avec le vrai Code.js : un seul POST la crée, identique à `PREMIUM_HARDCODED_.join(',')`). La garde l'interdisait par son NOM ; elle la juge désormais sur son CONTENU.
+   RÈGLE : `PREMIUM_EMAILS` n'est tolérée QUE si, adresse par adresse, son contenu est EXACTEMENT l'ensemble de `PREMIUM_HARDCODED_` (casse et espaces normalisés comme le fait le serveur, un doublon est sans effet).
+   Une adresse de trop, une de moins, un autre séparateur, une valeur vide, ou une liste codée en dur illisible d'ici = refus (le refus est le côté sûr : il n'écrit rien).
+   ⛔ RIEN d'autre n'est assoupli : `PREMIUM_CODES`, les clés et jetons, tout compte u_ / h_ / auth_ / prem_ / confirmed_ qui n'est pas en @example.invalid restent refusés.
+   ⛔ JAMAIS une adresse ni un secret dans le journal : le contenu de `PREMIUM_EMAILS` n'est pas recopié (des NOMBRES seulement) ; pour les autres propriétés on dit le NOM d'un secret fixe (une constante de
+      ce fichier) ou la CLASSE d'un compte (« u_… »), pas même la première lettre d'une adresse (l'ancien message en donnait trois caractères, « u_m » par exemple).
+   ⛔ Les trois motifs de refus (propriétés interdites · PREMIUM_EMAILS · stockage) sont TOUS évalués avant de s'arrêter : un seul passage dit tout, au lieu d'un aller-retour par blocage. */
+var RECETTE_P0_SECRETS_ = /^(ANTHROPIC_API_KEY|ADMIN_TOKEN|PREMIUM_CODES|KOFI_TOKEN|IDEES_TOKEN2|BACKUP_TOKEN)$/;
+function recetteP0Premium_(valeur) {
+  var norm = function (s) { return String(s).trim().toLowerCase(); };
+  var codee = (typeof PREMIUM_HARDCODED_ !== 'undefined' && Array.isArray(PREMIUM_HARDCODED_)) ? PREMIUM_HARDCODED_ : [];
+  var attendues = [], presentes = [], inconnues = 0, manquantes = 0;
+  codee.forEach(function (e) { var n = norm(e); if (n && attendues.indexOf(n) < 0) attendues.push(n); });
+  String(valeur === undefined || valeur === null ? '' : valeur).split(',').forEach(function (e) { var n = norm(e); if (n && presentes.indexOf(n) < 0) presentes.push(n); });
+  presentes.forEach(function (n) { if (attendues.indexOf(n) < 0) inconnues++; });
+  attendues.forEach(function (n) { if (presentes.indexOf(n) < 0) manquantes++; });
+  return { attendues: attendues.length, presentes: presentes.length, inconnues: inconnues, manquantes: manquantes,
+           ok: attendues.length > 0 && presentes.length > 0 && inconnues === 0 && manquantes === 0 };
+}
+function recetteP0Proprietes_(props) {
+  var classes = {}, n = 0;
+  Object.keys(props).forEach(function (k) {
+    if (k === 'PREMIUM_EMAILS') return;                                // jugée sur son CONTENU (recetteP0Premium_), plus sur son nom
+    var c = null;
+    if (RECETTE_P0_SECRETS_.test(k)) c = k;                            // le NOM d'un secret fixe est une constante du code : le dire n'est pas le divulguer
+    else { var m = /^(u_|h_|auth_|prem_|confirmed_)(.*)$/.exec(k); if (m && !/@example\.invalid$/i.test(m[2])) c = m[1] + '…'; }   // compte non fictif : la CLASSE seulement
+    if (c) { classes[c] = (classes[c] || 0) + 1; n++; }
+  });
+  return { interdites: n, classes: Object.keys(classes).sort().map(function (c) { return c + ' ×' + classes[c]; }).join(', '),
+           premium: Object.prototype.hasOwnProperty.call(props, 'PREMIUM_EMAILS') ? recetteP0Premium_(props.PREMIUM_EMAILS) : null };
+}
 /* une séance fictive : identifiant « r0001 »…, dates étalées, forme de celles de la production (id, date, ts, exs, vol, synced) */
 function recetteP0Seance_(i) {
   var ts = Date.UTC(2026, 7, 1) + i * 86400000;
@@ -259,17 +293,16 @@ function recetteRestaurationP1() {
     if (corbeille) stop('⛔ Le dossier de sauvegarde de TEST est à la corbeille : on s\'arrête, rien n\'a été écrit.');
     if (sp.getProperty('ADMIN_TOKEN')) stop('⛔ Un jeton d\'administration existe déjà dans ce projet : ce n\'est pas un projet de test vierge (on n\'y touche pas). On s\'arrête, rien n\'a été écrit.');
     var props = sp.getProperties(), cles = Object.keys(props);
-    var interdit = cles.filter(function (k) {
-      if (/^(ANTHROPIC_API_KEY|ADMIN_TOKEN|PREMIUM_EMAILS|PREMIUM_CODES|KOFI_TOKEN|IDEES_TOKEN2|BACKUP_TOKEN)$/.test(k)) return true;
-      var m = /^(u_|h_|auth_|prem_|confirmed_)(.*)$/.exec(k);
-      return !!m && !/@example\.invalid$/i.test(m[2]);
-    });
-    if (interdit.length) stop('⛔ Ce projet porte autre chose que des comptes FICTIFS ou un secret (' + interdit.length + ' propriété(s) comme « ' + interdit[0].slice(0, 3) + '… ») : ce n\'est pas un projet de test. On s\'arrête, rien n\'a été écrit.');
+    var an = recetteP0Proprietes_(props), refus = [];
     V.stockageAvant = recetteP0Stockage_(props);
-    if (V.stockageAvant > RECETTE_P0_STOCKAGE_MAX_) stop('⛔ Le stockage des propriétés du projet de TEST est trop plein (' + V.stockageAvant + ' octets, limite de départ ' + RECETTE_P0_STOCKAGE_MAX_ + ' sur 500 000) : on s\'arrête, rien n\'a été écrit. Il faudrait faire de la place (décision de Michel).');
+    V.premium = an.premium;                                                  // des NOMBRES seulement : jamais une adresse (voir recetteP0Premium_)
+    if (an.interdites) refus.push('Ce projet porte autre chose que des comptes FICTIFS ou un secret (' + an.interdites + ' : ' + an.classes + ')');
+    if (an.premium && !an.premium.ok) refus.push('PREMIUM_EMAILS ≠ liste codée en dur (' + (an.premium.attendues ? 'attendues ' + an.premium.attendues + ', présentes ' + an.premium.presentes + ', inconnues ' + an.premium.inconnues + ', manquantes ' + an.premium.manquantes : 'liste illisible d\'ici') + ')');
+    if (V.stockageAvant > RECETTE_P0_STOCKAGE_MAX_) refus.push('stockage des propriétés trop plein (' + V.stockageAvant + ' octets > ' + RECETTE_P0_STOCKAGE_MAX_ + ' ; quota 500 000 ; faire de la place = décision de Michel)');
+    if (refus.length) stop('⛔ ' + refus.join(' · ') + ' — on s\'arrête, rien n\'a été écrit.');
     declAvant = recetteP0Handlers_();
     V.gardes = true; V.dossier = nomDossier;
-    note('R1', true, 'projet de TEST préparé · dossier « ' + nomDossier + ' » · ' + cles.length + ' propriété(s), ' + V.stockageAvant + ' octets · ' + declAvant.length + ' déclencheur(s)');
+    note('R1', true, 'projet de TEST préparé · dossier « ' + nomDossier + ' » · ' + cles.length + ' propriété(s), ' + V.stockageAvant + ' octets · ' + declAvant.length + ' déclencheur(s)' + (an.premium ? ' · PREMIUM_EMAILS = copie exacte de la liste codée en dur (' + an.premium.presentes + ' entrées, aucune inconnue)' : ''));
 
     /* ── 1 · ÉTAT S0 : deux comptes fictifs, écrits par le chemin RÉEL d'écriture ── */
     var stamp = Utilities.formatDate(new Date(), 'UTC', 'yyyyMMddHHmmss') + '-' + Utilities.getUuid().slice(0, 4);      // jamais deux fois les mêmes comptes, même si on relance dans la seconde
