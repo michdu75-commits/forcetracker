@@ -2042,6 +2042,56 @@ function _logHistShrink_(email, recues, enBase) {
   } catch (e) {}
 }
 
+/* 🧷 F2-A′ (12/11/2026, décision de Michel : « perdre encore 1 ou 2 séances n'est pas acceptable ») — LES SÉANCES SE FUSIONNENT PAR IDENTIFIANT, ELLES NE SE REMPLACENT PLUS.
+   Avant : `existing.sessions = envoi` (le dernier appareil écrit gagne) + un garde-fou de TAILLE (refus sous 60 % de la base, dès 30 séances) qui laissait passer un envoi de 50 contre 51 à 83 en base
+   — donc 1 à 33 séances effacées en silence — et qui, au-delà, refusait AUSSI les séances neuves de l'envoi.
+   Maintenant : résultat = séances de la base, INTACTES et dans leur ordre, + séances de l'envoi que la base ne connaît pas, ajoutées à la fin. ⛔ AUCUNE SUPPRESSION IMPLICITE, même pour une seule séance absente.
+   · IDENTITÉ = `String(id)` (le client fait pareil : 123 et "123" sont la même séance ; ni casse ni espaces touchés). Un `id` vide, non fini ou non scalaire n'en est pas un. SANS `id` : empreinte stricte
+     de tout le contenu hors `synced` (comme `_empreinteSeance`, state.js), comptée UNE FOIS POUR UNE (multi-ensemble) — une copie identique est reconnue, une séance modifiée reste en deux versions : un doublon vaut mieux qu'une perte.
+   · MÊME IDENTITÉ, CONTENU DIFFÉRENT (séance corrigée, `synced` basculé) → la version de l'ENVOI remplace celle de la base, à sa place : c'est le comportement d'avant, séance par séance.
+     ⚠️ LE DERNIER ARRIVÉ GAGNE DONC ENCORE sur un même identifiant modifié : l'ensemble des IDENTIFIANTS ne dépend pas de l'ordre des appareils, la VERSION d'une séance modifiée, si.
+   · Un envoi VIDE, absent, ou invalide (pas une liste) ne change rien. Une entrée qui n'est pas un objet est ignorée (jamais écrite) ; ce que la base contient déjà, même douteux, n'est jamais touché.
+   · Rejouer le même envoi ne change plus rien (idempotent) ; deux envois concurrents s'additionnent (tout `saveProfile` est sous verrou).
+   ⛔ CONSÉQUENCE ASSUMÉE, TEMPORAIRE (avant F2-B) : une suppression VOLONTAIRE (séance, activité, import « Remplacer ») ne se propage plus au serveur — la séance revient à une restauration ou sur un nouvel appareil. Le registre
+     des suppressions (même moteur que Nutrition, NUT-SYNC) est le lot suivant. Aucune borne de taille : une base ne fait que croître (un `setProperty` refusé échoue haut et clair, rien n'est écrit — voir le `catch` de `handleSaveProfile_`). */
+function _sessCanon_(v, sansSynced) {
+  if (Array.isArray(v)) return '[' + v.map(function(x) { return _sessCanon_(x, sansSynced); }).join(',') + ']';
+  if (v && typeof v === 'object') {
+    return '{' + Object.keys(v).filter(function(k) { return !(sansSynced && k === 'synced'); }).sort()
+      .map(function(k) { return JSON.stringify(k) + ':' + _sessCanon_(v[k], sansSynced); }).join(',') + '}';
+  }
+  return String(JSON.stringify(v));
+}
+function _sessIdentite_(s) {
+  var id = s.id, t = typeof id;
+  if ((t === 'string' && id.trim() !== '') || (t === 'number' && isFinite(id))) return 'i:' + String(id);
+  return 'e:' + _sessCanon_(s, true);
+}
+function _sessFusion_(stockees, recues) {
+  var liste = stockees.slice(), parId = Object.create(null), libres = Object.create(null);
+  var res = { liste: liste, ajoutees: 0, remplacees: 0, ignorees: 0 };
+  function valide(s) { return !!s && typeof s === 'object' && !Array.isArray(s); }
+  liste.forEach(function(s, i) {
+    if (!valide(s)) return;                                   // ce qui est déjà en base n'est jamais jugé ni retiré
+    var k = _sessIdentite_(s);
+    if (k.charAt(0) === 'i') { if (!(k in parId)) parId[k] = i; }
+    else (libres[k] || (libres[k] = [])).push(i);
+  });
+  recues.forEach(function(s) {
+    if (!valide(s)) { res.ignorees++; return; }
+    var k = _sessIdentite_(s), j;
+    if (k.charAt(0) === 'i') {
+      if (!(k in parId)) { parId[k] = liste.length; liste.push(s); res.ajoutees++; return; }
+      j = parId[k];
+    } else {
+      if (!libres[k] || !libres[k].length) { liste.push(s); res.ajoutees++; return; }
+      j = libres[k].shift();
+    }
+    if (JSON.stringify(liste[j]) !== JSON.stringify(s)) { liste[j] = s; res.remplacees++; }
+  });
+  return res;
+}
+
 /* 🙈 D-141 MINIMAL (29/10/2026, mission de Michel) — LES MASQUAGES NUTRITION (« ✕ ») SURVIVENT AU SERVEUR.
    `hiddenFoods` = des DATES DE DÉPART {k, t} : `k` = l'identité d'un aliment (`id:…`, `nom:…`) ou `*` (la remise à zéro), `t` = l'instant
    (ms). Avant ce lot, la liste blanche de `handleSaveProfile_` ne la nommait pas : elle partait du téléphone et était jetée ici.
@@ -2292,21 +2342,24 @@ function handleSaveProfile_(body) {
 
     // Tableaux entraînement : [] n'écrase pas des données existantes
     if (body.sessions !== undefined) {
-      const inSess = body.sessions || [], exSess = existing.sessions || [];
-      // ⚠️ GARDE-FOU ÉLARGI le 02/08. Il ne refusait qu'un envoi VIDE — donc un envoi de 50
-      // séances remplaçait sans broncher un historique de 500. Chemin réel : le stockage du
-      // téléphone sature, l'app tronque l'historique local à 50, et la sauvegarde suivante
-      // écrasait le cloud. On refuse maintenant tout RÉTRÉCISSEMENT BRUTAL (règle d'or n°1).
-      // Seuils : on ne juge que si le cloud a déjà un vrai historique (>= 30 séances), et on
-      // laisse passer les suppressions ordinaires (jusqu'à 40 % en une fois).
-      const SEUIL_MINI = 30, PART_MINI = 0.6;
-      const vide      = inSess.length === 0 && exSess.length > 0;
-      const retreci   = exSess.length >= SEUIL_MINI && inSess.length < exSess.length * PART_MINI;
-      if (vide || retreci) {
-        Logger.log('[FT GARDE-FOU sessions] refusé : ' + inSess.length + ' reçues contre ' +
-                   exSess.length + ' en base — historique conservé');
-        _logHistShrink_(email, inSess.length, exSess.length);
-      } else { existing.sessions = inSess; }
+      /* 🧷 F2-A′ : FUSION par identifiant, jamais de remplacement — le détail, la règle et ses limites sont au-dessus de `_sessFusion_`. Remplace le garde-fou de TAILLE du 02/08
+         (refus sous 60 % de la base dès 30 séances), qui laissait passer 50 envoyées contre 51 à 83 en base. Le SIGNAL est gardé (même carte Admin) : un envoi bien plus court que la base
+         reste le symptôme d'un appareil amputé — mais plus rien n'est refusé, donc plus rien n'est perdu, ni les séances de la base ni les séances neuves de l'envoi. */
+      const exSess = Array.isArray(existing.sessions) ? existing.sessions : [];
+      if (body.sessions !== null && !Array.isArray(body.sessions)) {
+        Logger.log('[FT sessions] liste reçue invalide (' + typeof body.sessions + ') : ignorée, séances de la base inchangées');
+      } else {
+        const inSess = body.sessions || [];
+        const SEUIL_SIGNAL = 30, PART_SIGNAL = 0.6;           // signal seulement : ne refuse RIEN
+        const vide    = inSess.length === 0 && exSess.length > 0;
+        const retreci = exSess.length >= SEUIL_SIGNAL && inSess.length < exSess.length * PART_SIGNAL;
+        if (vide || retreci) {
+          Logger.log('[FT sessions] envoi plus court que la base : ' + inSess.length + ' reçues contre ' +
+                     exSess.length + ' en base — aucune séance retirée, les neuves sont ajoutées');
+          _logHistShrink_(email, inSess.length, exSess.length);
+        }
+        existing.sessions = _sessFusion_(exSess, inSess).liste;
+      }
     }
     if (body.prs !== undefined) {
       const inPrs = Object.keys(body.prs||{}).length, exPrs = Object.keys(existing.prs||{}).length;
