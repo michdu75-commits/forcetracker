@@ -44,9 +44,11 @@ MUTATIONS = [
      #      premier — puis le temoin I2e a ete ajoute pour couvrir cette branche.
      'p_data', ['I2e', 'FZ1']),
     # ── les garde-fous d Apps Script ─────────────────────────────────────────────────
-    ('Apps Script perd son garde anti-retrecissement des seances',
-     'Code.js', 'const SEUIL_MINI = 30, PART_MINI = 0.6;',
-     'const SEUIL_MINI = 99999, PART_MINI = 0;', ['SR-a']),
+    # F2-A' (12/11/2026) : le garde de TAILLE (60 % des 30) est remplace par une FUSION par identifiant. L'ancre `SEUIL_MINI` n'existe plus ; la garantie
+    #     « 500 -> 50 ne perd rien » repose maintenant sur la fusion — on la casse en revenant au REMPLACEMENT (le comportement d'avant la correction).
+    ('Apps Script perd la fusion des seances (retour au remplacement : le dernier envoi gagne)',
+     'Code.js', 'existing.sessions = _sessFusion_(exSess, inSess).liste;',
+     'existing.sessions = inSess;', ['SR-a', 'M1a', 'M5-AB', 'M5-BA', 'S3a']),
     ('l aide _pa_ cesse de refuser un tableau vide',
      'Code.js', 'return(bi.length>0||ei.length===0)?bi:ei;', 'return bi;', ['M4c']),
     # ⭐⭐ [vert attendu] MUTANT EQUIVALENT, ET LA RAISON EST MESUREE, PAS SUPPOSEE.

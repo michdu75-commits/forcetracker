@@ -1118,8 +1118,8 @@ async function blocG(c) {
     // le « second appareil » (B) n'a jamais vu l'activité : sa sauvegarde périmée passe APRÈS celle de A
     const r2 = h.sauver(corps(ref, jB)); const apres = (h.lire(EM) || {}).sessions || [];
     const perdue = !apres.some(s => s && s.autre);
-    t(P + '5 T30 / T31 (VRAI Code.js, 2ᵉ appareil SIMULÉ) : LIMITE CONNUE, MESURÉE — le serveur applique « dernier écrivain gagne » à la liste ENTIÈRE : la sauvegarde périmée d\'un 2ᵉ appareil qui n\'a jamais vu l\'activité l\'efface du classeur (statut ' + r2.status + ') ; c\'est le même comportement que pour toute séance (banc de chaos M1a) et la restauration par union (témoin suivant) la rattrape',
-      W('T30', 'dernier écrivain gagne', 'limite mesurée : la liste périmée écrase', perdue === true || r2.status !== 'ok', { statut: r2.status, activitePerdue: perdue, n: apres.length }, 'banc C-ACT-G5', { simule: true })
+    t(P + '5 T30 / T31 (VRAI Code.js, 2ᵉ appareil SIMULÉ) : F2-A′ (12/11/2026) LÈVE LA LIMITE « dernier écrivain gagne » côté serveur — la sauvegarde périmée d\'un 2ᵉ appareil qui n\'a jamais vu l\'activité NE L\'EFFACE PLUS (statut ' + r2.status + ', ' + apres.length + ' séances dont l\'activité : le serveur FUSIONNE la liste par identifiant) ; c\'est le même comportement que pour toute séance (banc de chaos M1a)',
+      W('T30', 'fusion par identifiant (F2-A′)', 'la liste périmée d\'un 2ᵉ appareil n\'efface plus l\'activité', perdue === false && r2.status === 'ok' && apres.length === 5, { statut: r2.status, activitePerdue: perdue, n: apres.length }, 'banc C-ACT-G5', { simule: true })
       && W('T31', 'second appareil (serveur)', 'comportement du serveur pour l\'activité identique à celui d\'une séance', true, { n: apres.length }, 'banc C-ACT-G5', { simule: true }), _det({ statut: r2.status, activitePerdue: perdue, n: apres.length }));
   }
 
