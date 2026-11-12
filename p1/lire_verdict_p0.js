@@ -45,16 +45,29 @@ let ok = 0, rouge = 0; const t = (n, c, d) => { c ? ok++ : rouge++; console.log(
     console.log('   VERDICT_P0 ' + (m ? m[1] + ' · ' + m[2] + ' · ' + m[3] : 'AUCUN (la fonction n\'a pas encore été exécutée, ou elle s\'est arrêtée avant d\'écrire son marqueur)'));
     if (dernier) {
       const med = await get('https://www.googleapis.com/drive/v3/files/' + dernier.id + '?alt=media', true);
-      if (med.s === 200) { let v = null; try { v = JSON.parse(med.txt); } catch (e) { /* texte */ } console.log('   contenu du dernier marqueur (sans adresse) : ' + sansMail(v ? JSON.stringify({ pass: v.pass, r: v.r, dureeMs: v.dureeMs, erreur: v.erreur }) : med.txt).slice(0, 600)); }
+      if (med.s === 200) {
+        let v = null; try { v = JSON.parse(med.txt); } catch (e) { /* texte */ }
+        console.log('   contenu du dernier marqueur (sans adresse) : ' + sansMail(v ? JSON.stringify({ pass: v.pass, r: v.r, dureeMs: v.dureeMs, erreur: v.erreur, gardes: v.gardes, dossier: v.dossier, stockageAvant: v.stockageAvant }) : med.txt).slice(0, 700));
+        /* LES PREUVES, critère par critère (R1–R10) : c'est là que se lisent les comptes 60 → 63 → 60 → 63 (R2, R3, R4/R5, R8). Comptes fictifs seulement ; aucune adresse n'est affichée. */
+        if (v && v.d) Object.keys(v.d).forEach((k) => console.log('       ' + k + ' · ' + (v.r && v.r[k] ? 'OK' : 'KO') + ' · ' + sansMail(v.d[k]).slice(0, 520)));
+      }
       else console.log('   (contenu du marqueur non lisible avec ce jeton : HTTP ' + med.s + ' — le NOM suffit)');
     }
   }
-  /* la production : des NOMBRES seulement */
+  /* la production : des NOMBRES et des HEURES seulement — jamais un nom, jamais un contenu */
+  const BASE_PROD = '2026-11-11T01:31:41';   // l'élément le plus récent vu le 11/11 avant tout essai (étape « verifier » d'avant) : ce qui est plus récent doit tomber sur les passages programmés de la production (02 h et 14 h, heure de Paris = 01 h et 13 h UTC en hiver)
   for (const pd of prods) {
     const en = await lister("'" + pd.id + "' in parents and trashed=false", 'id,mimeType,createdTime');
     let n = en.files.length, recent = en.files.length ? en.files[en.files.length - 1].createdTime : '';
-    for (const sd of en.files.filter((x) => x.mimeType === 'application/vnd.google-apps.folder')) { const f2 = await lister("'" + sd.id + "' in parents and trashed=false", 'id,createdTime'); n += f2.files.length; if (f2.files.length && String(f2.files[f2.files.length - 1].createdTime) > String(recent)) recent = f2.files[f2.files.length - 1].createdTime; }
+    const nouveaux = en.files.map((x) => String(x.createdTime).slice(0, 19)).filter((h) => h > BASE_PROD);
+    for (const sd of en.files.filter((x) => x.mimeType === 'application/vnd.google-apps.folder')) {
+      const f2 = await lister("'" + sd.id + "' in parents and trashed=false", 'id,createdTime'); n += f2.files.length;
+      if (f2.files.length && String(f2.files[f2.files.length - 1].createdTime) > String(recent)) recent = f2.files[f2.files.length - 1].createdTime;
+      f2.files.map((x) => String(x.createdTime).slice(0, 19)).filter((h) => h > BASE_PROD).forEach((h) => nouveaux.push(h));
+    }
+    nouveaux.sort();
     console.log('       PROD_DOSSIER_SAUVEGARDE_COMPTE ' + masque(pd.id) + ' : ' + n + ' élément(s) au total, le plus récent créé ' + String(recent).slice(0, 19) + ' (compte seulement ; à comparer à l\'étape « verifier » d\'avant)');
+    console.log('       PROD_CREES_APRES_LA_BASE ' + BASE_PROD + ' UTC : ' + nouveaux.length + ' élément(s) · heures UTC : ' + (nouveaux.join(' · ') || '(aucun)'));
   }
   console.log('\n──── ' + ok + ' OK / ' + rouge + ' ROUGE ────'); process.exit(rouge ? 1 : 0);
 })().catch((e) => { console.error('⛔ ' + (e && e.message || e)); process.exit(2); });
