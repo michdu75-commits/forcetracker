@@ -963,6 +963,39 @@ module.exports.ecran = async function (t, b, PORT) {
   t('IPDF-D01 ⭐⭐ « Séance 3 – facultative » après « Séance 3 » reste UNE séance à part (4 séances), idem « Séance 3 bis » et « Séance facultative » ; la fusion par numéro des sections d\'une même séance est INTACTE (Dorsaux + Biceps = 1 ; deux sections d\'une même facultative = 1)',
     sFac.length === 4 && sBis.length === 2 && sSans.length === 2 && sTrois.length === 1 && sDeux.length === 1 && /facultative/i.test(sDeux[0]) && /facultative/i.test(sFac[3]), js({ sFac, sBis, sSans, sTrois, sDeux }));
   });
+  await section('Q', async () => {
+  // ── Q. LE RATTACHEMENT CATALOGUE NE FAIT PAS PERDRE LA PREUVE D'ÉCHAUFFEMENT (IMPORT PDF, 13/11/2026 — « reprise du chantier », priorité n°1 : « distinction É/N ») ──
+  //    Le cas : la ligne d'échauffement porte un NOM voisin de celui du travail mais pas identique (« Squats - échauffement » / « Squat à la Barre ») : le catalogue PROPOSE
+  //    « ≈ Rattacher à Squat à la Barre ? » ET le regroupement est PROPOSÉ (jamais fait d'office : une ressemblance de nom n'autorise pas une fusion, décision de Michel du 02/11).
+  //    Mesuré avant ce correctif : « ✓ Oui » PUIS « Regrouper » donnait UN exercice de 6 séries NNNNNN — les échauffements devenaient des séries de travail, sans un mot —
+  //    parce que le « Oui » remplace le nom (le marqueur « - échauffement » disparaît avec lui) et que `_typesLigneImport` ne lisait que le nom COURANT.
+  //    ⛔ TOUT EST INVENTÉ. Les deux ordres de gestes doivent donner le même exercice ; et « Garder séparés » n'est jamais contourné.
+  const SQ = { name: 'Programme test Q', weeks: 4, startDate: '', days: [{ label: 'SÉANCE 1', exercises: [
+    L('Squats - échauffement', 3, 0, 0, '', { repsPerSet: [8, 4, 2], kgPerSet: [20, 40, 60] }),
+    L('Squat à la Barre', 3, 0, 0, 'RIR 2', { repsPerSet: [3, 3, 3], kgPerSet: [80, 75, 75] })] }] };
+  const geste = async (ordre) => {
+    await importer(SQ);
+    return pg.evaluate((ordre) => {
+      const lire = () => ((_impExtracted.days[0] || {}).exercises || []).map((e, i) => ({ i, nom: e.name, n: _seriesImport(e).n, sug: !!e._vmSuggest, prop: e._propGrp ? e._propRole : null }));
+      const avant = lire();
+      const oui = () => { const s = lire().find(x => x.sug); if (s) impAcceptMatch(0, s.i); };
+      const reg = () => { const w = lire().find(x => x.prop === 'travail'); if (w) impGrouperEch(0, w.i); };
+      const sep = () => { const w = lire().find(x => x.prop === 'travail'); if (w) impGarderSepares(0, w.i); };
+      if (ordre === 'oui-puis-regrouper') { oui(); reg(); } else if (ordre === 'regrouper-puis-oui') { reg(); oui(); } else { oui(); sep(); }
+      finalImportProg();
+      const p = S.programmes[S.programmes.length - 1];
+      return { avant, enr: (p.days[0].exs || []).map(e => ({ nom: e.name, n: (e.sets || []).length, types: (e.sets || []).map(s => s.type || 'N').join(''),
+        kg: (e.sets || []).map(s => s.kg).join(','), reps: (e.sets || []).map(s => s.reps).join(',') })) };
+    }, ordre);
+  };
+  const gOP = await geste('oui-puis-regrouper'), gPO = await geste('regrouper-puis-oui'), gSEP = await geste('oui-puis-garder-separes');
+  const scenarioOK = g => g.avant.length === 2 && g.avant[0].sug && g.avant[0].prop === 'ech' && g.avant[1].prop === 'travail';
+  const UN = g => g.enr.length === 1 && g.enr[0].nom === 'Squat à la Barre' && g.enr[0].n === 6 && g.enr[0].types === 'ÉÉÉNNN' && g.enr[0].kg === '20,40,60,80,75,75' && g.enr[0].reps === '8,4,2,3,3,3';
+  t('IPDF-G00 le scénario est bien celui voulu : deux cartes, le rattachement catalogue est PROPOSÉ sur l\'échauffement, le regroupement est PROPOSÉ (rien fusionné d\'office)', scenarioOK(gOP) && scenarioOK(gPO), js({ gOP: gOP.avant, gPO: gPO.avant }));
+  t('IPDF-G01 ⭐⭐ « ✓ Oui » au rattachement PUIS « Regrouper » : UN exercice de 6 séries, types ÉÉÉNNN, charges et reps dans l\'ordre du document — les échauffements ne deviennent pas des séries de travail', UN(gOP), js(gOP.enr));
+  t('IPDF-G02 ⭐ l\'autre ordre (« Regrouper » puis « Oui ») donne EXACTEMENT le même exercice', UN(gPO), js(gPO.enr));
+  t('IPDF-G03 ⛔ « Garder séparés » reste respecté : deux exercices de 3 séries (NNN et NNN), rien n\'est retypé ni fusionné sans la personne', gSEP.enr.length === 2 && gSEP.enr.every(e => e.n === 3 && e.types === 'NNN'), js(gSEP.enr));
+  });
   t('IIF-C04 aucune erreur de page, aucun appel réel', errs.length === 0 && reels === 0, js({ errs, reels }));
   await cx.close();
   function S_IDX() { return 0; }

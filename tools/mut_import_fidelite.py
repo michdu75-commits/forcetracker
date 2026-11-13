@@ -189,7 +189,7 @@ MUT = [
      [(LO, "    _impConserverSpeciales();    // les séries « en couleur » du document ne sont plus jetées en silence\n", "    _impConserverSpeciales();    // les séries « en couleur » du document ne sont plus jetées en silence\n    ((_impExtracted&&_impExtracted.days)||[]).forEach(d=>(d.exercises||[]).forEach(e=>{ if(_seriesImport(e).reps.some(r=>r==null))e.note=(e.note?e.note+' | ':'')+'Répétitions non écrites dans le document : 10 proposées, à corriger'; }));\n")], 'GARDE'),
     # ── IMPORT PDF (08/11/2026, « GO CORRECTIF IMPORT PDF ») : « X - échauffement » + « X », plage = borne basse, séance facultative, commentaires ──
     ('M81 la forme « X - échauffement » (marqueur À LA FIN du nom) n\'est plus une preuve d\'échauffement : deux cartes, comme sur l\'iPhone de Michel',
-     [(LO, "||_echNomTete(ex.name)!==null||_echNomQueue(ex.name)!==null||_noteEch(ex.note);", "||_echNomTete(ex.name)!==null||_noteEch(ex.note);")], 'GARDE'),
+     [(LO, "||_echNomTete(nomDoc)!==null||_echNomQueue(nomDoc)!==null||_noteEch(ex.note);", "||_echNomTete(nomDoc)!==null||_noteEch(ex.note);")], 'GARDE'),
     ('M82 le nom de base ne perd plus son suffixe « - échauffement » : la clé d\'identité diffère, rien n\'est regroupé',
      [(LO, "function _nomBlocImport(ex){ return _nomSansEch(ex.name)||_echNomTete(ex.name)||_echNomQueue(ex.name)||String(ex.name||'').trim(); }", "function _nomBlocImport(ex){ return _nomSansEch(ex.name)||_echNomTete(ex.name)||String(ex.name||'').trim(); }")], 'GARDE'),
     ('M83 N\'IMPORTE QUELLE fin de nom devient un marqueur : « Squat - Bulgare » est pris pour un échauffement du squat classique',
@@ -220,6 +220,9 @@ MUT = [
      [(LO, "if(x.repos.txt)nPlage++; }); }));", "if(false)nPlage++; }); }));")], 'GARDE'),
     ('M96 le balayage des séparateurs ne regarde que le DERNIER : « Squat | warm-up » (le mot contient lui-même un tiret) n\'est plus reconnu',
      [(LO, "for(let k=seps.length-1;k>=0;k--){", "for(let k=seps.length-1;k>=seps.length-1;k--){")], 'GARDE'),
+    # ── IMPORT PDF (13/11/2026, reprise) : le rattachement catalogue ne fait pas perdre la preuve d'échauffement ──
+    ('M97 la preuve d\'échauffement ne lit plus que le nom COURANT (`_vmFrom` ignoré) : « ✓ Oui » au rattachement PUIS « Regrouper » retypent les échauffements en séries de travail (NNNNNN)',
+     [(LO, "const nomDoc=ex._vmFrom||ex.name;", "const nomDoc=ex.name;")], 'GARDE'),
 ]
 
 BANC = os.path.join('tools', 'banc_import_fidelite.js')

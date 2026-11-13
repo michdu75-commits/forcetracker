@@ -7782,7 +7782,12 @@ function _typesLigneImport(ex){
   const n=_seriesImport(ex).n;
   if(Array.isArray(ex.setTypePerSet)&&ex.setTypePerSet.length)   // le structuré passe AVANT le texte
     return Array.from({length:n},(_,s)=>String(ex.setTypePerSet[s]||'').toUpperCase()==='W'?'W':'');
-  const w=String(ex.setType||'').toUpperCase()==='W'||_nomSansEch(ex.name)!==null||_echNomTete(ex.name)!==null||_echNomQueue(ex.name)!==null||_noteEch(ex.note);
+  /* 🔎 LA PREUVE VIENT DU NOM ÉCRIT DANS LE DOCUMENT, PAS DU NOM COURANT (IMPORT PDF, 13/11/2026, reprise — « distinction É/N »).
+     Un rattachement catalogue, accepté d'un « ✓ Oui » ou fait tout seul, REMPLACE le nom par celui du catalogue (« Squats - échauffement » → « Squat à la Barre ») et le marqueur
+     disparaît avec lui ; `_vmFrom` garde le nom ÉCRIT. Mesuré (sonde du 13/11) : « ✓ Oui » au rattachement PUIS « Regrouper » donnait UN exercice de 6 séries NNNNNN — les échauffements
+     devenaient des séries de travail, sans un mot ; dans l'autre ordre (« Regrouper » puis « Oui »), ÉÉÉNNN. Le résultat ne dépend plus de l'ordre des gestes. */
+  const nomDoc=ex._vmFrom||ex.name;
+  const w=String(ex.setType||'').toUpperCase()==='W'||_nomSansEch(nomDoc)!==null||_echNomTete(nomDoc)!==null||_echNomQueue(nomDoc)!==null||_noteEch(ex.note);
   return Array(n).fill(w?'W':'');
 }
 function _wPuisTravail(T){ let trav=false; for(const v of T){ if(v!=='W')trav=true; else if(trav)return false; } return true; }
