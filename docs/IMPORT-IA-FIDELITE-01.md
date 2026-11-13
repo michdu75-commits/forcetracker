@@ -483,3 +483,22 @@ Sonde de noms voisins (14 paires, tout inventé) : 8 paires se regroupent dès l
 | Fichiers applicatifs touchés | **1** — `log.js` (+6 −1) |
 | Lignes ajoutées − retirées | **+5** (dont 4 lignes de commentaire « pourquoi ») |
 | Anciens chemins supprimés / fusionnés | **1** — la troncature silencieuse à la 8ᵉ page (`Math.min(pdf.numPages, MAX_PAGES)`) |
+
+## 23. Stabilisation de l'intégration — 13/11/2026 soir (« GO STABILISATION IMPORT PDF + F2-A′ », option A de Michel, D-159)
+
+> **Contexte.** La D-031 classique complète de l'intégration (branche `claude/integration-import-f2a-2026-11-13`, tête `70c0c2ab`) a donné **8 835 ✅ / 10 ❌** : les 7 échecs préexistants de D-156 + **3 rouges nouveaux du lot import**, tous dans de vieux blocs du runner. Michel autorise l'option A (D-159) : corriger sans élargir, rejouer, et s'arrêter à la moindre régression nouvelle. **États : corrigé sur branche · intégré sur la branche d'intégration · non publié · non vérifié sur iPhone.** Le Worker reste dans son commit séparé, non déployé.
+
+| Rouge | Nature | Correction | Preuve |
+|---|---|---|---|
+| `CCLXXIII` | **défaut réel** : `_materielNoteContredit` lit `ex.note` sans garde ; le Worker PUBLIÉ ne garantit pas ce champ pour un programme → l'import échoue (message d'erreur) et coûte un import gratuit | `log.js` : `_normEx(String(nom\|\|''))` dans `_materielsEcrits` (1 ligne + 2 de commentaire) | témoins `IPDF-I00/I01/I02` (rouges avant, verts après : 157 OK / 0) · mutation **M106** · bloc rejoué seul : 8 OK · sonde sur le vrai chemin d'import |
+| `CCLXXIV` | **témoin périmé** : affirmait « une plage vaut 0 s » (alternative (a) écartée par D-153) | `runner.js` : attendu `[90,90,90]`, libellé D-153 ; commentaire du bloc | rougit sous 3 mutants de `_reposLire(..).prop` (0 · moyenne 105 · borne haute 120) |
+| `B-CCCVIII ⑧` | **garde trop large** : refusait tout `setTypePerSet` dans `worker.js` | `runner.js` : le garde lit `HIST_PROMPT` + la branche `kind === 'history'` ; un témoin exige que ces extraits existent | rougit sous 3 mutants (prompt d'historique · sa branche · extraction cassée) ; `worker.js` inchangé |
+
+**Pourquoi rien ne l'avait vu** : les bancs dédiés du lot (fidélité, corpus, contrat Worker) sont verts et ne rejouent pas ces trois vieux blocs ; la D-031 complète n'avait pas été jouée sur le lot intégré à master. **Ce que cette stabilisation ne change pas** : aucune donnée persistée, aucun comportement du Worker, aucune règle de D-153 (une plage reste sa borne basse, le texte reste conservé), `_secRepos` (lu aussi par Milo) inchangé, aucune publication.
+
+| Compteur règle d'or #17 (code applicatif) | Valeur |
+|---|---|
+| Données persistées ajoutées | **0** |
+| Fichiers applicatifs touchés | **1** — `log.js` (+3 −1) |
+| Lignes ajoutées − retirées | **+2** (dont 2 lignes de commentaire « pourquoi » : la ligne de code est modifiée, pas ajoutée) |
+| Anciens chemins supprimés / fusionnés | **0** |
