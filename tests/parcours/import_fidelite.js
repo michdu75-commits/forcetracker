@@ -996,6 +996,47 @@ module.exports.ecran = async function (t, b, PORT) {
   t('IPDF-G02 ⭐ l\'autre ordre (« Regrouper » puis « Oui ») donne EXACTEMENT le même exercice', UN(gPO), js(gPO.enr));
   t('IPDF-G03 ⛔ « Garder séparés » reste respecté : deux exercices de 3 séries (NNN et NNN), rien n\'est retypé ni fusionné sans la personne', gSEP.enr.length === 2 && gSEP.enr.every(e => e.n === 3 && e.types === 'NNN'), js(gSEP.enr));
   });
+  await section('R', async () => {
+  // ── R. UN PDF DE PLUS DE 8 PAGES EST REFUSÉ, JAMAIS TRONQUÉ (IMPORT PDF, 13/11/2026 — « GO correctif PDF supérieur à 8 pages » de Michel) ──
+  //    Sa décision du 07/10 (brief D4, numérotée D-056 sur la branche parquée `claude/import-programme-lot1-client` ; ⚠️ D-056 sur MASTER = « Fentes ») : « jamais silencieuse : refusé avec un message clair,
+  //    jamais tronqué ». Avant ce correctif, `_pdfToImages` s'arrêtait à la 8ᵉ page SANS UN MOT : les pages suivantes disparaissaient (une page ignorée peut être la séance facultative d'un programme).
+  //    De 1 à 8 pages : INCHANGÉ. Plus de 8 : refus AVANT tout rendu (aucune importation partielle), message clair, rien d'ajouté.
+  //    ⛔ TOUT EST STUBBÉ (`pdfjsLib`, comme le bloc CCCIII du runner) : aucun binaire, aucun PDF personnel, le nombre de pages est CONTRÔLÉ. Ce qui est éprouvé ici est NOTRE garde, pas pdf.js.
+  const essai = (fichiers, mode, deja) => pg.evaluate(async ([fichiers, mode, deja]) => {
+    const vrai = window.pdfjsLib, vraiToast = window.toast, vraiFetch = window.fetch;
+    const o = { toasts: [], getPage: 0, fetchs: 0 };
+    try {
+      const docs = fichiers.map(n => ({ numPages: n, getPage() { o.getPage++; return Promise.resolve({ getViewport(a) { return { width: 600 * a.scale, height: 800 * a.scale }; }, render() { return { promise: Promise.resolve() }; } }); } }));
+      let k = 0;
+      window.pdfjsLib = { GlobalWorkerOptions: {}, getDocument() { return { promise: Promise.resolve(docs[k++]) }; } };
+      window.toast = (m, t) => { o.toasts.push({ m: String(m), t }); };
+      window.fetch = function () { o.fetchs++; return vraiFetch.apply(this, arguments); };
+      const files = fichiers.map((n, i) => new File([new Uint8Array([37, 80, 68, 70])], 'p' + i + '.pdf', { type: 'application/pdf' }));
+      if (mode === 'programme') {
+        _impPhotos = Array.from({ length: deja || 0 }, (_, i) => ({ type: 'image/jpeg', data: 'x' + i, name: 'avant' + i }));
+        await addImportFile({ files }); o.photos = _impPhotos.length; o.avant = _impPhotos.filter(p => /^avant/.test(p.name)).length;
+      } else { _histPhotos = []; await addHistFile({ files }); o.photos = _histPhotos.length; }
+    } catch (e) { o.erreur = String(e && e.message || e); }
+    finally { window.pdfjsLib = vrai; window.toast = vraiToast; window.fetch = vraiFetch; }
+    return o;
+  }, [fichiers, mode, deja]);
+  const erreursT = r => r.toasts.filter(x => x.t === 'error');
+  const r1 = await essai([1], 'programme'), r7 = await essai([7], 'programme'), r8 = await essai([8], 'programme');
+  const r9 = await essai([9], 'programme', 2), r200 = await essai([200], 'programme'), rMulti = await essai([3, 12], 'programme');
+  const h8 = await essai([8], 'historique'), h9 = await essai([9], 'historique');
+  t('IPDF-H01 ⭐ DE 1 À 8 PAGES : INCHANGÉ — 1 page = 1 image, 7 = 7, 8 = 8 (la limite elle-même passe), aucune erreur',
+    r1.photos === 1 && r7.photos === 7 && r8.photos === 8 && [r1, r7, r8].every(r => erreursT(r).length === 0 && !r.erreur), js({ r1, r7, r8 }));
+  t('IPDF-H02 ⭐⭐ 9 PAGES : REFUSÉ — rien n\'est ajouté (les 2 photos déjà là restent, ni plus ni moins), UN message d\'erreur, aucune page rendue',
+    r9.photos === 2 && r9.avant === 2 && erreursT(r9).length === 1 && r9.getPage === 0 && !r9.erreur, js(r9));
+  t('IPDF-H03 ⭐ le message est CLAIR : il dit le nombre de pages, la limite (8 pages par import) et que rien n\'a été ajouté',
+    !!erreursT(r9)[0] && /\b9 pages/.test(erreursT(r9)[0].m) && /limite/.test(erreursT(r9)[0].m) && /8 pages par import/.test(erreursT(r9)[0].m) && /rien n'a été ajouté/.test(erreursT(r9)[0].m), js(erreursT(r9)));
+  t('IPDF-H04 ⛔ le refus se fait AVANT tout rendu : 200 pages = 0 page rendue, 0 image ajoutée, 0 appel réseau (aucune importation partielle, aucun travail inutile)',
+    r200.getPage === 0 && r200.photos === 0 && r200.fetchs === 0 && erreursT(r200).length === 1, js(r200));
+  t('IPDF-H05 ⭐ plusieurs fichiers choisis d\'un coup : le PDF valide (3 pages) entre EN ENTIER, SEUL le PDF de 12 pages est refusé (aucune de ses pages n\'entre)',
+    rMulti.photos === 3 && rMulti.getPage === 3 && erreursT(rMulti).length === 1 && /12 pages/.test(erreursT(rMulti)[0].m), js(rMulti));
+  t('IPDF-H06 ⭐ le MÊME garde protège l\'import d\'HISTORIQUE (une seule porte, R2) : 8 pages passent, 9 pages sont refusées sans rien ajouter',
+    h8.photos === 8 && erreursT(h8).length === 0 && h9.photos === 0 && erreursT(h9).length === 1 && h9.getPage === 0, js({ h8, h9 }));
+  });
   t('IIF-C04 aucune erreur de page, aucun appel réel', errs.length === 0 && reels === 0, js({ errs, reels }));
   await cx.close();
   function S_IDX() { return 0; }

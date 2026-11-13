@@ -7429,8 +7429,13 @@ async function _pdfOuvrir(f){
 async function _pdfToImages(f){
   const pdf=await _pdfOuvrir(f);
   const MAX_PAGES=8,MAX_DIM=1200;
+  /* 🚫 PLUS DE 8 PAGES = REFUSÉ, JAMAIS TRONQUÉ (IMPORT PDF, 13/11/2026 — « GO correctif PDF supérieur à 8 pages » de Michel ; sa décision du 07/10 : « jamais silencieuse »).
+     Avant : la boucle s'arrêtait à la 8ᵉ page SANS UN MOT — les pages suivantes disparaissaient et rien ne le disait (une page ignorée peut être la séance facultative d'un programme).
+     Le refus se fait AVANT tout rendu : aucune page n'entre (jamais d'import partiel), aucun travail inutile. De 1 à 8 pages : strictement inchangé.
+     ⚠️ Le message est lu derrière « Erreur PDF : » par les deux appelants (programme ET historique : une seule porte, R2) — il dit le nombre de pages, la limite, et que rien n'a été ajouté. */
+  if(pdf.numPages>MAX_PAGES)throw new Error('ce PDF a '+pdf.numPages+' pages, la limite est de '+MAX_PAGES+' pages par import — rien n\'a été ajouté');
   const pages=[];
-  for(let i=1;i<=Math.min(pdf.numPages,MAX_PAGES);i++){
+  for(let i=1;i<=pdf.numPages;i++){
     const page=await pdf.getPage(i);
     const vp0=page.getViewport({scale:1});
     const scale=Math.min(MAX_DIM/vp0.width,MAX_DIM/vp0.height,2);

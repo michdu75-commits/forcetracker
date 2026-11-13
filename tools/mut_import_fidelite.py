@@ -223,6 +223,26 @@ MUT = [
     # ── IMPORT PDF (13/11/2026, reprise) : le rattachement catalogue ne fait pas perdre la preuve d'échauffement ──
     ('M97 la preuve d\'échauffement ne lit plus que le nom COURANT (`_vmFrom` ignoré) : « ✓ Oui » au rattachement PUIS « Regrouper » retypent les échauffements en séries de travail (NNNNNN)',
      [(LO, "const nomDoc=ex._vmFrom||ex.name;", "const nomDoc=ex.name;")], 'GARDE'),
+    # ── IMPORT PDF (13/11/2026, « GO correctif PDF supérieur à 8 pages » de Michel) : plus de 8 pages = REFUSÉ, jamais tronqué ──
+    ('M98 le garde « plus de 8 pages » est retiré : un PDF de 9 pages repasse (le refus disparaît)',
+     [(LO, "  if(pdf.numPages>MAX_PAGES)throw new Error('ce PDF a '+pdf.numPages+' pages, la limite est de '+MAX_PAGES+' pages par import — rien n\\'a été ajouté');\n", '')], 'GARDE'),
+    ('M99 le garde refuse AUSSI 8 pages (`>` devient `>=`) : la limite elle-même ne passe plus',
+     [(LO, "  if(pdf.numPages>MAX_PAGES)throw new Error('ce PDF a '+pdf.numPages+' pages, la limite est de '+MAX_PAGES+' pages par import — rien n\\'a été ajouté');\n", "  if(pdf.numPages>=MAX_PAGES)throw new Error('ce PDF a '+pdf.numPages+' pages, la limite est de '+MAX_PAGES+' pages par import — rien n\\'a été ajouté');\n")], 'GARDE'),
+    ("M100 la TRONCATURE SILENCIEUSE revient (le garde est retiré, la boucle s'arrête de nouveau à la 8ᵉ page) : c'est le défaut d'origine",
+     [(LO, "  if(pdf.numPages>MAX_PAGES)throw new Error('ce PDF a '+pdf.numPages+' pages, la limite est de '+MAX_PAGES+' pages par import — rien n\\'a été ajouté');\n", ''),
+           (LO, '  for(let i=1;i<=pdf.numPages;i++){\n    const page=await pdf.getPage(i);\n', '  for(let i=1;i<=Math.min(pdf.numPages,MAX_PAGES);i++){\n    const page=await pdf.getPage(i);\n')], 'GARDE'),
+    ('M101 la limite descend à 6 pages : 7 et 8 pages sont refusées à tort (de 1 à 8 doit rester inchangé)',
+     [(LO, '  const MAX_PAGES=8,MAX_DIM=1200;\n', '  const MAX_PAGES=6,MAX_DIM=1200;\n')], 'GARDE'),
+    ("M102 le refus arrive APRÈS le rendu des pages (il faut 8 pages rendues avant de refuser) : travail inutile, et l'importation n'est plus refusée AVANT",
+     [(LO, "  if(pdf.numPages>MAX_PAGES)throw new Error('ce PDF a '+pdf.numPages+' pages, la limite est de '+MAX_PAGES+' pages par import — rien n\\'a été ajouté');\n", ''),
+           (LO, '  for(let i=1;i<=pdf.numPages;i++){\n    const page=await pdf.getPage(i);\n', '  for(let i=1;i<=Math.min(pdf.numPages,MAX_PAGES);i++){\n    const page=await pdf.getPage(i);\n'),
+           (LO, "      name:f.name+(pdf.numPages>1?' p.'+i:'')\n    });\n  }\n  return pages;\n", "      name:f.name+(pdf.numPages>1?' p.'+i:'')\n    });\n  }\n  if(pdf.numPages>MAX_PAGES)throw new Error('ce PDF a '+pdf.numPages+' pages, la limite est de '+MAX_PAGES+' pages par import — rien n\\'a été ajouté');\n  return pages;\n")], 'GARDE'),
+    ("M103 le message de refus ne dit plus ni le nombre de pages, ni la limite, ni que rien n'a été ajouté",
+     [(LO, "  if(pdf.numPages>MAX_PAGES)throw new Error('ce PDF a '+pdf.numPages+' pages, la limite est de '+MAX_PAGES+' pages par import — rien n\\'a été ajouté');\n", "  if(pdf.numPages>MAX_PAGES)throw new Error('PDF refusé');\n")], 'GARDE'),
+    ("M104 une erreur sur UN fichier abandonne TOUS les autres (`return` dans le catch de l'import programme) : le PDF valide choisi avec lui n'entre plus",
+     [(LO, "      }catch(e){toast('Erreur PDF : '+(e.message||e),'error');}\n    }\n  }\n  if(results.length){\n    _impPhotos.push(...results);\n", "      }catch(e){toast('Erreur PDF : '+(e.message||e),'error');return;}\n    }\n  }\n  if(results.length){\n    _impPhotos.push(...results);\n")], 'GARDE'),
+    ('M105 le garde tolère une page de plus (`>` devient `> MAX_PAGES+1`) : 9 pages repassent',
+     [(LO, "  if(pdf.numPages>MAX_PAGES)throw new Error('ce PDF a '+pdf.numPages+' pages, la limite est de '+MAX_PAGES+' pages par import — rien n\\'a été ajouté');\n", "  if(pdf.numPages>MAX_PAGES+1)throw new Error('ce PDF a '+pdf.numPages+' pages, la limite est de '+MAX_PAGES+' pages par import — rien n\\'a été ajouté');\n")], 'GARDE'),
 ]
 
 BANC = os.path.join('tools', 'banc_import_fidelite.js')
