@@ -39259,6 +39259,8 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
      (hors ligne, reprise simulée, vrai Code.js, échec d'écriture). La matrice T01-T50 de la mission y est jouée. Blocs C-ACT-*.
      Banc : tools/banc_autre_activite.js · contrôle négatif : tools/mut_autre_activite.py. */
   await require('./autre_activite.js').ecran(t, b, PORT);
+  /* ═══ F2-A′ — séances fusionnées par identifiant, ZÉRO suppression implicite (12/11/2026, D-157, BUGS §146) ═══ 100 % serveur (vm Node + vrais processus pour le verrou) : aucun navigateur, aucun réseau. Banc : tools/banc_f2_seances_union.js · contrôle négatif : tools/mut_f2_seances_union.py. */
+  await require('./f2_seances_union.js').jouer(t);
   /* 📐 D031S-B — LES TÉMOINS PRÉPARÉS DE D-091 (D-031-SÉCURITÉ-01, Claude Nutrition, 19/10/2026), BRANCHÉS le 20/10 par Principal
      avec la livraison de D-091 (lot final ft-v1257), comme le prévoyait la passation (docs/D031-SECURITE-01.md § 6) : le panneau
      « Ta séance jusqu'ici » compte les échauffements validés dans les TOTAUX et dit le travail à part ; la séance enregistrée
