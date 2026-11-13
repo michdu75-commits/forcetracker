@@ -39298,6 +39298,9 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
      d'écriture) passés par la vraie chaîne : programme enregistré série par série, reconnaissance (aucun rattachement faux), chrono
      réellement déclenché pour chaque série. Banc : tools/banc_import_corpus.js · contrôle négatif : tools/mut_import_corpus.py. */
   await require('./import_corpus.js').ecran(t, b, PORT);
+  /* 📥 IMPORT-IA-FIDELITE-01 · LOT A — le Worker CONDUIT (réseau simulé, horloge figée, 0 appel réel) : prompt envoyé, catalogue, réponse
+     tronquée, normalisation. Banc : tools/banc_import_worker_contrat.js · contrôle négatif : tools/mut_import_worker_contrat.py. */
+  await require('./import_worker_contrat.js').reel(t, ROOT, fs, path);
   /* 🔒 SEC-ADMIN-01 (session-B, 09/10/2026) — la route de diagnostic premium (S-01) et `testGardeFou` exigent le jeton admin
      côté serveur (refus sans rien lire ni écrire) ; le mode admin ne change plus l'identité locale ; la carte « Statut
      Premium » présente le jeton ; la carte des comptes dit qu'elle affiche des adresses. Vrai Code.js en local (doGet /
@@ -40181,6 +40184,7 @@ require('./seance_date.js').source(t, ROOT, fs, path);
 require('./seance_repos.js').source(t, ROOT, fs, path);
 require('./import_fidelite.js').pur(t, ROOT, fs, path);   // IMPORT-IA-FIDELITE-01 : la lecture d'un repos écrit par un coach (constants.js exécuté)
 require('./import_corpus.js').source(t, ROOT, fs, path);  // IMPORT-IA-FIDELITE-01 : le corpus est sain (inventé, cohérent, au catalogue)
+require('./import_worker_contrat.js').source(t, ROOT, fs, path);   // IMPORT-IA-FIDELITE-01 · LOT A : le contrat d'import du Worker (parité avec Code.js)
 require('./picker_vignettes.js').source(t, ROOT, fs, path);
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');

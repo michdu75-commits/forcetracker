@@ -40,6 +40,7 @@
 "./import_map.js": 2,
 "./import_map2.js": 1,
 "./import_map_alias.js": 0,
+"./import_worker_contrat.js": 1,
 "./masse_grasse_source.js": 2,
 "./mensurations.js": 1,
 "./milo_pdf1.js": 0,
