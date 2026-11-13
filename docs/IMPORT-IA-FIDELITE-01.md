@@ -448,3 +448,38 @@ Sonde de noms voisins (14 paires, tout inventé) : 8 paires se regroupent dès l
 3. **Un test réel de l'IA ne peut pas se faire hors de l'origine de production** : le Worker refuse toute autre origine (`ALLOWED_ORIGIN`, réponse 403) et le clone coupe le réseau vers lui. Il faut l'app publiée (P-A) ou un Worker de test — aucun n'existe dans le dépôt (`wrangler.toml` ne nomme que `dry-field-e931`).
 4. **G3** (séance facultative = libellé seul), **G4** (commentaire par série = commentaire de l'exercice), **G5** (texte du PDF envoyé à l'IA), **Q5** (le PDF de Michel a-t-il un texte sélectionnable ?) : toujours en attente de Michel.
 5. **Historique de la branche** : les commits `c187c066` et `23ffa132` gardent des charges de développé couché reprises des captures de Michel (remplacées ensuite par des valeurs inventées). Aucune réécriture n'est faite (ni rebase, ni force-push) : décision de Michel.
+
+## 22. Refus des PDF de plus de 8 pages — 13/11/2026 (« GO correctif PDF supérieur à 8 pages » de Michel)
+
+> **Décision de Michel (13/11/2026)** : de 1 à 8 pages, fonctionnement inchangé ; au-delà, **refus explicite avec un message clair, aucune troncature silencieuse, aucune importation partielle**. Elle reprend sa décision du 07/10 (« jamais silencieuse : refusé avec un message clair, jamais tronqué »), numérotée D-056 sur la branche parquée `claude/import-programme-lot1-client` — ⚠️ **D-056 sur master = IMPORT-MAP-02 (Fentes)** : la citer par son énoncé. États : corrigé sur branche · non intégré · non publié · non vérifié sur iPhone.
+
+### 22.1 Le défaut (mesuré avant correctif)
+
+`_pdfToImages` bouclait sur `Math.min(pdf.numPages, MAX_PAGES)` : un PDF de 9 pages ou plus était **lu jusqu'à la 8ᵉ page, sans un mot** — les pages suivantes disparaissaient (une page ignorée peut être la séance facultative d'un programme). Témoins écrits d'abord, joués sur le code NON corrigé : **140 OK / 5 rouge** — 9 pages : 8 images ajoutées (10 avec les 2 photos déjà là), aucune erreur ; 200 pages : 8 pages rendues.
+
+### 22.2 Ce qui change, et ce qui ne change pas
+
+| | |
+|---|---|
+| **Change** | `_pdfToImages` (`log.js`) : `if(pdf.numPages>MAX_PAGES)` → erreur « ce PDF a N pages, la limite est de 8 pages par import — rien n'a été ajouté », **avant tout rendu**. Les deux appelants (import de programme `addImportFile`, import d'historique `addHistFile`) la montrent derrière « Erreur PDF : » — une seule porte (R2), aucun appelant modifié. |
+| **Ne change pas** | 1 à 8 pages (la 8ᵉ elle-même passe) ; le texte du PDF lu pour Milo (`_pdfToText`, `MAX_PAGES=15`, témoin `B-CCCIII ⑩`) ; le plafond de taille (15 Mo) ; le choix de plusieurs fichiers d'un coup : le PDF valide entre en entier, **seul** le PDF de plus de 8 pages est refusé (aucune de ses pages n'entre) |
+| **Reste vrai** | aucun plafond CUMULÉ (deux PDF de 8 pages = 16 images : comportement inchangé, non demandé) ; un PDF long peut être découpé par la personne en deux fichiers |
+
+### 22.3 Validation (13/11/2026, machine seule, sous garde réseau)
+
+| Quoi | Résultat |
+|---|---|
+| Témoins `IPDF-H01` à `H06` (1-8 pages inchangé · 9 pages refusé sans rien ajouter ni rendre · message clair · 200 pages = 0 page rendue, 0 appel réseau · plusieurs fichiers · même garde pour l'historique) | avant correctif **140 OK / 5 rouge** · après **154 OK / 0** |
+| Bancs du lot | corpus **58 / 0** · contrat Worker **198 / 0** |
+| Contrôle négatif | **8/8** nouvelles mutations conformes (M98 garde retiré · M99 `>=` · M100 troncature rétablie · M101 limite à 6 · M102 refus après rendu · M103 message vidé · M104 une erreur abandonne les autres fichiers · M105 `> MAX_PAGES+1`), chacune fait rougir au moins un témoin |
+
+⚠️ **Tout est stubbé** (`pdfjsLib`, comme le bloc CCCIII du runner) : aucun binaire, aucun PDF personnel, le nombre de pages est contrôlé. Ce qui est éprouvé est NOTRE garde, pas pdf.js ; l'affichage du message sur un vrai iPhone n'est pas vérifié.
+
+### 22.4 Compteurs règle d'or #17 (code applicatif uniquement)
+
+| Compteur | Valeur |
+|---|---|
+| Données persistées ajoutées | **0** |
+| Fichiers applicatifs touchés | **1** — `log.js` (+6 −1) |
+| Lignes ajoutées − retirées | **+5** (dont 4 lignes de commentaire « pourquoi ») |
+| Anciens chemins supprimés / fusionnés | **1** — la troncature silencieuse à la 8ᵉ page (`Math.min(pdf.numPages, MAX_PAGES)`) |
