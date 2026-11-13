@@ -1,81 +1,92 @@
-name: Déployer le backend (Apps Script)
+name: "Essai F2-A′ — TEST isolé, LECTURE SEULE (⛔ NE DÉPLOIE RIEN, NE TOUCHE PAS LA PRODUCTION)"
 
-# Se déclenche automatiquement dès que Code.js (ou appsscript.json) change sur master,
-# et peut aussi être lancé à la main depuis l'onglet "Actions" de GitHub.
+# ⛔ CE FICHIER NE VIT QUE SUR LA BRANCHE `test/f2a-prime-2026-11-13` — ⛔ NE JAMAIS LE FUSIONNER.
+#    Il porte le MÊME NOM que le workflow de déploiement de la production : GitHub n'autorise `workflow_dispatch` que pour un fichier déjà
+#    présent sur master, et exécute la version de la branche choisie. Fusionné, il REMPLACERAIT le déploiement de la production.
+# CE QU'IL PEUT FAIRE : lire le projet Apps Script de TEST (API en lecture, un GET « ?test=1 », métadonnées des dossiers « FT-TEST-P1… »).
+# CE QU'IL NE PEUT PAS FAIRE, PAR CONSTRUCTION : `clasp push`, `clasp deploy`, créer une version ou un déploiement, écrire une propriété ou un
+#    compte, contacter la production (les identifiants de production n'apparaissent ici que pour être REFUSÉS ; UN SEUL Script ID est accepté :
+#    celui du TEST). ⚠️ Les identifiants de production de ce fichier sont LUS dans master par un script (jamais tapés) puis recomptés par le banc
+#    `prouver_gardes.py` : une faute de frappe dans une garde = une garde qui ne refuse rien (constatée le 13/11/2026 ailleurs, voir le rapport).
+# « GO TEST F2-A′ LIMITÉ » de Michel (13/11/2026). Toute étape qui écrit (poussée de code, nouvelle version, sonde) exige un GO distinct.
 on:
-  push:
-    branches: [master]
-    paths:
-      - 'Code.js'
-      - 'appsscript.json'
-      # `.claspignore` décide de CE QUI PART en prod : le corriger doit redéployer.
-      # Ajouté le 04/08 après un correctif de `.claspignore` qui n'a relancé aucun
-      # run — le déploiement restait donc cassé, en silence, sans que rien ne l'indique.
-      - '.claspignore'
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      etape:
+        description: 'verifier (les 13 contrôles d isolement et le code réellement servi) | deploiements (liste des déploiements et des versions du projet de TEST)'
+        required: true
+        default: 'verifier'
+      script_id:
+        description: 'Script ID du projet de TEST (un seul est accepté ; celui de la production est refusé)'
+        required: true
+        default: ''
+      url_exec:
+        description: '(verifier) adresse /exec du déploiement de TEST à contrôler ; jamais celle de la production'
+        required: false
+        default: ''
+
+# moindre privilège : aucun droit d'écriture sur le dépôt, aucun jeton laissé dans .git
+permissions:
+  contents: read
 
 jobs:
-  deploy:
-    runs-on: ubuntu-latest
+  essai:
+    runs-on: ubuntu-24.04   # figé : « ubuntu-latest » est passé en 26.04 (constaté le 06/11/2026)
+    timeout-minutes: 15
     steps:
-      - name: Récupérer le code
+      - name: "Récupérer le code"
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
-      - name: Installer Node
+      - name: "Gardes — cette branche seulement, le Script ID de TEST seulement, jamais la production"
+        env:
+          SCRIPT_ID: ${{ inputs.script_id }}
+          URL_EXEC: ${{ inputs.url_exec }}
+          ETAPE: ${{ inputs.etape }}
+        run: |
+          set -euo pipefail
+          TEST_SID="1gBAmFDy2iEtsM8i5qeBTU5x2RckHqchkizUYgOurhKHw9C-Ymvis8C6m"
+          PROD_SID="1RwE46heNmZrykInYcrMgm1OZWt4NmS6NjTqttvAevZLuqo2v6EEb1Drw"
+          echo "=== ESSAI F2-A′ (lecture seule) · ref ${GITHUB_REF} · étape ${ETAPE} ==="
+          [ "${GITHUB_REF}" != "refs/heads/master" ] || { echo "::error::refus : ce workflow d'essai ne tourne pas sur master"; exit 1; }
+          case "${GITHUB_REF}" in refs/heads/test/f2a-prime-*) ;; *) echo "::error::refus : seule une branche test/f2a-prime-* peut lancer ce workflow"; exit 1;; esac
+          case "$ETAPE" in verifier|deploiements) ;; *) echo "::error::étape inconnue ou non autorisée : $ETAPE"; exit 1;; esac
+          [ "$SCRIPT_ID" != "$PROD_SID" ] || { echo "::error::REFUS : Script ID de production"; exit 1; }
+          [ "$SCRIPT_ID" = "$TEST_SID" ] || { echo "::error::REFUS : ce n'est pas le Script ID du projet de TEST"; exit 1; }
+          case "$URL_EXEC" in
+            *AKfycbxWUsEFIlmx*) echo "::error::REFUS : adresse de production"; exit 1;;
+            "") [ "$ETAPE" = "deploiements" ] || { echo "::error::url_exec vide"; exit 1; };;
+            https://script.google.com/macros/s/*/exec) ;;
+            *) echo "::error::url_exec : format inattendu"; exit 1;;
+          esac
+          echo "✅ gardes passées : branche d'essai · Script ID = celui du TEST · aucune adresse de production"
+
+      - name: "Installer Node"
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
-      - name: Installer clasp
-        run: npm install -g @google/clasp@3.3.0
-
-      - name: Restaurer l'authentification clasp (depuis le secret)
+      - name: "Vérifier un déploiement de TEST et son isolement (LECTURE SEULE : API Apps Script, métadonnées des dossiers FT-TEST-P1, un GET test=1 ; aucun secret ni adresse affichés)"
+        if: ${{ inputs.etape == 'verifier' }}
         env:
+          SCRIPT_ID: ${{ inputs.script_id }}
+          URL_EXEC: ${{ inputs.url_exec }}
           CLASPRC_JSON: ${{ secrets.CLASPRC_JSON }}
-        run: printf '%s' "$CLASPRC_JSON" > "$HOME/.clasprc.json"
-
-      - name: Pousser Code.js (respecte .claspignore = seulement Code.js + appsscript.json)
-        run: clasp push --force
-
-      - name: Redéployer la web app (déploiement existant — clasp v3 create-deployment, repli sur deploy)
         run: |
-          ID=AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNqCztZNDMD9N4qbA
-          clasp create-deployment -i "$ID" -d "Auto-deploy GitHub" || clasp deploy -i "$ID" -d "Auto-deploy GitHub"
+          set -euo pipefail
+          [ "$SCRIPT_ID" != "1RwE46heNmZrykInYcrMgm1OZWt4NmS6NjTqttvAevZLuqo2v6EEb1Drw" ] || { echo "::error::REFUS : Script ID de production"; exit 1; }
+          case "$URL_EXEC" in *AKfycbxWUsEFIlmx*) echo "::error::REFUS : adresse de production"; exit 1;; esac
+          printf '%s' "$CLASPRC_JSON" > "$HOME/.clasprc.json"
+          node p1/verifier_deploiement.js "$SCRIPT_ID" "$URL_EXEC"
 
-      # ⚠️ CETTE ÉTAPE NE VÉRIFIAIT RIEN (constaté le 04/08/2026, run @124).
-      # Deux défauts qui se cumulaient :
-      #   ① `curl -s` sans -L ne SUIT PAS la redirection — or Apps Script redirige toujours vers
-      #      googleusercontent.com. Le journal affichait « Moved Temporarily », jamais la réponse.
-      #   ② `|| true` : l'étape ne pouvait pas échouer, donc le feu vert ne prouvait rien.
-      # C'est la famille « un contrôle qui ne peut pas échouer ne contrôle rien » (BUGS.md §12),
-      # et ça vide la règle R18 de son sens : on vérifiait le push, pas le déploiement.
-      - name: Vérifier que le backend répond VRAIMENT
+      - name: "Inspecter les déploiements du projet de TEST (LECTURE SEULE : API Apps Script, aucun secret affiché)"
+        if: ${{ inputs.etape == 'deploiements' }}
+        env:
+          SCRIPT_ID: ${{ inputs.script_id }}
+          CLASPRC_JSON: ${{ secrets.CLASPRC_JSON }}
         run: |
-          sleep 5
-          REP=$(curl -sSL --max-time 30 "https://script.google.com/macros/s/AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNqCztZNDMD9N4qbA/exec?test=1")
-          echo "Réponse du backend : $REP"
-          echo "$REP" | grep -q '"status":"online"' || {
-            echo "::error::Le backend ne répond PAS « online » après déploiement — l'app est peut-être cassée pour tout le monde."
-            exit 1
-          }
-          echo "✅ Backend en ligne."
-
-      # Contrôle ciblé du correctif du 04/08 : authStatus en mode light doit répondre sans
-      # charger le compte. Sur une adresse inexistante, la réponse doit rester structurée.
-      - name: Vérifier authStatus (mode light)
-        run: |
-          # ⚠️ PAS de -X POST ici : avec -X, curl REJOUE la requête en POST sur l'adresse de
-          # redirection de Google (qui n'accepte que des GET) → « unable to open the file ».
-          # Sans -X, `--data` suffit à faire un POST, et curl bascule en GET après la redirection.
-          # Piège vécu le 04/08 : le run a échoué en désignant le backend, alors que le backend
-          # allait bien — c'était le contrôle qui était faux.
-          REP=$(curl -sSL --max-time 30 \
-            -H "Content-Type: text/plain;charset=utf-8" \
-            --data '{"action":"authStatus","email":"controle-deploiement@exemple.invalid","light":true}' \
-            "https://script.google.com/macros/s/AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNqCztZNDMD9N4qbA/exec")
-          echo "Réponse authStatus : $REP"
-          echo "$REP" | grep -q '"hasCode"' || {
-            echo "::error::authStatus ne répond pas comme attendu."
-            exit 1
-          }
-          echo "✅ authStatus répond."
+          set -euo pipefail
+          [ "$SCRIPT_ID" != "1RwE46heNmZrykInYcrMgm1OZWt4NmS6NjTqttvAevZLuqo2v6EEb1Drw" ] || { echo "::error::REFUS : Script ID de production"; exit 1; }
+          printf '%s' "$CLASPRC_JSON" > "$HOME/.clasprc.json"
+          node p1/inspecter_deploiements.js "$SCRIPT_ID"
