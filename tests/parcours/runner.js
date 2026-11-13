@@ -36175,8 +36175,18 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
     t('B-CCCVIII ⑧ ⛔ PÉRIMÈTRE — le prompt interdit TOUJOURS W et E des deux côtés',
       wk.includes('3. TYPE : UNIQUEMENT "" (Normal) ou "D" (Drop set). JAMAIS "E" ni "W".')
       && cd.includes('3. TYPE : UNIQUEMENT "" (Normal) ou "D" (Drop set). JAMAIS "E" ni "W".'), '');
-    t('B-CCCVIII ⑧ ⛔ PÉRIMÈTRE — aucun `setTypePerSet` pour l\'historique',
-      !/setTypePerSet/.test(wk), '');
+    /* ↪️ 13/11/2026 — D-159 (Michel, « option A » de la stabilisation de l'intégration) : le garde ci-dessous regardait TOUT `worker.js` (`!/setTypePerSet/.test(wk)`). Or le lot
+       IMPORT-IA-FIDELITE-01 apporte légitimement `setTypePerSet` AU WORKER POUR LES PROGRAMMES (prompt programme + normalisation `_exercice`) — rouge de la D-031 complète de l'intégration.
+       Ce que le garde protège n'a pas changé : l'import d'HISTORIQUE n'a pas de `setTypePerSet` (étape 2 non commencée). On lit donc ce que l'historique lit — le prompt `HIST_PROMPT` et la
+       branche `kind === 'history'` de `importDoc` — et NON le fichier entier. ⛔ Un extrait vide ferait passer le garde sans rien regarder : un témoin séparé exige que les deux existent.
+       Le comportement du Worker n'est PAS touché : seul ce garde de périmètre change. */
+    const _hP=(wk.match(/^const HIST_PROMPT = .*$/m)||[''])[0];
+    const _iH=wk.indexOf("if (kind === 'history') {"), _iP=_iH<0?-1:wk.indexOf("if (kind === 'program') {",_iH);
+    const _hB=(_iH>=0&&_iP>_iH)?wk.slice(_iH,_iP):'';
+    t('B-CCCVIII ⑧ ⛔ PÉRIMÈTRE — le garde LIT bien l\'historique : `HIST_PROMPT` et la branche `kind === \'history\'` existent et ne sont pas vides',
+      _hP.length>500 && /extrait TOUTES les séances/.test(_hP) && _hB.length>200 && /sessions/.test(_hB), JSON.stringify({prompt:_hP.length,branche:_hB.length}));
+    t('B-CCCVIII ⑧ ⛔ PÉRIMÈTRE — aucun `setTypePerSet` pour l\'historique (son prompt et sa normalisation, pas le fichier entier : D-159)',
+      !/setTypePerSet/.test(_hP) && !/setTypePerSet/.test(_hB), '');
     t('B-CCCVIII ⑧ ⛔ PÉRIMÈTRE — `_typeAt` n\'a pas été branché sur l\'import d\'historique',
       !/_typeAt/.test(lg.slice(lg.indexOf('function finalImportHist'))), '');
     t('B-CCCVIII ⑧ ⛔ NUTRITION — `typesNormalises` n\'existe nulle part dans `app.js`',
