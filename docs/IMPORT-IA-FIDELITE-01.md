@@ -386,3 +386,65 @@ Bilan cumulé de la branche (vs `e2b942f3`) : **2** données persistées ajouté
 | Anciens chemins supprimés / fusionnés | **1** remplacé — la règle du lot « une plage vaut 0 s » (consigne seulement) devient « une plage vaut sa borne basse » : un seul chemin, pas un second |
 
 ↩️ **Retour arrière** : la branche n'a rien changé hors d'elle-même ; `master` reste `be04f04c`. Aucune donnée n'est migrée : un programme importé par cette version garde ses champs `rest` et `restTxt` ; une version plus ancienne de l'app ignore `restTxt` et lit `rest` (un nombre).
+
+## 21. Reprise du 13/11/2026 — re-vérifié sur le master actuel (`ft-v1266`), et un trou de plus fermé (« distinction É/N »)
+
+> **Ordre de Michel du 13/11/2026** (« REPRISE IMPORT PDF / ÉCHAUFFEMENT EN PARALLÈLE ») : reprendre le chantier du 08/11 **sans le recommencer**, sur cette branche isolée, avec tests ciblés ; **aucun merge master, aucun déploiement, aucun changement du Worker de production** ; le chantier T-bis reste hors périmètre ; ne pas toucher aux fichiers de Claude N°1 (F2-A′) ni aux fichiers communs sans coordination. Coordination faite par message à Claude N°1 (13/11, périmètre : `log.js`, `constants.js`, `coach.js`, `index.html`, `style.css`, `worker.js` non déployé, tests et outils d'import ; aucun fichier de F2-A′). **États : corrigé sur branche · non intégré · non publié · non vérifié sur iPhone.**
+
+### 21.1 Ce qui a été re-mesuré (arbres JETABLES : aucune référence git créée, rien écrit dans le dépôt)
+
+| Quoi | Résultat (13/11/2026, machine seule sous garde réseau) |
+|---|---|
+| Fusion à blanc de `b1217e1b` avec master `fd8bf703` (`ft-v1266`) | **0 conflit de code** (`log.js`, `constants.js`, `coach.js`, `index.html`, `tests/parcours/runner.js`, `repartition-3.json` se fusionnent seuls) ; 4 fichiers de SUIVI à réconcilier : `BUGS.md`, `docs/DECISIONS.md`, `docs/INVENTAIRE.md`, `docs/JOURNAL-DE-PARTAGE.md` |
+| 3 bancs d'import, branche telle quelle (`b1217e1b`) | **144 OK / 0** · **58 / 0** · **198 / 0** — identiques au 08/11 |
+| 3 bancs d'import, arbre fusionné avec master, **avant** le correctif du § 21.3 | **144 / 0** · **58 / 0** · **198 / 0** |
+| 3 bancs d'import, arbre fusionné avec master, **avec** le correctif du § 21.3 (`9b19f2ee`) | **148 / 0** · **58 / 0** · **198 / 0** |
+| 40 bancs voisins de la liste du 08/11, arbre fusionné (sans le correctif du § 21.3) | **36 verts** (dont 3 qui n'impriment pas de total, code 0) · **3** avec des rouges **déjà connus** (`B-FFD-⑧e`, `PS-E29`, `B-UXI-G2/G3/G5/G7`) · **1** plantage connu (`seance_ux`) : même bilan qu'au 08/11, rien de nouveau. Master non rejoué aujourd'hui. |
+
+### 21.2 Sonde « ancien Worker » — ce qu'un test de l'app SEULE (Worker publié inchangé) montrerait
+
+Le prompt du Worker publié (`PROG_PROMPT`, 2 885 caractères) sait déjà rendre `repsPerSet` / `kgPerSet` ; il n'a **aucun champ repos**, interdit `setType` « W » et range « échauffement » dans la NOTE. La MÊME réponse inventée (forme du PDF de Michel : lignes « X - échauffement » puis « X », une séance facultative), sans aucun repos, passée dans le client des deux arbres :
+
+| | master publié (`ft-v1266`) | candidat (branche fusionnée) |
+|---|---|---|
+| Exercices pour les 4 séances | 8 (deux cartes par mouvement) | **5** (un exercice par mouvement) |
+| Développé couché | « … - échauffement » 5 × « 0 reps » + « Développé Couché » 3 × « 0 reps », proposition « Rattacher… Oui / Non » sur l'échauffement | **UN exercice de 8 séries, types ÉÉÉÉÉNNN**, charges 0·40·55·70·80 puis 90·85·85, reps 10·5·3·1·1 puis 2·3·3 |
+| Reps absentes (soulevé de terre, échauffement) | aperçu « 5×0 reps » **mais 10 reps enregistrées** (valeur inventée) | **« Non renseigné »**, rien d'inventé |
+| Séance facultative | gardée (numéro 4 distinct) | gardée, libellé intact |
+| Repos | 0 enregistré → chrono 90 s (réglage global) | **identique : « repos non précisé », chrono 90 s** (échauffements 45 s puis 90 s : règle de palier existante) |
+
+⚠️ **Conclusion à ne pas déformer** : avec le Worker publié, l'app seule corrige le regroupement, la distinction É/N, les charges et reps et le « 5×0 » — **elle ne peut pas corriger les repos** : aucun champ repos n'arrive. Variante B de la sonde : même « repos 4-5 min » écrit seulement dans la NOTE de l'exercice → il n'est pas lu comme un repos (par construction : on ne devine pas une durée dans une note). Les repos « 4-5 min » → 4:00 exigent le déploiement du Worker (GO distinct, `deploy-worker.yml`).
+
+### 21.3 Un trou trouvé et fermé : « ✓ Oui » au rattachement PUIS « Regrouper » retypait les échauffements en séries de travail
+
+Sonde de noms voisins (14 paires, tout inventé) : 8 paires se regroupent dès l'analyse (« Dév. couché », « Squat » / « Squat à la Barre », matériel d'un seul côté, casse, marqueur en tête, parenthèse, « warm-up »). Trois paires difficiles ne se regroupent pas — **par construction (R29)** : « Tirage poitrine » / « Tirage vertical prise large », « Dc incline » / « Développé Incliné Haltères », « Barre » / « Rowing Barre » : des noms différents ne sont jamais fusionnés d'office. Une paire (« Squats - échauffement » / « Squat à la Barre ») tombe dans le cas prévu par le lot (le catalogue PROPOSE « ≈ Rattacher à Squat à la Barre ? » ET le regroupement est PROPOSÉ à la personne) — et y révélait un défaut réel :
+
+- **« Regrouper » puis « Oui »** → UN exercice de 6 séries, types **ÉÉÉNNN** ✓ ;
+- **« Oui » puis « Regrouper »** → UN exercice de 6 séries, types **NNNNNN** ✗ : le « Oui » remplace le nom (le marqueur « - échauffement » disparaît avec lui) et `_typesLigneImport` ne lisait que le nom COURANT. Les échauffements devenaient des séries de travail, **sans un mot**.
+
+**Correctif** (`log.js`, `_typesLigneImport`) : la preuve se lit dans le nom ÉCRIT dans le document — `_vmFrom` quand un rattachement (accepté ou automatique) a remplacé le nom. Le résultat ne dépend plus de l'ordre des gestes. **Aucune donnée persistée, aucun regroupement d'office de plus** (la proposition reste une proposition ; « Garder séparés » reste respecté).
+
+### 21.4 Validation de ce correctif
+
+| Niveau | Quoi | Résultat |
+|---|---|---|
+| Témoins | `IPDF-G00` (le scénario est celui voulu) · `IPDF-G01` (« Oui » puis « Regrouper » = ÉÉÉNNN) · `IPDF-G02` (l'autre ordre, même résultat) · `IPDF-G03` (« Garder séparés » respecté, NNN + NNN) | **avant le correctif : 138 OK / 1 rouge (`IPDF-G01`, types « NNNNNN »)** · **après : 148 OK / 0** |
+| Bancs voisins du lot | corpus · contrat Worker | **58 / 0** · **198 / 0** (inchangés) |
+| Contrôle négatif | `tools/mut_import_fidelite.py` : M97 (nouvelle) fait rougir `IPDF-G01` ; M81 ré-ancrée sur la ligne modifiée | **97/97 conformes** (M01–M09 jouées avant la coupure du serveur du 13/11, M10–M97 après) · corpus **14/14** · Worker **80/80** ; M97 fait rougir `IPDF-G01` (1 rouge, le bon), M81 ré-ancrée sur la ligne modifiée |
+
+### 21.5 Compteurs règle d'or #17 de cette reprise (code applicatif uniquement, vs `b1217e1b`)
+
+| Compteur | Valeur |
+|---|---|
+| Données persistées ajoutées | **0** |
+| Fichiers applicatifs touchés | **1** — `log.js` (+6 −1) |
+| Lignes ajoutées − retirées | **+5** (dont 4 lignes de commentaire « pourquoi ») |
+| Anciens chemins supprimés / fusionnés | **0** (une lecture de nom devient « nom écrit, sinon nom courant » : même fonction, pas de second chemin) |
+
+### 21.6 Ce que cette reprise ne change PAS (à ne pas redécouvrir)
+
+1. **Les repos n'arrivent qu'avec le Worker déployé** (§ 21.2) : GO distinct de Michel, aucun changement de Worker de production n'est fait ici.
+2. **Au-delà de la 8ᵉ page, les pages restent ignorées sans un mot** (`_pdfToImages`, `MAX_PAGES=8`) alors que Michel a tranché le 07/10 « jamais silencieuse : refusé avec un message clair, jamais tronqué ». ⚠️ Cette décision porte le numéro **D-056 sur la branche parquée** `claude/import-programme-lot1-client`, mais **D-056 sur master = IMPORT-MAP-02 (Fentes)** : désigner la décision par son énoncé. Une page ignorée peut être la séance facultative.
+3. **Un test réel de l'IA ne peut pas se faire hors de l'origine de production** : le Worker refuse toute autre origine (`ALLOWED_ORIGIN`, réponse 403) et le clone coupe le réseau vers lui. Il faut l'app publiée (P-A) ou un Worker de test — aucun n'existe dans le dépôt (`wrangler.toml` ne nomme que `dry-field-e931`).
+4. **G3** (séance facultative = libellé seul), **G4** (commentaire par série = commentaire de l'exercice), **G5** (texte du PDF envoyé à l'IA), **Q5** (le PDF de Michel a-t-il un texte sélectionnable ?) : toujours en attente de Michel.
+5. **Historique de la branche** : les commits `c187c066` et `23ffa132` gardent des charges de développé couché reprises des captures de Michel (remplacées ensuite par des valeurs inventées). Aucune réécriture n'est faite (ni rebase, ni force-push) : décision de Michel.
