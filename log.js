@@ -1159,7 +1159,7 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize,blockIdx,blockCount){
          lignes, et le REPLI de `_prevAligne` le recopiait sur les lignes en trop) : un point bleu le signale, l'appui
          sur « Précédent » l'affiche avec sa date et sa série (`openSetNote`). Rien n'est enregistré de plus. */
       +`<div class="sprev${_pn?' a-note':''}" onclick="openSetNote(${ei},${si})" style="cursor:pointer;" title="${_pn?'Commentaire de la dernière fois — touche pour le lire':'Ajouter une note'}">${pv?`<div class="sprev-v"><span class="sprev-n">${pv.reps}×${pv.kg}</span><wbr>${_prevTypeBadge(pv)}<wbr>${_prevRirBadge(pv)}</div>`:'<div class="sprev-v">—</div>'}${_setPrevNote(set,p)}${_pn?'<span class="sprev-pt" aria-hidden="true"></span>':''}</div>`
-      +`<input class="sinp" type="number" value="${set.reps||''}" placeholder="${set.maxi?'max':(p?p.reps:'')}" inputmode="numeric" step="1" enterkeyhint="next" onchange="upSet(${ei},${si},'reps',this.value)" oninput="_onRepsInput(this,${ei},${si})" onfocus="this.select();clearTimeout(_afTimer)" onkeydown="if(event.key==='Enter'){event.preventDefault();clearTimeout(_afTimer);const n=this.nextElementSibling;n.focus();n.select&&n.select();}">`
+      +`<input class="sinp${set.reps===null?' sinp-nr':''}" type="number" value="${set.reps||''}" placeholder="${set.maxi?'max':(p?p.reps:(set.reps===null?'?':''))}"${set.reps===null?` title="${REPS_NON_RENSEIGNE} — saisis les répétitions"`:''} inputmode="numeric" step="1" enterkeyhint="next" onchange="upSet(${ei},${si},'reps',this.value)" oninput="_onRepsInput(this,${ei},${si})" onfocus="this.select();clearTimeout(_afTimer)" onkeydown="if(event.key==='Enter'){event.preventDefault();clearTimeout(_afTimer);const n=this.nextElementSibling;n.focus();n.select&&n.select();}">`
       +`<input class="sinp" type="text" value="${set.kg||''}" placeholder="${p?p.kg:''}" inputmode="decimal" step="0.5" enterkeyhint="done" onchange="upSet(${ei},${si},'kg',this.value)" oninput="updateRMLive(${ei},${si})" onfocus="this.select()" onkeydown="if(event.key==='Enter'){event.preventDefault();confirmSetAndNext(${ei},${si});}">`
       +`<div class="srm" id="trm-${ei}-${si}">${set.done&&set.rm1?'~'+fmt(set.rm1):liveRM?'~'+liveRM:''}</div>`
       +`<button class="chk${set.done?' done':''}" onclick="toggleSet(${ei},${si})">${set.done?'✓':''}</button>`
@@ -1242,6 +1242,7 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize,blockIdx,blockCount){
     +`</div></div>`
     +`<div id="ex-gif-${ei}" style="display:none;" data-open="0" data-loaded="0"></div>`
     +_intensiteBandeau(ex)          // ⚡ le calcul reste visible aussi dans la carte dépliée
+    +_repsNrBandeau(ex)             // 🔢 correction D : « Non renseigné » — le programme n'écrit pas les reps, la personne les saisit
     +useSetsHdr
     +useRows
     +suiteBanner+useDropBanner
@@ -1959,10 +1960,31 @@ const _REPOS_PRESETS=[30,45,60,90,120];
 /* 🔢 ft-v1057 : `numFR` et pas `parseFloat` — la valeur arrive du HTML en ARGUMENT
    (`this.value`), donc elle echappait a la recherche sur `.value`. C'est le champ le
    PLUS utilise de l'app : `parseFloat('62,5')` y rendait 62, la moitie du poids. */
-function upSet(ei,si,f,v){const s=S.wkt.exs[ei].sets[si];s[f]=numFR(v)||0;if(s.kg&&s.reps)s.rm1=bz(s.kg,s.reps);persist();}
+/* 🔢 IMPORT-IA-FIDELITE-01 (correction D, 02/11/2026) — DES RÉPÉTITIONS QUE LE PROGRAMME N'ÉCRIT PAS (`reps: null`, « Non renseigné »).
+   Un programme importé dont le document n'écrit pas les répétitions garde `null` jusqu'à la séance (avant : un 10 inventé, puis signalé). À la
+   séance, la série affiche un champ VIDE à compléter (`.sinp-nr`) et un bandeau le dit ; `toggleSet` refuse de la valider sans nombre.
+   ⛔ Rien n'est jamais enregistré à la place de la personne : ni dans le programme, ni dans la série tant qu'elle n'a pas validé. Une valeur
+   suggérée (la dernière fois, grise dans le champ) n'est reprise que par SON appui sur ✓ — le mécanisme de toutes les séries.
+   `0` (programmes d'AVANT, séries « maxi ») garde son ancien comportement : on ne réécrit pas l'existant. */
+function _repsNrBandeau(ex){
+  const n=((ex&&ex.sets)||[]).filter(s=>s&&!s.done&&s.reps===null).length;
+  return n?`<div class="reps-nr-hint">${REPS_NON_RENSEIGNE} dans le programme : saisis les répétitions${n>1?' de chaque série':''} pour valider.</div>`:'';
+}
+function upSet(ei,si,f,v){
+  const s=S.wkt.exs[ei].sets[si], n=numFR(v)||0;
+  s[f]=(f==='reps'&&s.reps===null&&!(n>0))?null:n;      // « Non renseigné » le reste tant qu'aucun nombre n'est saisi (effacer un champ vide ne l'invente pas à 0)
+  if(s.kg&&s.reps)s.rm1=bz(s.kg,s.reps);persist();
+}
 function toggleSet(ei,si){
   const set=S.wkt.exs[ei].sets[si];
   const row=document.getElementById(`sr-${ei}-${si}`);
+  /* 🔢 Une série « Non renseigné » ne se valide pas sans nombre : ni 0 inventé, ni 10 d'office. Le nombre saisi dans le champ (ou la suggestion
+     grise qu'il affiche — la dernière fois, comme pour toute série) est repris à CET appui. Sinon : rien ne change, le champ est ramené sous le doigt. */
+  if(set.reps===null&&!set.done){
+    const inp=row&&row.querySelector('.sinp'), lu=parseInt(inp?(inp.value||inp.placeholder):'');
+    if(!(lu>0)){ toast('Saisis les répétitions pour valider cette série','info'); if(inp){ inp.focus(); inp.select&&inp.select(); } return; }
+    set.reps=lu;
+  }
   if(row){const inps=row.querySelectorAll('.sinp');if(!set.reps&&inps[0])set.reps=parseInt(inps[0].value||inps[0].placeholder)||0;if(!set.kg&&inps[1])set.kg=numFR(inps[1].value||inps[1].placeholder)||0;}
   set.done=!set.done;if(set.kg&&set.reps)set.rm1=bz(set.kg,set.reps);
   // ── HORODATAGE DE LA SÉRIE (12/08/2026) ────────────────────────────────────────────
@@ -2061,8 +2083,21 @@ function toggleSet(ei,si){
     }
     const sec=(set.rest>0?set.rest:(_versTravail?Math.max(_base,defForEx):_base));
     // ─── Dropset : avance entre paliers ─────────────────────────────────────
-    if(S.wkt.exs[ei].dropset){
-      const ds=S.wkt.exs[ei].dropset;
+    /* 📉 IMPORT-IA-FIDELITE-01 (correction C, 02/11/2026) — UN DROPSET IMPORTÉ S'ENCHAÎNE SUR UN MARQUAGE ÉCRIT, JAMAIS PAR DÉDUCTION.
+       Un dropset importé n'a pas d'objet `ex.dropset` (celui-là n'est posé que par l'outil de la séance) : ses paliers sont des séries
+       de type « D », avec leurs charges et leurs reps. Le premier jet de ce lot DÉDUISAIT l'enchaînement du seul type « D » + repos absent.
+       ⛔ C'était une régression sur les données anciennes : l'ancien import écrivait déjà des paliers « D » (avec ou sans repos), et leur
+       chrono changeait en silence — un repos ENTIER entre deux paliers devenait « aucun repos », sans que la personne ait rien demandé.
+       ⛔ Une donnée ancienne ne reçoit JAMAIS un comportement nouveau par simple déduction (décision de Michel, 02/11).
+       👉 L'enchaînement est donc un fait ÉCRIT : `ex.dropChaine === true`, posé par l'import — et par lui seul, après ce correctif — quand
+       le document décrit un dropset (`_impDropEnchaine`), puis recopié avec l'exercice (`_recopierDropset`). SANS ce marqueur, rien ne
+       change : chaque palier garde son repos (`set.rest`, sinon le repos par défaut), exactement comme avant ce lot. AVEC lui, même
+       règle que l'outil (`direction:'down'`) : pas de repos ENTRE deux paliers — sauf si le programme en a écrit un pour CE palier
+       (`set.rest > 0` gagne toujours) —, le repos de la série (celui du document) à la fin du dernier palier. */
+    const _exD=S.wkt.exs[ei], _suivD=_exD.sets[si+1];
+    const _dsImporte=(_exD.dropChaine===true&&!_exD.dropset&&set.type==='D'&&!(set.rest>0)&&_suivD&&_suivD.type==='D'&&!_suivD.done)?{direction:'down'}:null;
+    if(_exD.dropset||_dsImporte){
+      const ds=_exD.dropset||_dsImporte;
       if(ds.direction==='down'){
         // Pas de repos entre paliers : on passe direct au suivant
         const nextSi=S.wkt.exs[ei].sets.findIndex((s,i)=>i>si&&!s.done);
@@ -3670,7 +3705,9 @@ function _matchExercise(name,opts){
 }
 // Valide le set et focus automatiquement le kg du prochain set non-done
 function confirmSetAndNext(ei,si){
+  const _s0=S.wkt.exs[ei].sets[si], _etaitFaite=!!_s0.done;
   toggleSet(ei,si);
+  if(!_etaitFaite&&!_s0.done)return;   // refusée (série « Non renseigné » sans nombre, correction D) : le curseur reste sur elle, il ne saute pas à la suivante
   const exs=S.wkt.exs;
   for(let e=ei;e<exs.length;e++){
     for(let s=(e===ei?si+1:0);s<exs[e].sets.length;s++){
@@ -3709,7 +3746,7 @@ function addSet(ei){
   // → une nouvelle série ne repart jamais « à vide » (kg conservé).
   const last=ex.sets.length?ex.sets[ex.sets.length-1]:null;
   const kg   = p ? p.kg   : (last ? (last.kg||0)   : 0);
-  const reps = p ? p.reps : (last ? (last.reps||8) : 8);
+  const reps = p ? p.reps : (last ? (last.reps===null?null:(last.reps||8)) : 8);   // une série copiée d'une série « Non renseigné » l'est aussi (correction D)
   ex.sets.push({kg,reps,type:'N',done:false,rm1:0});
   persist();renderExBlocks();
 }
@@ -5087,6 +5124,10 @@ async function finishWorkout(){
      message d'erreur ET laissait l'écran s'éteindre, alors que la séance continuait. */
   _releaseWakeLock();
   const duration=Math.floor(_wktElapsedMs()/1000); // durée réelle, hors temps en pause
+  /* 🔢 IMPORT-IA-FIDELITE-01 (correction D) — l'HISTORIQUE ne porte jamais `null`. Une série restée « Non renseigné » (non validée) s'enregistre
+     à 0 — la valeur « vide » que tous les lecteurs de l'historique connaissent déjà (volume, records et 1RM l'ignorent). Une série validée
+     ne peut pas en être là : `toggleSet` exige un nombre. ⛔ Ni 10 ni 5 : on n'écrit pas dans l'historique une répétition qui n'a pas eu lieu. */
+  S.wkt.exs.forEach(ex=>(ex.sets||[]).forEach(s=>{ if(s&&s.reps===null)s.reps=0; }));
   // ⚠️ UNE SEULE règle de volume, et elle vit dans `_workVol` (R2). La copie qui était
   // écrite ici disait exactement la même chose… jusqu'au jour où l'unilatéral est arrivé :
   // deux calculs du même chiffre finissent toujours par diverger, la seule question est
@@ -5917,6 +5958,7 @@ function startRest(sec){
      seulement quand plusieurs séries d'un superset attendent leur question (24/09/2026). */
   _rirCible=Array.isArray(_rirPending)?(_rirPending.length>1?_rirPending:(_rirPending[0]||null)):_rirPending;
   _rirPending=null;
+  _restConsigneMontrer();        // IMPORT-IA-FIDELITE-01 : la consigne écrite (une plage) de la série dont le repos démarre
   updRest();_updPill();_renderRirRow();
   restIv=setInterval(_restTick,250);
   if(_pillIv)clearInterval(_pillIv);
@@ -6012,6 +6054,7 @@ function _stopRestTimerOnly(){
      CIBLE doit disparaître, sinon le repos suivant (démarré autrement) rouvrirait la question
      sur une série déjà passée. */
   _rirCible=null;
+  _restConsigne=null; { const rc=document.getElementById('rest-consigne'); if(rc){ rc.textContent=''; rc.style.display='none'; } }   // IMPORT-IA-FIDELITE-01
   const rz=document.getElementById('rest-rir');if(rz)rz.innerHTML='';
   _updPill();
 }
@@ -6133,6 +6176,30 @@ let _rirCible=null;                       // {ei, si}, null — ou une LISTE de 
    CONSOMME : un seul endroit décide, et un repos lancé autrement (bouton repos, enchaînement)
    trouve l'attente vide — donc ne pose aucune question sur une série qui n'existe pas. */
 let _rirPending=null;
+/* 📝 LA CONSIGNE DE REPOS ÉCRITE (IMPORT-IA-FIDELITE-01, 02/11/2026). Un programme importé dit parfois « 3-4 min » : c'est une
+   PLAGE, pas une durée. ⛔ Elle n'est jamais convertie en nombre (consigne de Michel) — mais elle ne doit pas non plus disparaître :
+   avant, le texte était perdu et le chrono prenait le réglage de la personne (90 s) devant un « 3-4 min » écrit. Maintenant le
+   dock DIT la consigne et « Régler » propose ses deux bornes ; la personne décide, la séance n'attend personne.
+   ⭐ Même mécanique que la cible du RIR (juste au-dessus) : `toggleSet` dépose la série (`_rirPending`), `startRest` la consomme ET
+   lit sa consigne ici — un seul endroit, quel que soit celui des cinq `startRest` qui s'exécute. Un repos lancé autrement
+   (« Régler » sans repos en cours) ne trouve rien et n'affiche rien. */
+let _restConsigne=null;                   // { txt, min, max } (secondes) de la série dont le repos court ; null sinon
+function _restConsigneMontrer(){
+  _restConsigne=null;
+  try{
+    const c=Array.isArray(_rirCible)?_rirCible[_rirCible.length-1]:_rirCible;
+    const ex=c&&S.wkt&&S.wkt.exs&&S.wkt.exs[c.ei], set=ex&&ex.sets&&ex.sets[c.si];
+    /* ⚠️ MIS À JOUR LE 08/11/2026 (décision de Michel) : le chrono de la série est réglé sur la BORNE BASSE de la plage (`set.rest`, posé à l'import) ET la
+       consigne d'origine reste AFFICHÉE (`set.restTxt`) — avant, elle n'apparaissait que si aucun repos chiffré n'existait. Un repos chiffré qui vient d'un
+       choix de la personne (éditeur) n'a pas de `restTxt` si elle a remplacé la plage par un nombre à l'import : la consigne est alors dans la note. */
+    if(set&&set.restTxt){ const r=_reposLire(set.restTxt); _restConsigne={txt:String(set.restTxt),min:r.min,max:r.max,reglee:set.rest>0?set.rest:0}; }
+  }catch(e){}
+  const el=document.getElementById('rest-consigne');
+  if(el){
+    if(_restConsigne){ el.textContent='Consigne du programme : '+_restConsigne.txt+(_restConsigne.reglee?' · chrono réglé sur '+_fmtMmSs(_restConsigne.reglee):'')+(_restConsigne.min?' · touche le temps pour choisir':''); el.style.display='block'; }
+    else { el.textContent=''; el.style.display='none'; }
+  }
+}
 
 /* ⛔ UN SEUL AUTEUR POUR `#rest-rir` (R2) — la leçon de `#rest-label`, ce matin : `updRest`
    tourne à chaque tick et aurait effacé ce que `startRest` y met. Ici, personne d'autre
@@ -6234,7 +6301,19 @@ function skipRest(){const cb=_restDoneCb;stopRest();if(cb)cb();}
 // ─── Réglage manuel du temps de repos (retour Emma, ft-v438) ──────────────────
 // Ouvre un mini-éditeur min:sec → règle la durée du repos en cours (avant, on ne pouvait
 // qu'ajouter/retirer 15s à répétition). Mémorise aussi la préférence pour l'exercice.
+function _fmtMmSs(sec){ sec=Math.max(0,Math.round(sec)); return Math.floor(sec/60)+':'+String(sec%60).padStart(2,'0'); }
 function openRestEdit(){
+  // IMPORT-IA-FIDELITE-01 : la consigne écrite du programme (ex. « 3-4 min »), avec SES DEUX BORNES en un geste. Rien n'est choisi
+  // pour la personne : les deux boutons passent par `setRestPreset`, le même chemin que les préréglages (même mémoire d'exercice).
+  const rc=document.getElementById('re-consigne');
+  if(rc){
+    if(_restConsigne&&_restConsigne.min&&_restConsigne.max&&restStartTs){
+      rc.innerHTML='<div class="re-perso">Consigne du programme</div><div class="re-cons-txt">'+_escNote(_restConsigne.txt)+'</div>'
+        +'<div class="re-presets"><button class="rbtn" id="rc-min" onclick="setRestPreset('+_restConsigne.min+');closeRestEdit()">'+_fmtMmSs(_restConsigne.min)+'</button>'
+        +'<button class="rbtn" id="rc-max" onclick="setRestPreset('+_restConsigne.max+');closeRestEdit()">'+_fmtMmSs(_restConsigne.max)+'</button></div>';
+      rc.style.display='block';
+    }else{ rc.innerHTML=''; rc.style.display='none'; }
+  }
   const mi=document.getElementById('re-min'),se=document.getElementById('re-sec');
   const left=restStartTs?Math.max(5,_restLeft()):(restTot||reposDefaut());
   if(mi)mi.value=Math.floor(left/60);
@@ -7364,8 +7443,13 @@ async function _pdfOuvrir(f){
 async function _pdfToImages(f){
   const pdf=await _pdfOuvrir(f);
   const MAX_PAGES=8,MAX_DIM=1200;
+  /* 🚫 PLUS DE 8 PAGES = REFUSÉ, JAMAIS TRONQUÉ (IMPORT PDF, 13/11/2026 — « GO correctif PDF supérieur à 8 pages » de Michel ; sa décision du 07/10 : « jamais silencieuse »).
+     Avant : la boucle s'arrêtait à la 8ᵉ page SANS UN MOT — les pages suivantes disparaissaient et rien ne le disait (une page ignorée peut être la séance facultative d'un programme).
+     Le refus se fait AVANT tout rendu : aucune page n'entre (jamais d'import partiel), aucun travail inutile. De 1 à 8 pages : strictement inchangé.
+     ⚠️ Le message est lu derrière « Erreur PDF : » par les deux appelants (programme ET historique : une seule porte, R2) — il dit le nombre de pages, la limite, et que rien n'a été ajouté. */
+  if(pdf.numPages>MAX_PAGES)throw new Error('ce PDF a '+pdf.numPages+' pages, la limite est de '+MAX_PAGES+' pages par import — rien n\'a été ajouté');
   const pages=[];
-  for(let i=1;i<=Math.min(pdf.numPages,MAX_PAGES);i++){
+  for(let i=1;i<=pdf.numPages;i++){
     const page=await pdf.getPage(i);
     const vp0=page.getViewport({scale:1});
     const scale=Math.min(MAX_DIM/vp0.width,MAX_DIM/vp0.height,2);
@@ -7506,11 +7590,12 @@ async function analyzeImportPhotos(){
     _impExtracted=d.data;
     if(!S.premium){S.progImports=(S.progImports||0)+1;persist();if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();} // compte l'import réussi (limite gratuite)
     _mergeImportSeances(); // fusionne « Séance 1 - Dorsaux/Biceps/… » en UNE séance (groupes = sections internes)
-    _mergeImportEchauffements(); // ⛔ AVANT le rattachement VM, et l'ordre compte : la fusion rend au nom sa forme
-                                 // nue (« Développé couché »), et c'est CE nom-là que le catalogue sait reconnaître.
-                                 // Après, on rattacherait « Développé couché (échauffement) » — c'est-à-dire rien.
-    _mergeImportBlocsEch();      // IMPORT-ECH-01 : même filet quand le nom est NU (échauffement en note / en type)
+    _mergeImportBlocsEch();      // ⛔ UN SEUL filet (IMPORT-IA-FIDELITE-01) : le regroupement échauffement + travail, AVANT le rattachement VM.
+                                 // L'ordre compte : il rend au nom sa forme nue (« Développé couché »), et c'est CE nom-là que le catalogue sait
+                                 // reconnaître. Après, on rattacherait « Développé couché (échauffement) » — c'est-à-dire rien.
+    _impConserverSpeciales();    // les séries « en couleur » du document ne sont plus jetées en silence
     _vmMatchExtracted();   // VM : rattache aux références EXLIB (évite les doublons) AVANT l'aperçu
+    _impOuverts.clear(); _impRepos=null;   // un NOUVEAU scan repart d'un aperçu fermé (l'état d'écran d'avant ne le concerne plus)
     _renderImpConfirm();
     impGoStep(4);
   }catch(e){
@@ -7556,9 +7641,14 @@ function _mergeImportSeances(){
   const out=[]; let merged=0;
   _impExtracted.days.forEach(day=>{
     const n=_seanceNum(day.label), prev=out[out.length-1];
-    if(prev && n!=null && _seanceNum(prev.label)===n){
+    /* 🅰️🅱️ IMPORT-IA-FIDELITE-01 : « Jour 3 … Semaine A » et « Jour 3 … Semaine B » sont deux VARIANTES d'un même jour, une
+       semaine sur deux — jamais une seule séance. Sans ce garde, deux libellés « Jour 3 — Semaine A / B » portant le même
+       numéro auraient été collés (les exercices de la A mêlés à ceux de la B). */
+    const _va=prev?_varianteSemaine(prev.label):null, _vb=_varianteSemaine(day.label);
+    const _ma=prev?_marqueSeance(prev.label):null, _mb=_marqueSeance(day.label);   // ⛔ une facultative / « bis » ne se colle JAMAIS à sa voisine (IMPORT PDF)
+    if(prev && n!=null && _seanceNum(prev.label)===n && !(_va&&_vb&&_va!==_vb) && _ma===_mb){
       prev.exercises=(prev.exercises||[]).concat(day.exercises||[]);
-      prev.label=_seanceKw(prev.label)+' '+n;   // « Séance N » propre (groupes musculaires = sections internes)
+      prev.label=_seanceKw(prev.label)+' '+n+(_ma==='facultative'?' (facultative)':(_ma==='bis'?' bis':''));   // « Séance N » propre (groupes musculaires = sections internes) — le mot « facultative » / « bis » reste dans le libellé
       merged++;
     } else out.push(day);
   });
@@ -7590,7 +7680,15 @@ function _mergeImportSeances(){
    ⛔ ET ÇA NE REMPLACE PAS `setTypePerSet` (ft-v1156), ça s'y AJOUTE. Si le backend renvoie le
    champ, les noms ne portent aucun marqueur et cette fonction ne trouve rien à faire. Les deux
    coexistent — *un correctif qui REMPLACE le filet au lieu de s'y ajouter devient une
-   régression le jour où il ne s'applique pas* (leçon de ft-v1152). */
+   régression le jour où il ne s'applique pas* (leçon de ft-v1152).
+
+   ⚠️ MIS À JOUR LE 02/11/2026 (IMPORT-IA-FIDELITE-01) — ÉCRIT POUR QUE PERSONNE NE LE « RÉPARE » (R30).
+   `_mergeImportEchauffements` et `_fusionneEch` N'EXISTENT PLUS. Ce filet et `_mergeImportBlocsEch` répondaient à la même
+   question (« ces lignes forment-elles UN exercice ? ») avec deux preuves, deux tests d'identité et deux fusions qui
+   divergeaient. Il n'y en a plus qu'UNE : preuve = `_typesLigneImport`, identité = `_identiteBlocImport`, fusion =
+   `_fusionneBlocImport`. Ce que ce filet faisait en plus — fusionner d'office une ligne de travail qui PROLONGE le nom
+   (« X » puis « X / haltères ») — est devenu une PROPOSITION à confirmer : « guidé / haltères » peut désigner deux
+   mouvements (consigne de Michel, 02/11). `_nomSansEch` reste (c'est une preuve d'échauffement). */
 function _nomSansEch(name){
   const raw=String(name==null?'':name).trim();
   const m=raw.match(/^(.*?)\s*[([]([^)\]]*)[)\]]\s*$/);   // un parenthésé EN FIN de nom, et lui seul
@@ -7616,65 +7714,37 @@ function _estLaLigneDeTravail(nom,base){
   if(n.indexOf(base)!==0)return false;
   return /^[\s]*[/\-(:,]/.test(n.slice(base.length));   // un séparateur, pas un mot de plus
 }
+/* ⏱️ LE REPOS BRUT D'UNE SÉRIE — UN SEUL PROPRIÉTAIRE (IMPORT-IA-FIDELITE-01, R2). Le texte du document, tel que l'IA
+   l'a recopié (« 3 mins », « 60-90 s »), sans le lire : c'est `_reposLire` (constants.js) qui le lit. La valeur de LA série
+   si elle en a une, sinon celle de l'exercice, sinon `null`. ⚠️ Une valeur par série VIDE (« ») compte pour absente :
+   le contrat du Worker rend toujours `restPerSet` à la longueur des séries, avec « » là où la ligne n'a rien dit — la lire
+   comme une valeur ferait taire le repos écrit au niveau de l'exercice. */
+function _restBrut(ex,s){
+  const plein=v=>v!=null&&String(v).trim()!=='';
+  if(ex&&ex.restPerSet&&plein(ex.restPerSet[s]))return ex.restPerSet[s];
+  return (ex&&plein(ex.rest))?ex.rest:null;
+}
 // Déplie un exercice importé en séries : c'est la MÊME convention que `_buildProgDay`
 // (repsPerSet s'il existe, sinon `sets` × `reps` uniformes) — R2, une seule règle de lecture.
 function _seriesImport(ex){
   const n=(ex.repsPerSet&&ex.repsPerSet.length)?ex.repsPerSet.length:Math.max(1,parseInt(ex.sets)||1);
   const reps=[],kgs=[],rests=[];
   for(let s=0;s<n;s++){
-    reps.push((ex.repsPerSet&&ex.repsPerSet[s]!=null)?ex.repsPerSet[s]:(ex.reps!=null?ex.reps:10));
+    /* Les reps d'une série : ce que le document écrit — sinon RIEN : `null`, « Non renseigné » (IMPORT-IA-FIDELITE-01, correction D, 02/11/2026).
+       ⛔ Avant : un 10 était mis à la place (« la séance a besoin d'un nombre »), puis signalé dans la note. Un 10 que le document n'a pas écrit,
+       enregistré dans le programme, passe tôt ou tard pour la prescription du coach : on n'invente jamais une donnée du document, même en la
+       signalant (décision de Michel). La séance, elle, demande le nombre à la personne (champ à compléter, `toggleSet`) — l'absence n'est plus
+       comblée à l'import, elle est COMPLÉTÉE par la personne, qui valide.
+       Une seule lecture (R2) : l'aperçu et l'enregistrement passent tous deux ici.
+       Une valeur déjà `null` dans `repsPerSet` (aperçu déjà matérialisé par `_impMaterialiser`) reste absente : elle ne retombe PAS sur les reps
+       uniformes de l'exercice, qui ne parlaient pas de cette série. */
+    const brut=(Array.isArray(ex.repsPerSet)&&s<ex.repsPerSet.length)?ex.repsPerSet[s]:ex.reps;
+    const lu=parseInt(brut);
+    reps.push(lu>0?lu:null);
     kgs .push((ex.kgPerSet &&ex.kgPerSet [s]!=null)?ex.kgPerSet [s]:(ex.kg||0));
-    // ⛔ on garde `null` tel quel : `_restAt` retombe alors sur `ex.rest`, exactement comme avant
-    rests.push((ex.restPerSet&&ex.restPerSet[s]!=null)?ex.restPerSet[s]:(ex.rest!=null?ex.rest:null));
+    rests.push(_restBrut(ex,s));          // `null` = rien d'écrit : le défaut de l'app s'applique, exactement comme avant
   }
   return {n,reps,kgs,rests};
-}
-function _fusionneEch(echs,trav){
-  const R=[],K=[],T=[],RE=[];
-  echs.forEach(e=>{const x=_seriesImport(e);R.push(...x.reps);K.push(...x.kgs);RE.push(...x.rests);for(let s=0;s<x.n;s++)T.push('W');});
-  const nEch=R.length;
-  const w=_seriesImport(trav);
-  R.push(...w.reps);K.push(...w.kgs);RE.push(...w.rests);for(let s=0;s<w.n;s++)T.push('');
-  const o=Object.assign({},trav);
-  o.repsPerSet=R;o.kgPerSet=K;o.setTypePerSet=T;o.sets=R.length;
-  if(RE.some(v=>v!=null))o.restPerSet=RE;
-  /* ⚠️ `specialSets` est une liste d'indices 0-based DANS la ligne de travail. Après fusion
-     elle ne désigne plus les mêmes séries : elle se DÉCALE du nombre d'échauffements ajoutés
-     devant. Sans ça, les séries marquées en rouge dans le PDF changeraient de place. */
-  if(Array.isArray(trav.specialSets)&&trav.specialSets.length)o.specialSets=trav.specialSets.map(k=>(parseInt(k)||0)+nEch);
-  /* ⛔ LA NOTE GARDÉE EST CELLE DE LA LIGNE DE TRAVAIL, ET C'EST UN CHOIX ÉCRIT (R30). C'est
-     elle qui porte la prescription (RIR cible, progression S1→S4, repos) ; les notes des lignes
-     d'échauffement sont du libellé (« ECH - série d'échauffement, non comptée »), et leurs
-     CHIFFRES survivent tous dans `repsPerSet` / `kgPerSet` / `restPerSet`. Les empiler rendrait
-     illisible la seule note que l'athlète lit vraiment. Si la ligne de travail n'a pas de note,
-     on prend la première des échauffements plutôt que de rester muet. */
-  if(!o.note){const n1=echs.map(e=>e.note).filter(Boolean)[0];if(n1)o.note=n1;}
-  o._echFusion=nEch;o._echLignes=echs.length;   // trace montrée dans l'aperçu : on informe, on ne cache pas
-  return o;
-}
-function _mergeImportEchauffements(){
-  if(!_impExtracted||!(_impExtracted.days||[]).length)return;
-  let fus=0;
-  (_impExtracted.days||[]).forEach(day=>{
-    const src=day.exercises||[],out=[];
-    for(let i=0;i<src.length;i++){
-      const b=_nomSansEch(src[i]&&src[i].name);
-      if(b===null){out.push(src[i]);continue;}
-      const bn=_naz(b);
-      let j=i;
-      while(j<src.length){const bj=_nomSansEch(src[j]&&src[j].name);if(bj===null||_naz(bj)!==bn)break;j++;}
-      const trav=src[j];
-      if(!trav||!_estLaLigneDeTravail(trav.name,bn)){
-        for(let k=i;k<j;k++)out.push(src[k]);   // pas de ligne de travail → on laisse le document tel quel
-        i=j-1;continue;
-      }
-      out.push(_fusionneEch(src.slice(i,j),trav));
-      fus++;
-      i=j;   // les échauffements ET la ligne de travail sont consommés
-    }
-    day.exercises=out;
-  });
-  if(fus)console.log('[Import] '+fus+' exercice(s) recomposé(s) : séries d\'échauffement regroupées avec leur série de travail');
 }
 /* 📥 IMPORT-ECH-01 (06/10/2026) — LE MÊME FILET, QUAND LE NOM NE PORTE PLUS DE MARQUEUR.
    ⛔⛔ CE QUI A CHANGÉ, ET C'EST MESURÉ. Le filet ci-dessus ne reconnaît un échauffement qu'à un parenthésé EN FIN de
@@ -7694,17 +7764,53 @@ function _echNomTete(name){
   const m=String(name==null?'':name).trim().match(/^(?:ech|[ée]chauffement|warm[\s-]?up)\s*[-–—:|]\s*(.+)$/i);
   return m&&m[1].trim()?m[1].trim():null;
 }
+/* ✂️ LE MARQUEUR À LA FIN DU NOM, APRÈS UN SÉPARATEUR — « Développé Couché - échauffement » (IMPORT PDF, 08/11/2026, « GO CORRECTIF IMPORT PDF »).
+   ⛔⛔ LE CAS RÉEL, MESURÉ PAR LA LECTURE DU CODE ET LES CAPTURES DE MICHEL (iPhone, 08/11). Son programme écrit la ligne d'échauffement
+   « Développé Couché - échauffement » (5 séries) puis « Développé Couché » (3 séries) — et idem pour le soulevé de terre et le squat. Les deux
+   reconnaissances de marqueur dans un NOM n'admettaient que « X (ECH) » (parenthèse, en fin : `_nomSansEch`) et « ECH - X » (en TÊTE, avec
+   séparateur : `_echNomTete`) : la forme « X - échauffement » n'était ni l'une ni l'autre. Résultat : deux cartes, et l'écran « ≈ Rattacher à
+   Développé Couché ? » renommait la première SANS rien regrouper (le filet passe avant le rattachement, jamais après). Aucun témoin ne couvrait
+   cette forme (0 occurrence dans les tests de master ni du lot).
+   ⭐ LA RÈGLE, LA MÊME QUE POUR LES DEUX AUTRES FORMES : c'est une PREUVE d'échauffement, rien de plus — sans ligne de travail du même exercice
+   juste derrière, rien n'est regroupé ni retypé (`_mergeImportBlocsEch`). Le nom de base est ce qui précède le DERNIER séparateur.
+   ⛔ Le mot doit être TOUT ce qui suit le séparateur (avec, au plus, un qualificatif : « léger », « progressif », un numéro) : « Squat - Bulgare »,
+   « Presse - Zeta » ou « Curl - échelle » ne sont jamais touchés (R29 : un faux regroupement mettrait les charges d'échauffement d'un exercice
+   sur un autre). */
+const _MARQUEUR_ECH_FIN=/^(?:ech|echauff\w*|warm[\s-]?up|warmup|mont[e]{1,2}s? en charge|montee|series? (?:longues? )?(?:de |d')?e?chauff\w*|chauffe)(?:\s+(?:leger|legere|legers|legeres|progressi[fv]e?s?|general|generale|specifique|series?|n\s?\d+|\d+))*$/;
+function _echNomQueue(name){
+  /* On parcourt les séparateurs de DROITE À GAUCHE et on garde le premier dont TOUT ce qui suit est le marqueur : « warm-up » contient lui-même un tiret
+     (« Squat | warm-up », « Squat - warm-up »), donc couper au tout dernier séparateur ne laisserait que « up ». Mesuré au premier banc (IPDF-F01). */
+  const s=String(name==null?'':name).trim(), re=/\s*[-–—:|\/]\s*/g, seps=[];
+  let m;
+  while((m=re.exec(s))!==null)seps.push({deb:m.index,fin:m.index+m[0].length});
+  for(let k=seps.length-1;k>=0;k--){
+    const base=s.slice(0,seps[k].deb).trim();
+    if(base&&_MARQUEUR_ECH_FIN.test(_naz(s.slice(seps[k].fin)).replace(/\s+/g,' ').trim()))return base;   // un nom qui ne serait QUE « - échauffement » n'a pas de base : on ne touche pas
+  }
+  return null;
+}
 // La NOTE ne prouve un échauffement que si elle COMMENCE par lui : « après l'échauffement général, 3 séries lourdes » est du travail.
-function _noteEch(note){ return /^(ech\b|echauff|warm[\s-]?up|montee\b|series? d.?echauff)/.test(_naz(String(note||'').trim())); }
+function _noteEch(note){
+  /* IMPORT-IA-FIDELITE-01 : « Montée en charge » ET « Monté en charge » (une faute courante :
+     « monte » ≠ « montee », l'ancien motif ne la voyait pas), « Série de chauffe », « Série longue de
+     chauffe », « Chauffe ». ⛔ TOUJOURS « au DÉBUT de la note » : « après l'échauffement général, 3 séries lourdes » est du
+     travail. Et ce n'est qu'une PREUVE : sans ligne de travail du même exercice derrière, rien n'est regroupé ni retypé. */
+  return /^(ech\b|echauff|warm[\s-]?up|montee\b|mont[e]{1,2}s? en charge|series? (longues? )?(de |d.)?e?chauff|chauffe\b)/.test(_naz(String(note||'').trim()));
+}
 function _typesLigneImport(ex){
   const n=_seriesImport(ex).n;
   if(Array.isArray(ex.setTypePerSet)&&ex.setTypePerSet.length)   // le structuré passe AVANT le texte
     return Array.from({length:n},(_,s)=>String(ex.setTypePerSet[s]||'').toUpperCase()==='W'?'W':'');
-  const w=String(ex.setType||'').toUpperCase()==='W'||_nomSansEch(ex.name)!==null||_echNomTete(ex.name)!==null||_noteEch(ex.note);
+  /* 🔎 LA PREUVE VIENT DU NOM ÉCRIT DANS LE DOCUMENT, PAS DU NOM COURANT (IMPORT PDF, 13/11/2026, reprise — « distinction É/N »).
+     Un rattachement catalogue, accepté d'un « ✓ Oui » ou fait tout seul, REMPLACE le nom par celui du catalogue (« Squats - échauffement » → « Squat à la Barre ») et le marqueur
+     disparaît avec lui ; `_vmFrom` garde le nom ÉCRIT. Mesuré (sonde du 13/11) : « ✓ Oui » au rattachement PUIS « Regrouper » donnait UN exercice de 6 séries NNNNNN — les échauffements
+     devenaient des séries de travail, sans un mot ; dans l'autre ordre (« Regrouper » puis « Oui »), ÉÉÉNNN. Le résultat ne dépend plus de l'ordre des gestes. */
+  const nomDoc=ex._vmFrom||ex.name;
+  const w=String(ex.setType||'').toUpperCase()==='W'||_nomSansEch(nomDoc)!==null||_echNomTete(nomDoc)!==null||_echNomQueue(nomDoc)!==null||_noteEch(ex.note);
   return Array(n).fill(w?'W':'');
 }
 function _wPuisTravail(T){ let trav=false; for(const v of T){ if(v!=='W')trav=true; else if(trav)return false; } return true; }
-function _nomBlocImport(ex){ return _nomSansEch(ex.name)||_echNomTete(ex.name)||String(ex.name||'').trim(); }
+function _nomBlocImport(ex){ return _nomSansEch(ex.name)||_echNomTete(ex.name)||_echNomQueue(ex.name)||String(ex.name||'').trim(); }
 function _cleBlocImport(ex){
   let nom=_nomBlocImport(ex);
   try{ const r=(typeof _matchExercise==='function')?_matchExercise(nom):null; if(r&&r.tier==='auto'&&r.match)nom=r.match; }catch(e){}
@@ -7721,44 +7827,150 @@ function _fusionneBlocImport(lignes){
     if(Array.isArray(l.specialSets))l.specialSets.forEach(k=>SP.push((parseInt(k)||0)+off));
   });
   const trav=lignes.filter(l=>_typesLigneImport(l).some(v=>v!=='W'));
-  const o=Object.assign({},trav[0]);
-  o.name=_nomBlocImport(trav[0]);
+  const base=trav[0]||lignes[0];                    // un bloc d'échauffements SEULS (aucune ligne de travail) a aussi un nom
+  const o=Object.assign({},base);
+  delete o._propGrp; delete o._propRole;            // une proposition en attente n'est jamais recopiée dans l'exercice fusionné
+  o.name=_nomBlocImport(base);
   o.repsPerSet=R;o.kgPerSet=K;o.setTypePerSet=T;o.sets=R.length;
-  // Repos PAR SÉRIE : une ligne sans repos garde « défaut par type » ('') — sinon le repos du travail déborderait sur l'échauffement.
+  /* Repos PAR SÉRIE, toujours à la longueur des séries : une ligne sans repos garde « rien » ('') — le repos du travail ne
+     déborde JAMAIS sur l'échauffement. ⛔ Et `rest` (celui de l'exercice) est vidé : `_restBrut` le lirait comme repli pour
+     chaque série vide, c'est-à-dire qu'il recouvrirait le repos d'échauffement par celui du travail. */
   if(RE.some(v=>v!=null&&v!=='')){o.restPerSet=RE.map(v=>v==null?'':v);}else delete o.restPerSet;
+  o.rest='';
   if(SP.length)o.specialSets=SP;else delete o.specialSets;
-  // Même choix écrit que `_fusionneEch` : la note gardée est celle du TRAVAIL (toutes les notes de travail distinctes) ;
-  // à défaut, la première des échauffements.
+  /* Les notes : celles du TRAVAIL d'abord (c'est elles qui portent la prescription : RIR cible, progression, consigne),
+     à défaut la première des échauffements. ⭐ IMPORT-IA-FIDELITE-01 : une note d'échauffement qui dit AUTRE CHOSE que son
+     marqueur (« Charge : léger », « progressif, sans fatigue ») est de l'information du document, pas du libellé : elle est
+     gardée, étiquetée « Échauffement : … ». Seul le marqueur nu (« ECH », « Montée 2 ») n'apporte rien et n'est pas répété. */
   const notes=[...new Set(trav.map(l=>String(l.note||'').trim()).filter(Boolean))];
-  o.note=notes.length?notes.join(' | '):(lignes.map(l=>l.note).filter(Boolean)[0]||'');
+  const nu=n=>/^(ech|echauffement|warm[\s-]?up|montee( en charge)?( \d+)?|serie de chauffe|chauffe)\W*$/.test(_naz(n).trim());
+  const echN=[...new Set(lignes.filter(l=>!trav.includes(l)).map(l=>String(l.note||'').trim()).filter(n=>n&&!nu(n)))];
+  const lot=notes.slice();
+  echN.forEach(n=>{ if(!lot.some(x=>x.indexOf(n)>=0)) lot.push((trav.length?'Échauffement : ':'')+n); });
+  o.note=lot.length?lot.join(' | '):'';
   o._echFusion=nW;o._echLignes=nLW;o._blocLignes=lignes.length;
   return o;
 }
+/* 🎨 LES SÉRIES « EN COULEUR » DU DOCUMENT (`specialSets`, IMPORT-IA-FIDELITE-01). Le prompt demande à l'IA d'indiquer quelles séries ont leurs
+   reps en rouge / en couleur dans le PDF (méthode, échec, consigne du coach…). L'app, elle, n'en faisait RIEN depuis ft-v292 (le champ n'était plus
+   converti en « échec ») : l'indication disparaissait entre l'IA et le programme, sans un mot. Une donnée du document qu'on ne sait pas exécuter
+   ne se jette pas : elle est CONSERVÉE dans la note de l'exercice, numérotée de 1 (« n° 2, 3 »), et donc visible dans l'aperçu et à la séance.
+   ⛔ On ne devine pas ce que la couleur veut dire (échec ? méthode ?) : on dit seulement QUELLES séries. Appelée APRÈS les regroupements, quand les indices
+   sont ceux de l'exercice final (`_fusionneBlocImport` les a décalés). */
+function _impConserverSpeciales(){
+  ((_impExtracted&&_impExtracted.days)||[]).forEach(day=>(day.exercises||[]).forEach(ex=>{
+    if(!ex||!Array.isArray(ex.specialSets)||!ex.specialSets.length)return;
+    const n=_seriesImport(ex).n;
+    const idx=[...new Set(ex.specialSets.map(k=>parseInt(k)).filter(k=>k>=0&&k<n))].sort((a,b)=>a-b);
+    delete ex.specialSets;
+    if(!idx.length)return;
+    if(String(ex.note||'').indexOf('Séries en couleur')<0)ex.note=(ex.note?ex.note+' | ':'')+'Séries en couleur dans le document : n° '+idx.map(k=>k+1).join(', ');
+  }));
+}
+/* 🔟 DES REPS QUE LE DOCUMENT N'ÉCRIT PAS — RETRAIT ÉCRIT (IMPORT-IA-FIDELITE-01, correction D, 02/11/2026, R30).
+   Le premier jet de ce lot mettait 10 à la place, puis le DISAIT dans la note de l'exercice (`_impSignalerRepsAbsentes`, « 10 proposées, à
+   corriger »). Michel : on ne transforme jamais, même en le signalant, l'absence de répétitions en 10 — une valeur inventée enregistrée dans le
+   programme finit par passer pour la prescription du coach. La fonction est donc RETIRÉE, avec sa note : `_seriesImport` rend `null` (« Non
+   renseigné »), le programme garde ce `null`, l'aperçu et l'éditeur disent « Non renseigné », la séance demande le nombre (`toggleSet`).
+   Cas constaté : une ligne qui n'écrit qu'un nom d'exercice et un repos (« Exercice X 1.30 mins »), ni séries ni reps. ⛔ Ne pas la remettre : un témoin
+   (IIF-K05) fige que ni le 10 ni la note ne reviennent. */
+/* ═══ L'IDENTITÉ D'UN EXERCICE IMPORTÉ — TROIS RÉPONSES, PAS DEUX (IMPORT-IA-FIDELITE-01, 02/11/2026) ═══════════════
+   « Ces deux lignes désignent-elles le même mouvement ? » avait deux réponses (oui / non) et DEUX propriétaires qui ne se
+   contredisaient pas par accident : l'un fusionnait d'office un nom qui en PROLONGE un autre (« X » → « X / haltères »),
+   l'autre exigeait la même clé. Le cas constaté (une variante « B » d'un programme généré par une IA) tombe entre les deux : « Presse épaules guidée »
+   (×2, échauffement) puis « Presse épaules guidée / haltères » (travail) = trois cartes, parce que la clé diffère.
+   ⛔⛔ MAIS « guidé / haltères » PEUT désigner deux mouvements (la machine OU les haltères) : une simple ressemblance de nom
+   n'autorise JAMAIS une fusion automatique (décision de Michel, 02/11). D'où la 3ᵉ réponse :
+     · 'meme'        : même clé canonique (mêmes mots après retrait du marqueur, alias du catalogue compris) → regroupé d'office ;
+     · 'a-verifier'  : mêmes mots utiles (le matériel est un mot vide), OU le nom de travail PROLONGE le nom de base derrière
+                       un séparateur — et les matériels ÉCRITS ne se contredisent pas → une PROPOSITION, jamais une fusion ;
+     · 'autre'       : tout le reste — « Squat » / « Squat Bulgare », barre / haltères : jamais regroupés, jamais proposés.
+   Les matériels écrits : TOUS ceux du nom (« guidé / haltères » en écrit deux), pas seulement le premier — `_materielDe`
+   (IMPORT-MAP-01) n'en rend qu'un, par priorité, et ne verrait pas qu'« haltères » est aussi écrit. Mêmes mots que lui. */
+function _materielsEcrits(nom){
+  const s=' '+_normEx(nom)+' ', r=[];
+  if(/ smith /.test(s)) r.push('smith');
+  if(/ (poulie|cable|cables) /.test(s)) r.push('poulie');
+  if(/ (machine|guide|guidee|guides|guidees) /.test(s)) r.push('machine');
+  if(/ (haltere|halteres|dumbbell|dumbbells|kettlebell) /.test(s)) r.push('libre');
+  if(/ (barre|barbell|ez) /.test(s)) r.push('barre');
+  return r;
+}
+function _identiteBlocImport(a,b){
+  if(_cleBlocImport(a)===_cleBlocImport(b)) return 'meme';
+  const na=_nomBlocImport(a), nb=_nomBlocImport(b);
+  const prolonge=_estLaLigneDeTravail(nb,_naz(na));
+  const mots=x=>_exTokens(x).slice().sort().join('|');
+  const memesMots=!!mots(na)&&mots(na)===mots(nb);
+  if(!prolonge&&!memesMots) return 'autre';
+  const ma=_materielsEcrits(na), mb=_materielsEcrits(nb);
+  if(ma.length&&mb.length&&!ma.some(x=>mb.includes(x))) return 'autre';   // barre ≠ haltères : deux mouvements, point
+  return 'a-verifier';
+}
+let _propSeq=0;
+/* 📥 LE REGROUPEMENT ÉCHAUFFEMENT + TRAVAIL — UNE SEULE RÈGLE (IMPORT-ECH-01 → IMPORT-IA-FIDELITE-01).
+   Un BLOC CONTINU d'un même exercice qui COMMENCE par une preuve d'échauffement (`_typesLigneImport` : type structuré,
+   marqueur dans le nom, note qui COMMENCE par un marqueur) et contient au moins une série de travail = UN exercice.
+   ⛔ Sans preuve, rien ne bouge (deux lignes identiques peuvent être voulues — R29) ; un autre exercice entre deux lignes
+   COUPE le bloc ; un échauffement APRÈS le travail ouvre un autre bloc ; superset et dropset ne sont jamais touchés.
+   ⛔ Chaque série garde ses reps, sa charge, son type, son repos, et l'ordre du document.
+   ⭐ Des échauffements SEULS (≥ 2 lignes de même identité) sont regroupés eux aussi — sans perte — puis, si la ligne qui suit
+   est « à vérifier » (`_identiteBlocImport`), les deux reçoivent une MARQUE de proposition (`_propGrp`/`_propRole`) :
+   l'aperçu la montre, la personne tranche (`impGrouperEch` / `impGarderSepares`). Tant qu'elle n'a pas dit oui, RIEN n'est fusionné. */
 function _mergeImportBlocsEch(){
   if(!_impExtracted||!(_impExtracted.days||[]).length)return;
-  let fus=0;
+  let fus=0,props=0;
   (_impExtracted.days||[]).forEach(day=>{
     const src=day.exercises||[],out=[];
     let i=0;
     while(i<src.length){
       const a=src[i],ta=_blocCompatible(a)?_typesLigneImport(a):[];
       if(!ta.length||ta[0]!=='W'||!_wPuisTravail(ta)){out.push(a);i++;continue;}   // un bloc COMMENCE par une preuve d'échauffement
-      const cle=_cleBlocImport(a);
       let j=i+1,travail=ta.some(v=>v!=='W');
       while(j<src.length){
         const b=src[j];
-        if(!_blocCompatible(b)||_cleBlocImport(b)!==cle)break;          // un autre exercice (ou un superset, un dropset) coupe le bloc
+        if(!_blocCompatible(b)||_identiteBlocImport(a,b)!=='meme')break;   // un autre exercice (ou un superset, un dropset) coupe le bloc
         const tb=_typesLigneImport(b);
-        if(!_wPuisTravail(tb)||(travail&&tb.some(v=>v==='W')))break;    // un échauffement APRÈS le travail ouvre un autre bloc
+        if(!_wPuisTravail(tb)||(travail&&tb.some(v=>v==='W')))break;        // un échauffement APRÈS le travail ouvre un autre bloc
         if(tb.some(v=>v!=='W'))travail=true;
         j++;
       }
-      if(!travail||j-i<2){for(let k=i;k<j;k++)out.push(src[k]);i=j;continue;}   // pas de travail : on laisse le document tel quel
-      out.push(_fusionneBlocImport(src.slice(i,j)));fus++;i=j;
+      const bloc=src.slice(i,j);
+      if(travail){ out.push(bloc.length>=2?_fusionneBlocImport(bloc):a); if(bloc.length>=2)fus++; i=j; continue; }
+      // des échauffements SEULS : regroupés s'ils sont plusieurs (même identité = sans perte), puis la ligne qui suit est examinée
+      const ech=bloc.length>=2?_fusionneBlocImport(bloc):a;
+      if(bloc.length>=2)fus++;
+      const nxt=src[j];
+      if(nxt&&_blocCompatible(nxt)){
+        const tn=_typesLigneImport(nxt);
+        if(tn.length&&tn[0]!=='W'&&tn.some(v=>v!=='W')&&_identiteBlocImport(a,nxt)==='a-verifier'){
+          const pid='pg'+(++_propSeq);
+          ech._propGrp=pid; ech._propRole='ech'; nxt._propGrp=pid; nxt._propRole='travail'; props++;
+        }
+      }
+      out.push(ech); i=j;
     }
     day.exercises=out;
   });
-  if(fus)console.log('[Import] '+fus+' bloc(s) échauffement + travail regroupé(s) en un exercice (IMPORT-ECH-01)');
+  if(fus)console.log('[Import] '+fus+' bloc(s) échauffement + travail regroupé(s) en un exercice');
+  if(props)console.log('[Import] '+props+' regroupement(s) proposé(s) à la personne (identité à vérifier)');
+}
+/* ✅ / ✋ LA PERSONNE TRANCHE — `ei` est l'index de l'exercice de TRAVAIL (celui qui porte la proposition). */
+function impGrouperEch(di,ei){
+  const day=_impExtracted&&_impExtracted.days&&_impExtracted.days[di]; if(!day)return;
+  const ex=day.exercises[ei], prev=day.exercises[ei-1];
+  if(!ex||ex._propRole!=='travail'||!prev||prev._propGrp!==ex._propGrp)return;
+  const m=_fusionneBlocImport([prev,ex]);
+  day.exercises.splice(ei-1,2,m);
+  _vmMatchEx(m);                      // seul l'exercice fusionné est ré-examiné : les rattachements des autres ne bougent pas
+  _renderImpConfirm();
+}
+function impGarderSepares(di,ei){
+  const day=_impExtracted&&_impExtracted.days&&_impExtracted.days[di]; if(!day)return;
+  const ex=day.exercises[ei]; if(!ex||!ex._propGrp)return;
+  const g=ex._propGrp;
+  day.exercises.forEach(e=>{ if(e&&e._propGrp===g){ delete e._propGrp; delete e._propRole; } });
+  _renderImpConfirm();
 }
 /* ⛔⛔ R2 — UN SEUL PROPRIÉTAIRE de la question « cet exercice sera-t-il CRÉÉ à l'import ? »
    (ft-v1166). Elle était calculée à DEUX endroits, avec DEUX comparaisons DIFFÉRENTES :
@@ -7819,18 +8031,34 @@ function _exerciceInconnu(nom,connus){
 // Palier auto (confiance ≥90) = rattaché direct (nom remplacé, original gardé pour « annuler »).
 // Palier confirm (zone grise) = proposé à l'utilisateur (« ≈ Rattacher à X ? »), nom inchangé
 // tant qu'il n'a pas dit oui. Palier nouveau = laissé tel quel → exercice créé (comme avant).
+/* 🏷️ LE MATÉRIEL ÉCRIT DANS LA NOTE (IMPORT-IA-FIDELITE-01). Les garde-fous IMPORT-MAP lisent le NOM : un « Hip Thrust » dont la note dit
+   « Machine guidée » était rattaché d'office au « Hip Thrust Barre » — le programme enregistrait un autre mouvement, et l'historique de
+   la barre recevait les charges de la machine (cas constaté à l'import d'un programme de coach). Le modèle range parfois le matériel dans la
+   note plutôt que dans le nom ; on ne lui en veut pas, on le LIT. ⛔ Ce n'est jamais un refus : le rattachement d'office devient une
+   PROPOSITION (« À confirmer »), la personne tranche (R29 : l'erreur touche ses records, donc on demande). Le nom qui dit DÉJÀ son matériel
+   garde son propre garde-fou ; une cible non marquée est lue comme barre / poids du corps, que seule une note « Smith / machine / poulie /
+   haltères » contredit (un « barre » en note ne la contredit pas). */
+function _materielNoteContredit(ex,cible){
+  const mn=_materielsEcrits(ex.note);
+  if(!mn.length||_materielsEcrits(ex.name).length)return false;
+  const mc=_materielsEcrits(cible);
+  if(mc.length)return !mn.some(x=>mc.includes(x));
+  return mn.some(x=>x!=='barre');
+}
+function _vmMatchEx(ex){
+  if(typeof _matchExercise!=='function'||!ex||!ex.name)return;
+  delete ex._vmFrom; delete ex._vmSuggest; delete ex._vmConf;
+  let r; try{ r=_matchExercise(ex.name); }catch(e){ return; }
+  if(!r||!r.match||r.match===ex.name)return; // rien à faire / déjà EXACTEMENT le nom canonique
+  // (une simple différence de casse/accents « Pec deck » → « Pec Deck » est un rattachement utile :
+  //  sinon l'exo importé ne partagerait ni stats ni figurine avec la référence EXLIB)
+  if(r.tier==='auto'&&_materielNoteContredit(ex,r.match)){ ex._vmSuggest=r.match; ex._vmConf=r.confidence; return; }
+  if(r.tier==='auto'){ ex._vmFrom=ex.name; ex._vmConf=r.confidence; ex.name=r.match; }
+  else if(r.tier==='confirm'){ ex._vmSuggest=r.match; ex._vmConf=r.confidence; }
+}
 function _vmMatchExtracted(){
   if(typeof _matchExercise!=='function'||!_impExtracted)return;
-  (_impExtracted.days||[]).forEach(day=>(day.exercises||[]).forEach(ex=>{
-    if(!ex||!ex.name)return;
-    delete ex._vmFrom; delete ex._vmSuggest; delete ex._vmConf;
-    let r; try{ r=_matchExercise(ex.name); }catch(e){ return; }
-    if(!r||!r.match||r.match===ex.name)return; // rien à faire / déjà EXACTEMENT le nom canonique
-    // (une simple différence de casse/accents « Pec deck » → « Pec Deck » est un rattachement utile :
-    //  sinon l'exo importé ne partagerait ni stats ni figurine avec la référence EXLIB)
-    if(r.tier==='auto'){ ex._vmFrom=ex.name; ex._vmConf=r.confidence; ex.name=r.match; }
-    else if(r.tier==='confirm'){ ex._vmSuggest=r.match; ex._vmConf=r.confidence; }
-  }));
+  (_impExtracted.days||[]).forEach(day=>(day.exercises||[]).forEach(_vmMatchEx));
 }
 function _impSetDayLabel(di,val){
   if(_impExtracted&&_impExtracted.days[di]) _impExtracted.days[di].label=(val||'').trim()||('Jour '+(di+1));
@@ -7861,20 +8089,6 @@ function impRejectMatch(di,ei){
 // proposé (gif/photo si dispo, sinon muscle deviné) + ✓ Oui / ✕ Non explicites. Pensé
 // pour un sportif fatigué : décider d'un coup d'œil, aucun formulaire. Partagé programme+journal.
 // acceptCall / rejectCall = chaînes d'appel déjà construites (évite l'imbrication de gabarits).
-// Vignette d'aperçu d'import : vraie image > muscle deviné SEULEMENT si fiable > icône haltère neutre
-// (ne tombe JAMAIS sur le défaut « chest.svg » de _exMuscleImg → plus de torse rouge pour un exo inconnu)
-function _impThumb(name){
-  const box='width:36px;height:36px;border-radius:8px;flex-shrink:0;background:var(--bg3);box-sizing:border-box;';
-  let gif=''; try{ gif=_exImg(name)||''; }catch(e){}
-  if(gif) return `<img src="${gif}" onerror="this.style.visibility='hidden'" style="${box}object-fit:cover;">`;
-  let musc=''; try{ const {sc}=_mscScoresVus([{name,sets:[{done:true}]}]); const top=Object.entries(sc||{}).sort((a,b)=>b[1]-a[1])[0]; if(top&&_MG_IMG[top[0]]) musc=_MG_IMG[top[0]]; }catch(e){}
-  if(musc) return `<img src="${musc}" onerror="this.style.visibility='hidden'" style="${box}object-fit:contain;padding:3px;">`;
-  // exo RÉEL de la biblio (sans gif ni muscle deviné) → silhouette de son GROUPE (figurine pertinente, jamais le défaut chest global)
-  let grp=''; try{ const cn=exNomCatalogue(name); const ex=EXLIB.find(e=>e.n===cn); if(ex&&_MUSCLE_FILE[ex.g]) grp=_MUSCLE_FILE[ex.g]; }catch(e){}
-  if(grp) return `<img src="${grp}" onerror="this.style.visibility='hidden'" style="${box}object-fit:contain;padding:4px;">`;
-  // vraiment inconnu (hors biblio) → icône haltère neutre
-  return `<div style="${box}display:flex;align-items:center;justify-content:center;">${_ICO_HALTERE}</div>`;
-}
 /* ⭐ LA LIGNE ORANGE — jumelle de `_vmConfirmRow` juste dessous, même forme, même endroit (R13).
    Elle dit ce que l'app va faire AVANT de le faire, et laisse la main : « 🔗 Rattacher ».
    ⛔ Elle N'INTERDIT RIEN (R24, informer sans bloquer) : un exercice réellement absent du
@@ -7969,13 +8183,170 @@ function _vmConfirmRow(suggest, acceptCall, rejectCall, noThumb){
     +`<button onclick="${rejectCall}" style="background:var(--bg3);border:1px solid var(--sep);color:var(--t2);border-radius:6px;padding:3px 12px;font-size:12px;font-weight:700;cursor:pointer;">✕ Non</button>`
     +`</div>`;
 }
+/* ═══ L'APERÇU D'IMPORT DIT CE QUI SERA ENREGISTRÉ — IMPORT-IA-FIDELITE-01 (02/11/2026) ═══════════════════════════════
+   Avant : « 5×3 · 90 kg » — les 4 séries d'échauffement du développé couché, leurs charges et TOUS les repos disparaissaient
+   de l'écran avant d'être enregistrés. Michel : *« l'aperçu doit rendre compréhensible le résultat de l'IA avant toute
+   sauvegarde ».* Il montre maintenant, par exercice : le NOM, son STATUT de reconnaissance, sa VRAIE illustration (ou
+   l'absence d'illustration, jamais une silhouette de muscle qui ferait croire à une reconnaissance), les séries d'échauffement
+   et de travail avec leurs charges / reps / repos, la consigne, les ambiguïtés — et il laisse corriger (type, repos).
+   ⭐ R2 : le type et le repos d'une série sont LUS PAR LES MÊMES FONCTIONS que `_buildProgDay` (celles ci-dessous) — l'aperçu
+   ne peut pas annoncer autre chose que ce qui sera enregistré. */
+function _typeSerieImport(ex,si){
+  const v=(ex.setTypePerSet&&ex.setTypePerSet[si]!=null)?String(ex.setTypePerSet[si]).toUpperCase():'';
+  return v==='W' ? 'É' : (ex.setType||'N');          // 'W' est le mot du backend, 'É' celui de l'app (R33 : traduit ICI, une fois)
+}
+/* 📉 Un dropset : le repos de l'EXERCICE vaut pour la FIN de la série dégressive, pas pour chaque palier (sinon 2 min entre deux
+   paliers qui s'enchaînent). Un repos écrit pour un palier précis (`restPerSet`) reste à ce palier. */
+function _restBrutSerieImport(ex,si){
+  const n=_seriesImport(ex).n;
+  const vide=v=>v==null||String(v).trim()==='';
+  /* Un repos écrit pour un palier PRÉCIS reste à ce palier. Mais un `restPerSet` UNIFORME (la même valeur sur chaque série) ne dit rien de
+     plus que le repos de l'exercice : c'est le modèle qui a recopié « 2 mins » sur chaque palier (constaté sur des programmes de
+     coachs) — le document, lui, l'écrit UNE fois, au bout de la série dégressive. */
+  const rp=ex.restPerSet||[];
+  const uniforme=rp.length>1&&!vide(rp[0])&&rp.every(v=>!vide(v)&&String(v).trim()===String(rp[0]).trim());
+  const proprio=!vide(rp[si])&&!uniforme;
+  if((ex.setType||'N')==='D'&&!proprio&&si<n-1)return null;
+  return _restBrut(ex,si);
+}
+function _reposSerieImport(ex,si){ return _reposLire(_restBrutSerieImport(ex,si)); }
+/* 📉 UN DROPSET IMPORTÉ S'ENCHAÎNE-T-IL ? — LE MARQUAGE EXPLICITE (IMPORT-IA-FIDELITE-01, correction C, 02/11/2026).
+   Un exercice que le document donne en dropset (`setType` D) et qui a au moins deux paliers reçoit `dropChaine: true` à l'enregistrement
+   (`_buildProgDay`). C'est ce champ — et lui seul — qui autorise la séance à enchaîner les paliers sans repos (`toggleSet`) : un programme
+   enregistré AVANT n'en porte pas, son chrono ne change donc pas. ⛔ Ne jamais déduire l'enchaînement du type « D » ni d'un repos absent :
+   c'est exactement ce qui touchait les anciens programmes. Même test de type que `_typeSerieImport` (R2) : les paliers sont « D » si, et seulement si, ce test est vrai. */
+function _impDropEnchaine(ex){
+  return !!ex&&(ex.setType||'N')==='D'&&_seriesImport(ex).n>1;
+}
+function _impVueSeries(ex){
+  const x=_seriesImport(ex);
+  return Array.from({length:x.n},(_,si)=>({type:_typeSerieImport(ex,si),kg:+x.kgs[si]||0,reps:x.reps[si],repos:_reposSerieImport(ex,si)}));
+}
+// « 90 s », « 1 min 30 », « 2 min » — la durée telle qu'on la dit
+function _fmtReposDit(sec){
+  sec=Math.round(sec); if(sec<60)return sec+' s';
+  const m=Math.floor(sec/60), r=sec%60; return r?(m+' min '+r):(m+' min');
+}
+function _impReposLib(r){
+  if(r.sec)return _fmtReposDit(r.sec);
+  if(r.prop)return _fmtReposDit(r.prop);  // une PLAGE : sa BORNE BASSE est proposée (décision de Michel, 08/11/2026) — le texte écrit reste affiché à côté (`_impReposEcrit`)
+  if(r.txt)return r.txt;                  // un texte sans chiffre : tel qu'écrit dans le document, aucun chiffre appliqué
+  return '—';
+}
+/* La CONSIGNE D'ORIGINE d'un repos écrit en plage (« 4-5 min »), ou '' : c'est elle qu'on affiche à côté du chiffre proposé, pour que la personne voie d'où il vient
+   et puisse le changer. Un texte sans chiffre n'a pas de chiffre proposé : il s'affiche déjà tel quel (`_impReposLib`). */
+function _impReposEcrit(r){ return (r&&r.txt&&r.prop)?r.txt:''; }
+/* Le détail par série devient ÉDITABLE : avant toute correction, on écrit explicitement dans l'exercice ce que l'aperçu montre
+   (type et repos de CHAQUE série), à la longueur des séries. Rien ne change à l'enregistrement : `_typeSerieImport` /
+   `_restBrutSerieImport` relisent exactement les mêmes valeurs. ⛔ Le repos d'un palier de dropset non écrit reste « rien ». */
+function _impMaterialiser(ex){
+  const n=_seriesImport(ex).n;
+  const types=Array.from({length:n},(_,si)=>_typeSerieImport(ex,si)==='É'?'W':'');
+  const rests=Array.from({length:n},(_,si)=>{ const v=_restBrutSerieImport(ex,si); return v==null?'':String(v); });
+  const x=_seriesImport(ex);
+  ex.repsPerSet=x.reps.slice(); ex.kgPerSet=x.kgs.slice(); ex.sets=n;
+  ex.setTypePerSet=types; ex.restPerSet=rests; ex.rest='';
+}
+function _impEx(di,ei){ return _impExtracted&&_impExtracted.days&&_impExtracted.days[di]&&(_impExtracted.days[di].exercises||[])[ei]; }
+let _impOuverts=new Set();               // cartes dont le détail est déplié — la mémoire de l'écran seulement, jamais stockée
+function impToggleDet(di,ei){ const k=di+'-'+ei; if(_impOuverts.has(k))_impOuverts.delete(k); else _impOuverts.add(k); _renderImpConfirm(); }
+function impBasculerType(di,ei,si){
+  const ex=_impEx(di,ei); if(!ex||(ex.setType||'')==='D')return;           // un palier de dropset n'est ni échauffement ni travail
+  _impMaterialiser(ex);
+  ex.setTypePerSet[si]=ex.setTypePerSet[si]==='W'?'':'W';
+  delete ex._echFusion; delete ex._echLignes;                              // l'ancien décompte de lignes regroupées n'est plus vrai
+  _renderImpConfirm();
+}
+let _impRepos=null;                       // { di, ei, si } — la série dont le repos est en cours de correction
+function impEditRepos(di,ei,si){ _impRepos=(_impRepos&&_impRepos.di===di&&_impRepos.ei===ei&&_impRepos.si===si)?null:{di,ei,si}; _renderImpConfirm(); }
+function impFixerRepos(di,ei,si,sec){
+  const ex=_impEx(di,ei); if(!ex)return;
+  _impMaterialiser(ex);
+  // un repos CHOISI est un nombre ; la consigne écrite d'origine (une plage) reste dans la note de l'exercice : rien n'est perdu
+  const ancien=_reposLire(ex.restPerSet[si]);
+  if(ancien.txt&&sec&&String(ex.note||'').indexOf(ancien.txt)<0)ex.note=((ex.note?ex.note+' | ':'')+'Repos écrit : '+ancien.txt);
+  ex.restPerSet[si]=sec?String(Math.round(sec)):'';
+  _impRepos=null; _renderImpConfirm();
+}
+function impReposAutre(di,ei,si){
+  const el=document.getElementById('imp-rp-autre'); const brut=el?String(el.value).trim():'';
+  const v=_reposLire(/^\d+$/.test(brut)?brut+' s':brut);                    // des chiffres seuls, ici, sont des SECONDES
+  if(v.sec)impFixerRepos(di,ei,si,v.sec); else toast('Durée illisible — ex. 90 s, 2 min','info');
+}
+// L'illustration : la VRAIE (photo perso, photo rangée, image du catalogue) ou l'aveu qu'il n'y en a pas.
+// ⛔ Jamais une silhouette de muscle deviné : elle ressemble à une reconnaissance et n'en prouve aucune.
+function _impIllu(name){
+  let src=''; try{ src=_exImg(name)||''; }catch(e){}
+  if(src)return `<img class="imp-ill" src="${src}" alt="" onerror="this.style.visibility='hidden'">`;
+  return `<span class="ex-sans-illu imp-ill imp-ill-none" role="img" aria-label="${_SANS_ILLU}" title="${_SANS_ILLU}">${_ICO_HALTERE}</span>`;
+}
+function _impStatut(ex,connus){
+  if(ex._vmSuggest)return {k:'conf',lib:'À confirmer'};
+  if(_exerciceInconnu(ex.name,connus))return {k:'new',lib:'Sera créé · exercice perso'};
+  if(ex._vmFrom)return {k:'ok',lib:'Reconnu'};
+  const enPerso=(S.customExercises||[]).some(e=>e&&e.n&&_cleNom(e.n)===_cleNom(ex.name));
+  const enCatalogue=typeof EXLIB!=='undefined'&&EXLIB.some(e=>e&&e.n&&_cleNom(e.n)===_cleNom(ex.name));
+  return {k:'ok',lib:(enPerso&&!enCatalogue)?'Ton exercice perso':'Reconnu'};
+}
+function _impGroupesSeries(v){
+  const g=[]; v.forEach(s=>{ const l=g[g.length-1]; if(l&&l.t===s.type)l.s.push(s); else g.push({t:s.type,s:[s]}); }); return g;
+}
+/* 🔢 « NON RENSEIGNÉ » — LE MOT D'UNE RÉPÉTITION QUE LE DOCUMENT N'ÉCRIT PAS (IMPORT-IA-FIDELITE-01, correction D, 02/11/2026).
+   Le libellé a UNE source (`REPS_NON_RENSEIGNE`, constants.js — R2) : l'aperçu, l'éditeur de programme et la séance disent la même chose.
+   `null` (ou absent) = le document ne l'écrit pas ; `0` n'est PAS cela — c'est l'ancienne valeur « vide » des programmes déjà enregistrés,
+   qui garde son ancien comportement. */
+function _repsHtml(r){ return (r==null)?`<span class="imp-nr">${REPS_NON_RENSEIGNE}</span>`:_escNote(String(r)); }
+function _impLigneGroupe(g,avecLib){
+  const s=g.s, n=s.length;
+  const memes=s.every(x=>x.kg===s[0].kg&&String(x.reps)===String(s[0].reps));
+  const lib={'É':'Échauffement','N':'Travail','D':'Dropset'}[g.t]||'Travail';
+  const kgTxt=s[0].kg?' @ '+s[0].kg+' kg':'';
+  const corps=memes
+    ?(s[0].reps==null?_escNote(n+(n>1?' séries':' série')+' · reps ')+_repsHtml(null)+_escNote(kgTxt):_escNote(n+' × '+s[0].reps+' reps'+kgTxt))
+    :s.slice(0,7).map(x=>_escNote(x.kg?x.kg+' kg × ':'')+_repsHtml(x.reps)).join(' · ')+(n>7?' …':'');
+  const rp=[]; s.forEach(x=>{ const e=_impReposEcrit(x.repos); const l=_impReposLib(x.repos)+(e?' (écrit : '+e+')':''); if(!rp.includes(l))rp.push(l); });
+  const repos=(rp.length===1&&rp[0]==='—')?'repos non précisé':'repos '+rp.filter(l=>l!=='—').join(' · ')+(rp.includes('—')?' · —':'');
+  return `<div>${avecLib?`<b>${lib}</b> · `:''}${n>1&&!memes?n+' séries : ':''}${corps} <span style="color:var(--t3);">— ${_escNote(repos)}</span></div>`;
+}
+function _impDetailSeries(di,ei,v){
+  return `<div class="imp-sets">${v.map((x,si)=>{
+    const ouvert=_impRepos&&_impRepos.di===di&&_impRepos.ei===ei&&_impRepos.si===si;
+    const ty=x.type==='É'?'É':(x.type==='D'?'D':'T'), cls=x.type==='É'?'ech':(x.type==='D'?'drop':'trav');
+    const titre=x.type==='É'?'Échauffement — touche pour passer en travail':(x.type==='D'?'Palier de dropset':'Travail — touche pour passer en échauffement');
+    const flag=!!x.repos.txt;                  // un repos écrit en plage ou en texte : marqué ⚑ (le chiffre proposé n'est PAS celui du document)
+    let h=`<div class="imp-set"><button class="imp-ty imp-ty-${cls}" ${x.type==='D'?'disabled':`onclick="impBasculerType(${di},${ei},${si})"`} title="${titre}">${ty}</button>`
+      +`<span class="imp-kr">${x.kg?x.kg+' kg':'—'} × ${_repsHtml(x.reps)}</span>`
+      +`<button class="imp-rp${flag?' imp-rp-flag':''}" onclick="impEditRepos(${di},${ei},${si})" title="${_impReposEcrit(x.repos)?'Écrit dans le document : '+_escNote(_impReposEcrit(x.repos))+' — touche pour corriger':'Corriger le repos'}">${flag?'⚑ ':''}${_escNote(_impReposLib(x.repos))}</button></div>`;
+    if(ouvert){
+      h+=`<div class="imp-rpe"><div class="imp-rpe-t">Repos de la série ${si+1}${x.repos.txt?` · écrit : « ${_escNote(x.repos.txt)} »`:''}</div><div class="imp-rpe-c">`
+        +(x.repos.min?`<button class="imp-rpe-b" onclick="impFixerRepos(${di},${ei},${si},${x.repos.min})">${_fmtReposDit(x.repos.min)}</button><button class="imp-rpe-b" onclick="impFixerRepos(${di},${ei},${si},${x.repos.max})">${_fmtReposDit(x.repos.max)}</button>`:'')
+        +[30,45,60,90,120,180,240,300].map(sec=>`<button onclick="impFixerRepos(${di},${ei},${si},${sec})">${_fmtReposDit(sec)}</button>`).join('')
+        +`<button onclick="impFixerRepos(${di},${ei},${si},0)">Aucun</button></div>`
+        +`<div class="imp-rpe-a"><input id="imp-rp-autre" inputmode="numeric" placeholder="autre : 100 s, 2 min…" enterkeyhint="done"><button onclick="impReposAutre(${di},${ei},${si})">OK</button></div></div>`;
+    }
+    return h;
+  }).join('')}</div>`;
+}
+/* ⚠️ CE QUE LE SERVEUR A DÛ ÉCARTER (IMPORT-IA-FIDELITE-01). Le Worker valide la réponse du modèle et COMPTE ce qu'il ne peut pas garder
+   (`data.normalisation` : des compteurs entiers, jamais un mot du document — Constitution P3). Ce qui disparaît du programme se DIT avant
+   d'enregistrer, on ne le découvre pas à la salle : une séance sans aucun exercice lisible, une ligne illisible, une date de début refusée.
+   ⛔ Les compteurs de simple CONSERVATION (plages de reps, charges « à calibrer ») ne sont PAS des pertes : leur texte est déjà dans la note.
+   Une seule source (R2) : l'ancien serveur (Apps Script) ne sait pas compter → rien n'est dit, on n'invente pas un « tout va bien ». */
+function _impPertes(d){
+  const n=d&&d.normalisation; if(!n||typeof n!=='object')return '';
+  const j=+n.joursEcartes||0, e=+n.exercicesIllisibles||0, dt=+n.startDateRefusee||0, p=[];
+  if(j>0)p.push(j+(j>1?' séances sans exercice lisible ont été écartées':' séance sans exercice lisible a été écartée'));
+  if(e>0)p.push(e+(e>1?' lignes illisibles ont été ignorées':' ligne illisible a été ignorée'));
+  if(dt>0)p.push("la date de début écrite n'a pas été gardée (impossible, ou cycle déjà terminé)");
+  return p.length?'Ce que l\'import n\'a pas pu garder : '+p.join(' · ')+'. Relis le document avant d\'enregistrer.':'';
+}
 function _renderImpConfirm(){
   const d=_impExtracted;if(!d)return;
   const nameEl=document.getElementById('imp-prog-name');
   if(nameEl)nameEl.textContent=d.name||'Programme importé';
   const el=document.getElementById('imp-preview');if(!el)return;
   /* ⭐ Un SEUL passage de comptage, réutilisé par le bandeau ET par chaque ligne : le compte
-     annoncé en haut ne peut pas contredire les pastilles orange du dessous. */
+     annoncé en haut ne peut pas contredire les pastilles du dessous. */
   const _connus=_catalogueConnu();
   const _neuf=ex=>!!ex&&!ex._vmSuggest&&_exerciceInconnu(ex.name,_connus);
   /* ⚠️ ON COMPTE LES NOMS DISTINCTS, pas les lignes : `toCreate` DÉDOUBLONNE avant de créer.
@@ -7984,24 +8355,47 @@ function _renderImpConfirm(){
   const _vus=new Set();
   (d.days||[]).forEach(day=>(day.exercises||[]).forEach(ex=>{ if(_neuf(ex))_vus.add(_cleNom(ex.name)); }));
   const _nbNeuf=_vus.size;
-  el.innerHTML=_vmNouveauBandeau(_nbNeuf)+(d.days||[]).map((day,di)=>`
-    <div style="background:var(--bg3);border-radius:10px;padding:10px 12px;">
-      <input value="${_escNote(day.label||'Jour '+(di+1)).replace(/"/g,'&quot;')}" onchange="_impSetDayLabel(${di},this.value)" title="Renomme la séance si besoin" style="width:100%;font-weight:700;font-size:13px;color:var(--red);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em;background:transparent;border:none;border-bottom:1px dashed var(--sep);padding:2px 0;font-family:inherit;">
-      <div id="imp-day-${di}">
-        ${(day.exercises||[]).map((ex,ei)=>`
-          <div id="imp-ex-${di}-${ei}" style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:var(--bg2);border-radius:8px;margin-bottom:5px;">
-            ${_impThumb(ex._vmSuggest||ex.name)}
-            <div style="flex:1;min-width:0;">
-              <div style="font-size:13px;font-weight:600;">${_escNote(ex.name)}</div>
-              <div style="font-size:12px;color:var(--t2);">${ex.sets}×${ex.reps} reps${ex.kg?' · '+ex.kg+' kg':''}</div>
-              ${ex._echFusion?`<div style="font-size:11px;color:var(--gold);margin-top:3px;">🔥 dont ${ex._echFusion} série${ex._echFusion>1?'s':''} d'échauffement — ${ex._echLignes} ligne${ex._echLignes>1?'s':''} du document regroupée${ex._echLignes>1?'s':''} ici</div>`:''}
-              ${ex._vmFrom?`<div style="font-size:11px;color:var(--green);margin-top:3px;">↔ reconnu depuis « ${_escNote(ex._vmFrom)} » · <span onclick="impUndoMatch(${di},${ei})" style="color:var(--t3);cursor:pointer;text-decoration:underline;">annuler</span></div>`:''}
-              ${ex._vmSuggest?_vmConfirmRow(ex._vmSuggest,'impAcceptMatch('+di+','+ei+')','impRejectMatch('+di+','+ei+')',true):''}
-              ${_neuf(ex)?_vmNouveauRow('impRattacher('+di+','+ei+')'):''}
-              ${ex.note?`<div style="font-size:11px;color:var(--gold);margin-top:2px;font-style:italic;">📋 ${_escNote(ex.note)}</div>`:''}
+  let nEx=0,nSer=0,nEch=0,nPlage=0;
+  (d.days||[]).forEach(day=>(day.exercises||[]).forEach(ex=>{ nEx++; _impVueSeries(ex).forEach(x=>{ nSer++; if(x.type==='É')nEch++; if(x.repos.txt)nPlage++; }); }));
+  const nj=(d.days||[]).length;
+  const total=`<div style="font-size:12px;color:var(--t2);line-height:1.5;margin-bottom:8px;"><b style="color:var(--t1);">${nj} séance${nj>1?'s':''} · ${nEx} exercice${nEx>1?'s':''} · ${nSer} série${nSer>1?'s':''}</b> (dont ${nEch} d'échauffement)`
+    +(nPlage?`<br>⚑ ${nPlage} repos écrit${nPlage>1?'s':''} en plage ou en texte : pour une plage (« 4-5 min »), la <b>borne basse</b> est proposée au chrono (4 min) et la consigne écrite est conservée ; un texte sans durée n'applique rien. Touche un repos pour le changer.`:'')
+    +(_impPertes(d)?`<br><span class="imp-perte">⚠️ ${_escNote(_impPertes(d))}</span>`:'')+`</div>`;
+  const carte=(di,ei)=>{
+    const ex=d.days[di].exercises[ei], o=_impOuverts.has(di+'-'+ei);
+    const v=_impVueSeries(ex), st=_impStatut(ex,_connus), g=_impGroupesSeries(v);
+    const prec=ei>0?d.days[di].exercises[ei-1]:null;
+    const prop=(ex._propRole==='travail'&&prec&&prec._propGrp===ex._propGrp)?prec:null;
+    const nProp=prop?_impVueSeries(prop).length:0;
+    return `
+          <div class="imp-card" id="imp-ex-${di}-${ei}" data-statut="${st.k}" data-ech="${v.filter(x=>x.type==='É').length}" data-trav="${v.filter(x=>x.type!=='É').length}">
+            <div class="imp-head">
+              ${_impIllu(ex._vmSuggest||ex.name)}
+              <div style="flex:1;min-width:0;">
+                <div class="imp-nom">${_escNote(ex.name)}</div>
+                <span class="imp-st imp-st-${st.k}">${st.lib}</span>
+              </div>
+              <button onclick="removeImpEx(${di},${ei})" class="imp-x" title="Retirer cet exercice" aria-label="Retirer cet exercice">✕</button>
             </div>
-            <button onclick="removeImpEx(${di},${ei})" style="background:none;border:none;color:var(--t3);font-size:16px;cursor:pointer;padding:4px;flex-shrink:0;line-height:1;">✕</button>
-          </div>`).join('')}
+            <div class="imp-sum">${g.map(x=>_impLigneGroupe(x,g.length>1)).join('')}</div>
+            ${ex._echFusion?`<div class="imp-info">🔥 dont ${ex._echFusion} série${ex._echFusion>1?'s':''} d'échauffement — ${ex._echLignes} ligne${ex._echLignes>1?'s':''} du document regroupée${ex._echLignes>1?'s':''} ici</div>`:''}
+            ${v.some(x=>x.reps==null)?`<div class="imp-info">🔢 Répétitions non écrites dans le document : rien n'est inventé, tu les saisiras pendant la séance.</div>`:''}
+            ${prop?`<div class="imp-prop"><div>🔗 Les <b>${nProp} série${nProp>1?'s':''} d'échauffement</b> juste au-dessus (« ${_escNote(prop.name)} ») semblent faire partie de cet exercice. Le nom ou le matériel n'est pas identique dans le document : <b>à toi de dire</b>.</div>`
+              +`<div class="imp-prop-b"><button class="imp-b-ok" onclick="impGrouperEch(${di},${ei})">Regrouper en un exercice</button><button onclick="impGarderSepares(${di},${ei})">Garder séparés</button></div></div>`:''}
+            ${ex._vmFrom?`<div class="imp-info" style="color:var(--green);">↔ reconnu depuis « ${_escNote(ex._vmFrom)} » · <span onclick="impUndoMatch(${di},${ei})" style="color:var(--t3);cursor:pointer;text-decoration:underline;">annuler</span></div>`:''}
+            ${ex._vmSuggest?_vmConfirmRow(ex._vmSuggest,'impAcceptMatch('+di+','+ei+')','impRejectMatch('+di+','+ei+')',true):''}
+            ${_neuf(ex)?_vmNouveauRow('impRattacher('+di+','+ei+')'):''}
+            ${ex.note?`<div class="imp-note">📋 ${_escNote(ex.note)}</div>`:''}
+            <button class="imp-det" onclick="impToggleDet(${di},${ei})">${o?'Masquer':'Voir / corriger'} les ${v.length} série${v.length>1?'s':''} ${o?'▴':'▾'}</button>
+            ${o?_impDetailSeries(di,ei,v):''}
+          </div>`;
+  };
+  const guillemet=String.fromCharCode(34);
+  el.innerHTML=total+_vmNouveauBandeau(_nbNeuf)+(d.days||[]).map((day,di)=>`
+    <div style="background:var(--bg3);border-radius:10px;padding:10px 12px;">
+      <input value="${_escNote(day.label||'Jour '+(di+1)).split(guillemet).join('&quot;')}" onchange="_impSetDayLabel(${di},this.value)" title="Renomme la séance si besoin" style="width:100%;font-weight:700;font-size:13px;color:var(--red);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em;background:none;border:none;outline:none;font-family:var(--font);">
+      <div id="imp-day-${di}">
+        ${(day.exercises||[]).map((ex,ei)=>carte(di,ei)).join('')}
       </div>
     </div>`).join('');
 }
@@ -8014,6 +8408,17 @@ function removeImpEx(di,ei){
   _renderImpConfirm();
 }
 
+/* 🪪 DEUX PROGRAMMES PEUVENT PORTER LE MÊME NOM (rien ne l'interdit : réimporter le même document en crée un second). Ils doivent
+   alors se DISTINGUER au moment de remplacer — nom, numéro technique, début, durée, nombre de séances — et on ne remplace jamais
+   sur le seul nom (IMPORT-IA-FIDELITE-01). `n°` = les 6 derniers caractères de l'identifiant interne, assez pour les départager. */
+function _descProg(p,i){
+  if(!p)return '';
+  const nj=(p.days&&p.days.length)||1;
+  const duree=p.weeks>0?(p.weeks+' sem.'):'durée non précisée';
+  const debut=p.startDate?('début '+new Date(p.startDate).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'})):'sans date de début';
+  const n=String(p.id||('#'+(i+1))).slice(-6);
+  return (p.name||'Programme')+' · '+duree+' · '+debut+' · '+nj+' séance'+(nj>1?'s':'')+' · n°'+n;
+}
 function _setImpMode(mode){
   _impMode=mode;
   const btnN=document.getElementById('imp-mode-new');
@@ -8022,7 +8427,7 @@ function _setImpMode(mode){
   if(mode==='replace'){
     const progs=S.programmes||[];
     if(!progs.length){toast('Aucun programme existant à remplacer','info');_setImpMode('new');return;}
-    sel.innerHTML=progs.map((p,i)=>`<option value="${i}">${_escNote(p.name)}</option>`).join('');
+    sel.innerHTML=progs.map((p,i)=>`<option value="${i}">${_escNote(_descProg(p,i))}</option>`).join('');
     sel.style.display='block';
     if(btnN)btnN.className='btn btn-bg2';
     if(btnR)btnR.className='btn btn-red';
@@ -8105,9 +8510,24 @@ function _cardioVersWkt(day){
     if(r.apres&&!S.wkt.cardio)     S.wkt.cardio     =r.apres;
   }catch(e){}
 }
+let _remplaceCible=null;   // { idx, id } — la cible confirmée d'un remplacement
 function finalImportProg(){
   if(!_impExtracted||!(_impExtracted.days||[]).length){toast('Aucun programme à importer','error');return;}
   if(!S.programmes)S.programmes=[];
+  /* 🪪 REMPLACER = UNE CIBLE NOMMÉE ET CONFIRMÉE (IMPORT-IA-FIDELITE-01). Avant : le nom seul, dans une liste, et le remplacement partait au tap.
+     ⛔ Placé AVANT tout effet de bord : la création des exercices perso plus bas ne doit pas avoir lieu si la personne annule. ⛔ Et la cible est
+     revérifiée par son identifiant au moment d'agir : la liste a pu changer pendant que la fenêtre était ouverte. */
+  if(_impMode==='replace'){
+    const idx=parseInt((document.getElementById('imp-replace-sel')||{}).value);
+    const cible=!isNaN(idx)?S.programmes[idx]:null;
+    if(cible&&!(_remplaceCible&&_remplaceCible.idx===idx&&_remplaceCible.id===cible.id)){
+      const nEx=(_impExtracted.days||[]).reduce((k,dj)=>k+(dj.exercises||[]).length,0);
+      showConfirm('Remplacer ce programme ?',
+        'Cible : '+_descProg(cible,idx)+'. Il sera remplacé par « '+(_impExtracted.name||'ce programme')+' » ('+(_impExtracted.days||[]).length+' séance'+((_impExtracted.days||[]).length>1?'s':'')+', '+nEx+' exercice'+(nEx>1?'s':'')+'). Tes séances déjà faites, tes records et tes autres programmes ne changent pas.',
+        ()=>{ _remplaceCible={idx,id:cible.id}; try{ finalImportProg(); } finally { _remplaceCible=null; } }, 'Remplacer');
+      return;
+    }
+  }
   const name=(_impExtracted.name||'Programme '+new Date().toLocaleDateString('fr-FR')).trim();
   /* ⛔ R2 — la MÊME fonction que l'aperçu (`_exerciceInconnu`, ft-v1166). Avant, ce test était
      écrit ici en `allEx.includes(low)` et une 2ᵉ fois dans l'import d'historique avec un `Set` :
@@ -8165,31 +8585,22 @@ function finalImportProg(){
            format interne). Ailleurs dans l'app, seul 'É' existe.
            ⛔ Et l'absence de champ ne change RIEN : on retombe sur `baseType`, donc un import
            sans colonne de type se comporte exactement comme avant. */
-        const _typeAt=si=>{
-          const v=(ex.setTypePerSet&&ex.setTypePerSet[si]!=null)?String(ex.setTypePerSet[si]).toUpperCase():'';
-          return v==='W' ? 'É' : baseType;
-        };
+        const _typeAt=si=>_typeSerieImport(ex,si);   // IMPORT-IA-FIDELITE-01 : la MÊME fonction que l'aperçu (R2)
         // Séries avec reps+kg par palier (dropsets) ou repsPerSet
         let sets;
-        // Repos par série : backend peut fournir restPerSet[] (secondes) ou rest unique — sinon 0 (défaut par type)
-        const _restAt=si=>(ex.restPerSet&&ex.restPerSet[si]!=null?_secRepos(ex.restPerSet[si]):_secRepos(ex.rest));
-        if(ex.repsPerSet&&ex.repsPerSet.length>0){
-          sets=ex.repsPerSet.map((r,si)=>({
-            kg:(ex.kgPerSet&&ex.kgPerSet[si]!=null?ex.kgPerSet[si]:(ex.kg||0)),
-            reps:parseInt(r)||10,
-            type:_typeAt(si), /* échec auto à l'import désactivé (ft-v292) — ex.specialSets plus converti en 'E' */
-            rest:_restAt(si)
-          }));
-        }else{
-          sets=Array.from({length:Math.max(1,ex.sets||3)},(_,si)=>({
-            kg:(ex.kgPerSet&&ex.kgPerSet[si]!=null?ex.kgPerSet[si]:(ex.kg||0)),
-            reps:ex.reps||10,
-            type:_typeAt(si), /* échec auto à l'import désactivé (ft-v292) — ex.specialSets plus converti en 'E' */
-            rest:_restAt(si)
-          }));
-        }
+        /* ⏱️ LE REPOS DE LA SÉRIE, LU UNE SEULE FOIS (IMPORT-IA-FIDELITE-01). `_restBrut` choisit le texte du document pour CETTE série
+           (la sienne, sinon celle de l'exercice) ; `_reposLire` le lit : une valeur ferme devient `rest` (secondes) ; une PLAGE ou un
+           texte (« 3-4 min », « selon ressenti ») : ⚠️ MIS À JOUR LE 08/11/2026 (décision de Michel, « GO CORRECTIF IMPORT PDF ») — une PLAGE devient sa BORNE
+           BASSE (`r.prop` : « 4-5 min » → 240 s au chrono) ET son texte est CONSERVÉ dans `restTxt` (la séance l'affiche, « Régler » propose les deux
+           bornes, l'éditeur permet de changer le chiffre) ; un texte SANS chiffre (« selon ressenti ») garde `rest` à 0 et son texte. Rien n'est
+           supprimé ni inventé : le chiffre est celui du document (sa borne basse), pas un réglage deviné. */
+        const _restAt=si=>_reposSerieImport(ex,si);  // IMPORT-IA-FIDELITE-01 : la MÊME fonction que l'aperçu (R2) — voir `_restBrutSerieImport`
+        const _setDe=(si,kg,reps)=>{ const r=_restAt(si); const o={kg,reps,type:_typeAt(si) /* échec auto à l'import désactivé (ft-v292) — ex.specialSets plus converti en 'E' */,rest:r.prop}; if(r.txt)o.restTxt=r.txt; return o; };
+        const _SI=_seriesImport(ex);        // IMPORT-IA-FIDELITE-01 : la MÊME lecture que l'aperçu (nombre de séries, reps, charges) — R2
+        sets=_SI.reps.map((r,si)=>_setDe(si,_SI.kgs[si],r));
         const obj={name:ex.name,note:ex.note||'',sets};
         if(group){obj.group=group;obj.groupType='super';} // FIX Emma : sans groupType='super' le superset importé n'était pas reconnu
+        if(_impDropEnchaine(ex))obj.dropChaine=true;      // correction C : l'enchaînement des paliers est un fait ÉCRIT à l'import, pas une déduction (voir `toggleSet`)
         return obj;
       })
     };
@@ -8212,6 +8623,7 @@ function finalImportProg(){
   if(_impMode==='replace'){
     const idx=parseInt((document.getElementById('imp-replace-sel')||{}).value);
     if(!isNaN(idx)&&S.programmes[idx]){
+      if(!(_remplaceCible&&_remplaceCible.idx===idx&&_remplaceCible.id===S.programmes[idx].id)){toast('La liste des programmes a changé — recommence le remplacement.','error');return;}
       const oldName=S.programmes[idx].name;
       prog.name=prog.name||oldName;
       S.programmes[idx]=prog;
@@ -8831,6 +9243,19 @@ function _varianteSemaine(label){
   if(m)return m[1].toUpperCase();
   m=s.match(/^\s*J\s*\d+\s*([AB])\b/i);          // « J3A », « J 3 B »
   return m?m[1].toUpperCase():null;
+}
+/* 🟡 UNE SÉANCE FACULTATIVE (OU « BIS ») N'EST JAMAIS COLLÉE À SA VOISINE DE MÊME NUMÉRO — IMPORT PDF, 08/11/2026 (« GO CORRECTIF IMPORT PDF » :
+   « préserver les quatre séances du PDF, dont la quatrième facultative »). `_mergeImportSeances` colle deux jours consécutifs de même NUMÉRO
+   (« Séance 1 - Dorsaux » + « Séance 1 - Biceps » = une séance) : « Séance 3 – facultative » ou « Séance 3 bis » après « Séance 3 » y aurait
+   été fusionnée dans la 3, et la séance facultative aurait DISPARU sans un mot. Le mot qui la désigne est un MARQUEUR de variante, comme
+   « Semaine A / B » (`_varianteSemaine`) : deux jours ne sont fusionnés que s'ils portent le MÊME marqueur (ou aucun).
+   ⛔ Aucun nouveau champ : la séance facultative reste un jour ordinaire, son LIBELLÉ la dit (décision de Michel attendue G3, recommandation :
+   libellé seul) — l'aperçu l'annonce (« N séances »), le sélecteur de jour l'affiche telle quelle. */
+function _marqueSeance(label){
+  const n=_naz(String(label==null?'':label));
+  if(/\bfacultati[fv]e?s?\b|\boptionnel(?:le)?s?\b|\boptional\b|\ben option\b|\bbonus\b/.test(n))return 'facultative';
+  if(/\bbis\b/.test(n))return 'bis';
+  return null;
 }
 // La « base » d'un jour = son NUMÉRO (J3A et J3B partagent J3). C'est le seul appariement
 // accepté : deux jours ne forment une paire que s'ils portent le même numéro.
@@ -9717,9 +10142,10 @@ function _loadProgDayVraiment(progIdx,dayIdx){
       const pp=_pa[i];
       return {
         kg:pp?pp.kg:(s.kg||0),
-        reps:s.maxi?0:(pp?pp.reps:(s.reps||10)), // série "maxi" : reps vide, elle saisit ce qu'elle a fait
+        reps:s.maxi?0:(pp?pp.reps:(s.reps===null?null:(s.reps||10))), // série "maxi" : reps vide, elle saisit ce qu'elle a fait ; `null` = « Non renseigné » (correction D) : champ à compléter, jamais un 10 d'office
         maxi:!!s.maxi,
-        type:s.type||'N',done:false,rm1:0,rest:_secRepos(s.rest)
+        type:s.type||'N',done:false,rm1:0,rest:_secRepos(s.rest),
+        ...(s.restTxt?{restTxt:String(s.restTxt)}:{})   // IMPORT-IA-FIDELITE-01 : la consigne de repos écrite (une plage) suit la série
       };
     })};
     if(e.group){obj.group=e.group;obj.groupType=e.groupType||'super';} // propage le superset
@@ -10009,7 +10435,16 @@ function renderProgModal(){
       // La période vient de `progPeriode` — la même fonction que la feuille imprimée (R2).
       const _per=progPeriode(p);
       const endDate=_per?new Date(_per.end):null;
-      const cycleHtml=hasCycle?`<div style="margin-top:8px;">
+      const _sansDate=hasCycle&&!p.startDate;
+      /* 📅 IMPORT-IA-FIDELITE-01 — SANS DATE DE DÉBUT, ON NE SAIT PAS À QUELLE SEMAINE ON EST, ET ON NE LE DIT PAS COMME SI. `getProgCurrentWeek`
+         rend 1 par repli ; l'afficher en « Semaine 1 / 4 » avec sa barre à 25 % ressemblait à un calcul, et un programme utilisé depuis un
+         mois y restait figé (Michel, 02/11). Ses jumeaux (`_varianteDeLaSemaine`, la feuille imprimée) ne s'en servaient déjà pas — la
+         carte était le seul consommateur à fabriquer ce faux repère. ⛔ Aucune date n'est posée à la place de la personne : « Définir »
+         ouvre l'éditeur (bouton « Aujourd'hui » explicite). */
+      const cycleHtml=_sansDate?`<div style="margin-top:8px;display:flex;justify-content:space-between;align-items:center;gap:8px;">
+        <span style="font-size:12px;font-weight:700;color:var(--t2);">${p.weeks} semaine${p.weeks>1?'s':''} · <span class="prog-sans-date" style="color:var(--gold);">Date de début à définir</span></span>
+        <button class="btn-xs" style="min-height:34px;padding:0 12px;" onclick="event.stopPropagation();editProg(${i})">📅 Définir</button>
+      </div>`:hasCycle?`<div style="margin-top:8px;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
           <span style="font-size:12px;font-weight:700;color:var(--t1);">Semaine ${curW} / ${p.weeks}</span>
           <div style="display:flex;align-items:center;gap:5px;">
@@ -10021,7 +10456,7 @@ function renderProgModal(){
         <div style="height:5px;background:var(--sep);border-radius:3px;overflow:hidden;"><div style="width:${pct}%;height:100%;background:var(--red);border-radius:3px;"></div></div>
       </div>`:'';
       return `<div class="prog-card" style="flex-direction:column;align-items:stretch;">
-        <div class="prog-card-name">${isMulti?'📅 ':'📋 '}${_escNote(p.name)}</div>
+        <div class="prog-card-name">${isMulti?'📅 ':'📋 '}${_escNote(p.name)}${(S.programmes||[]).filter(q=>q&&q.name===p.name).length>1?` <span class="prog-homonyme" style="font-size:11px;font-weight:600;color:var(--t3);">n°${_escNote(String(p.id||('#'+(i+1))).slice(-6))}</span>`:''}</div>
         <div class="prog-card-detail">${_escNote(detail)}</div>
         <div style="display:flex;gap:6px;margin-top:10px;align-items:center;">
           <button class="btn-xs" style="flex:1;background:rgba(255,45,85,.12);border-color:rgba(255,45,85,.4);color:var(--red);" onclick="loadProg(${i})">▶ Charger</button>
@@ -10054,9 +10489,14 @@ function renderProgModal(){
    ⛔ Champ présent → recopié EN ENTIER (copie profonde : aucun alias entre programme et séance,
    aucun sous-champ trié). Champ absent → rien n'est créé. `ex.dropset` n'est PAS le futur modèle
    des méthodes (série par série à terme) : c'est seulement la représentation actuelle, qu'on
-   empêche de perdre. Le type de série `D` et les `groupType` drop/pyramide ne sont pas touchés. */
+   empêche de perdre. Le type de série `D` et les `groupType` drop/pyramide ne sont pas touchés.
+   ➕ IMPORT-IA-FIDELITE-01 (correction C) : le MARQUEUR d'enchaînement d'un dropset IMPORTÉ (`dropChaine`) voyage par le MÊME propriétaire —
+   un second recopieur serait la même omission qui a déjà coûté trois fois (R2/R4). Posé seulement quand il vaut `true` : un programme
+   enregistré avant n'a pas le champ, et n'en reçoit jamais un ici. */
 function _recopierDropset(src,dst){
-  if(!src||!dst||src.dropset===undefined)return dst;
+  if(!src||!dst)return dst;
+  if(src.dropChaine===true)dst.dropChaine=true;
+  if(src.dropset===undefined)return dst;
   dst.dropset=JSON.parse(JSON.stringify(src.dropset));
   return dst;
 }
@@ -10070,7 +10510,7 @@ function saveAsProg(){
     exs:S.wkt.exs.map(ex=>{
       // note conservée : sous le MÊME nom, saveAsProg REMPLACE le programme — sans elle, la
       // consigne posée dans l'éditeur serait détruite au premier « Sauvegarder » (perte silencieuse).
-      const o={name:ex.name,sets:ex.sets.map(s=>({kg:s.kg||0,reps:s.reps||5,maxi:!!s.maxi,type:s.type||'N',rest:_secRepos(s.rest)}))};
+      const o={name:ex.name,sets:ex.sets.map(s=>({kg:s.kg||0,reps:(s.reps===null?null:(s.reps||5)),maxi:!!s.maxi,type:s.type||'N',rest:_secRepos(s.rest)}))};   // `null` reste « Non renseigné » (correction D) : on ne l'enregistre pas en 5
       if(ex.note)o.note=String(ex.note).slice(0,300);
       if(ex.group){o.group=ex.group;o.groupType=ex.groupType||'super';} // conserve le superset
       _recopierDropset(ex,o);                                           // LOT 6 / ML-A
@@ -10144,9 +10584,10 @@ function _loadProgVraiment(idx){
         const pp=_pa[i];
         return {
           kg:pp?pp.kg:(s.kg||0),
-          reps:s.maxi?0:(pp?pp.reps:(s.reps||5)),
+          reps:s.maxi?0:(pp?pp.reps:(s.reps===null?null:(s.reps||5))),   // `null` = « Non renseigné » (correction D) : jamais un 5 d'office
           maxi:!!s.maxi,
-          type:s.type||'N',done:false,rm1:0,rest:_secRepos(s.rest)
+          type:s.type||'N',done:false,rm1:0,rest:_secRepos(s.rest),
+          ...(s.restTxt?{restTxt:String(s.restTxt)}:{})
         };
       })};
       if(e.group){obj.group=e.group;obj.groupType=e.groupType||'super';} // propage le superset
@@ -10176,6 +10617,12 @@ function deleteProg(idx){
   persist();renderProgModal();
   toast('"'+name+'" supprimé','info');
 }
+/* 🔢 Les répétitions d'un exercice sur PAPIER (feuille imprimée et PDF) : un seul propriétaire (R2). Une série « Non renseigné » (`null`) s'écrit « ? »
+   — jamais « null », jamais un nombre inventé (IMPORT-IA-FIDELITE-01, correction D). Le reste est inchangé : tous pareils → « 12 », sinon « 12/10/8 ». */
+function _valRepsProg(sets){
+  const reps=(sets||[]).map(x=>(x&&x.reps!=null)?x.reps:'?');
+  return reps.every(r=>r===reps[0])?reps[0]:reps.join('/');
+}
 // Impression / export PDF d'un programme — génère une feuille propre puis window.print()
 // (le navigateur propose « Imprimer » ou « Enregistrer en PDF » ; sur iPhone : Partager → Imprimer → PDF)
 function printProg(idx){
@@ -10184,9 +10631,7 @@ function printProg(idx){
   const days=(p.days&&p.days.length)?p.days:[{label:p.name||'Séance',exs:p.exs||[]}];
   const scheme=(sets)=>{
     const s=sets||[];if(!s.length)return '';
-    const reps=s.map(x=>x.reps);
-    const val=reps.every(r=>r===reps[0])?reps[0]:reps.join('/');
-    return s.length+' × '+val;
+    return s.length+' × '+_valRepsProg(s);
   };
   // ── UNE CASE PAR SÉRIE, pas une seule colonne « Poids » (12/08/2026) ────────────────
   // Demande de Michel : « il faut créer aussi des lignes pour l'entraînement ». Une case
@@ -10381,9 +10826,8 @@ async function exportProgPdf(idx){
     const nCol=Math.min(6,Math.max(1,...days.map(d=>Math.max(1,...(d.exs||[]).map(e=>(e.sets||[]).length||1)))));
     days.forEach(d=>{
       const body=(d.exs||[]).map(e=>{
-        const s=e.sets||[],reps=s.map(x=>x.reps);
-        const val=reps.length?(reps.every(r=>r===reps[0])?reps[0]:reps.join('/')):'';
-        let sc=s.length?(s.length+' × '+val):'';
+        const s=e.sets||[];
+        let sc=s.length?(s.length+' × '+_valRepsProg(s)):'';
         if(sc&&/gainage|planche/i.test(e.name))sc=String(sc).replace(/(\d+)$/,'$1 s');
         // La consigne saisie dans l'éditeur de programme s'imprime SOUS le nom : elle sert
         // à la salle, pas dans l'app (2ᵉ demande de Michel, 12/08).
@@ -10486,7 +10930,11 @@ function _renderProgEdit(){
       </div>
       <div style="flex:2;">
         <div style="font-size:12px;color:var(--t3);margin-bottom:4px;">Date de début</div>
-        <input id="prog-edit-start" type="date" value="${d.startDate||''}" style="width:100%;background:var(--bg2);border:1px solid var(--sep);border-radius:8px;padding:9px 8px;color:var(--t1);font-size:14px;font-family:var(--font);outline:none;box-sizing:border-box;-webkit-appearance:none;">
+        <div style="display:flex;gap:6px;align-items:center;">
+          <input id="prog-edit-start" type="date" value="${d.startDate||''}" oninput="_progStartHint()" style="flex:1;min-width:0;background:var(--bg2);border:1px solid var(--sep);border-radius:8px;padding:9px 8px;color:var(--t1);font-size:14px;font-family:var(--font);outline:none;box-sizing:border-box;-webkit-appearance:none;">
+          <button type="button" id="prog-edit-today" class="btn-xs" style="min-height:40px;padding:0 10px;white-space:nowrap;" onclick="_progStartAujourdhui()">Aujourd'hui</button>
+        </div>
+        <div id="prog-edit-start-hint" style="font-size:11px;color:var(--gold);margin-top:4px;line-height:1.35;">${d.startDate?'':'Sans date de début, la semaine n\'avance pas. Choisis une date, ou touche « Aujourd\'hui ».'}</div>
       </div>
     </div>
   </div>`;
@@ -10512,18 +10960,19 @@ function _renderProgEdit(){
     <div style="display:flex;gap:6px;font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.04em;padding:0 2px 3px;">
       <span style="width:30px;">Série</span><span style="width:58px;text-align:center;">Reps</span>${_nbMaxi?'<span style="width:36px;"></span>':''}<span style="flex:1;text-align:right;">Repos</span><span style="width:22px;"></span>
     </div>
+    ${sets.some(s=>s&&s.reps===null)?`<div style="font-size:11px;line-height:1.35;color:var(--gold);padding:0 2px 5px;">${REPS_NON_RENSEIGNE} : le document n'écrit pas les répétitions — complète-les ici, ou à la séance.</div>`:''}
     ${sets.map((s,si)=>`<div style="display:flex;align-items:center;gap:6px;padding:2px 2px;">
       <span style="width:30px;font-size:12px;color:var(--t2);">${si+1}</span>
       ${(_nbMaxi&&s.maxi)
         ? `<div onclick="_toggleProgSetMaxi(${di},${ei},${si})" title="Répétitions au maximum — touche pour revenir à un nombre" style="width:58px;text-align:center;padding:6px 0;background:rgba(255,109,0,.14);border:1px solid var(--orange);border-radius:8px;color:var(--orange);font-size:12px;font-weight:800;cursor:pointer;box-sizing:border-box;">maxi</div>`
-        : `<input type="number" min="1" inputmode="numeric" value="${s.reps||''}" onchange="_setProgSetReps(${di},${ei},${si},this.value)" style="width:58px;${_INP}">`}
+        : `<input type="number" min="1" inputmode="numeric" value="${s.reps||''}"${s.reps===null?` class="reps-nr" placeholder="?" title="${REPS_NON_RENSEIGNE} — le document n'écrit pas les répétitions"`:''} onchange="_setProgSetReps(${di},${ei},${si},this.value)" style="width:58px;${_INP}">`}
       ${_nbMaxi?`<button onclick="_toggleProgSetMaxi(${di},${ei},${si})" title="Nombre max de répétitions" style="width:36px;flex-shrink:0;background:${s.maxi?'rgba(255,109,0,.14)':'transparent'};border:1px ${s.maxi?'solid var(--orange)':'dashed var(--sep)'};border-radius:8px;color:${s.maxi?'var(--orange)':'var(--t3)'};font-size:10px;font-weight:800;cursor:pointer;padding:5px 0;">max</button>`:''}
       <span style="flex:1;display:flex;align-items:center;justify-content:flex-end;gap:5px;">
-        <input type="number" min="0" step="5" inputmode="numeric" value="${s.rest||''}" placeholder="${_defRestForType(s.type)}" onchange="_setProgSetRest(${di},${ei},${si},this.value)" style="width:56px;${_INP}">
+        <input type="number" min="0" step="5" inputmode="numeric" value="${s.rest||''}" placeholder="${s.restTxt&&!s.rest?_escNote(s.restTxt).replace(/&quot;/g,''):_defRestForType(s.type)}" title="${s.restTxt?'Consigne écrite : '+_escNote(s.restTxt).replace(/&quot;/g,''):''}" onchange="_setProgSetRest(${di},${ei},${si},this.value)" style="width:56px;${_INP}">
         <span style="font-size:11px;color:var(--t3);white-space:nowrap;min-width:44px;">s${s.rest>0?' '+_fmtRest(s.rest):''}</span>
       </span>
       <button onclick="_removeProgSet(${di},${ei},${si})" title="Retirer la série" style="width:22px;background:none;border:none;color:var(--t3);font-size:16px;line-height:1;cursor:pointer;padding:0;">×</button>
-    </div>`).join('')}
+    </div>${_hintReposEcrit(sets,si)}`).join('')}
     <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:5px;">
       <button onclick="_addProgSet(${di},${ei})" style="padding:5px 12px;background:transparent;border:1px dashed var(--sep);border-radius:8px;color:var(--t2);font-size:12px;cursor:pointer;">+ série</button>
       ${hasNext?`<button onclick="_toggleProgSuperset(${di},${ei})" style="padding:5px 12px;border-radius:8px;font-size:12px;cursor:pointer;background:${linkedNext?'rgba(255,109,0,.14)':'transparent'};border:1px ${linkedNext?'solid var(--orange)':'dashed var(--sep)'};color:${linkedNext?'var(--orange)':'var(--t2)'};">⚡ ${linkedNext?'En superset ✓':'Superset avec le suivant'}</button>`:''}
@@ -10560,6 +11009,16 @@ function _cleanProgEditExercises(){
   if(n){ _renderProgEdit(); toast(n+' exercice'+(n>1?'s':'')+' rattaché'+(n>1?'s':'')+' — 💾 enregistre pour valider','success'); }
   else toast('Aucun doublon évident à rattacher 👍','info');
 }
+/* 📝 LA CONSIGNE DE REPOS D'ORIGINE, VISIBLE DANS L'ÉDITEUR (IMPORT PDF, 08/11/2026 : « conserver la consigne d'origine et permettre sa modification »).
+   Le chiffre proposé à l'import (la borne basse d'une plage) est dans le champ et se change ; le TEXTE du document (`restTxt`) reste lisible sous la série.
+   Une seule ligne pour une suite de séries qui portent le même texte (« séries 6 à 8 »), pas une ligne par série. Affichage seul : rien n'est écrit. */
+function _hintReposEcrit(sets,si){
+  const t=sets&&sets[si]&&sets[si].restTxt;
+  if(!t)return '';
+  if(si>0&&sets[si-1]&&sets[si-1].restTxt===t)return '';         // la suite a déjà sa ligne
+  let j=si; while(j+1<sets.length&&sets[j+1]&&sets[j+1].restTxt===t)j++;
+  return `<div style="font-size:10.5px;line-height:1.35;color:var(--gold);padding:0 2px 4px 38px;">⚑ repos écrit dans le document : « ${_escNote(t)} »${j>si?' (séries '+(si+1)+' à '+(j+1)+')':''}${sets[si].rest>0?' · proposé : '+_fmtRest(sets[si].rest):''}</div>`;
+}
 // Repos par défaut selon le type de série (pour le placeholder de l'éditeur)
 /* ⚠️ LA JUMELLE (R8, 31/08/2026) — ce placeholder de l'éditeur de programmes annonçait **90 s**
    pour une série normale, alors que la séance applique le repos RÉGLÉ par la personne (mesuré :
@@ -10590,12 +11049,20 @@ function _setProgSetRest(di,ei,si,val){
 function _setProgExNote(di,ei,val){
   const ex=_progEditEx(di,ei);if(!ex)return;
   const v=(val||'').trim();
-  if(v)ex.note=v.slice(0,300);else delete ex.note;
+  /* ⛔ IMPORT PDF (08/11/2026, « préserver les commentaires ») : le plafond de 300 caractères vaut pour un commentaire TAPÉ. Une note IMPORTÉE plus longue
+     (les commentaires de plusieurs lignes regroupées, « Échauffement : … | RIR … ») était COUPÉE à la première frappe, en silence. On ne coupe jamais un texte
+     qui existait déjà plus long que le plafond. */
+  const cap=String(ex.note||'').length>300?2000:300;
+  if(v)ex.note=v.slice(0,cap);else delete ex.note;
 }
 // Édite les reps d'une série — pas de re-render (garde le focus)
+/* 🔢 IMPORT-IA-FIDELITE-01 (correction D) : un champ VIDÉ (ou illisible) dans l'éditeur dit « Non renseigné » (`null`) — plus « 0 », que la séance
+   remplaçait d'office par 10. Une série « maxi » garde son 0 (c'est son propre état, jamais touché ici). Les programmes d'AVANT, qui portent
+   déjà des 0, ne sont pas réécrits : seule une série que la personne édite change. */
 function _setProgSetReps(di,ei,si,val){
   const ex=_progEditEx(di,ei);if(!ex||!ex.sets||!ex.sets[si])return;
-  ex.sets[si].reps=parseInt(val)||0;
+  const n=parseInt(val);
+  ex.sets[si].reps=n>0?n:(ex.sets[si].maxi?0:null);
   if(ex.sets[si].reps>0)ex.sets[si].maxi=false; // saisir un nombre annule le mode « maxi »
 }
 // Bascule une série en « maxi » (nombre max de répétitions) ou revient à un nombre — re-render
@@ -10604,6 +11071,7 @@ function _toggleProgSetMaxi(di,ei,si){
   const s=ex.sets[si];
   s.maxi=!s.maxi;
   if(s.maxi)s.reps=0; // en mode maxi, pas de nombre cible
+  else if(!(s.reps>0))s.reps=null;   // retour à « un nombre » sans nombre : « Non renseigné », pas un 0 que la séance transformerait en 10 (correction D)
   _renderProgEdit();
 }
 // Ajoute une série (copie la dernière) puis re-render
@@ -10611,7 +11079,7 @@ function _addProgSet(di,ei){
   const ex=_progEditEx(di,ei);if(!ex)return;
   if(!ex.sets)ex.sets=[];
   const l=ex.sets[ex.sets.length-1];
-  ex.sets.push({kg:l?l.kg||0:0,reps:l?l.reps||10:10,type:l?l.type||'N':'N',rest:l?l.rest||0:0});
+  ex.sets.push({kg:l?l.kg||0:0,reps:l?(l.reps===null?null:(l.reps||10)):10,type:l?l.type||'N':'N',rest:l?l.rest||0:0});   // copier une série « Non renseigné » reste « Non renseigné » (correction D)
   _renderProgEdit();
 }
 // Retire une série (garde au moins 1) puis re-render
@@ -10798,9 +11266,19 @@ function progPeriode(prog){
   const iso=d=>d.toISOString().split('T')[0];
   return {weeks:w, start:iso(d0), end:iso(d1), semaine:getProgCurrentWeek(prog)};
 }
+// 📅 IMPORT-IA-FIDELITE-01 — la date du jour, posée par un GESTE de la personne (jamais d'office). Les navigateurs d'iPhone affichent parfois
+// la date du jour dans un champ date VIDE : on le dit (le repère « sans date ») et on ne laisse pas croire qu'une date est enregistrée.
+function _progStartAujourdhui(){
+  const el=document.getElementById('prog-edit-start'); if(!el)return;
+  el.value=today(); _progStartHint();
+}
+function _progStartHint(){
+  const el=document.getElementById('prog-edit-start'), h=document.getElementById('prog-edit-start-hint'); if(!el||!h)return;
+  h.textContent=el.value?'':'Sans date de début, la semaine n\'avance pas. Choisis une date, ou touche « Aujourd\'hui ».';
+}
 function shiftProgStart(idx,delta){
   const prog=(S.programmes||[])[idx];if(!prog)return;
-  if(!prog.startDate)prog.startDate=today();
+  if(!prog.startDate)return;   // IMPORT-IA-FIDELITE-01 : sans date, rien ne se décale — la date du jour n'est JAMAIS posée à la place de la personne (« Définir » / « Aujourd'hui »)
   const d=new Date(prog.startDate);
   d.setDate(d.getDate()+delta*7);
   prog.startDate=d.toISOString().split('T')[0];
@@ -10813,7 +11291,7 @@ function _formatProgForAnalysis(prog){
     return prog.days.map(day=>{
       const exs=(day.exs||[]).map(ex=>{
         const sets=ex.sets?ex.sets.length:3;
-        const reps=ex.sets&&ex.sets[0]?ex.sets[0].reps:10;
+        const reps=ex.sets&&ex.sets[0]?(ex.sets[0].reps!=null?ex.sets[0].reps:'?'):10;   // « Non renseigné » (null) reste « ? » pour Milo (correction D)
         const kg=ex.sets&&ex.sets[0]&&ex.sets[0].kg?' × '+ex.sets[0].kg+'kg':'';
         return '  - '+ex.name+' : '+sets+'×'+reps+kg;
       }).join('\n');
@@ -10822,7 +11300,7 @@ function _formatProgForAnalysis(prog){
   }
   return (prog.exs||[]).map(ex=>{
     const sets=ex.sets?ex.sets.length:3;
-    const reps=ex.sets&&ex.sets[0]?ex.sets[0].reps:10;
+    const reps=ex.sets&&ex.sets[0]?(ex.sets[0].reps!=null?ex.sets[0].reps:'?'):10;   // « Non renseigné » (null) reste « ? » pour Milo (correction D)
     const kg=ex.sets&&ex.sets[0]&&ex.sets[0].kg?' × '+ex.sets[0].kg+'kg':'';
     return '  - '+ex.name+' : '+sets+'×'+reps+kg;
   }).join('\n');

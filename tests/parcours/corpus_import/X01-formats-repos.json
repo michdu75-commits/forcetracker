@@ -1,0 +1,354 @@
+{
+ "id": "X01-formats-repos",
+ "synthetique": true,
+ "source": "synthetique-formats-repos",
+ "decrit": "Programme inventé : un exercice par façon d'écrire un repos (« 2 mins », « 75 sec max », « Repos 40 sec maxi », « 1 . 20 min », « 2 à 3 mins », « 1.45 mins »), une charge « à calibrer » et un exercice dont les répétitions ne sont pas écrites. Contenu inventé.",
+ "incertitudes": [],
+ "aiOutput": {
+  "name": "Programme synthétique X01-formats-repos",
+  "weeks": 0,
+  "startDate": "",
+  "days": [
+   {
+    "label": "Séance push léger (inventée)",
+    "exercises": [
+     {
+      "name": "Développé Militaire Haltères",
+      "sets": 5,
+      "reps": 5,
+      "repsPerSet": [],
+      "specialSets": [],
+      "kg": 24,
+      "kgPerSet": [],
+      "supersetGroup": "",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "2 mins",
+      "restPerSet": [
+       "2 mins",
+       "2 mins",
+       "2 mins",
+       "2 mins",
+       "2 mins"
+      ],
+      "note": "RIR 2"
+     },
+     {
+      "name": "Élévations Latérales Machine",
+      "sets": 3,
+      "reps": 15,
+      "repsPerSet": [],
+      "specialSets": [],
+      "kg": 25,
+      "kgPerSet": [],
+      "supersetGroup": "",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "75 sec max",
+      "restPerSet": [
+       "75 sec max",
+       "75 sec max",
+       "75 sec max"
+      ],
+      "note": ""
+     },
+     {
+      "name": "Tirage Visage (Face Pull)",
+      "sets": 4,
+      "reps": 15,
+      "repsPerSet": [],
+      "specialSets": [],
+      "kg": 18,
+      "kgPerSet": [],
+      "supersetGroup": "",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "Repos 40 sec maxi",
+      "restPerSet": [
+       "Repos 40 sec maxi",
+       "Repos 40 sec maxi",
+       "Repos 40 sec maxi",
+       "Repos 40 sec maxi"
+      ],
+      "note": ""
+     },
+     {
+      "name": "Triceps Corde Poulie",
+      "sets": 3,
+      "reps": 12,
+      "repsPerSet": [],
+      "specialSets": [],
+      "kg": 0,
+      "kgPerSet": [],
+      "supersetGroup": "",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "1 . 20 min",
+      "restPerSet": [
+       "1 . 20 min",
+       "1 . 20 min",
+       "1 . 20 min"
+      ],
+      "note": "Charge : à calibrer"
+     },
+     {
+      "name": "Barre au Front",
+      "sets": 3,
+      "reps": 10,
+      "repsPerSet": [],
+      "specialSets": [],
+      "kg": 30,
+      "kgPerSet": [],
+      "supersetGroup": "",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "2 à 3 mins",
+      "restPerSet": [
+       "2 à 3 mins",
+       "2 à 3 mins",
+       "2 à 3 mins"
+      ],
+      "note": ""
+     },
+     {
+      "name": "Rotation Externe Épaule Poulie",
+      "sets": 2,
+      "reps": 0,
+      "repsPerSet": [],
+      "specialSets": [],
+      "kg": 4,
+      "kgPerSet": [],
+      "supersetGroup": "",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "1.45 mins",
+      "restPerSet": [
+       "1.45 mins",
+       "1.45 mins"
+      ],
+      "note": "Contrôle de la descente"
+     }
+    ]
+   }
+  ]
+ },
+ "attendu": {
+  "totaux": {
+   "jours": 1,
+   "exercices": 6,
+   "series": 20,
+   "seriesEch": 0
+  },
+  "jours": [
+   {
+    "label": "Séance push léger (inventée)",
+    "cardioAvant": null,
+    "exercices": [
+     {
+      "nom": "Développé Militaire Haltères",
+      "series": [
+       {
+        "type": "N",
+        "kg": 24,
+        "reps": 5,
+        "repos": 120,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 24,
+        "reps": 5,
+        "repos": 120,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 24,
+        "reps": 5,
+        "repos": 120,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 24,
+        "reps": 5,
+        "repos": 120,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 24,
+        "reps": 5,
+        "repos": 120,
+        "reposTxt": ""
+       }
+      ],
+      "noteContient": [
+       "RIR 2"
+      ],
+      "superset": "",
+      "catalogueAttendu": "Développé Militaire Haltères",
+      "statutAttendu": "ok"
+     },
+     {
+      "nom": "Élévations Latérales Machine",
+      "series": [
+       {
+        "type": "N",
+        "kg": 25,
+        "reps": 15,
+        "repos": 75,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 25,
+        "reps": 15,
+        "repos": 75,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 25,
+        "reps": 15,
+        "repos": 75,
+        "reposTxt": ""
+       }
+      ],
+      "noteContient": [],
+      "superset": "",
+      "catalogueAttendu": "Élévations Latérales Machine",
+      "statutAttendu": "ok"
+     },
+     {
+      "nom": "Tirage Visage (Face Pull)",
+      "series": [
+       {
+        "type": "N",
+        "kg": 18,
+        "reps": 15,
+        "repos": 40,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 18,
+        "reps": 15,
+        "repos": 40,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 18,
+        "reps": 15,
+        "repos": 40,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 18,
+        "reps": 15,
+        "repos": 40,
+        "reposTxt": ""
+       }
+      ],
+      "noteContient": [],
+      "superset": "",
+      "catalogueAttendu": "Tirage Visage (Face Pull)",
+      "statutAttendu": "ok"
+     },
+     {
+      "nom": "Triceps Corde Poulie",
+      "series": [
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 12,
+        "repos": 80,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 12,
+        "repos": 80,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 12,
+        "repos": 80,
+        "reposTxt": ""
+       }
+      ],
+      "noteContient": [
+       "à calibrer"
+      ],
+      "superset": "",
+      "catalogueAttendu": "Triceps Corde Poulie",
+      "statutAttendu": "ok"
+     },
+     {
+      "nom": "Barre au Front",
+      "series": [
+       {
+        "type": "N",
+        "kg": 30,
+        "reps": 10,
+        "repos": 120,
+        "reposTxt": "2 à 3 mins"
+       },
+       {
+        "type": "N",
+        "kg": 30,
+        "reps": 10,
+        "repos": 120,
+        "reposTxt": "2 à 3 mins"
+       },
+       {
+        "type": "N",
+        "kg": 30,
+        "reps": 10,
+        "repos": 120,
+        "reposTxt": "2 à 3 mins"
+       }
+      ],
+      "noteContient": [],
+      "superset": "",
+      "catalogueAttendu": "Barre au Front",
+      "statutAttendu": "ok"
+     },
+     {
+      "nom": "Rotation Externe Épaule Poulie",
+      "series": [
+       {
+        "type": "N",
+        "kg": 4,
+        "reps": 0,
+        "repos": 105,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 4,
+        "reps": 0,
+        "repos": 105,
+        "reposTxt": ""
+       }
+      ],
+      "noteContient": [
+       "Contrôle de la descente"
+      ],
+      "superset": "",
+      "catalogueAttendu": "Rotation Externe Épaule Poulie",
+      "statutAttendu": "ok"
+     }
+    ]
+   }
+  ],
+  "propositions": [],
+  "methodes": [],
+  "nonRepresentable": []
+ }
+}

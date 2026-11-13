@@ -1,0 +1,419 @@
+{
+ "id": "X02-dropset-superset-materiel",
+ "synthetique": true,
+ "source": "synthetique-dropset-superset-materiel",
+ "decrit": "Programme inventé : un dropset dont le même repos est recopié sur chaque palier, un superset de deux exercices, un exercice dont la NOTE écrit le matériel (machine guidée), et une variante (prise inversée) écrite dans la note, que l'app ne sait pas lire (limite connue, nommée dans le banc). Contenu inventé.",
+ "incertitudes": [],
+ "aiOutput": {
+  "name": "Programme synthétique X02-dropset-superset-materiel",
+  "weeks": 0,
+  "startDate": "",
+  "days": [
+   {
+    "label": "Séance bas du corps (inventée)",
+    "exercises": [
+     {
+      "name": "Squat à la Barre",
+      "sets": 5,
+      "reps": 5,
+      "repsPerSet": [],
+      "specialSets": [],
+      "kg": 100,
+      "kgPerSet": [],
+      "supersetGroup": "",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "3 min",
+      "restPerSet": [
+       "3 min",
+       "3 min",
+       "3 min",
+       "3 min",
+       "3 min"
+      ],
+      "note": ""
+     },
+     {
+      "name": "Hip Thrust",
+      "sets": 3,
+      "reps": 10,
+      "repsPerSet": [],
+      "specialSets": [],
+      "kg": 70,
+      "kgPerSet": [],
+      "supersetGroup": "",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "2 min 30",
+      "restPerSet": [
+       "2 min 30",
+       "2 min 30",
+       "2 min 30"
+      ],
+      "note": "Machine guidée | pause en haut"
+     },
+     {
+      "name": "Leg Curl Couché Machine",
+      "sets": 3,
+      "reps": 12,
+      "repsPerSet": [],
+      "specialSets": [],
+      "kg": 40,
+      "kgPerSet": [],
+      "supersetGroup": "",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "90 s",
+      "restPerSet": [
+       "90 s",
+       "90 s",
+       "90 s"
+      ],
+      "note": ""
+     },
+     {
+      "name": "Extension Quadriceps (Leg Extension)",
+      "sets": 3,
+      "reps": 0,
+      "repsPerSet": [
+       12,
+       10,
+       8
+      ],
+      "specialSets": [],
+      "kg": 0,
+      "kgPerSet": [
+       45,
+       35,
+       25
+      ],
+      "supersetGroup": "",
+      "setType": "D",
+      "setTypePerSet": [],
+      "rest": "",
+      "restPerSet": [
+       "2 mins",
+       "2 mins",
+       "2 mins"
+      ],
+      "note": ""
+     }
+    ]
+   },
+   {
+    "label": "Séance tirage et bras (inventée)",
+    "exercises": [
+     {
+      "name": "Tirage vertical",
+      "sets": 3,
+      "reps": 10,
+      "repsPerSet": [],
+      "specialSets": [],
+      "kg": 40,
+      "kgPerSet": [],
+      "supersetGroup": "",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "90 s",
+      "restPerSet": [
+       "90 s",
+       "90 s",
+       "90 s"
+      ],
+      "note": "Prise inversée"
+     },
+     {
+      "name": "Curl Poulie",
+      "sets": 3,
+      "reps": 12,
+      "repsPerSet": [],
+      "specialSets": [],
+      "kg": 15,
+      "kgPerSet": [],
+      "supersetGroup": "A",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "1 min",
+      "restPerSet": [
+       "1 min",
+       "1 min",
+       "1 min"
+      ],
+      "note": ""
+     },
+     {
+      "name": "Triceps Poulie",
+      "sets": 3,
+      "reps": 12,
+      "repsPerSet": [],
+      "specialSets": [],
+      "kg": 20,
+      "kgPerSet": [],
+      "supersetGroup": "A",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "1 min",
+      "restPerSet": [
+       "1 min",
+       "1 min",
+       "1 min"
+      ],
+      "note": ""
+     }
+    ]
+   }
+  ]
+ },
+ "attendu": {
+  "totaux": {
+   "jours": 2,
+   "exercices": 7,
+   "series": 23,
+   "seriesEch": 0
+  },
+  "jours": [
+   {
+    "label": "Séance bas du corps (inventée)",
+    "cardioAvant": null,
+    "exercices": [
+     {
+      "nom": "Squat à la Barre",
+      "series": [
+       {
+        "type": "N",
+        "kg": 100,
+        "reps": 5,
+        "repos": 180,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 100,
+        "reps": 5,
+        "repos": 180,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 100,
+        "reps": 5,
+        "repos": 180,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 100,
+        "reps": 5,
+        "repos": 180,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 100,
+        "reps": 5,
+        "repos": 180,
+        "reposTxt": ""
+       }
+      ],
+      "noteContient": [],
+      "superset": "",
+      "catalogueAttendu": "Squat à la Barre",
+      "statutAttendu": "ok"
+     },
+     {
+      "nom": "Hip Thrust",
+      "series": [
+       {
+        "type": "N",
+        "kg": 70,
+        "reps": 10,
+        "repos": 150,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 70,
+        "reps": 10,
+        "repos": 150,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 70,
+        "reps": 10,
+        "repos": 150,
+        "reposTxt": ""
+       }
+      ],
+      "noteContient": [
+       "Machine guidée"
+      ],
+      "superset": "",
+      "catalogueAttendu": "Hip Thrust Machine (Poussée de Hanche)",
+      "statutAttendu": "conf"
+     },
+     {
+      "nom": "Leg Curl Couché Machine",
+      "series": [
+       {
+        "type": "N",
+        "kg": 40,
+        "reps": 12,
+        "repos": 90,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 40,
+        "reps": 12,
+        "repos": 90,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 40,
+        "reps": 12,
+        "repos": 90,
+        "reposTxt": ""
+       }
+      ],
+      "noteContient": [],
+      "superset": "",
+      "catalogueAttendu": "Leg Curl Couché Machine",
+      "statutAttendu": "ok"
+     },
+     {
+      "nom": "Extension Quadriceps (Leg Extension)",
+      "series": [
+       {
+        "type": "D",
+        "kg": 45,
+        "reps": 12,
+        "repos": 0,
+        "reposTxt": ""
+       },
+       {
+        "type": "D",
+        "kg": 35,
+        "reps": 10,
+        "repos": 0,
+        "reposTxt": ""
+       },
+       {
+        "type": "D",
+        "kg": 25,
+        "reps": 8,
+        "repos": 120,
+        "reposTxt": ""
+       }
+      ],
+      "noteContient": [],
+      "superset": "",
+      "catalogueAttendu": "Extension Quadriceps (Leg Extension)",
+      "statutAttendu": "ok"
+     }
+    ]
+   },
+   {
+    "label": "Séance tirage et bras (inventée)",
+    "cardioAvant": null,
+    "exercices": [
+     {
+      "nom": "Tirage vertical",
+      "series": [
+       {
+        "type": "N",
+        "kg": 40,
+        "reps": 10,
+        "repos": 90,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 40,
+        "reps": 10,
+        "repos": 90,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 40,
+        "reps": 10,
+        "repos": 90,
+        "reposTxt": ""
+       }
+      ],
+      "noteContient": [
+       "Prise inversée"
+      ],
+      "superset": "",
+      "catalogueAttendu": "Tirage Poulie Haute Prise Inversée"
+     },
+     {
+      "nom": "Curl Poulie",
+      "series": [
+       {
+        "type": "N",
+        "kg": 15,
+        "reps": 12,
+        "repos": 60,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 15,
+        "reps": 12,
+        "repos": 60,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 15,
+        "reps": 12,
+        "repos": 60,
+        "reposTxt": ""
+       }
+      ],
+      "noteContient": [],
+      "superset": "A",
+      "catalogueAttendu": "Curl Poulie",
+      "statutAttendu": "ok"
+     },
+     {
+      "nom": "Triceps Poulie",
+      "series": [
+       {
+        "type": "N",
+        "kg": 20,
+        "reps": 12,
+        "repos": 60,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 20,
+        "reps": 12,
+        "repos": 60,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 20,
+        "reps": 12,
+        "repos": 60,
+        "reposTxt": ""
+       }
+      ],
+      "noteContient": [],
+      "superset": "A",
+      "catalogueAttendu": "Triceps Poulie",
+      "statutAttendu": "ok"
+     }
+    ]
+   }
+  ],
+  "propositions": [],
+  "methodes": [],
+  "nonRepresentable": []
+ }
+}

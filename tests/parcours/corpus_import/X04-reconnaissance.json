@@ -1,0 +1,525 @@
+{
+ "id": "X04-reconnaissance",
+ "synthetique": true,
+ "source": "synthetique-reconnaissance",
+ "decrit": "Programme inventé : des noms d'exercices écrits comme on les écrit à la main (anglicismes, noms courts, noms ambigus, nom inconnu) pour vérifier les trois statuts de l'aperçu — reconnu d'office, À CONFIRMER (jamais appliqué sans la personne), inconnu (« sera créé »). Contenu inventé.",
+ "incertitudes": [],
+ "aiOutput": {
+  "name": "Programme synthétique X04-reconnaissance",
+  "weeks": 0,
+  "startDate": "",
+  "days": [
+   {
+    "label": "Séance de reconnaissance (inventée)",
+    "exercises": [
+     {
+      "name": "Leg Press",
+      "sets": 3,
+      "reps": 10,
+      "repsPerSet": [],
+      "specialSets": [],
+      "kg": 0,
+      "kgPerSet": [],
+      "supersetGroup": "",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "90 s",
+      "restPerSet": [
+       "90 s",
+       "90 s",
+       "90 s"
+      ],
+      "note": ""
+     },
+     {
+      "name": "Curl Pupitre",
+      "sets": 3,
+      "reps": 10,
+      "repsPerSet": [],
+      "specialSets": [],
+      "kg": 0,
+      "kgPerSet": [],
+      "supersetGroup": "",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "90 s",
+      "restPerSet": [
+       "90 s",
+       "90 s",
+       "90 s"
+      ],
+      "note": ""
+     },
+     {
+      "name": "Extension Triceps Poulie",
+      "sets": 3,
+      "reps": 10,
+      "repsPerSet": [],
+      "specialSets": [],
+      "kg": 0,
+      "kgPerSet": [],
+      "supersetGroup": "",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "90 s",
+      "restPerSet": [
+       "90 s",
+       "90 s",
+       "90 s"
+      ],
+      "note": ""
+     },
+     {
+      "name": "Rowing Barre",
+      "sets": 3,
+      "reps": 10,
+      "repsPerSet": [],
+      "specialSets": [],
+      "kg": 0,
+      "kgPerSet": [],
+      "supersetGroup": "",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "90 s",
+      "restPerSet": [
+       "90 s",
+       "90 s",
+       "90 s"
+      ],
+      "note": ""
+     },
+     {
+      "name": "Squat Bulgare",
+      "sets": 3,
+      "reps": 10,
+      "repsPerSet": [],
+      "specialSets": [],
+      "kg": 0,
+      "kgPerSet": [],
+      "supersetGroup": "",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "90 s",
+      "restPerSet": [
+       "90 s",
+       "90 s",
+       "90 s"
+      ],
+      "note": ""
+     },
+     {
+      "name": "Soulevé de Terre Roumain",
+      "sets": 3,
+      "reps": 10,
+      "repsPerSet": [],
+      "specialSets": [],
+      "kg": 0,
+      "kgPerSet": [],
+      "supersetGroup": "",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "90 s",
+      "restPerSet": [
+       "90 s",
+       "90 s",
+       "90 s"
+      ],
+      "note": ""
+     },
+     {
+      "name": "Écarté",
+      "sets": 3,
+      "reps": 10,
+      "repsPerSet": [],
+      "specialSets": [],
+      "kg": 0,
+      "kgPerSet": [],
+      "supersetGroup": "",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "90 s",
+      "restPerSet": [
+       "90 s",
+       "90 s",
+       "90 s"
+      ],
+      "note": ""
+     },
+     {
+      "name": "Shrugs",
+      "sets": 3,
+      "reps": 10,
+      "repsPerSet": [],
+      "specialSets": [],
+      "kg": 0,
+      "kgPerSet": [],
+      "supersetGroup": "",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "90 s",
+      "restPerSet": [
+       "90 s",
+       "90 s",
+       "90 s"
+      ],
+      "note": ""
+     },
+     {
+      "name": "Rowing Penché",
+      "sets": 3,
+      "reps": 10,
+      "repsPerSet": [],
+      "specialSets": [],
+      "kg": 0,
+      "kgPerSet": [],
+      "supersetGroup": "",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "90 s",
+      "restPerSet": [
+       "90 s",
+       "90 s",
+       "90 s"
+      ],
+      "note": ""
+     },
+     {
+      "name": "Poulie Quantique Zeta",
+      "sets": 3,
+      "reps": 10,
+      "repsPerSet": [],
+      "specialSets": [],
+      "kg": 0,
+      "kgPerSet": [],
+      "supersetGroup": "",
+      "setType": "",
+      "setTypePerSet": [],
+      "rest": "90 s",
+      "restPerSet": [
+       "90 s",
+       "90 s",
+       "90 s"
+      ],
+      "note": ""
+     }
+    ]
+   }
+  ]
+ },
+ "attendu": {
+  "totaux": {
+   "jours": 1,
+   "exercices": 10,
+   "series": 30,
+   "seriesEch": 0
+  },
+  "jours": [
+   {
+    "label": "Séance de reconnaissance (inventée)",
+    "cardioAvant": null,
+    "exercices": [
+     {
+      "nom": "Leg Press",
+      "series": [
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 90,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 90,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 90,
+        "reposTxt": ""
+       }
+      ],
+      "noteContient": [],
+      "superset": "",
+      "catalogueAttendu": "Press Jambes 45°",
+      "statutAttendu": "ok"
+     },
+     {
+      "nom": "Curl Pupitre",
+      "series": [
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 90,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 90,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 90,
+        "reposTxt": ""
+       }
+      ],
+      "noteContient": [],
+      "superset": "",
+      "catalogueAttendu": "Curl Pupitre Machine",
+      "statutAttendu": "ok"
+     },
+     {
+      "nom": "Extension Triceps Poulie",
+      "series": [
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 90,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 90,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 90,
+        "reposTxt": ""
+       }
+      ],
+      "noteContient": [],
+      "superset": "",
+      "catalogueAttendu": "Triceps Poulie",
+      "statutAttendu": "ok"
+     },
+     {
+      "nom": "Rowing Barre",
+      "series": [
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 90,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 90,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 90,
+        "reposTxt": ""
+       }
+      ],
+      "noteContient": [],
+      "superset": "",
+      "catalogueAttendu": "Rowing Barre (Tirage Horizontal)",
+      "statutAttendu": "ok"
+     },
+     {
+      "nom": "Squat Bulgare",
+      "series": [
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 90,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 90,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 90,
+        "reposTxt": ""
+       }
+      ],
+      "noteContient": [],
+      "superset": "",
+      "catalogueAttendu": "Squat Bulgare",
+      "statutAttendu": "ok"
+     },
+     {
+      "nom": "Soulevé de Terre Roumain",
+      "series": [
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 90,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 90,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 90,
+        "reposTxt": ""
+       }
+      ],
+      "noteContient": [],
+      "superset": "",
+      "catalogueAttendu": "Soulevé de Terre Roumain Barre",
+      "statutAttendu": "conf"
+     },
+     {
+      "nom": "Écarté",
+      "series": [
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 90,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 90,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 90,
+        "reposTxt": ""
+       }
+      ],
+      "noteContient": [],
+      "superset": "",
+      "catalogueAttendu": "Écarté Haltères",
+      "statutAttendu": "conf"
+     },
+     {
+      "nom": "Shrugs",
+      "series": [
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 90,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 90,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 90,
+        "reposTxt": ""
+       }
+      ],
+      "noteContient": [],
+      "superset": "",
+      "statutAttendu": "conf"
+     },
+     {
+      "nom": "Rowing Penché",
+      "series": [
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 90,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 90,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 90,
+        "reposTxt": ""
+       }
+      ],
+      "noteContient": [],
+      "superset": "",
+      "statutAttendu": "conf"
+     },
+     {
+      "nom": "Poulie Quantique Zeta",
+      "series": [
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 90,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 90,
+        "reposTxt": ""
+       },
+       {
+        "type": "N",
+        "kg": 0,
+        "reps": 10,
+        "repos": 90,
+        "reposTxt": ""
+       }
+      ],
+      "noteContient": [],
+      "superset": "",
+      "statutAttendu": "new"
+     }
+    ]
+   }
+  ],
+  "propositions": [],
+  "methodes": [],
+  "nonRepresentable": []
+ }
+}
