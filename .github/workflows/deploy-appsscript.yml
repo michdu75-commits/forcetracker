@@ -1,33 +1,45 @@
-name: "Essai F2-A′ — TEST isolé, LECTURE SEULE (⛔ NE DÉPLOIE RIEN, NE TOUCHE PAS LA PRODUCTION)"
+name: "Essai F2-A′ — TEST isolé (ÉCRIT UNIQUEMENT dans le projet de TEST, et seulement à l'étape deployer confirmée ; ⛔ NE TOUCHE PAS LA PRODUCTION)"
 
 # ⛔ CE FICHIER NE VIT QUE SUR LA BRANCHE `test/f2a-prime-2026-11-13` — ⛔ NE JAMAIS LE FUSIONNER.
-#    Il porte le MÊME NOM que le workflow de déploiement de la production : GitHub n'autorise `workflow_dispatch` que pour un fichier déjà
+#    Il porte le MÊME NOM DE FICHIER que le workflow de déploiement de la production : GitHub n'autorise `workflow_dispatch` que pour un fichier déjà
 #    présent sur master, et exécute la version de la branche choisie. Fusionné, il REMPLACERAIT le déploiement de la production.
-# CE QU'IL PEUT FAIRE : lire le projet Apps Script de TEST (API en lecture, un GET « ?test=1 », métadonnées des dossiers « FT-TEST-P1… »).
-# CE QU'IL NE PEUT PAS FAIRE, PAR CONSTRUCTION : `clasp push`, `clasp deploy`, créer une version ou un déploiement, écrire une propriété ou un
-#    compte, contacter la production (les identifiants de production n'apparaissent ici que pour être REFUSÉS ; UN SEUL Script ID est accepté :
-#    celui du TEST). ⚠️ Les identifiants de production de ce fichier sont LUS dans master par un script (jamais tapés) puis recomptés par le banc
-#    `prouver_gardes.py` : une faute de frappe dans une garde = une garde qui ne refuse rien (constatée le 13/11/2026 ailleurs, voir le rapport).
-# « GO TEST F2-A′ LIMITÉ » de Michel (13/11/2026). Toute étape qui écrit (poussée de code, nouvelle version, sonde) exige un GO distinct.
+# ÉTAPES EN LECTURE SEULE : sauvegardes (métadonnées Drive du dossier « FT-TEST-P1… », puis une tentative de lecture de la plus récente) · preparer (tous les contrôles
+#    d'avant déploiement, AUCUNE écriture) · verifier (les 13 contrôles d'isolement + le code réellement servi) · deploiements (liste des déploiements et des versions).
+# SEULE ÉTAPE QUI ÉCRIT : deployer — « GO NOUVEAU DÉPLOIEMENT F2-A′ SUR TEST UNIQUEMENT » de Michel (13/11/2026). Trois écritures dans le projet Apps Script de TEST :
+#    ① le code (seul le fichier « Code » change, feuille de production neutralisée) ② une NOUVELLE version ③ un NOUVEAU déploiement web. JAMAIS un déploiement existant (@4 reste intact).
+#    Elle exige la phrase de confirmation `DEPLOYER-<empreinte du candidat>-SUR-TEST`, refait tous les contrôles de « preparer » juste avant d'écrire, puis compare l'état d'avant et d'après.
+# CE QUE RIEN ICI NE PEUT FAIRE, PAR CONSTRUCTION : contacter la production (les identifiants de production n'apparaissent que pour être REFUSÉS ; UN SEUL Script ID est accepté : celui du TEST),
+#    utiliser clasp, toucher Drive en écriture, une feuille Google, une propriété, un compte, ou modifier/supprimer un déploiement existant (les scripts n'ont aucun chemin pour cela).
+# ⚠️ Les identifiants de production de ce fichier sont LUS dans master par un script (jamais tapés) puis recomptés par le banc local : une faute de frappe dans une garde = une garde
+#    qui ne refuse rien (constatée le 13/11/2026 sur d'autres branches d'essai).
 on:
   workflow_dispatch:
     inputs:
       etape:
-        description: 'verifier (les 13 contrôles d isolement et le code réellement servi) | deploiements (liste des déploiements et des versions du projet de TEST)'
+        description: 'sauvegardes | preparer | deployer (SEULE étape qui écrit, dans le projet de TEST) | verifier | deploiements'
         required: true
-        default: 'verifier'
+        default: 'preparer'
       script_id:
         description: 'Script ID du projet de TEST (un seul est accepté ; celui de la production est refusé)'
         required: true
         default: ''
       url_exec:
-        description: '(verifier) adresse /exec du déploiement de TEST à contrôler ; jamais celle de la production'
+        description: '(verifier seulement) adresse /exec du déploiement de TEST à contrôler ; vide pour toutes les autres étapes ; jamais celle de la production'
+        required: false
+        default: ''
+      confirmer:
+        description: '(deployer seulement) la phrase exacte DEPLOYER-<empreinte du candidat>-SUR-TEST'
         required: false
         default: ''
 
 # moindre privilège : aucun droit d'écriture sur le dépôt, aucun jeton laissé dans .git
 permissions:
   contents: read
+
+# une seule exécution à la fois : jamais deux écritures concurrentes dans le projet de TEST
+concurrency:
+  group: ft-test-p1-f2a-prime
+  cancel-in-progress: false
 
 jobs:
   essai:
@@ -44,22 +56,26 @@ jobs:
           SCRIPT_ID: ${{ inputs.script_id }}
           URL_EXEC: ${{ inputs.url_exec }}
           ETAPE: ${{ inputs.etape }}
+          CONFIRMER: ${{ inputs.confirmer }}
         run: |
           set -euo pipefail
           TEST_SID="1gBAmFDy2iEtsM8i5qeBTU5x2RckHqchkizUYgOurhKHw9C-Ymvis8C6m"
           PROD_SID="1RwE46heNmZrykInYcrMgm1OZWt4NmS6NjTqttvAevZLuqo2v6EEb1Drw"
-          echo "=== ESSAI F2-A′ (lecture seule) · ref ${GITHUB_REF} · étape ${ETAPE} ==="
+          echo "=== ESSAI F2-A′ · ref ${GITHUB_REF} · étape ${ETAPE} ==="
           [ "${GITHUB_REF}" != "refs/heads/master" ] || { echo "::error::refus : ce workflow d'essai ne tourne pas sur master"; exit 1; }
           case "${GITHUB_REF}" in refs/heads/test/f2a-prime-*) ;; *) echo "::error::refus : seule une branche test/f2a-prime-* peut lancer ce workflow"; exit 1;; esac
-          case "$ETAPE" in verifier|deploiements) ;; *) echo "::error::étape inconnue ou non autorisée : $ETAPE"; exit 1;; esac
+          case "$ETAPE" in sauvegardes|preparer|deployer|verifier|deploiements) ;; *) echo "::error::étape inconnue ou non autorisée : $ETAPE"; exit 1;; esac
           [ "$SCRIPT_ID" != "$PROD_SID" ] || { echo "::error::REFUS : Script ID de production"; exit 1; }
           [ "$SCRIPT_ID" = "$TEST_SID" ] || { echo "::error::REFUS : ce n'est pas le Script ID du projet de TEST"; exit 1; }
           case "$URL_EXEC" in
             *AKfycbxWUsEFIlmx*) echo "::error::REFUS : adresse de production"; exit 1;;
-            "") [ "$ETAPE" = "deploiements" ] || { echo "::error::url_exec vide"; exit 1; };;
-            https://script.google.com/macros/s/*/exec) ;;
+            "") [ "$ETAPE" != "verifier" ] || { echo "::error::url_exec vide"; exit 1; };;
+            https://script.google.com/macros/s/*/exec) [ "$ETAPE" = "verifier" ] || { echo "::error::url_exec n'est admise que pour l'étape verifier"; exit 1; };;
             *) echo "::error::url_exec : format inattendu"; exit 1;;
           esac
+          if [ "$ETAPE" = "deployer" ]; then
+            [ "$CONFIRMER" = "DEPLOYER-ecbb462ea7b4-SUR-TEST" ] || { echo "::error::REFUS : confirmation absente ou inexacte (attendu : DEPLOYER-ecbb462ea7b4-SUR-TEST)"; exit 1; }
+          fi
           echo "✅ gardes passées : branche d'essai · Script ID = celui du TEST · aucune adresse de production"
 
       - name: "Installer Node"
@@ -67,8 +83,48 @@ jobs:
         with:
           node-version: '20'
 
-      - name: "Vérifier un déploiement de TEST et son isolement (LECTURE SEULE : API Apps Script, métadonnées des dossiers FT-TEST-P1, un GET test=1 ; aucun secret ni adresse affichés)"
-        if: ${{ inputs.etape == 'verifier' }}
+      - name: "Sauvegardes du projet de TEST (LECTURE SEULE : métadonnées du dossier FT-TEST-P1…, une tentative de lecture de la plus récente ; aucune adresse e-mail affichée)"
+        if: ${{ inputs.etape == 'sauvegardes' }}
+        env:
+          SCRIPT_ID: ${{ inputs.script_id }}
+          CLASPRC_JSON: ${{ secrets.CLASPRC_JSON }}
+        run: |
+          set -euo pipefail
+          [ "$SCRIPT_ID" != "1RwE46heNmZrykInYcrMgm1OZWt4NmS6NjTqttvAevZLuqo2v6EEb1Drw" ] || { echo "::error::REFUS : Script ID de production"; exit 1; }
+          printf '%s' "$CLASPRC_JSON" > "$HOME/.clasprc.json"
+          node p1/lister_sauvegardes_test.js "$SCRIPT_ID"
+
+      - name: "Préparer le déploiement (LECTURE SEULE : tous les contrôles d'avant, AUCUNE écriture)"
+        if: ${{ inputs.etape == 'preparer' }}
+        env:
+          SCRIPT_ID: ${{ inputs.script_id }}
+          CLASPRC_JSON: ${{ secrets.CLASPRC_JSON }}
+          EMPREINTE_CANDIDAT: "ecbb462ea7b4"
+          EMPREINTE_BASE: "f2de6eed1923"
+          BLOB_CANDIDAT: "7be47192f7f9ae4fe3a32c0d44643aa659f04dae"
+        run: |
+          set -euo pipefail
+          [ "$SCRIPT_ID" != "1RwE46heNmZrykInYcrMgm1OZWt4NmS6NjTqttvAevZLuqo2v6EEb1Drw" ] || { echo "::error::REFUS : Script ID de production"; exit 1; }
+          printf '%s' "$CLASPRC_JSON" > "$HOME/.clasprc.json"
+          node p1/deployer_test.js preparer "$SCRIPT_ID"
+
+      - name: "DÉPLOYER F2-A′ dans le projet de TEST (⚠️ SEULE ÉTAPE QUI ÉCRIT : le code, une NOUVELLE version, un NOUVEAU déploiement — jamais un déploiement existant)"
+        if: ${{ inputs.etape == 'deployer' }}
+        env:
+          SCRIPT_ID: ${{ inputs.script_id }}
+          CONFIRMER: ${{ inputs.confirmer }}
+          CLASPRC_JSON: ${{ secrets.CLASPRC_JSON }}
+          EMPREINTE_CANDIDAT: "ecbb462ea7b4"
+          EMPREINTE_BASE: "f2de6eed1923"
+          BLOB_CANDIDAT: "7be47192f7f9ae4fe3a32c0d44643aa659f04dae"
+        run: |
+          set -euo pipefail
+          [ "$SCRIPT_ID" != "1RwE46heNmZrykInYcrMgm1OZWt4NmS6NjTqttvAevZLuqo2v6EEb1Drw" ] || { echo "::error::REFUS : Script ID de production"; exit 1; }
+          printf '%s' "$CLASPRC_JSON" > "$HOME/.clasprc.json"
+          node p1/deployer_test.js deployer "$SCRIPT_ID"
+
+      - name: "Vérifier un déploiement de TEST et son isolement (LECTURE SEULE : API Apps Script, métadonnées des dossiers FT-TEST-P1, un GET test=1 ; après « deployer » : le NOUVEAU déploiement)"
+        if: ${{ inputs.etape == 'verifier' || inputs.etape == 'deployer' }}
         env:
           SCRIPT_ID: ${{ inputs.script_id }}
           URL_EXEC: ${{ inputs.url_exec }}
@@ -76,9 +132,13 @@ jobs:
         run: |
           set -euo pipefail
           [ "$SCRIPT_ID" != "1RwE46heNmZrykInYcrMgm1OZWt4NmS6NjTqttvAevZLuqo2v6EEb1Drw" ] || { echo "::error::REFUS : Script ID de production"; exit 1; }
-          case "$URL_EXEC" in *AKfycbxWUsEFIlmx*) echo "::error::REFUS : adresse de production"; exit 1;; esac
+          # après « deployer », l'adresse du NOUVEAU déploiement vient de l'étape précédente (ADRESSE_EXEC, via $GITHUB_ENV) ; sinon, celle qu'on a saisie
+          URL="${ADRESSE_EXEC:-$URL_EXEC}"
+          [ -n "$URL" ] || { echo "::error::aucune adresse à vérifier"; exit 1; }
+          case "$URL" in *AKfycbxWUsEFIlmx*) echo "::error::REFUS : adresse de production"; exit 1;; esac
+          case "$URL" in https://script.google.com/macros/s/*/exec) ;; *) echo "::error::adresse : format inattendu"; exit 1;; esac
           printf '%s' "$CLASPRC_JSON" > "$HOME/.clasprc.json"
-          node p1/verifier_deploiement.js "$SCRIPT_ID" "$URL_EXEC"
+          node p1/verifier_deploiement.js "$SCRIPT_ID" "$URL"
 
       - name: "Inspecter les déploiements du projet de TEST (LECTURE SEULE : API Apps Script, aucun secret affiché)"
         if: ${{ inputs.etape == 'deploiements' }}
