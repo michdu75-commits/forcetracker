@@ -7888,7 +7888,9 @@ function _impConserverSpeciales(){
    Les matériels écrits : TOUS ceux du nom (« guidé / haltères » en écrit deux), pas seulement le premier — `_materielDe`
    (IMPORT-MAP-01) n'en rend qu'un, par priorité, et ne verrait pas qu'« haltères » est aussi écrit. Mêmes mots que lui. */
 function _materielsEcrits(nom){
-  const s=' '+_normEx(nom)+' ', r=[];
+  /* 🛡️ `nom` peut être ABSENT : `_materielNoteContredit` lui passe `ex.note`, et le Worker PUBLIÉ ne garantit pas ce champ pour un programme (le modèle l'omet ou écrit `null`).
+     Sans garde, `_normEx(undefined)` levait un TypeError et l'import ENTIER échouait (rouge `CCLXXIII` de la D-031, 13/11/2026 ; témoin IPDF-I01 / I02). Même convention que le reste du fichier : `String(x||'')`. */
+  const s=' '+_normEx(String(nom||''))+' ', r=[];
   if(/ smith /.test(s)) r.push('smith');
   if(/ (poulie|cable|cables) /.test(s)) r.push('poulie');
   if(/ (machine|guide|guidee|guides|guidees) /.test(s)) r.push('machine');
