@@ -1037,6 +1037,46 @@ module.exports.ecran = async function (t, b, PORT) {
   t('IPDF-H06 ⭐ le MÊME garde protège l\'import d\'HISTORIQUE (une seule porte, R2) : 8 pages passent, 9 pages sont refusées sans rien ajouter',
     h8.photos === 8 && erreursT(h8).length === 0 && h9.photos === 0 && erreursT(h9).length === 1 && h9.getPage === 0, js({ h8, h9 }));
   });
+  await section('S', async () => {
+  // ── S. UN EXERCICE SANS CHAMP « note » N'ARRÊTE PAS L'IMPORT (IMPORT PDF, 13/11/2026 — STABILISATION de l'intégration : rouge `CCLXXIII` de la D-031 complète) ──
+  //    Le garde-fou « matériel écrit dans la note » (`_materielNoteContredit`, lot IMPORT-IA-FIDELITE-01) lisait `ex.note` SANS garde : `_normEx(undefined)` → TypeError
+  //    « reading 'toLowerCase' » ; l'import ÉCHOUAIT (message d'erreur, aperçu absent) et comptait quand même comme un des 2 imports gratuits. Le Worker PUBLIÉ ne garantit pas `note`
+  //    pour un programme (seuls le nouveau Worker et le repli Apps Script la normalisent) : l'app publiée seule la recevrait telle que le modèle l'écrit.
+  //    Le cas : « Leg curl » (rattaché d'office au catalogue, palier `auto`) SANS la clé `note`, ou avec `note: null` — contre le MÊME exercice avec `note: ''` (le témoin de contrôle).
+  //    ⛔ TOUT EST INVENTÉ. Ce qui est éprouvé : l'import ABOUTIT, sans message d'erreur, avec le même résultat que si la note était vide.
+  const sansNote = async (variante) => {
+    const ex = L('Leg curl', 3, 10, 40, '', {});
+    if (variante === 'absente') delete ex.note; else if (variante === 'nulle') ex.note = null;      // 'vide' : `note: ''` — le témoin de contrôle
+    PROG = { name: 'Programme test S', weeks: 4, startDate: '', days: [{ label: 'SÉANCE 1', exercises: [ex] }] };
+    return pg.evaluate(async () => {
+      const o = { toasts: [] }, vraiToast = window.toast;
+      window.toast = (m, k) => { o.toasts.push({ m: String(m), k }); };
+      try {
+        const pv0 = document.getElementById('imp-preview'); if (pv0) pv0.innerHTML = '';          // un aperçu resté d'un cas précédent ne doit pas faire croire à un succès
+        S.premium = true; S.programmes = []; S.customExercises = []; S.exRestPref = {}; S.defRest = 130; persist();
+        _impPhotos = [{ type: 'text/plain', data: 'programme', name: 'prog.txt', isText: true }]; _impMode = 'new';
+        await analyzeImportPhotos();
+        const exs = (((_impExtracted || {}).days || [{}])[0] || {}).exercises || [];
+        o.nom = exs[0] && exs[0].name;
+        const pv = document.getElementById('imp-preview'); o.apercu = !!(pv && pv.innerText.trim().length > 20);
+        finalImportProg();
+        const p = S.programmes[S.programmes.length - 1];
+        o.enregistre = p ? ((p.days || [{}])[0].exs || []).map(e => e.name) : null;
+      } catch (e) { o.exception = String(e && e.message || e).slice(0, 160); }
+      finally { window.toast = vraiToast; }
+      return o;
+    });
+  };
+  const sVide = await sansNote('vide'), sAbs = await sansNote('absente'), sNul = await sansNote('nulle');
+  const erreursS = r => r.toasts.filter(x => x.k === 'error');
+  const abouti = r => !r.exception && erreursS(r).length === 0 && r.apercu === true && Array.isArray(r.enregistre) && r.enregistre.length === 1;
+  t('IPDF-I00 le scénario est bien celui voulu : « Leg curl » est rattaché d\'office au catalogue (le nom change), aperçu affiché, programme enregistré (le témoin de contrôle, note vide)',
+    abouti(sVide) && !!sVide.nom && _naz(sVide.nom) !== 'leg curl' && /leg curl/.test(_naz(sVide.nom)) && sVide.enregistre[0] === sVide.nom, js(sVide));
+  t('IPDF-I01 ⭐⭐ SANS la clé `note` : l\'import ABOUTIT — aucun message d\'erreur, aperçu affiché, programme enregistré, même exercice rattaché que pour une note vide',
+    abouti(sAbs) && sAbs.nom === sVide.nom && sAbs.enregistre[0] === sVide.enregistre[0], js(sAbs));
+  t('IPDF-I02 ⭐ `note: null` (un modèle qui écrit « null » pour un champ vide) : même résultat, rien ne plante',
+    abouti(sNul) && sNul.nom === sVide.nom && sNul.enregistre[0] === sVide.enregistre[0], js(sNul));
+  });
   t('IIF-C04 aucune erreur de page, aucun appel réel', errs.length === 0 && reels === 0, js({ errs, reels }));
   await cx.close();
   function S_IDX() { return 0; }

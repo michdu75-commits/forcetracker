@@ -243,6 +243,8 @@ MUT = [
      [(LO, "      }catch(e){toast('Erreur PDF : '+(e.message||e),'error');}\n    }\n  }\n  if(results.length){\n    _impPhotos.push(...results);\n", "      }catch(e){toast('Erreur PDF : '+(e.message||e),'error');return;}\n    }\n  }\n  if(results.length){\n    _impPhotos.push(...results);\n")], 'GARDE'),
     ('M105 le garde tolère une page de plus (`>` devient `> MAX_PAGES+1`) : 9 pages repassent',
      [(LO, "  if(pdf.numPages>MAX_PAGES)throw new Error('ce PDF a '+pdf.numPages+' pages, la limite est de '+MAX_PAGES+' pages par import — rien n\\'a été ajouté');\n", "  if(pdf.numPages>MAX_PAGES+1)throw new Error('ce PDF a '+pdf.numPages+' pages, la limite est de '+MAX_PAGES+' pages par import — rien n\\'a été ajouté');\n")], 'GARDE'),
+    ("M106 un exercice SANS champ note (ou `note: null`) fait de nouveau planter l'import : le garde `String(nom||'')` retiré de `_materielsEcrits` (rouge CCLXXIII de la D-031, 13/11/2026)",
+     [(LO, "  const s=' '+_normEx(String(nom||''))+' ', r=[];\n", "  const s=' '+_normEx(nom)+' ', r=[];\n")], 'GARDE'),
 ]
 
 BANC = os.path.join('tools', 'banc_import_fidelite.js')
