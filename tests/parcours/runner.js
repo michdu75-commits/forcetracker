@@ -31525,7 +31525,11 @@ console.log('\n-- CCLXXII. Le poids du paquet (ft-v1174) --');
    **R8 À L'ENVERS : un lecteur qui attend un champ que personne ne produit.**
    ⛔ LA NUANCE DE MICHEL EST LA GARANTIE CENTRALE : un repos VARIABLE n'est pas un repos. Le
    code la tenait déjà (`_secRepos('90-120s')` = 0) ; le prompt la dit maintenant explicitement.
-   ⚠️ ET UN TROU TROUVÉ EN VÉRIFIANT MA PROPRE CONSIGNE : `1min30` COLLÉ rendait 0. */
+   ⚠️ ET UN TROU TROUVÉ EN VÉRIFIANT MA PROPRE CONSIGNE : `1min30` COLLÉ rendait 0.
+   ↪️ 13/11/2026 — D-153 (Michel, 08/11/2026) A CHANGÉ CE QUE L'IMPORT FAIT D'UNE PLAGE, PAS LA GARANTIE : une plage écrite (« 90-120s ») est un repos ÉCRIT ; l'import en propose
+      la BORNE BASSE (90 s) au chrono et CONSERVE le texte. « Jamais inventé » veut toujours dire : JAMAIS la moyenne (105), JAMAIS la borne haute. `_secRepos` (lu aussi par Milo) NE
+      CHANGE PAS : une plage y reste 0 s — le témoin « FLOU » ci-dessous le tient toujours ; la lecture « borne basse » vit dans `_reposLire(..).prop`, lue par le seul import.
+      Le témoin « VARIABLE » affirmait « 0 » — l'alternative (a), ÉCARTÉE par D-153 : il est réécrit sur la règle décidée (rouge de la D-031 complète de l'intégration, 13/11/2026). */
 {
   const R = await p.evaluate(()=>{
    try{
@@ -31580,8 +31584,8 @@ console.log('\n-- CCLXXII. Le poids du paquet (ft-v1174) --');
       JSON.stringify(R.restColle)==='[90,90,90]', JSON.stringify(R.restColle));
     t('CCLXXIV ⭐ un repos DIFFÉRENT par série suit chaque série',
       JSON.stringify(R.restParSerie)==='[120,120,180]', JSON.stringify(R.restParSerie));
-    t('CCLXXIV ⛔⛔ ... et un repos VARIABLE laisse l\'app à SON réglage (0, pas 105)',
-      JSON.stringify(R.restFlou)==='[0,0,0]', JSON.stringify(R.restFlou));
+    t('CCLXXIV ⛔⛔ ... et un repos VARIABLE (une plage « 90-120s ») devient sa BORNE BASSE — D-153 : 90 s, JAMAIS la moyenne 105 ni la borne haute',
+      JSON.stringify(R.restFlou)==='[90,90,90]', JSON.stringify(R.restFlou));
     t('CCLXXIV ⛔ NON-RÉGRESSION — sans champ `rest`, rien ne change',
       JSON.stringify(R.sansRest)==='[0,0,0]', JSON.stringify(R.sansRest));
     /* ⛔ Côté serveur : le champ DANS LE SCHÉMA (le signal le plus fort du prompt — ft-v1158),
