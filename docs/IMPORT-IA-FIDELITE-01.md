@@ -557,3 +557,13 @@ Sonde hors dépôt sur le vrai chemin d'import (`openImportProg` → `analyzeImp
 | Fichiers applicatifs touchés | **5** — `log.js` (+647 −167) · `constants.js` (+99 −24) · `style.css` (+49 −0) · `index.html` (+5 −2) · `coach.js` (+1 −1) ; aucun fichier applicatif créé |
 | Lignes ajoutées − retirées | **+801 − 194 = +607** |
 | Anciens chemins supprimés / fusionnés | **7** — les 6 applicatifs du § 12 (le chemin du prompt du Worker en est exclu) + la troncature silencieuse à la 8ᵉ page (§ 22.4) |
+
+## 25. Publication de l'application seule — `ft-v1267` (14/11/2026)
+
+> ⚖️ **Décision de Michel (D-160 puis D-161)** : l'application est publiée d'abord, le Worker et F2-A′ plus tard, chacun par un GO distinct. Le « GO PUBLICATION ft-v1267 » du 14/11/2026 pose cinq conditions impératives (sauvegarde fraîche des données · retour arrière préparé et vérifié · master toujours à `fd8bf703` · règle d'or #11 · 7 rouges de D-156 acceptés pour CETTE publication seulement) ; **si l'une manque : STOP**.
+
+**Ce qui part** : le candidat `313975a4` (§ 24) + l'annonce de la règle #11 (point rouge `import-fidele`, aide « ? » Séance, aide détaillée, diapo du Guide ; pas de pop-up) + `sw.js` `ft-v1267`. **`Code.js` et `worker.js` : ceux de master** (blobs `897a0fb8` et `7eb85009`).
+
+**Ce que la personne verra, et ce qui ne marche pas encore** : l'aperçu range un échauffement avec son exercice, laisse « Non renseigné » ce que le document n'écrit pas, refuse un PDF de plus de 8 pages et demande une confirmation avant « Remplacer ». ⚠️ Les REPOS écrits dans le document ne seront lus qu'après la publication séparée du Worker : **les textes d'annonce ne les promettent pas** (à compléter le jour où le Worker sort).
+
+**Retour arrière** : branche `backup-prod-ft-v1266-avant-ft-v1267-2026-11-14` (`fd8bf703`, code servi vérifié octet pour octet) ; `retour_arriere_ft-v1267.sh` reconstruit le code de ft-v1266 sous la clé de cache ft-v1268 (même patron que `retour_arriere.sh client` de ft-v1265), sans toucher `Code.js` ni `worker.js`. Un retour du CODE n'est jamais une restauration de DONNÉES.
