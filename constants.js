@@ -545,6 +545,13 @@ const FEAT_SI = {
   testeur:       () => { try{ return typeof _isTester==='function' && _isTester(); }catch(e){ return false; } }
 };
 const NEW_FEATURES=[
+  /* 📋 POINT ROUGE sur SÉANCE (IMPORT-IA-FIDELITE-01, « GO PUBLICATION » de Michel, 14/11/2026 — règle d'or #11, point 2 ; docs/IMPORT-IA-FIDELITE-01.md § 24) : c'est de là qu'on ouvre
+     « Mes Programmes » et l'import, donc là que la pastille doit ramener. ⛔ Sans `spot`, comme les entrées voisines de cet écran (ft-v1153 : un ancrage absent est une annonce qui n'a
+     jamais lieu, en silence). ⛔ PAS DE POP-UP (R25), et c'est argumenté : rien n'est à faire, aucun repère n'a bougé (même porte, mêmes boutons) — l'aperçu range mieux ce qu'il lit et
+     « Remplacer » ajoute une QUESTION de sécurité, il n'en retire aucune. La pop-up ANNONCE, l'aide EXPLIQUE.
+     ⚠️ CE QUI N'EST PAS ANNONCÉ, EXPRÈS : les REPOS lus dans le document (« 3-4 min »). Le code les sait lire (D-153), mais l'IA publiée n'en renvoie aucun tant que le Worker n'est pas publié
+     (publication séparée) — annoncer une chose qui n'arrive pas est le défaut que cette règle empêche. À annoncer le jour où le Worker sort. */
+  {id:'import-fidele', screen:'log', desc:'Nouveau : l\'<b>import d\'un programme</b> garde ce qu\'il lit — un <b>échauffement</b> écrit à part est rangé <b>avec son exercice</b> (séries <b>É</b> puis <b>N</b>), et charges et répétitions ne sont plus inventées (« <b>Non renseigné</b> » si le document n\'en dit rien). Un PDF de <b>plus de 8 pages</b> est refusé, et « Remplacer » demande d\'abord de confirmer.'},
   /* 🚶 POINT ROUGE sur SÉANCE (mission « Autre activité » de Michel, 05/11/2026 — docs/AUTRE-ACTIVITE-CALORIES.md) — la tuile « Autre activité » est sous « Programme », donc
      là que la pastille doit ramener. ⛔ Sans `spot`, comme les entrées voisines de cet écran : la tuile n'existe que dans l'état « avant la séance » (ft-v1153 : un ancrage
      absent est une annonce qui n'a jamais lieu, en silence). ⛔ PAS DE POP-UP (R25) : une porte s'ajoute, rien n'est à faire et aucun repère n'a bougé (les bilans qui
