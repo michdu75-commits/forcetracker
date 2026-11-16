@@ -8,7 +8,7 @@
 
 | État | Valeur |
 |---|---|
-| Corrigé sur branche | **OUI** — `claude/f2a-prime-qualif-2026-11-16` (5 commits sur master : fusion F2-A′ `a55d6d60`, finalisation U-29 / sauvegarde / restauration, suivi documentaire de F2-A′ repris de `cd1418cb`, reconstruction de l'ancien serveur, ce document). L'ancienne branche `fix/f2-seances-union-2026-11-12 @cd1418cb` et la branche d'essai distante `test/f2a-prime-2026-11-13 @fb92ae19` sont **intactes**. |
+| Corrigé sur branche | **OUI** — `claude/f2a-prime-qualif-2026-11-16` (les commits au-dessus de master, `git log e4456bf4..HEAD` : fusion F2-A′ `a55d6d60`, finalisation U-29 / sauvegarde / restauration, suivi documentaire de F2-A′ repris de `cd1418cb`, reconstruction de l'ancien serveur, ce document). L'ancienne branche `fix/f2-seances-union-2026-11-12 @cd1418cb` et la branche d'essai distante `test/f2a-prime-2026-11-13 @fb92ae19` sont **intactes**. |
 | Intégré | **NON** |
 | Publié (Apps Script) | **NON** (production @195 inchangée) |
 | Vérifié (TEST réel / iPhone) | **NON** pour cette version. (L'essai TEST @5 du 13/11 portait la version d'avant les correctifs de ce document.) |
