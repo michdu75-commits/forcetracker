@@ -2065,6 +2065,11 @@ function _sessCanon_(v, sansSynced) {
 function _sessIdentite_(s) {
   var id = s.id, t = typeof id;
   if ((t === 'string' && id.trim() !== '') || (t === 'number' && isFinite(id))) return 'i:' + String(id);
+  /* ⭐ U-29 (16/11/2026) — UNE SÉANCE SANS `id` MAIS AVEC UN `ts` EST IDENTIFIÉE PAR SON `ts`. `ts` est l'instant de CRÉATION (`Date.now()`, finishWorkout) et la correction d'une séance le RECOPIE (`ts: ancien.ts`) :
+     c'est le même genre d'identité que `id` (même risque : deux séances créées à la même milliseconde sur deux appareils). Avant : une séance de ce genre corrigée 20 fois laissait 21 versions au serveur (mesuré). Maintenant : sa version
+     la plus récente remplace l'ancienne, à sa place. ⛔ Une séance sans `id` NI `ts` reste identifiée par son contenu (« un doublon vaut mieux qu'une perte ») : aucune heuristique de date ou d'exercices, qui confondrait deux séances
+     réelles du même jour. */
+  if ((id === undefined || id === null) && typeof s.ts === 'number' && isFinite(s.ts) && s.ts > 0) return 't:' + String(s.ts);   // `id` ABSENT seulement : un `id` présent mais invalide (liste, objet, espaces) reste jugé sur le contenu
   return 'e:' + _sessCanon_(s, true);
 }
 function _sessFusion_(stockees, recues) {
@@ -2074,13 +2079,13 @@ function _sessFusion_(stockees, recues) {
   liste.forEach(function(s, i) {
     if (!valide(s)) return;                                   // ce qui est déjà en base n'est jamais jugé ni retiré
     var k = _sessIdentite_(s);
-    if (k.charAt(0) === 'i') { if (!(k in parId)) parId[k] = i; }
+    if (k.charAt(0) !== 'e') { if (!(k in parId)) parId[k] = i; }
     else (libres[k] || (libres[k] = [])).push(i);
   });
   recues.forEach(function(s) {
     if (!valide(s)) { res.ignorees++; return; }
     var k = _sessIdentite_(s), j;
-    if (k.charAt(0) === 'i') {
+    if (k.charAt(0) !== 'e') {
       if (!(k in parId)) { parId[k] = liste.length; liste.push(s); res.ajoutees++; return; }
       j = parId[k];
     } else {
@@ -4433,6 +4438,10 @@ function backupAllUserData_() {
 
     const userKeys = Object.keys(all).filter(k => k.startsWith('u_'));
     const users = [];
+    /* 🔎 U-09 / F2-A′ (16/11/2026) — UNE SAUVEGARDE DOIT DIRE CE QU'ELLE N'A PAS PU ÉCRIRE. Avant : un compte dont `u_` ne se relit pas (illisible, tronqué) était SAUTÉ avec une ligne de journal, et le fichier annonçait
+       `user_count` = les comptes réussis comme si c'étaient TOUS : 13 comptes sauvegardés pour 14 en ligne ne se voyait que par hasard (écart « 13 contre 14 » du 15/11, cause jamais établie). Maintenant le fichier porte
+       `user_count_attendu` (les clés `u_` trouvées) et `erreurs` (la clé et la raison) : un compte manquant est LISIBLE dans la sauvegarde elle-même. Rien d'autre ne change (même fichier, mêmes `users`, `user_count` inchangé). */
+    const erreurs = [];
     userKeys.forEach(k => {
       try {
         const data = JSON.parse(_unpackUser_(all[k]));
@@ -4448,20 +4457,23 @@ function backupAllUserData_() {
         try {
           const rs = _unpackUser_(all['h_' + email.toLowerCase().trim()]);
           if (rs) sante = JSON.parse(rs);
-        } catch(eS) { Logger.log('[FT backup] santé illisible pour ' + k); }
+        } catch(eS) { Logger.log('[FT backup] santé illisible pour ' + k); erreurs.push({ cle: santeKey_(email), raison: 'santé illisible' }); }
         users.push({ email: email, data: data, sante: sante });
       } catch(e) {
         Logger.log('[FT backup] Parse err ' + k + ' : ' + e.message);
+        erreurs.push({ cle: k, raison: String((e && e.message) || e).slice(0, 80) });
       }
     });
 
     folder.createFile(fileName, JSON.stringify({
       backed_up_at: now.toISOString(),
       user_count: users.length,
+      user_count_attendu: userKeys.length,
+      erreurs: erreurs,
       users: users
     }), 'application/json');
 
-    Logger.log('[FT backup Drive] ' + fileName + ' — ' + users.length + ' users');
+    Logger.log('[FT backup Drive] ' + fileName + ' — ' + users.length + ' users' + (erreurs.length ? ' ⚠️ ' + erreurs.length + ' ERREUR(S) : ' + users.length + ' sauvegardés sur ' + userKeys.length + ' attendus' : ''));
 
     // Comptage des fichiers — alerte si le dossier grossit trop (jamais de suppression auto)
     try {

@@ -24,7 +24,7 @@ AJOUT = "      if (!(k in parId)) { parId[k] = liste.length; liste.push(s); res.
 # (nom, ancre | liste de (ancre, remplacement) | 'AVANT', remplacement, tests ATTENDUS (prefixes), sections a rejouer, attendu 'GARDE' | 'OK')
 MUT = [
     ("M00 le Code.js d'AVANT F2-A' (master fd8bf703) : remplacement + garde de taille (60 % des 30)", 'AVANT', None,
-     ['F2A-A·C02a', 'F2A-A·C02b', 'F2A-A·C04', 'F2A-A·C05', 'F2A-A2a', 'F2A-A3a', 'F2A-F1'], 'Z,A,B,C,D,E,F', 'GARDE'),
+     ['F2A-A·C02a', 'F2A-A·C02b', 'F2A-A·C04', 'F2A-A·C05', 'F2A-A2a', 'F2A-A3a', 'F2A-F1', 'F2A-U01', 'F2A-S01'], 'Z,A,B,C,D,E,F,U,S', 'GARDE'),
     ("M01 remplacement pur : `existing.sessions = envoi` (le comportement d'avant, sans la fusion)", APPEL,
      "        existing.sessions = inSess;\n", ['F2A-A·C02a', 'F2A-A·C04', 'F2A-A2a', 'F2A-A3a', 'F2A-E01e', 'F2A-F1'], 'A,E,F', 'GARDE'),
     ("M02 la base n'est plus conservee : la liste de depart est VIDE (seul l'envoi reste)", "  var liste = stockees.slice(), parId = Object.create(null), libres = Object.create(null);\n",
@@ -75,6 +75,19 @@ MUT = [
      "   · Rejouer le même envoi ne modifie plus rien (idempotent)", [], 'Z,A,B,C', 'OK'),
     ("M25 (EQUIVALENT, attendu VERT) une seance identique est « remplacee » par sa copie : aucun effet observable, ni sur le contenu ni sur l'ordre", REMPL,
      "    if (true) { liste[j] = s; res.remplacees++; }\n", [], 'A,B', 'OK'),
+    # ── 16/11/2026 : U-29 (identite par `ts`) et la sauvegarde qui dit ce qu'elle n'a pas pu ecrire ──
+    ("M26 U-29 : la regle du `ts` est eteinte (une seance sans id mais avec `ts` redevient jugee sur son contenu : 21 versions apres 20 corrections)", "if ((id === undefined || id === null) && typeof s.ts === 'number' && isFinite(s.ts) && s.ts > 0) return 't:' + String(s.ts);",
+     "if (false) return 't:' + String(s.ts);", ['F2A-U01', 'F2A-U06', 'F2A-U08', 'F2A-M02'], 'U,M', 'GARDE'),
+    ("M27 U-29 : la regle du `ts` s'applique AUSSI a un `id` present mais invalide (objet) : deux seances distinctes de meme `ts` fusionnent", "(id === undefined || id === null) && typeof s.ts === 'number'",
+     "typeof s.ts === 'number'", ['F2A-U05'], 'U,B', 'GARDE'),
+    ("M28 U-29 : l'identite par `ts` est remplacee par la DATE (la double seance d'un meme jour est prise pour une correction : une seance PERDUE)", "return 't:' + String(s.ts);",
+     "return 't:' + String(s.date);", ['F2A-U03'], 'U', 'GARDE'),
+    ("M29 sauvegarde : le champ `erreurs` n'est plus ecrit (un compte illisible redevient invisible)", "      erreurs: erreurs,\n", "", ['F2A-S01'], 'S', 'GARDE'),
+    ("M30 sauvegarde : `user_count_attendu` compte les comptes ECRITS (plus de moyen de voir l'ecart)", "      user_count_attendu: userKeys.length,\n", "      user_count_attendu: users.length,\n", ['F2A-S01'], 'S', 'GARDE'),
+    ("M31 sauvegarde : l'echec de lecture d'un compte n'est plus note dans `erreurs`", "        erreurs.push({ cle: k, raison: String((e && e.message) || e).slice(0, 80) });\n", "", ['F2A-S01'], 'S', 'GARDE'),
+    ("M32 sauvegarde : le journal ne signale plus l'ecart", "(erreurs.length ? ' ⚠️ '", "(false ? ' ⚠️ '", ['F2A-S03'], 'S', 'GARDE'),
+    ("M33 restauration : la restauration d'un compte n'ecrit plus ses seances (le test de restauration isolee doit le voir)", "    saveUserData_(email, data);\n  } finally { _nutVerrouRendre_(_hv, 'adminRestore'); }",
+     "    saveUserData_(email, Object.assign({}, data, { sessions: [] }));\n  } finally { _nutVerrouRendre_(_hv, 'adminRestore'); }", ['F2A-S04', 'F2A-S06'], 'S', 'GARDE'),
 ]
 
 
