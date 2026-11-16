@@ -116,7 +116,23 @@ function reconstruireAncien(neuf) {
   const a = neuf.indexOf(D), b = neuf.indexOf(F);
   if (!(a < b)) return null;
   const s = neuf.slice(0, a) + BLOC_ANCIEN + neuf.slice(b), h0 = s.indexOf(H0), h1 = s.indexOf(H1);
-  return (h0 >= 0 && h0 < h1) ? s.slice(0, h0) + s.slice(h1) : null;
+  return (h0 >= 0 && h0 < h1) ? retablirSauvegarde(s.slice(0, h0) + s.slice(h1)) : null;
+}
+/** 16/11/2026 : la sauvegarde nocturne dit désormais ce qu'elle n'a pas pu écrire (`user_count_attendu`, `erreurs`). Ce n'est PAS F2-A′ : pour que « le serveur d'avant » reste IDENTIQUE octet pour octet à celui de master
+    (retour arrière démontré, H00b), on remet aussi l'ANCIENNE sauvegarde. Un repère qui a bougé = `null` (le banc le dit, il ne devine pas). */
+function retablirSauvegarde(src) {
+  const unFois = (motif) => src.split(motif).length === 2;
+  const regCommentaire = /    \/\* 🔎 U-09 \/ F2-A′ \(16\/11\/2026\)[\s\S]*?\*\/\n    const erreurs = \[\];\n/;
+  const paires = [
+    ["Logger.log('[FT backup] santé illisible pour ' + k); erreurs.push({ cle: santeKey_(email), raison: 'santé illisible' }); }", "Logger.log('[FT backup] santé illisible pour ' + k); }"],
+    ["        erreurs.push({ cle: k, raison: String((e && e.message) || e).slice(0, 80) });\n", ""],
+    ["      user_count_attendu: userKeys.length,\n      erreurs: erreurs,\n", ""],
+    ["    Logger.log('[FT backup Drive] ' + fileName + ' — ' + users.length + ' users' + (erreurs.length ? ' ⚠️ ' + erreurs.length + ' ERREUR(S) : ' + users.length + ' sauvegardés sur ' + userKeys.length + ' attendus' : ''));", "    Logger.log('[FT backup Drive] ' + fileName + ' — ' + users.length + ' users');"],
+  ];
+  if (!regCommentaire.test(src) || !paires.every(([n]) => unFois(n))) return null;
+  let r = src.replace(regCommentaire, '');
+  paires.forEach(([n, o]) => { r = r.replace(n, () => o); });
+  return r;
 }
 const ANCIEN_BRUT = reconstruireAncien(CODE_NEUF);
 const ANCIEN = ANCIEN_BRUT ? P1.preparerCode(ANCIEN_BRUT) : null;
