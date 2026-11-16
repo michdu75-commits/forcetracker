@@ -2065,26 +2065,51 @@ function _sessCanon_(v, sansSynced) {
 function _sessIdentite_(s) {
   var id = s.id, t = typeof id;
   if ((t === 'string' && id.trim() !== '') || (t === 'number' && isFinite(id))) return 'i:' + String(id);
-  /* ⭐ U-29 (16/11/2026) — UNE SÉANCE SANS `id` MAIS AVEC UN `ts` EST IDENTIFIÉE PAR SON `ts`. `ts` est l'instant de CRÉATION (`Date.now()`, finishWorkout) et la correction d'une séance le RECOPIE (`ts: ancien.ts`) :
-     c'est le même genre d'identité que `id` (même risque : deux séances créées à la même milliseconde sur deux appareils). Avant : une séance de ce genre corrigée 20 fois laissait 21 versions au serveur (mesuré). Maintenant : sa version
-     la plus récente remplace l'ancienne, à sa place. ⛔ Une séance sans `id` NI `ts` reste identifiée par son contenu (« un doublon vaut mieux qu'une perte ») : aucune heuristique de date ou d'exercices, qui confondrait deux séances
-     réelles du même jour. */
-  if ((id === undefined || id === null) && typeof s.ts === 'number' && isFinite(s.ts) && s.ts > 0) return 't:' + String(s.ts);   // `id` ABSENT seulement : un `id` présent mais invalide (liste, objet, espaces) reste jugé sur le contenu
+  /* ⭐ U-29 (16/11/2026, durci le même jour après la contre-expertise) — UNE SÉANCE SANS `id` MAIS AVEC UN `ts` PEUT ÊTRE IDENTIFIÉE PAR SON `ts` — À UNE CONDITION : UNE PREUVE, JAMAIS LE `ts` SEUL.
+     `ts` est l'instant de CRÉATION (finishWorkout) et la correction d'une séance le RECOPIE (`ts: ancien.ts`). Avant U-29 : une ancienne séance corrigée 20 fois laissait 21 versions (mesuré).
+     ⛔ MAIS `ts` seul n'est PAS une identité (contre-expertise, défaut 1) : deux séances DISTINCTES sans `id` de même `ts` (un `ts` posé en bloc à une migration, deux appareils) étaient fusionnées, la 2ᵉ ÉCRASAIT la 1ʳᵉ, réponse « ok ».
+     La preuve exigée = le `ts` ET le JOUR (`date`) ET la liste ORDONNÉE des NOMS d'exercices (`_sessSignature_`) : une correction change des séries (kg, reps, note), pas le jour ni les exercices. Sans cette preuve (pas de jour, pas
+     d'exercice nommé), ou si elle diffère → l'identité reste le CONTENU : les deux séances sont gardées. Et `_sessFusion_` retire aussi la règle quand la même identité apparaît DEUX FOIS (en base ou dans l'envoi) : ambiguïté → on garde tout.
+     ⚠️ LIMITE ÉCRITE : deux séances distinctes de même `ts`, même jour, mêmes exercices dans le même ordre, l'une en base et l'autre dans l'envoi, sont prises pour une correction — c'est indiscernable d'une correction avec les seules données ;
+     (une séance corrigée dont la liste d'exercices change reste, elle, en deux versions : un doublon vaut mieux qu'une perte). Une séance sans `id` NI `ts` reste identifiée par son contenu. */
+  if ((id === undefined || id === null) && typeof s.ts === 'number' && isFinite(s.ts) && s.ts > 0) {   // `id` ABSENT seulement : un `id` présent mais invalide (liste, objet, espaces) reste jugé sur le contenu
+    var sg = _sessSignature_(s);
+    if (sg !== null) return 't:' + String(s.ts) + '|' + sg;
+  }
   return 'e:' + _sessCanon_(s, true);
+}
+/** La preuve qu'une séance sans `id` est « la même » d'une version à l'autre : le jour + les noms d'exercices dans l'ordre. null = pas de preuve (jour vide, aucun exercice, un exercice sans nom). */
+function _sessSignature_(s) {
+  var d = typeof s.date === 'string' ? s.date.trim() : '';
+  if (d === '' || !Array.isArray(s.exs) || s.exs.length === 0) return null;
+  var noms = [];
+  for (var i = 0; i < s.exs.length; i++) {
+    var e = s.exs[i], n = (e && typeof e === 'object' && typeof e.name === 'string') ? e.name.trim() : '';
+    if (n === '') return null;
+    noms.push(n);
+  }
+  return d + '|' + noms.join('\u0001');
 }
 function _sessFusion_(stockees, recues) {
   var liste = stockees.slice(), parId = Object.create(null), libres = Object.create(null);
   var res = { liste: liste, ajoutees: 0, remplacees: 0, ignorees: 0 };
   function valide(s) { return !!s && typeof s === 'object' && !Array.isArray(s); }
+  /* AMBIGUÏTÉ : une identité « ts + preuve » portée par DEUX séances ou plus, en base OU dans l'envoi, n'identifie plus rien : chacune retombe sur son contenu (on garde tout). */
+  var nbS = Object.create(null), nbR = Object.create(null), ambigus = Object.create(null);
+  liste.forEach(function(s) { if (valide(s)) { var q = _sessIdentite_(s); if (q.charAt(0) === 't') nbS[q] = (nbS[q] || 0) + 1; } });
+  recues.forEach(function(s) { if (valide(s)) { var q = _sessIdentite_(s); if (q.charAt(0) === 't') nbR[q] = (nbR[q] || 0) + 1; } });
+  Object.keys(nbS).forEach(function(q) { if (nbS[q] > 1) ambigus[q] = true; });
+  Object.keys(nbR).forEach(function(q) { if (nbR[q] > 1) ambigus[q] = true; });
+  function cle(s) { var q = _sessIdentite_(s); return (q.charAt(0) === 't' && ambigus[q]) ? 'e:' + _sessCanon_(s, true) : q; }
   liste.forEach(function(s, i) {
     if (!valide(s)) return;                                   // ce qui est déjà en base n'est jamais jugé ni retiré
-    var k = _sessIdentite_(s);
+    var k = cle(s);
     if (k.charAt(0) !== 'e') { if (!(k in parId)) parId[k] = i; }
     else (libres[k] || (libres[k] = [])).push(i);
   });
   recues.forEach(function(s) {
     if (!valide(s)) { res.ignorees++; return; }
-    var k = _sessIdentite_(s), j;
+    var k = cle(s), j;
     if (k.charAt(0) !== 'e') {
       if (!(k in parId)) { parId[k] = liste.length; liste.push(s); res.ajoutees++; return; }
       j = parId[k];
@@ -5025,6 +5050,17 @@ function handleAdminRestore_(body) {
   if (!email) return json_({status:'error', error:'email required'});
   let data = body.data;
   if (!data || !data.profile) return json_({status:'error', error:'data.profile required'});
+  /* 🧷 F2-A′ · RESTAURATION (16/11/2026, contre-expertise : « le piège `data` seule ») — le fichier de SAUVEGARDE range la santé dans une section `sante` SÉPARÉE (depuis la séparation du 01/09) : `data.profile` ne la porte pas.
+     Restaurer `data` seule sur un serveur neuf (ou un compte sans `h_`) faisait revenir le compte SANS SA SANTÉ (bilans sanguins, profil santé), réponse « ok ». Maintenant :
+     · `body.sante` (la section `sante` du fichier, pour CE compte) est FUSIONNÉE dans le profil, champ de santé connu par champ de santé connu (`_CHAMPS_SANTE_` seulement — rien d'autre ne passe) ;
+     · GARDE DE COMPLÉTUDE, AVANT toute écriture : si le compte n'a aucune santé nulle part (ni dans l'envoi, ni dans `sante`, ni déjà sur le serveur) et que l'appelant ne dit pas explicitement `sansSante: true`, la restauration est REFUSÉE
+       (`sante_non_precisee`, rien n'est écrit) : on ne sait pas si la sauvegarde avait une santé qu'on aurait oublié d'envoyer. Un compte VIVANT qui porte déjà sa santé garde le comportement d'avant (sa santé n'est pas touchée) ;
+     · ÉCHEC PARTIEL EXPLICITE : l'écriture qui échoue renvoie `restauration_echouee` (la santé écrite en premier est RÉTABLIE à son état d'avant) ; une relecture qui ne retrouve pas ce qui devait être écrit renvoie `partial` avec la liste des manquants (jamais « ok »).
+     ⛔ L'outil de restauration lui-même (celui qui lit les sauvegardes Drive) est HORS DÉPÔT et n'a pas été modifié : il doit envoyer `sante` (ou `sansSante: true`) — voir `docs/F2A-QUALIFICATION-TEST.md`. Cette garde ne change AUCUNE écriture de `u_` / `h_` (ARCH-06 reste un lot distinct). */
+  const _santeFichier = body.sante;
+  if (_santeFichier !== undefined && (_santeFichier === null || typeof _santeFichier !== 'object' || Array.isArray(_santeFichier))) {
+    return json_({status:'error', error:'sante invalide : un objet (la section `sante` du fichier de sauvegarde) est attendu'});
+  }
 
   /* NUT-SYNC-02 phase A : une restauration réécrit le compte ENTIER — sous le même verrou que `saveProfile`, jamais entre sa lecture et son écriture. Occupé : réponse réessayable, rien n'est écrit. */
   const _hv = _nutVerrouPrendre_();
@@ -5039,13 +5075,33 @@ function handleAdminRestore_(body) {
     const _courant = loadUserData_(email);
     const _masques = _nutMasquesFusion_(_courant && _courant.profile && _courant.profile.hiddenFoods, data.profile.hiddenFoods);
     if (_masques.length) data = Object.assign({}, data, { profile: Object.assign({}, data.profile, { hiddenFoods: _masques }) });
+    /* 🧷 la santé du fichier (`sante`) fusionnée dans une COPIE du profil, puis la garde de complétude (voir plus haut) — avant toute écriture */
+    if (_santeFichier) {
+      const _pf = Object.assign({}, data.profile);
+      _CHAMPS_SANTE_.forEach(function(c) { if (_santeFichier[c] !== undefined) _pf[c] = _santeFichier[c]; });
+      data = Object.assign({}, data, { profile: _pf });
+    }
+    const _santeAttendue = _CHAMPS_SANTE_.filter(function(c) { return data.profile[c] !== undefined; });
+    const _santeSurCompte = _courant && _courant.profile && _CHAMPS_SANTE_.some(function(c) { return _courant.profile[c] !== undefined; });
+    if (!_santeFichier && !_santeAttendue.length && !_santeSurCompte && body.sansSante !== true) {
+      return json_({status:'error', error:'sante_non_precisee', ok:false, detail:'aucune santé dans l\'envoi, dans `sante`, ni sur le compte : envoyer la section `sante` du fichier de sauvegarde, ou `sansSante: true` si la sauvegarde n\'en a vraiment pas — rien n\'a été écrit'});
+    }
     data.email = email;
     data.updatedAt = new Date().toISOString();
     /* NUT-SYNC-02 correction (02/11/2026) : une restauration ne fait JAMAIS régresser un compte vers la voie tolérante. Une sauvegarde d'AVANT l'état v3 n'en porte ni marqueur, ni registre, ni opérations : sans cette ligne, un ancien appareil
        pourrait de nouveau écrire dans un compte dont les appareils à jour ont des suppressions à re-déclarer (leur guérison les renverra). Le marqueur du compte est donc conservé. */
     var _proto = _nutProtoDe_(_courant);
     if (_proto >= NUT_PROTOCOLE_MIN_ && !(Number(data.nutProto) >= _proto)) data.nutProto = _proto;
-    saveUserData_(email, data);
+    /* ÉCHEC PARTIEL EXPLICITE : `saveUserData_` écrit la santé (`h_`) AVANT `u_`. Si l'écriture échoue entre les deux, on rétablit `h_` tel qu'il était et on le DIT (jamais « ok », jamais un compte à moitié restauré en silence). */
+    const _sp = PropertiesService.getScriptProperties(), _hAvant = _sp.getProperty(santeKey_(email));
+    try {
+      saveUserData_(email, data);
+    } catch (eEcriture) {
+      let _retabli = true;
+      try { if (_hAvant === null || _hAvant === undefined) _sp.deleteProperty(santeKey_(email)); else _sp.setProperty(santeKey_(email), _hAvant); } catch (e2) { _retabli = false; }
+      Logger.log('[FT adminRestore] ÉCRITURE ÉCHOUÉE pour ' + email + ' : ' + eEcriture.message + (_retabli ? ' (santé rétablie à son état d\'avant)' : ' ⚠️ santé NON rétablie — état à vérifier'));
+      return json_({status:'error', ok:false, error:'restauration_echouee', sante_retablie:_retabli, detail:String(eEcriture && eEcriture.message || eEcriture).slice(0, 160)});
+    }
   } finally { _nutVerrouRendre_(_hv, 'adminRestore'); }
 
   try { _mirrorUserToSheet_(email, data); } catch(e) {
@@ -5053,6 +5109,16 @@ function handleAdminRestore_(body) {
   }
 
   const readBack = loadUserData_(email) || {};
+  /* relecture : ce qui devait être écrit l'a-t-il été ? (séances, records, chaque champ de santé du fichier) — sinon `partial` + la liste, jamais « ok » */
+  const _manquants = [];
+  if ((readBack.sessions || []).length !== (data.sessions || []).length) _manquants.push('sessions');
+  if (Object.keys(readBack.prs || {}).length !== Object.keys(data.prs || {}).length) _manquants.push('prs');
+  _CHAMPS_SANTE_.forEach(function(c) {
+    if (data.profile[c] !== undefined && JSON.stringify((readBack.profile || {})[c]) !== JSON.stringify(data.profile[c])) _manquants.push('sante.' + c);
+  });
+  if (_manquants.length) {
+    return json_({status:'partial', ok:false, error:'restauration_incomplete', manquants:_manquants, sessions:(readBack.sessions || []).length, prs:Object.keys(readBack.prs || {}).length});
+  }
   return json_({
     status: 'ok',
     sessions: (readBack.sessions || []).length,

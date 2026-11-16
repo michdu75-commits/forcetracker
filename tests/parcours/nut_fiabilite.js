@@ -1120,7 +1120,7 @@ function serveurQ15(t, tD) {
     && r5b.status === 'ok' && noms(prof(E).savedFoods) === J([NEUF.name, NEUF3.name]) && c5.noms.length === 15 && c5.drive > 0,
     J({ refus, apres: noms(prof(E).savedFoods), c5 }));
   /* ⑤ l'admin restaure la sauvegarde d'AVANT la remise à zéro (les anciens favoris dedans, aucune date `*`) */
-  let r6 = null; try { r6 = JSON.parse(X.post({ action: 'adminRestore', adminToken: ADMIN, email: C, data: JSON.parse(J(avant)) })); } catch (e) { r6 = { status: 'ERREUR ' + e.message }; }
+  let r6 = null; try { r6 = JSON.parse(X.post({ action: 'adminRestore', adminToken: ADMIN, email: C, sansSante: true, data: JSON.parse(J(avant)) })); } catch (e) { r6 = { status: 'ERREUR ' + e.message }; }
   tD('B-NFIAB-X Q15 ⑥ ⭐⭐ UNE SAUVEGARDE D\'AVANT RESTAURÉE PAR L\'ADMIN NE RAMÈNE PAS LES ANCIENS FAVORIS : la date de remise à zéro du compte est gardée (fusionnée), seuls les favoris d\'après restent actifs, le journal de la sauvegarde est restauré tel quel',
     !!r6 && r6.status === 'ok' && noms(prof().savedFoods) === J([NEUF.name]) && (prof().hiddenFoods || []).some((e) => e.k === '*' && e.t === raz) && J(prof().foodLog) === J(avant.profile.foodLog),
     J({ r6, favs: noms(prof().savedFoods), m: prof().hiddenFoods }));

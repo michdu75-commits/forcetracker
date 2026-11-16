@@ -175,7 +175,7 @@ function compteH(X, email, o) {
   X.ctx.saveUserData_(email, Object.assign({ email, profile, prs: {}, sessions: [] }, o.racine || {}));
 }
 const envoiH = (X, email, hidden, autres) => X.envoi(email, Object.assign(hidden === undefined ? {} : { hiddenFoods: hidden }, autres || {}));
-const restaure = (X, email, data) => X.post({ action: 'adminRestore', adminToken: ADMIN, email, data });
+const restaure = (X, email, data) => X.post({ action: 'adminRestore', adminToken: ADMIN, email, data, sansSante: true });      // 16/11/2026 : la garde de complétude de la restauration exige de DIRE qu'une sauvegarde n'a pas de santé — ces comptes de test n'en ont pas
 const sansBruit = c => { const x = copie(c || {}); delete x.updatedAt; if (x.profile) delete x.profile.hiddenFoods; return x; };
 const preuve = (titre, o) => console.log('   PREUVE ' + titre + ' :: ' + canon(o).slice(0, 700));
 
@@ -563,7 +563,7 @@ async function processusTests(t) {
     const m = email('d141b'); await P.init(0, m, { code: CODE_PERSO, extra: { nutProto: 3 }, profile: { name: 'Avant', hiddenFoods: [{ k: 'nom:pp2-avant-' + k, t: ago(50) }] } });
     const SAUV = { email: m, profile: { name: 'Sauvegarde ' + k, hiddenFoods: [{ k: 'nom:pp2-sauv-' + k, t: ago(60) }] }, prs: {}, sessions: [] };
     const [rr, rs] = await P.simultane([
-      { k: 1, corps: { action: 'adminRestore', adminToken: JETON, email: m, data: SAUV } },
+      { k: 1, corps: { action: 'adminRestore', adminToken: JETON, email: m, data: SAUV, sansSante: true } },
       { k: 2, corps: corps(m, { hiddenFoods: [{ k: 'nom:pp2-conc-' + k, t: ago(5) }], foodLog: [ligne('C', 'pp2-c-' + (1000000 + k))], requestId: rid() }) }], true);
     const c = await P.lire(0, m), jr = lj(rr), js = lj(rs);
     const ok = jr.status === 'ok' && js.ok === true && a(c, 'nom:pp2-avant-' + k) && a(c, 'nom:pp2-sauv-' + k) && a(c, 'nom:pp2-conc-' + k) && c.profile.name === 'Sauvegarde ' + k && c.nutProto === 3;
@@ -590,7 +590,7 @@ async function processusTests(t) {
     const env4 = (n) => corps(m4, { hiddenFoods: [{ k: 'nom:pp4-nouveau', t: ago(5) }], foodLog: [ligne('S', 'pp4-s-' + (1000000 + n))], requestId: rid() });
     fs.writeFileSync(propSusp(dirPool), '1');                                                    // la suspension, posée UNE fois dans les propriétés partagées
     const s0 = lj(await pool.post(0, env4(1))), s2 = lj(await pool.post(2, env4(2)));
-    const rr = lj(await pool.post(1, { action: 'adminRestore', adminToken: JETON, email: m4, data: { email: m4, profile: { name: 'Sauvegarde', hiddenFoods: [{ k: 'nom:pp4-sauv', t: ago(60) }] }, prs: {}, sessions: [] } }));
+    const rr = lj(await pool.post(1, { action: 'adminRestore', adminToken: JETON, email: m4, sansSante: true, data: { email: m4, profile: { name: 'Sauvegarde', hiddenFoods: [{ k: 'nom:pp4-sauv', t: ago(60) }] }, prs: {}, sessions: [] } }));
     const cS = await pool.lire(1, m4);
     fs.unlinkSync(propSusp(dirPool));                                                            // la reprise : instantanée, sans redéploiement
     const rd = lj(await pool.post(0, env4(3))); const cF = await pool.lire(0, m4);

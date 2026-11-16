@@ -178,7 +178,7 @@ module.exports.ecran = async function ecran(t0, b, PORT) {
         summarizeCoach: { corps: (m) => ({ action: 'summarizeCoach', email: m, history: [{ role: 'user', content: 'Bonjour test' }], existingMemory: '' }), hook: 'loadUserData_',
           pre: (X) => { X.props.ANTHROPIC_API_KEY = 'sk-test'; X.ctx.UrlFetchApp = { fetch: () => ({ getContentText: () => JSON.stringify({ content: [{ text: 'Résumé test' }] }) }) }; },
           effet: (X, m) => X.lireCompte(m).profile.coachMemory === 'Résumé test', occupe: (X, m, r) => r.j.summary === 'Résumé test' && X.lireCompte(m).profile.coachMemory === undefined },
-        adminRestore: { corps: (m) => ({ action: 'adminRestore', adminToken: 'admintoken-test-000001', email: m, data: { profile: { name: 'Restauré' }, sessions: [] } }), pre: (X) => { X.props.ADMIN_TOKEN = 'admintoken-test-000001'; }, hook: 'saveUserData_',
+        adminRestore: { corps: (m) => ({ action: 'adminRestore', adminToken: 'admintoken-test-000001', email: m, sansSante: true, data: { profile: { name: 'Restauré' }, sessions: [] } }), pre: (X) => { X.props.ADMIN_TOKEN = 'admintoken-test-000001'; }, hook: 'saveUserData_',
           effet: (X, m) => X.lireCompte(m).profile.name === 'Restauré', occupe: (X, m, r) => r.j.code === 'NUT_LOCK_BUSY' && r.j.retryable === true && X.lireCompte(m).profile.name === 'N' },
       };
       const noms = Object.keys(ECRIVAINS);
