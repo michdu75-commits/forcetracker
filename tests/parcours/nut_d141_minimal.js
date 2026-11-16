@@ -321,7 +321,7 @@ function serveurTests(t) {
     r = restaure(X4, AL, { email: AL, prs: {} }); t('B-ND141 R10 structure invalide (pas de `profile`) : refus « data.profile required », aucune écriture', r.j.error === 'data.profile required' && X4.ecritures.length === nEcr && memes2(hid(X4, AL), ACTUEL));
     r = restaure(X4, '', BACKUP()); t('B-ND141 R10b e-mail absent : refus, aucune écriture', r.j.error === 'email required' && X4.ecritures.length === nEcr); }
   { /* R11 : l'objet reçu — comparaison D-141 / master */
-    const mut = (code) => { const X = neuf({ code }); compteH(X, AL, { hidden: [E('nom:recent', T(2))] }); const corps = { adminToken: ADMIN, email: AL, data: BACKUP([E('nom:b', T(4))], { profile: { savedFoods: copie(FAV), foodLog: copie(LOG) } }) }; delete corps.data.email;
+    const mut = (code) => { const X = neuf({ code }); compteH(X, AL, { hidden: [E('nom:recent', T(2))] }); const corps = { adminToken: ADMIN, email: AL, sansSante: true, data: BACKUP([E('nom:b', T(4))], { profile: { savedFoods: copie(FAV), foodLog: copie(LOG) } }) }; delete corps.data.email;      // 16/11/2026 : appel DIRECT de handleAdminRestore_ (pas par `restaure`) — la garde de complétude exige de dire qu'une sauvegarde n'a pas de santé
       const avant = copie(corps); X.ctx.handleAdminRestore_(corps);
       const diff = { racine: ['email', 'updatedAt'].filter(k => canon(corps.data[k]) !== canon(avant.data[k])), profile: Object.keys(Object.assign({}, avant.data.profile, corps.data.profile)).filter(k => canon(corps.data.profile[k]) !== canon(avant.data.profile[k])) };
       return { diff, X, corps }; };
