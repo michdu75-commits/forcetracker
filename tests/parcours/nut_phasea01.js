@@ -178,7 +178,7 @@ module.exports.ecran = async function ecran(t0, b, PORT) {
         summarizeCoach: { corps: (m) => ({ action: 'summarizeCoach', email: m, history: [{ role: 'user', content: 'Bonjour test' }], existingMemory: '' }), hook: 'loadUserData_',
           pre: (X) => { X.props.ANTHROPIC_API_KEY = 'sk-test'; X.ctx.UrlFetchApp = { fetch: () => ({ getContentText: () => JSON.stringify({ content: [{ text: 'Résumé test' }] }) }) }; },
           effet: (X, m) => X.lireCompte(m).profile.coachMemory === 'Résumé test', occupe: (X, m, r) => r.j.summary === 'Résumé test' && X.lireCompte(m).profile.coachMemory === undefined },
-        adminRestore: { corps: (m) => ({ action: 'adminRestore', adminToken: 'admintoken-test-000001', email: m, sansSante: true, data: { profile: { name: 'Restauré' }, sessions: [] } }), pre: (X) => { X.props.ADMIN_TOKEN = 'admintoken-test-000001'; }, hook: 'saveUserData_',
+        adminRestore: { corps: (m, X) => ({ action: 'adminRestore', adminToken: 'admintoken-test-000001', email: m, sansSante: true, sourceEmail: m, etatAttendu: X.ctx._etatCompteLire_(m).etat, data: { profile: { name: 'Restauré' }, sessions: [] } }), pre: (X) => { X.props.ADMIN_TOKEN = 'admintoken-test-000001'; }, hook: 'saveUserData_',
           effet: (X, m) => X.lireCompte(m).profile.name === 'Restauré', occupe: (X, m, r) => r.j.code === 'NUT_LOCK_BUSY' && r.j.retryable === true && X.lireCompte(m).profile.name === 'N' },
       };
       const noms = Object.keys(ECRIVAINS);
@@ -186,7 +186,7 @@ module.exports.ecran = async function ecran(t0, b, PORT) {
       const occupes = noms.map((nom) => {
         const d = ECRIVAINS[nom], V = verrou(), X = P1.serveur({ LockService: V.LockService }), m = email('occ'); X.compte(m, { code: CODE_PERSO }); d.pre(X, m);
         V.st.tenu = true;
-        const r = X.post(d.corps(m));
+        const r = X.post(d.corps(m, X));
         return { nom, ok: d.occupe(X, m, r) && V.st.prises === 0 && V.st.refus === 1, rep: r.t.slice(0, 90) };
       });
       t('PA10 ⭐⭐ VERROU TENU par un autre : chacun des CINQ écrivains du compte hors `saveProfile` (santé de la montre, confirmation d\'e-mail, code perso, mémoire du coach, restauration admin) le RESPECTE — réponse « occupé » réessayable (ou repli sur `confirmed_` pour les deux e-mails) et le compte n\'est PAS écrit',
@@ -196,7 +196,7 @@ module.exports.ecran = async function ecran(t0, b, PORT) {
         const d = ECRIVAINS[nom], V = verrou(), X = P1.serveur({ LockService: V.LockService }), m = email('excl'); X.compte(m, { code: CODE_PERSO }); d.pre(X, m);
         const orig = X.ctx[d.hook]; let arme = true, concurrent = null;
         X.ctx[d.hook] = function () { if (arme) { arme = false; concurrent = X.post(Object.assign(corps(m, { requestId: rid(), foodLog: [ligne('Concurrent', 'pa-conc-00000001')] }), { authCode: d.authConcurrent || CODE_PERSO })); } return orig.apply(this, arguments); };
-        const r = X.post(d.corps(m));
+        const r = X.post(d.corps(m, X));
         X.ctx[d.hook] = orig;
         const c = X.lireCompte(m);
         return { nom, ok: !!concurrent && concurrent.j.code === 'NUT_LOCK_BUSY' && d.effet(X, m) && V.st.prises === 1 && V.st.rendus === 1 && V.st.refus === 1 && !(c.profile.foodLog || []).some((l) => l.id === 'pa-conc-00000001'), conc: concurrent && concurrent.t.slice(0, 80), rep: r.t.slice(0, 60) };

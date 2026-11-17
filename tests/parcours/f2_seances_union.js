@@ -21,6 +21,9 @@ const fs = require('fs'), os = require('os'), path = require('path');
 const { fork, execFileSync } = require('child_process');
 const RACINE = path.join(__dirname, '..', '..');
 const P1 = require('./nut_secu_p1.js');
+const AIDE = require('../../tools/aide_restauration_v4.js');
+/** 18/11/2026 : depuis le contrat v4, `adminRestore` exige `sourceEmail` (P1) et `etatAttendu` (P3) : le banc les ajoute comme le fait l'outil qualifié ; `X.postBrut` envoie tel quel (section P). */
+const serveurQ = (o) => AIDE.envelopper(P1.serveur(o));
 const J = JSON.stringify;
 const copie = (v) => (v === undefined ? undefined : JSON.parse(JSON.stringify(v)));
 const SECT = process.env.F2A_SEULEMENT || '';
@@ -142,6 +145,12 @@ function retablirSauvegarde(src) {
 function retablirRestauration(src) {
   if (src === null) return null;
   const etapes = [
+    [/  \/\* 🔒 P1 — DÉBUT[\s\S]*?  \/\* 🔒 P1 — FIN \*\/\n/, ''],
+    [/    \/\* 🔒 P3 — DÉBUT[\s\S]*?    \/\* 🔒 P3 — FIN \*\/\n/, ''],
+    [/    \/\* 🔒 P4 — DÉBUT[\s\S]*?    \/\* 🔒 P4 — FIN \*\/\n/, ''],
+    [/\/\* 🔒 P2\/P3\/P4 — DÉBUT[\s\S]*?\/\* 🔒 P2\/P3\/P4 — FIN \*\/\n\n/, ''],
+    [/  if \(body\.action === 'adminReadAccount'\)  return handleAdminReadAccount_\(body\);   \/\/ 🔒 P2 \(18\/11\/2026\)\n/, ''],
+    [/    name: readBack\.profile && readBack\.profile\.name,\n    etat: _etatCompteLire_\(email\)\.etat[^\n]*\n/, '    name: readBack.profile && readBack.profile.name\n'],
     [/  \/\* 🧷 F2-A′ · RESTAURATION[\s\S]*?\n  \}\n\n(?=  \/\* NUT-SYNC-02 phase A : une restauration réécrit)/, '\n'],
     [/    \/\* 🧷 la santé du fichier[\s\S]*?\n    \}\n(?=    data\.email = email;)/, ''],
     [/    \/\* ÉCHEC PARTIEL EXPLICITE[\s\S]*?\n    \}\n  \} finally \{ _nutVerrouRendre_\(_hv, 'adminRestore'\); \}/, "    saveUserData_(email, data);\n  } finally { _nutVerrouRendre_(_hv, 'adminRestore'); }"],
@@ -230,7 +239,7 @@ function tirage(rnd) {
 }
 function sectionA(t) {
   console.log('\n── A · les 13 cas P0 sur le vrai Code.js, TOLÉRANCE ZÉRO (le 12ᵉ, la concurrence, est en F) ──');
-  const X = P1.serveur();
+  const X = serveurQ();
   t('F2A-A00 · harnais valide : liste premium en dur remplacée une fois, fusion présente dans le Code.js servi', typeof X.ctx._sessFusion_ === 'function' && typeof X.ctx._sessIdentite_ === 'function');
   CAS.forEach((c) => {
     const base = c.base(), envoi = c.envoi(), e = essai(X, base, envoi, c.id), ko = verifier(base, envoi, e.apres);
@@ -297,7 +306,7 @@ function sectionA(t) {
 /* ═══════════════════════════════ B — un même identifiant, des contenus différents ═══════════════════════════════ */
 function sectionB(t) {
   console.log('\n── B · même identifiant, contenus différents : la version de l\'ENVOI remplace, à sa place — le dernier arrivé gagne (limite écrite) ──');
-  const X = P1.serveur(), base = seances(1, 3);
+  const X = serveurQ(), base = seances(1, 3);
   let e = essai(X, base, [modifie(base[1])], 'b01');
   t('F2A-B01 · une séance corrigée remplace la version de la base, À SA PLACE, sans changer le nombre ni l\'ordre', e.apres.length === 3 && J(idsDe(e.apres)) === J(['s0001', 's0002', 's0003']) && e.apres[1].note === 'corrigée' && e.apres[1].volume === 503, J(e.apres.map((s) => s.note)));
   const v1 = modifie(base[1], 'v1'), v2 = modifie(base[1], 'v2');
@@ -338,7 +347,7 @@ function sectionB(t) {
 /* ═══════════════════════════════ C — les anciens clients et les formes douteuses ═══════════════════════════════ */
 function sectionC(t) {
   console.log('\n── C · anciens clients, envois douteux : jamais une séance de moins, jamais de plantage ──');
-  const X = P1.serveur(), base = seances(1, 60);
+  const X = serveurQ(), base = seances(1, 60);
   const sur = (champs, tag) => { const mail = mailDe(tag); compteAvec(X, mail, base); const r = X.envoi(mail, champs); return { r, apres: lire(X, mail), mail }; };
   let s = sur({ name: 'Ancien' }, 'c01');
   t('F2A-C01 · un envoi SANS le champ « sessions » (l\'appareil à historique tronqué, ou un ancien client) : les 60 restent, le profil est enregistré', s.apres.length === 60 && s.r.j.ok === true && X.lireCompte(s.mail).profile.name === 'Ancien');
@@ -370,7 +379,7 @@ function sectionC(t) {
 /* ═══════════════════════════════ D — les suppressions voulues : NON PROPAGÉES, et c'est écrit ═══════════════════════════════ */
 function sectionD(t) {
   console.log('\n── D · suppressions volontaires : DOCUMENTÉ, pas guéri — elles ne se propagent plus au serveur avant F2-B (le registre de suppressions) ──');
-  const X = P1.serveur(), base = seances(1, 60);
+  const X = serveurQ(), base = seances(1, 60);
   let mail = mailDe('d01'); compteAvec(X, mail, base); poserCode(X, mail);
   envoyer(X, mail, base.filter((s) => s.id !== 's0030'), { authCode: CODE });
   t('F2A-D01 · ⛔ DOCUMENTÉ — supprimer UNE séance sur le téléphone : le serveur la GARDE (60). Elle reviendra à une restauration ou sur un nouvel appareil.', lire(X, mail).length === 60 && idsDe(lire(X, mail)).indexOf('s0030') >= 0);
@@ -412,7 +421,7 @@ function sectionE(t) {
   console.log('\n── E · quotas et erreurs d\'écriture : l\'échec est HAUT ET CLAIR, rien n\'est écrit à moitié, le verrou est rendu, la nouvelle tentative réussit ──');
   const base = seances(1, 70), envoi = base.slice(-50).concat(seances(1, 4, 'n'));
   { // E1 — l'écriture du compte (`u_…`) est refusée
-    const stock = stockPlafonne(), v = verrouEspion(), X = P1.serveur({ sp: stock.sp, LockService: v.LockService }), mail = mailDe('e01');
+    const stock = stockPlafonne(), v = verrouEspion(), X = serveurQ({ sp: stock.sp, LockService: v.LockService }), mail = mailDe('e01');
     compteAvec(X, mail, base); const avant = stock.props['u_' + mail];
     stock.cfg.panne = (k) => k === 'u_' + mail; const lock0 = Object.assign({}, v.st);
     const r = envoyer(X, mail, envoi);
@@ -426,7 +435,7 @@ function sectionE(t) {
     t('F2A-E01f · … et la rejouer encore ne change rien (idempotent)', lire(X, mail).length === 74 && J(lire(X, mail)) === J(a2));
   }
   { // E2 — le stockage est plein : la fusion fait grossir le compte
-    const plein = stockPlafonne(), X = P1.serveur({ sp: plein.sp }), mail = mailDe('e02'), autre = mailDe('e02autre');
+    const plein = stockPlafonne(), X = serveurQ({ sp: plein.sp }), mail = mailDe('e02'), autre = mailDe('e02autre');
     compteAvec(X, autre, seances(1, 30)); envoyer(X, autre, seances(1, 30)); compteAvec(X, mail, base); envoyer(X, mail, base);   // un premier envoi chacun : le compte prend sa forme complète (champs standard)
     const avantA = plein.props['u_' + autre], avantM = plein.props['u_' + mail];
     plein.cfg.total = plein.taille() + 80;                                      // 80 octets de marge : l'envoi ci-dessous ne peut PAS tenir, un renvoi à l'identique, si
@@ -438,17 +447,17 @@ function sectionE(t) {
     t('F2A-E02c · une fois de la place libérée, la nouvelle tentative réussit : 114 séances (70 + 4 + 40), rien perdu', r2.j.ok === true && lire(X, mail).length === 114);
   }
   { // E3 — la télémétrie (HIST_SHRINK) ne peut pas faire échouer l'enregistrement
-    const stock = stockPlafonne({ panne: (k) => k === 'HIST_SHRINK' }), X = P1.serveur({ sp: stock.sp }), mail = mailDe('e03');
+    const stock = stockPlafonne({ panne: (k) => k === 'HIST_SHRINK' }), X = serveurQ({ sp: stock.sp }), mail = mailDe('e03');
     compteAvec(X, mail, seances(1, 83)); const r = envoyer(X, mail, seances(1, 83).slice(-30));
     t('F2A-E03 · la trace « appareil amputé » (HIST_SHRINK) ne peut pas être écrite : l\'envoi réussit quand même, les 83 séances sont là', r.j.ok === true && lire(X, mail).length === 83 && stock.props.HIST_SHRINK === undefined);
   }
   { // E4 — le verrou occupé : rien n'est écrit, réponse réessayable
-    const stock = stockPlafonne(), X = P1.serveur({ sp: stock.sp, LockService: { getScriptLock: () => ({ tryLock: () => false, releaseLock() { throw new Error('ne doit pas être rendu'); } }) } }), mail = mailDe('e04');
+    const stock = stockPlafonne(), X = serveurQ({ sp: stock.sp, LockService: { getScriptLock: () => ({ tryLock: () => false, releaseLock() { throw new Error('ne doit pas être rendu'); } }) } }), mail = mailDe('e04');
     compteAvec(X, mail, base); const avant = stock.props['u_' + mail]; const r = envoyer(X, mail, envoi);
     t('F2A-E04 · verrou occupé : « NUT_LOCK_BUSY » réessayable, rien n\'est écrit (octet pour octet), un verrou jamais pris n\'est pas « rendu »', r.j.code === 'NUT_LOCK_BUSY' && r.j.retryable === true && stock.props['u_' + mail] === avant);
   }
   { // E5 — la croissance n'a pas de plafond : on la MESURE
-    const X = P1.serveur(), rnd = graine(5), riche = (i) => seanceRiche(i, rnd);
+    const X = serveurQ(), rnd = graine(5), riche = (i) => seanceRiche(i, rnd);
     const tailles = {}; const toutes = []; for (let i = 0; i < 2000; i++) toutes.push(riche(i));
     [100, 500, 1000, 2000].forEach((n) => { const mail = mailDe('e05'); compteAvec(X, mail, []); envoyer(X, mail, toutes.slice(0, n)); tailles[n] = X.brut(mail).length; });
     info('taille du compte compressé (séances de 6 exercices × 4 séries) : ' + Object.keys(tailles).map((n) => n + ' séances = ' + (tailles[n] / 1024).toFixed(0) + ' Ko').join(' · ') + ' — plafond du magasin d\'Apps Script : 500 Ko pour TOUS les comptes');
@@ -479,7 +488,7 @@ function sectionG(t) {
     ['journal alimentaire (volet Nutrition, protocole v3)', { foodLogV: 3, requestId: 'rq' + 'a'.repeat(16), foodLog: [{ id: 'm-1', date: '2026-10-01', meal: 'midi', name: 'repas-fictif-1', ts: 1759300000000, kcal: 500, prot: 30, carbs: 50, fat: 15, q: 100, u: 'g', v: 1 }], savedFoods: [{ name: 'fav-fictif-1', kcal: 100 }], hiddenFoods: [] }],
     ['loadProfile', null],
   ];
-  const N = P1.serveur(), A = P1.serveur({ code: ANCIEN }), mail = 'g-alice@example.test';
+  const N = serveurQ(), A = serveurQ({ code: ANCIEN }), mail = 'g-alice@example.test';
   let diffs = []; const reponses = [];
   SEQ.forEach(([nom, champs]) => {
     if (champs === null) { poserCode(N, mail); poserCode(A, mail); const rn = lireProfil(N, mail), ra = lireProfil(A, mail); const a = sansTemps(Object.assign({}, ra.j, { sessions: undefined })), b = sansTemps(Object.assign({}, rn.j, { sessions: undefined })); if (J(a) !== J(b)) diffs.push(nom); return; }
@@ -501,7 +510,7 @@ function sectionG(t) {
   t('F2A-G04 · 60 envois en croissance normale (l\'envoi contient toute la base, des séances corrigées, des neuves) : MÊME résultat qu\'avant (comme ensemble) — le comportement ordinaire n\'a pas bougé', bad === 0, bad);
   const traces = N.journal.filter((l) => /FT sessions|GARDE-FOU sessions/.test(l)).length;
   t('F2A-G05 · aucune trace « envoi plus court » sur ces envois ordinaires (la télémétrie ne parle que d\'un appareil amputé)', traces === 0 && !N.props.HIST_SHRINK, traces);
-  const X = P1.serveur(), m3 = mailDe('g06'); compteAvec(X, m3, seances(1, 83)); envoyer(X, m3, seances(1, 83).slice(-30));
+  const X = serveurQ(), m3 = mailDe('g06'); compteAvec(X, m3, seances(1, 83)); envoyer(X, m3, seances(1, 83).slice(-30));
   const hs = JSON.parse(X.props.HIST_SHRINK || '[]');
   t('F2A-G06 · le SIGNAL est conservé : un appareil amputé (30 envoyées sur 83) laisse la même trace datée qu\'avant { d, e, recues:30, enBase:83 } pour la carte « Santé du système » (la carte dit encore « refusée » : texte de app.js, hors périmètre)',
     hs.length === 1 && hs[0].recues === 30 && hs[0].enBase === 83 && typeof hs[0].d === 'string' && Object.keys(hs[0]).sort().join() === 'd,e,enBase,recues' && X.journal.some((l) => /envoi plus court que la base : 30 reçues contre 83 en base — aucune séance retirée/.test(l)), X.props.HIST_SHRINK);
@@ -515,7 +524,7 @@ function sectionH(t) {
   if (!ANCIEN) return;
   if (git === null) info('H00b non vérifiable ici : `git show ' + SHA_ANCIEN.slice(0, 8) + ':Code.js` indisponible (pas de dépôt, ou objet absent) — la reconstruction n\'est PAS comparée au vrai ancien fichier');
   else t('F2A-H00b · la reconstruction est IDENTIQUE octet pour octet au vrai Code.js de master fd8bf703 (ft-v1266)', reco === git, { reconstruit: reco && reco.length, git: git.length });
-  const A = P1.serveur({ code: ANCIEN }), N = P1.serveur();
+  const A = serveurQ({ code: ANCIEN }), N = serveurQ();
   const rouges = CAS.filter((c) => c.id !== 'C06a' && c.id !== 'C06b' && c.id !== 'C07' && c.id !== 'C09').map((c) => {
     const base = c.base(), envoi = c.envoi(), ea = essai(A, base, envoi, 'h' + c.id), en = essai(N, base, envoi, 'h' + c.id);
     return { id: c.id, ancien: verifier(base, envoi, ea.apres).filter((x) => x !== 'REF'), nouveau: verifier(base, envoi, en.apres), perduesAncien: nbPerdues(base, ea.apres), neuvesPerduesAncien: envoi ? (envoi.filter(valide).filter((s) => !ea.apres.some((a) => valide(a) && ident(a) === ident(s))).length) : 0 };
@@ -525,7 +534,7 @@ function sectionH(t) {
   t('F2A-H02 · l\'ANCIEN serveur PERD la séance neuve (C05 : refus total de l\'envoi) ; le nouveau l\'ajoute', parId('C05').neuvesPerduesAncien === 1 && parId('C05').ancien.indexOf('I2') >= 0 && parId('C05').nouveau.length === 0, parId('C05'));
   t('F2A-H03 · sur 13 cas P0, l\'ancien serveur viole au moins un invariant dans ' + rouges.filter((r) => r.ancien.length).length + ' ; le nouveau dans ' + rouges.filter((r) => r.nouveau.length).length + ' (attendu 0)', rouges.filter((r) => r.nouveau.length).length === 0 && rouges.filter((r) => r.ancien.length).length >= 4, rouges.filter((r) => r.ancien.length).map((r) => r.id));
   /* La séquence réelle d'un retour arrière : MÊMES propriétés, le nouveau serveur d'abord, l'ancien ensuite (le dépôt de code change, pas les données). */
-  const stock = stockPlafonne(), N2 = P1.serveur({ sp: stock.sp }), A2 = P1.serveur({ sp: stock.sp, code: ANCIEN }), mail = mailDe('h04'), base = seances(1, 83);
+  const stock = stockPlafonne(), N2 = serveurQ({ sp: stock.sp }), A2 = serveurQ({ sp: stock.sp, code: ANCIEN }), mail = mailDe('h04'), base = seances(1, 83);
   compteAvec(N2, mail, []); envoyer(N2, mail, base);
   const avantRetour = lire(N2, mail).length; envoyer(A2, mail, base.slice(-50)); const apresRetour = lire(A2, mail).length;
   t('F2A-H04 · RETOUR ARRIÈRE joué sur les mêmes propriétés : 83 séances avec le nouveau serveur ; on remet l\'ancien ; un appareil à 50 séances se synchronise → ' + apresRetour + ' (33 effacées). Le retour arrière réintroduit la perte.', avantRetour === 83 && apresRetour === 50, { avantRetour, apresRetour });
@@ -608,7 +617,7 @@ async function sectionF(t) {
    affirment maintenant que la version corrigée d'une séance sans `id` s'AJOUTE, sans rien perdre. Les témoins U03-U05, U09-U13, U15-U21 (collisions, ambiguïtés) tiennent tels quels. */
 function sectionU(t) {
   console.log('\n── U · séances sans `id` fiable : identité = contenu seul ; `ts` + jour + exercices n\'est PAS une preuve ──');
-  const X = P1.serveur();
+  const X = serveurQ();
   const versions = (s, n) => Array.from({ length: n }, (_, k) => modifie(s, 'v' + (k + 1)));
   const T = tsSeul(1);
   let mail = mailDe('u01'); compteAvec(X, mail, [T]);
@@ -692,7 +701,7 @@ function sectionU(t) {
 /* ═══════════════════════════════ S — sauvegarde : elle dit ce qu'elle n'a pas pu écrire ; restauration LOCALE ISOLÉE (comptes inventés, Drive en mémoire) ═══════════════════════════════ */
 function sectionS(t) {
   console.log('\n── S · la sauvegarde nocturne et sa restauration, sur le vrai Code.js (comptes inventés, rien de réel) ──');
-  const X = P1.serveur();
+  const X = serveurQ();
   const sante = { bloodTests: [{ date: '2026-09-01', valeurs: { fer: 14 } }], healthProfile: { allergies: ['fictive'] } };
   const comptes = [
     ['sa-complet', seances(1, 60), Object.assign({ goal: 'force' }, sante)],
@@ -709,7 +718,7 @@ function sectionS(t) {
   t('F2A-S02 · … et chaque compte lisible est dans le fichier avec ses séances intactes (60, 5, 2, 0) et sa santé rangée à part', sauv.users.length === 4 && J(sauv.users.map((u) => u.data.sessions.length)) === J([60, 5, 2, 0]) && !!sauv.users[0].sante && J(sauv.users[0].sante.bloodTests) === J(sante.bloodTests), J(sauv.users.map((u) => u.data.sessions.length)));
   t('F2A-S03 · … et le journal du serveur le dit (⚠️ 1 ERREUR : 4 sauvegardés sur 5 attendus)', X.journal.some((l) => /4 users ⚠️ 1 ERREUR\(S\) : 4 sauvegardés sur 5 attendus/.test(l)), X.journal.slice(-3).join(' | ').slice(0, 200));
   /* ── restauration dans un serveur NEUF, tout est perdu côté ligne : on rejoue chaque compte depuis le fichier ── */
-  const Y = P1.serveur(); Y.props.ADMIN_TOKEN = 'adm-fictif-' + 'x'.repeat(12);
+  const Y = serveurQ(); Y.props.ADMIN_TOKEN = 'adm-fictif-' + 'x'.repeat(12);
   // (16/11, 2ᵉ passe) la garde de complétude exige désormais de DIRE qu'un compte n'a pas de santé : `sansSante: true` pour les comptes dont le fichier n'a pas de section `sante` — la forme de l'appel change, ce que le témoin vérifie (retour identique à l'original) non.
   const restaurer = (S, u, avecSante) => S.post(Object.assign({ action: 'adminRestore', adminToken: Y.props.ADMIN_TOKEN, email: u.email, data: Object.assign({}, u.data, { profile: Object.assign({}, u.data.profile, avecSante ? (u.sante || {}) : {}) }) }, (avecSante && u.sante) ? {} : { sansSante: true }));
   const sans = (c) => { const x = copie(c); delete x.updatedAt; return x; };
@@ -718,24 +727,24 @@ function sectionS(t) {
     rest.every(({ u, r }) => r.j.status === 'ok') && comptes.every((c) => J(sans(Y.lireCompte(c.mail))) === J(sans(X.lireCompte(c.mail)))), rest.map(({ r }) => r.j.status));
   const ADM = Y.props.ADMIN_TOKEN, u0 = sauv.users[0];
   const brut = (S) => J(Object.keys(S.props).filter((k) => /^(u_|h_)/.test(k)).sort());       // les clés de compte écrites sur ce serveur
-  const Z = P1.serveur(); Z.props.ADMIN_TOKEN = ADM;
+  const Z = serveurQ(); Z.props.ADMIN_TOKEN = ADM;
   const rz = Z.post({ action: 'adminRestore', adminToken: ADM, email: u0.email, data: u0.data });
   t('F2A-S05 · ⛔ LE PIÈGE EST FERMÉ : restaurer `data` SEULE (la santé est dans la section `sante` du fichier) sur un compte sans santé est REFUSÉ — `sante_non_precisee`, RIEN n\'est écrit (avant : réponse « ok », compte revenu sans sa santé)',
     rz.j.status === 'error' && rz.j.error === 'sante_non_precisee' && brut(Z) === '[]' && !Z.lireCompte(u0.email), J(rz.j).slice(0, 160));
-  const Z2 = P1.serveur(); Z2.props.ADMIN_TOKEN = ADM;
+  const Z2 = serveurQ(); Z2.props.ADMIN_TOKEN = ADM;
   const rz2 = Z2.post({ action: 'adminRestore', adminToken: ADM, email: u0.email, data: u0.data, sansSante: true });
   const naif = Z2.lireCompte(u0.email) || {};
   t('F2A-S05b · … et SEULE la déclaration explicite `sansSante: true` rétablit l\'ancien comportement : le compte revient sans santé, parce que l\'appelant l\'a dit', rz2.j.status === 'ok' && naif.profile && naif.profile.bloodTests === undefined && naif.sessions.length === 60, J(Object.keys(naif.profile || {})));
   /* ── NOUVEAU : la section `sante` du fichier, envoyée à part, est fusionnée par le serveur lui-même ── */
-  const W = P1.serveur(); W.props.ADMIN_TOKEN = ADM;
+  const W = serveurQ(); W.props.ADMIN_TOKEN = ADM;
   const rw = sauv.users.map((u) => W.post(Object.assign({ action: 'adminRestore', adminToken: ADM, email: u.email, data: u.data }, u.sante ? { sante: u.sante } : { sansSante: true })));
   t('F2A-S07 · restauration LOCALE ISOLÉE par la voie ENTIÈRE du fichier (`data` + `sante` envoyées telles que le fichier les range, sans fusion manuelle) : les 4 comptes reviennent identiques à l\'original, santé comprise',
     rw.every((r) => r.j.status === 'ok') && comptes.every((c) => J(sans(W.lireCompte(c.mail))) === J(sans(X.lireCompte(c.mail)))), rw.map((r) => r.j.status));
-  const V = P1.serveur(); V.props.ADMIN_TOKEN = ADM;
+  const V = serveurQ(); V.props.ADMIN_TOKEN = ADM;
   const rv1 = V.post({ action: 'adminRestore', adminToken: ADM, email: u0.email, data: u0.data, sante: { bloodTests: sante.bloodTests, premium: true, name: 'intrus', hiddenFoods: [{ k: 'x', t: 1 }] } });
   const cv = V.lireCompte(u0.email) || {};
   t('F2A-S08 · `sante` ne laisse passer QUE les champs de santé connus : un champ étranger (`premium`, `name`, `hiddenFoods`) glissé dans `sante` n\'atteint pas le profil', rv1.j.status === 'ok' && cv.profile.premium === undefined && cv.profile.name === 'N' && J(cv.profile.bloodTests) === J(sante.bloodTests), J(Object.keys(cv.profile || {})));
-  const V2 = P1.serveur(); V2.props.ADMIN_TOKEN = ADM;
+  const V2 = serveurQ(); V2.props.ADMIN_TOKEN = ADM;
   const rvi = ['x', [1], null, 7].map((s) => V2.post({ action: 'adminRestore', adminToken: ADM, email: u0.email, data: u0.data, sante: s }));
   t('F2A-S08b · une `sante` qui n\'est pas un objet (texte, liste, null, nombre) est refusée, rien n\'est écrit', rvi.every((r) => r.j.status === 'error' && /sante invalide/.test(r.j.error)) && brut(V2) === '[]', rvi.map((r) => r.j.error));      // 17/11 : l'erreur doit être CELLE du type (« sante invalide »), pas un refus de complétude qui masquerait l'absence du contrôle de type
   /* ── un compte VIVANT qui porte déjà sa santé garde le comportement d'avant ── */
@@ -743,35 +752,38 @@ function sectionS(t) {
   const r09 = W.post({ action: 'adminRestore', adminToken: ADM, email: u0.email, data: u0.data });
   t('F2A-S09 · (RÉÉCRIT, oracle du 17/11) un compte VIVANT qui porte déjà sa santé : restaurer `data` SEULE est REFUSÉ comme les autres (`sante_non_precisee`) — l\'absence de déclaration n\'est jamais acceptée ; rien n\'est écrit, sa santé est intacte', r09.j.status === 'error' && r09.j.error === 'sante_non_precisee' && r09.j.compte_porte_une_sante === true && J(sans(W.lireCompte(u0.email))) === apres09, J(r09.j).slice(0, 120));
   const nouvelle = { bloodTests: [{ date: '2026-10-01', valeurs: { fer: 11 } }], healthProfile: { allergies: ['autre'] } };
-  W.post({ action: 'adminRestore', adminToken: ADM, email: u0.email, data: u0.data, sante: nouvelle });
-  t('F2A-S10 · … et une `sante` fournie REMPLACE celle du compte vivant (retour à l\'état de la sauvegarde)', J((W.lireCompte(u0.email).profile || {}).bloodTests) === J(nouvelle.bloodTests), J((W.lireCompte(u0.email).profile || {}).bloodTests));
+  /* ORACLE RÉÉCRIT le 18/11 (P4, arbitrage de Michel : « ne jamais supprimer silencieusement une donnée existante ») : remplacer la santé d'un compte vivant reste possible, À CONDITION que l'appelant NOMME ce qui est remplacé. La liste est calculée ICI, par une autre voie que le serveur. */
+  const perdue10 = Object.keys(sante).filter((c) => J(nouvelle[c]) !== J(sante[c])).sort();
+  const r10a = W.post({ action: 'adminRestore', adminToken: ADM, email: u0.email, data: u0.data, sante: nouvelle });
+  W.post({ action: 'adminRestore', adminToken: ADM, email: u0.email, data: u0.data, sante: nouvelle, santePerdueConfirmee: perdue10 });
+  t('F2A-S10 · (RÉÉCRIT, P4 du 18/11) … une `sante` fournie REMPLACE celle du compte vivant, À CONDITION de nommer ce qui est remplacé : sans la liste, refus `sante_supprimee_non_confirmee` (les champs nommés) ; avec elle, retour à l\'état de la sauvegarde', r10a.j.error === 'sante_supprimee_non_confirmee' && J((r10a.j.champs || []).slice().sort()) === J(perdue10) && J((W.lireCompte(u0.email).profile || {}).bloodTests) === J(nouvelle.bloodTests), J((W.lireCompte(u0.email).profile || {}).bloodTests));
   /* ── échec partiel explicite ── */
   const panne = { on: false };
-  const F = P1.serveur({ panne: (k) => panne.on && k.indexOf('u_') === 0 }); F.props.ADMIN_TOKEN = ADM;
+  const F = serveurQ({ panne: (k) => panne.on && k.indexOf('u_') === 0 }); F.props.ADMIN_TOKEN = ADM;
   const avantH = F.props['h_' + u0.email];
   panne.on = true;
   const rf = F.post({ action: 'adminRestore', adminToken: ADM, email: u0.email, data: u0.data, sante: sante });
   panne.on = false;
   t('F2A-S11 · ÉCHEC PARTIEL EXPLICITE : l\'écriture de `u_` échoue APRÈS celle de la santé (`h_`) : réponse `restauration_echouee`, la santé est RÉTABLIE à son état d\'avant (absente), aucun compte à moitié restauré en silence',
     rf.j.status === 'error' && rf.j.error === 'restauration_echouee' && rf.j.sante_retablie === true && F.props['h_' + u0.email] === avantH && !F.props['u_' + u0.email], J(rf.j).slice(0, 180));
-  const G = P1.serveur({ panne: (k) => panne.on && k.indexOf('u_') === 0 }); G.props.ADMIN_TOKEN = ADM;
+  const G = serveurQ({ panne: (k) => panne.on && k.indexOf('u_') === 0 }); G.props.ADMIN_TOKEN = ADM;
   G.post({ action: 'adminRestore', adminToken: ADM, email: u0.email, data: u0.data, sante: sante });
   const h1 = G.props['h_' + u0.email]; panne.on = true;
-  const rg = G.post({ action: 'adminRestore', adminToken: ADM, email: u0.email, data: u0.data, sante: nouvelle });
+  const rg = G.post({ action: 'adminRestore', adminToken: ADM, email: u0.email, data: u0.data, sante: nouvelle, santePerdueConfirmee: Object.keys(sante).filter((c) => J(nouvelle[c]) !== J(sante[c])) });   // (18/11, P4 : la perte est confirmée, c'est l'ÉCHEC d'écriture que ce témoin éprouve)
   panne.on = false;
   t('F2A-S12 · … et si le compte avait DÉJÀ une santé, l\'échec la remet telle qu\'elle était (octet pour octet), pas la nouvelle', rg.j.error === 'restauration_echouee' && G.props['h_' + u0.email] === h1 && J((G.lireCompte(u0.email).profile || {}).bloodTests) === J(sante.bloodTests), rg.j.error);
-  const H = P1.serveur(); H.props.ADMIN_TOKEN = ADM; let n = 0; const orig = H.ctx.loadUserData_;
+  const H = serveurQ(); H.props.ADMIN_TOKEN = ADM; let n = 0; const orig = H.ctx.loadUserData_;
   H.ctx.loadUserData_ = (e) => { const d = orig(e); n++; if (n >= 2 && d) { d.sessions = (d.sessions || []).slice(0, 10); } return d; };      // la RELECTURE ne retrouve pas tout ce qui a été écrit
   const rh = H.post({ action: 'adminRestore', adminToken: ADM, email: u0.email, data: u0.data, sante: sante });
   H.ctx.loadUserData_ = orig;
   t('F2A-S13 · RELECTURE INCOMPLÈTE : si le serveur ne retrouve pas ce qu\'il vient d\'écrire (séances), la réponse est `partial` avec la liste des manquants — jamais « ok »', rh.j.status === 'partial' && rh.j.error === 'restauration_incomplete' && rh.j.manquants.indexOf('sessions') >= 0, J(rh.j).slice(0, 180));
   /* ── 17/11 (contre-expertise ciblée) : `sante: {}` ne prouve rien ; `sansSante` doit être COHÉRENT ; la relecture compare le CONTENU ── */
-  const Q = P1.serveur(); Q.props.ADMIN_TOKEN = ADM;
+  const Q = serveurQ(); Q.props.ADMIN_TOKEN = ADM;
   const rq = Q.post({ action: 'adminRestore', adminToken: ADM, email: u0.email, data: u0.data, sante: {} });
   t('F2A-S14 · ⛔ `sante: {}` (section vide) NE PROUVE PAS une sauvegarde complète : refusée (`sante_vide_ambigue`), RIEN n\'est écrit (avant le 17/11 : acceptée, compte restauré sans santé, réponse « ok »)', rq.j.status === 'error' && rq.j.error === 'sante_vide_ambigue' && brut(Q) === '[]', J(rq.j).slice(0, 120));
   const rq2 = Q.post({ action: 'adminRestore', adminToken: ADM, email: u0.email, data: u0.data, sante: {}, sansSante: true });
   t('F2A-S14b · … `sante: {}` AVEC la déclaration explicite `sansSante: true` : acceptée (la sauvegarde n\'a vraiment pas de santé, et l\'appelant le dit)', rq2.j.status === 'ok' && (Q.lireCompte(u0.email).profile || {}).bloodTests === undefined, J(rq2.j).slice(0, 100));
-  const R = P1.serveur(); R.props.ADMIN_TOKEN = ADM;
+  const R = serveurQ(); R.props.ADMIN_TOKEN = ADM;
   const rr1 = R.post({ action: 'adminRestore', adminToken: ADM, email: u0.email, data: u0.data, sante: sante, sansSante: true });
   const rr2 = R.post({ action: 'adminRestore', adminToken: ADM, email: u0.email, data: Object.assign({}, u0.data, { profile: Object.assign({}, u0.data.profile, sante) }), sansSante: true });
   t('F2A-S15 · `sansSante: true` n\'est qu\'une déclaration COHÉRENTE : combinée à une santé présente (dans `sante`, ou dans `data.profile`) elle est refusée (`sans_sante_incoherent`), rien n\'est écrit — jamais d\'effacement silencieux', rr1.j.error === 'sans_sante_incoherent' && rr2.j.error === 'sans_sante_incoherent' && brut(R) === '[]', [rr1.j.error, rr2.j.error]);
@@ -779,7 +791,7 @@ function sectionS(t) {
   t('F2A-S15b · compte VIVANT qui porte sa santé + `sansSante: true` cohérent avec une sauvegarde sans santé : acceptée, sa santé N\'EST PAS effacée (aucun effacement de santé par défaut)', rr3.j.status === 'ok' && J((W.lireCompte(u0.email).profile || {}).bloodTests) === J(nouvelle.bloodTests), J(rr3.j).slice(0, 100));
   /* relecture de CONTENU : même cardinalité, contenu différent. L'appel 2 de `loadUserData_` est la relecture (le 1ᵉʳ lit le compte courant). */
   const corrompre = (nom, f, attendu) => {
-    const S = P1.serveur(); S.props.ADMIN_TOKEN = ADM; let n = 0; const o = S.ctx.loadUserData_;
+    const S = serveurQ(); S.props.ADMIN_TOKEN = ADM; let n = 0; const o = S.ctx.loadUserData_;
     S.ctx.loadUserData_ = (e) => { const d = o(e); n++; if (n >= 2 && d) f(d); return d; };
     const r = S.post({ action: 'adminRestore', adminToken: ADM, email: u0.email, data: u0.data, sante: sante });
     S.ctx.loadUserData_ = o;
@@ -789,7 +801,7 @@ function sectionS(t) {
   corrompre(['b', 'un record change (même nombre de records)'], (d) => { d.prs.Squat = { rm1: 999 }; }, 'prs');
   corrompre(['c', 'un champ du profil change (le prénom)'], (d) => { d.profile.name = 'AUTRE'; }, 'profile.name');
   corrompre(['d', 'un champ de SANTÉ change (même nombre de bilans)'], (d) => { d.profile.bloodTests[0].valeurs.fer = 1; }, 'profile.bloodTests');
-  const Hh = P1.serveur(); Hh.props.ADMIN_TOKEN = ADM;
+  const Hh = serveurQ(); Hh.props.ADMIN_TOKEN = ADM;
   const rh2 = Hh.post({ action: 'adminRestore', adminToken: ADM, email: u0.email, data: u0.data, sante: sante });
   t('F2A-S16e · CONTRÔLE POSITIF : sans corruption, la même restauration est « ok » (la comparaison de contenu ne fabrique pas de faux `partial`)', rh2.j.status === 'ok', J(rh2.j).slice(0, 100));
   /* ── F2-A′ après restauration : un appareil resté amputé ne retire rien ── */
@@ -801,7 +813,7 @@ function sectionS(t) {
 /* ═══════════════════════════════ M — deux appareils alternés, long : aucune perte, aucune copie (non-régression des synchronisations entre plusieurs appareils) ═══════════════════════════════ */
 function sectionM(t) {
   console.log('\n── M · 3 appareils, 60 tours, séances neuves, anciennes séances (avec et sans `ts`) corrigées : l\'union exacte, jamais de copie ──');
-  const X = P1.serveur(), rnd = graine(20261116), mail = mailDe('m01');
+  const X = serveurQ(), rnd = graine(20261116), mail = mailDe('m01');
   const anciennes = [tsSeul(1), tsSeul(2), tsSeul(3)];
   compteAvec(X, mail, seances(1, 40).concat(anciennes));
   const appareils = [0, 1, 2].map(() => ({ vu: seances(1, 40).concat(anciennes) }));
@@ -827,6 +839,149 @@ function sectionM(t) {
   t('F2A-M02 · (RÉÉCRIT, oracle du 17/11) … à la fin chaque contenu existe avec EXACTEMENT sa multiplicité attendue (aucune copie en trop) et les 3 anciennes séances à `ts` d\'origine sont toujours là : les corrections s\'AJOUTENT, rien n\'est écrasé', Array.from(multDe(final).entries()).every(([k, n]) => n === attendus.get(k)) && anciennes.every((s) => final.filter((x) => valide(x) && canon(x, true) === canon(s, true)).length === 1), final.length);
 }
 
+/* ═══════════════════════════════ P — restauration admin v4 : identité source (P1), lecture admin sous verrou (P2), précondition d'état u_+h_ (P3), santé champ par champ (P4) ═══════════════════════════════
+   18/11/2026, arbitrage de Michel : « les quatre objectifs sont retenus ; les propositions de code initiales ne le sont pas telles quelles ». Chaque témoin est ROUGE sur le Code.js de F2-A′ v3 (0a723a05) et VERT sur v4
+   (le même banc est rejoué sur l'ancien Code.js : voir le journal). Les requêtes sont envoyées BRUTES (`postBrut`) : rien n'est ajouté à la place de l'appelant. Données inventées uniquement. */
+function sectionP(t) {
+  const TOK = 'adm-fictif-' + 'x'.repeat(12);
+  const neuf = (o) => { const X = serveurQ(o); X.props.ADMIN_TOKEN = TOK; return X; };
+  const R = (X, c) => X.postBrut(Object.assign({ action: 'adminRestore', adminToken: TOK }, c));
+  const L = (X, mail) => X.postBrut({ action: 'adminReadAccount', adminToken: TOK, email: mail }).j;
+  const DON = (mail, n, p) => ({ email: mail, profile: { name: 'N' }, prs: { Squat: { rm1: 100 } }, sessions: seances(0, n - 1, p) });
+  const SANTE0 = { healthProfile: { taille: 170 }, bloodTests: [{ date: '2026-05-01', v: 1 }], bodyScans: [{ date: '2026-05-02', mm: 30 }] };
+  const posseder = (X, mail, n, sante) => { const d = DON(mail, n, 's'); Object.assign(d.profile, sante || {}); X.ctx.saveUserData_(mail, d); };
+  const brut = (X, mail) => J({ u: X.props['u_' + mail], h: X.props['h_' + mail] });
+  const GARDE = (X, mail) => ({ avant: brut(X, mail), ecr: X.ecritures.length });
+  const intact = (X, mail, g) => brut(X, mail) === g.avant && X.ecritures.length === g.ecr;
+  const base = (X, mail, o) => Object.assign({ email: mail, sourceEmail: mail, data: DON(mail, 2, 'r'), etatAttendu: L(X, mail).etat, sansSante: true }, o || {});
+  const ecrireH = (X, mail, h) => { X.props['h_' + mail] = X.ctx._packUser_(J(h)); };
+  const ecrireU = (X, mail, u) => { X.props['u_' + mail] = X.ctx._packUser_(J(u)); };
+  const lireH = (X, mail) => JSON.parse(X.ctx._unpackUser_(X.props['h_' + mail]));
+  const A = mailDe('pa'), B = mailDe('pb');
+
+  /* ── P1 — IDENTITÉ DU COMPTE ── */
+  { const X = neuf(); posseder(X, A, 3, SANTE0); posseder(X, B, 2); const g = GARDE(X, A);
+    let r = R(X, { email: A, data: DON(A, 2, 'r'), sante: SANTE0, etatAttendu: L(X, A).etat });
+    t('F2A-P1a · ⛔ SANS `sourceEmail` : refus `identite_source_absente`, rien n\'est écrit (l\'identité n\'est JAMAIS devinée)', r.j.error === 'identite_source_absente' && intact(X, A, g), r.j);
+    r = R(X, { email: A, sourceEmail: B, data: (() => { const d = DON(B, 2, 'r'); delete d.email; return d; })(), sante: SANTE0, etatAttendu: L(X, A).etat });
+    t('F2A-P1b · `sourceEmail` d\'un AUTRE compte (les données de B vers A) : `identite_discordante` sur `sourceEmail`, A intact (avant : « ok » et les données de B chez A)', r.j.error === 'identite_discordante' && J(r.j.champs) === J(['sourceEmail']) && intact(X, A, g), r.j);
+    r = R(X, { email: A, sourceEmail: A, data: Object.assign(DON(B, 2, 'r'), { email: B }), sante: SANTE0, etatAttendu: L(X, A).etat });
+    t('F2A-P1c · `data.email` d\'un autre compte (même avec un `sourceEmail` menteur) : `identite_discordante` sur `data.email`', r.j.error === 'identite_discordante' && J(r.j.champs) === J(['data.email']) && intact(X, A, g), r.j);
+    const dp = DON(A, 2, 'r'); dp.profile.email = B;
+    r = R(X, { email: A, sourceEmail: A, data: dp, sante: SANTE0, etatAttendu: L(X, A).etat });
+    t('F2A-P1d · `data.profile.email` d\'un autre compte : `identite_discordante` sur `data.profile.email`', r.j.error === 'identite_discordante' && J(r.j.champs) === J(['data.profile.email']) && intact(X, A, g), r.j);
+    const toutes = [42, ['a'], '', '   ', null, {}].map((v) => R(X, { email: A, sourceEmail: v, data: DON(A, 2, 'r'), sante: SANTE0, etatAttendu: L(X, A).etat }));
+    t('F2A-P1e · un `sourceEmail` qui n\'est pas une adresse lisible (nombre, liste, vide, espaces, null, objet) : tous refusés `identite_source_absente`, A intact', toutes.every((x) => x.j.error === 'identite_source_absente') && intact(X, A, g), toutes.map((x) => x.j.error));
+    const dn = DON(A, 2, 'r'); delete dn.email;
+    r = R(X, { email: A, sourceEmail: '  ' + A.toUpperCase() + ' ', data: dn, sante: SANTE0, etatAttendu: L(X, A).etat });
+    t('F2A-P1f · COMPATIBILITÉ : une ancienne sauvegarde LÉGITIME (entrée sans `data.email`, adresse d\'entrée en majuscules et espaces) passe — la normalisation (minuscules, sans espaces) est la seule tolérance', r.j.status === 'ok', r.j);
+    const Y = neuf(); posseder(Y, A, 1);
+    r = R(Y, { email: A, sourceEmail: A, data: (() => { const d = DON(B, 2, 'r'); delete d.email; return d; })(), sansSante: true, etatAttendu: L(Y, A).etat });
+    t('F2A-P1g · LIMITE DITE (le test passe quand la limite EST là) : si `data.email` est absent, le serveur ne peut pas prouver l\'origine des données — il croit `sourceEmail`. Le contrôle de l\'ENTRÉE est celui de l\'outil', r.j.status === 'ok', r.j); }
+
+  /* ── P2 — LECTURE ADMIN SOUS VERROU, ILLISIBLE REFUSÉ ── */
+  { const X = neuf(); posseder(X, A, 3, SANTE0); X.props['auth_' + A] = 'selfictif$hashfictif'; X.props['tok_fictif'] = 'jeton-fictif-' + 'z'.repeat(20);
+    const sans = X.postBrut({ action: 'adminReadAccount', email: A }), faux = X.postBrut({ action: 'adminReadAccount', adminToken: 'jeton-faux-1234567', email: A });
+    t('F2A-P2a · sans jeton ou avec un faux jeton : `unauthorized`, AUCUNE donnée dans la réponse', sans.j.error === 'unauthorized' && faux.j.error === 'unauthorized' && !/healthProfile|sessions|taille/.test(sans.t + faux.t), [sans.t, faux.t]);
+    const r = L(X, A); const vu = X.postBrut({ action: 'adminReadAccount', adminToken: TOK, email: A }).t;
+    t('F2A-P2b · lecture : `u_` et `h_` rendus TELS QUE STOCKÉS (décompressés), séparés, plus l\'état', r.status === 'ok' && J(r.u) === J(JSON.parse(X.ctx._unpackUser_(X.props['u_' + A]))) && J(r.h) === J(lireH(X, A)) && typeof r.etat === 'string' && r.etat.length === 64, r);
+    t('F2A-P2c · la lecture ne modifie RIEN (aucune écriture de propriété)', (() => { const e0 = X.ecritures.length; L(X, A); return X.ecritures.length === e0; })());
+    t('F2A-P2d · aucune fuite (la lecture FONCTIONNE, puis on cherche) : ni le jeton admin, ni le code perso (`auth_`), ni un jeton d\'appareil (`tok_`) dans la réponse ; le journal du serveur ne contient aucune valeur', JSON.parse(vu).status === 'ok' && ![TOK, 'selfictif', 'hashfictif', 'jeton-fictif-'].some((x) => vu.indexOf(x) >= 0) && !X.journal.some((l) => /taille|Développé|sessions/.test(l)), X.journal.slice(-2));
+    const g = X.get({ action: 'adminReadAccount', adminToken: TOK, email: A });
+    t('F2A-P2e · jamais par GET (un jeton dans une adresse resterait dans les journaux d\'accès) : alors que la route POST fonctionne, la même demande en GET ne rend aucune donnée', r.status === 'ok' && !/healthProfile|sessions|taille/.test(JSON.stringify(g)), JSON.stringify(g).slice(0, 120));
+    t('F2A-P2f · compte inconnu : `not_found` et état `VIDE` (ce n\'est pas une erreur, c\'est l\'état d\'un compte absent)', (() => { const q = L(X, mailDe('pz')); return q.status === 'not_found' && q.etat === 'VIDE'; })()); }
+  { const X = neuf(); posseder(X, A, 2, SANTE0);
+    X.props['u_' + A] = 'GZ:!!pas-du-base64!!';
+    const r = L(X, A);
+    t('F2A-P2g · ⛔ `u_` PRÉSENT mais illisible : ERREUR `u_illisible` — alors que `loadUserData_` lit ce même compte comme ABSENT (le piège : une lecture ratée devient « aucune donnée »)', r.error === 'u_illisible' && r.status === 'error' && X.ctx.loadUserData_(A) === null, { r, charge: X.ctx.loadUserData_(A) });
+    const Y = neuf(); posseder(Y, A, 2, SANTE0); Y.props['h_' + A] = 'GZ:!!pas-du-base64!!';
+    t('F2A-P2h · `h_` présent mais illisible : ERREUR `h_illisible`, jamais « pas de santé »', L(Y, A).error === 'h_illisible', L(Y, A));
+    const Z = neuf(); posseder(Z, A, 2); Z.props['u_' + A] = 'null'; const Z2 = neuf(); posseder(Z2, A, 2); Z2.props['u_' + A] = '[]'; const Z3 = neuf(); posseder(Z3, A, 2); Z3.props['u_' + A] = '';
+    t('F2A-P2i · un contenu lisible mais qui n\'est pas un objet de compte (`null`, `[]`, chaîne vide) : `u_illisible`', [Z, Z2, Z3].every((S) => L(S, A).error === 'u_illisible'), [Z, Z2, Z3].map((S) => L(S, A).error)); }
+  { let prises = 0, rendus = 0, occupe = false;
+    const verrou = { getScriptLock: () => ({ tryLock: () => { prises++; return !occupe; }, waitLock() {}, releaseLock: () => { rendus++; } }) };
+    const X = neuf({ LockService: verrou }); posseder(X, A, 2, SANTE0); prises = 0; rendus = 0;
+    L(X, A);
+    t('F2A-P2j · la lecture prend le MÊME verrou que les écrivains et le RENDS (une prise, une libération) : l\'instantané est cohérent', prises === 1 && rendus === 1, { prises, rendus });
+    occupe = true; const r = L(X, A);
+    t('F2A-P2k · verrou occupé : `busy` réessayable (NUT_LOCK_BUSY), AUCUNE donnée rendue', r.error === 'busy' && r.retryable === true && r.code === 'NUT_LOCK_BUSY' && !/healthProfile|sessions/.test(J(r)), r); }
+
+  /* ── P3 — PRÉCONDITION D'ÉTAT SUR u_ ET h_, SOUS VERROU, OBLIGATOIRE ── */
+  { const X = neuf(); posseder(X, A, 3, SANTE0); const g = GARDE(X, A);
+    let r = R(X, base(X, A, { etatAttendu: undefined }));
+    t('F2A-P3a · ⛔ SANS `etatAttendu` : refus `precondition_absente`, rien n\'est écrit (la précondition est OBLIGATOIRE)', r.j.error === 'precondition_absente' && intact(X, A, g), r.j);
+    r = R(X, base(X, A, { etatAttendu: 'f'.repeat(64) }));
+    t('F2A-P3b · un état périmé : `etat_change` AVANT toute écriture', r.j.error === 'etat_change' && intact(X, A, g), r.j);
+    const E0 = L(X, A).etat; const h = lireH(X, A); h.bloodTests[0].v = 2; ecrireH(X, A, h); const uAvant = X.props['u_' + A];
+    r = R(X, base(X, A, { etatAttendu: E0 }));
+    t('F2A-P3c · ⭐ UNE SANTÉ MODIFIÉE SANS CHANGEMENT DE DATE (`u_` et son `updatedAt` n\'ont pas bougé) : `etat_change` — l\'état couvre `h_`, pas seulement `updatedAt`', r.j.error === 'etat_change' && X.props['u_' + A] === uAvant && lireH(X, A).bloodTests[0].v === 2, r.j); }
+  { const X = neuf(); posseder(X, A, 3, SANTE0); const E0 = L(X, A).etat; const u = JSON.parse(X.ctx._unpackUser_(X.props['u_' + A])); u.sessions.push(seance(99, 'n')); ecrireU(X, A, u);
+    const r = R(X, base(X, A, { etatAttendu: E0 }));
+    t('F2A-P3d · une séance ajoutée dans `u_` sans toucher `updatedAt` : `etat_change`, la séance récente est conservée', r.j.error === 'etat_change' && JSON.parse(X.ctx._unpackUser_(X.props['u_' + A])).sessions.length === 4, r.j); }
+  { const X = neuf(); compteAvec(X, A, seances(0, 2, 's')); const E0 = L(X, A).etat; envoyer(X, A, seances(0, 4, 's'));   // un téléphone synchronise (la VRAIE route saveProfile)
+    const r = R(X, base(X, A, { etatAttendu: E0 }));
+    t('F2A-P3e · une saisie récente par la vraie route `saveProfile` entre la lecture et la restauration : `etat_change`, les 5 séances sont CONSERVÉES (jamais écrasées en silence)', r.j.error === 'etat_change' && lire(X, A).length === 5, { err: r.j.error, n: lire(X, A).length }); }
+  { const X = neuf(); posseder(X, A, 3, SANTE0); const ok1 = R(X, base(X, A, { sansSante: undefined, sante: SANTE0 }));
+    const apres = L(X, A);
+    t('F2A-P3f · avec l\'état lu : « ok », et la réponse porte le NOUVEL état (= une relecture) ', ok1.j.status === 'ok' && typeof ok1.j.etat === 'string' && ok1.j.etat.length === 64 && ok1.j.etat === apres.etat, { ok: ok1.j.status, e1: ok1.j.etat, e2: apres.etat });
+    const E1 = apres.etat; const rej = R(X, base(X, A, { sansSante: undefined, sante: SANTE0, etatAttendu: 'f'.repeat(64) }));
+    const rej2 = R(X, base(X, A, { sansSante: undefined, sante: SANTE0, etatAttendu: E1 }));
+    t('F2A-P3g · un REJEU avec l\'ancien état est refusé (l\'état a changé par la première restauration) ; avec le nouvel état, il passe', rej.j.error === 'etat_change' && rej2.j.status === 'ok', [rej.j.error, rej2.j.status]); }
+  { const X = neuf(); const e = L(X, A);
+    const bad = R(X, { email: A, sourceEmail: A, data: DON(A, 1, 'r'), sansSante: true, etatAttendu: 'a'.repeat(64) });
+    const ok = R(X, { email: A, sourceEmail: A, data: DON(A, 1, 'r'), sansSante: true, etatAttendu: e.etat });
+    t('F2A-P3h · compte ABSENT : état `VIDE` ; un autre état est refusé, `VIDE` crée le compte', e.status === 'not_found' && e.etat === 'VIDE' && bad.j.error === 'etat_change' && ok.j.status === 'ok', [e.etat, bad.j.error, ok.j.status]); }
+  { let occupe = false; const X = neuf({ LockService: { getScriptLock: () => ({ tryLock: () => !occupe, waitLock() {}, releaseLock() {} }) } }); posseder(X, A, 3, SANTE0); const g = GARDE(X, A);
+    occupe = true; const r = R(X, base(X, A, { etatAttendu: 'f'.repeat(64), sansSante: undefined, sante: SANTE0 }));
+    t('F2A-P3i · ⭐ LA PRÉCONDITION EST SOUS VERROU : verrou occupé + état faux → `busy` (le verrou est pris AVANT la vérification, jamais l\'inverse)', r.j.error === 'busy' && r.j.retryable === true && intact(X, A, g), r.j); }
+
+  /* ── P4 — SANTÉ DU COMPTE VIVANT, CHAMP PAR CHAMP, u_ ET h_ ── */
+  { const X = neuf(); ecrireU(X, A, { email: A, profile: { name: 'N', healthProfile: { taille: 170 } }, prs: {}, sessions: [] }); const g = GARDE(X, A);
+    const r = R(X, base(X, A));
+    t('F2A-P4a · ⭐ santé vivante SEULEMENT dans `u_` (jamais migrée) + `sansSante:true` : refus `sante_non_migree` (champ nommé), rien n\'est écrit (avant : « ok » et la santé DISPARAISSAIT)', r.j.error === 'sante_non_migree' && J(r.j.champs) === J(['healthProfile']) && intact(X, A, g), r.j); }
+  { const X = neuf(); ecrireU(X, A, { email: A, profile: { name: 'N', healthProfile: { taille: 170 } }, prs: {}, sessions: [] }); ecrireH(X, A, { bloodTests: [{ v: 1 }] }); const g = GARDE(X, A);
+    const r = R(X, base(X, A));
+    t('F2A-P4b · MIGRATION PARTIELLE (un champ dans `u_`, un autre dans `h_`) + `sansSante:true` : refus `sante_non_migree` sur le champ resté dans `u_`', r.j.error === 'sante_non_migree' && J(r.j.champs) === J(['healthProfile']) && intact(X, A, g), r.j);
+    const ok = R(X, base(X, A, { sansSante: undefined, sante: { healthProfile: { taille: 170 }, bloodTests: [{ v: 1 }] } }));
+    t('F2A-P4c · … et une restauration qui REPREND les deux champs à l\'identique (aucune perte) passe, sans confirmation à donner', ok.j.status === 'ok', ok.j); }
+  { const X = neuf(); ecrireU(X, A, { email: A, profile: { name: 'N', healthProfile: { taille: 170 } }, prs: {}, sessions: [] }); ecrireH(X, A, { healthProfile: { taille: 171 } }); const g = GARDE(X, A);
+    const a = R(X, base(X, A)), b = R(X, base(X, A, { sansSante: undefined, sante: { healthProfile: { taille: 170 } } }));
+    t('F2A-P4d · DIVERGENCE `u_` ≠ `h_` sur un même champ (on ne sait pas laquelle est la vraie) : refus `sante_divergente_u_h`, quel que soit le mode', a.j.error === 'sante_divergente_u_h' && b.j.error === 'sante_divergente_u_h' && J(a.j.champs) === J(['healthProfile']) && intact(X, A, g), [a.j.error, b.j.error]); }
+  { const X = neuf(); posseder(X, A, 2); ecrireH(X, A, { healthProfile: { taille: 170 }, champInconnuFictif: 1 }); const g = GARDE(X, A);
+    const r = R(X, base(X, A));
+    t('F2A-P4e · un champ INCONNU dans `h_` (ambigu : ni gardé ni perdu sans le dire) : refus `sante_h_champ_inconnu`', r.j.error === 'sante_h_champ_inconnu' && J(r.j.champs) === J(['champInconnuFictif']) && intact(X, A, g), r.j); }
+  { const X = neuf(); posseder(X, A, 3, SANTE0); const g = GARDE(X, A); const S1 = { healthProfile: { taille: 170 } };
+    const sans = R(X, base(X, A, { sansSante: undefined, sante: S1 }));
+    t('F2A-P4f · ⭐ une restauration qui RETIRERAIT de la santé vivante (`bloodTests`, `bodyScans` absents de la sauvegarde) sans que l\'appelant la reconnaisse : refus `sante_supprimee_non_confirmee`, les deux champs NOMMÉS, rien d\'écrit', sans.j.error === 'sante_supprimee_non_confirmee' && J(sans.j.champs) === J(['bloodTests', 'bodyScans']) && intact(X, A, g), sans.j);
+    const part = R(X, base(X, A, { sansSante: undefined, sante: S1, santePerdueConfirmee: ['bloodTests'] })), trop = R(X, base(X, A, { sansSante: undefined, sante: S1, santePerdueConfirmee: ['bloodTests', 'bodyScans', 'smoker'] })), mal = R(X, base(X, A, { sansSante: undefined, sante: S1, santePerdueConfirmee: 'bloodTests' }));
+    t('F2A-P4g · … une confirmation INCOMPLÈTE, EXCESSIVE ou qui n\'est pas une liste est refusée aussi (la liste doit être exactement celle des pertes)', part.j.error === 'sante_supprimee_non_confirmee' && trop.j.error === 'sante_supprimee_non_confirmee' && mal.j.error === 'sante_confirmation_invalide' && intact(X, A, g), [part.j.error, trop.j.error, mal.j.error]);
+    const ok = R(X, base(X, A, { sansSante: undefined, sante: S1, santePerdueConfirmee: ['bodyScans', 'bloodTests'] }));
+    t('F2A-P4h · avec la liste EXACTE (dans le désordre, sans doublon exigé) : « ok », `h_` ne contient plus que ce que la sauvegarde porte', ok.j.status === 'ok' && J(Object.keys(lireH(X, A))) === J(['healthProfile']), ok.j); }
+  { const X = neuf(); posseder(X, A, 3, SANTE0); const g = GARDE(X, A);
+    const r = R(X, base(X, A, { sansSante: undefined, sante: Object.assign({}, SANTE0, { healthProfile: { taille: 199 } }) }));
+    t('F2A-P4i · une valeur REMPLACÉE (même champ, autre contenu) compte comme une perte : confirmation exigée pour `healthProfile`', r.j.error === 'sante_supprimee_non_confirmee' && J(r.j.champs) === J(['healthProfile']) && intact(X, A, g), r.j); }
+  { const X = neuf(); posseder(X, A, 3, SANTE0); const hAvant = X.props['h_' + A];
+    const r = R(X, base(X, A));
+    t('F2A-P4j · D6 : santé MIGRÉE (dans `h_`) + `sansSante:true` : « ok », `h_` n\'est pas touché (octet pour octet) — aucune perte, aucune confirmation à donner', r.j.status === 'ok' && X.props['h_' + A] === hAvant, r.j);
+    const Y = neuf(); posseder(Y, B, 2);
+    t('F2A-P4k · aucune santé nulle part + `sansSante:true` : « ok » (la garde ne fabrique pas de faux refus)', R(Y, base(Y, B)).j.status === 'ok'); }
+  { const X = neuf(); posseder(X, A, 2, SANTE0); X.props['u_' + A] = 'GZ:!!pas-du-base64!!'; const g = GARDE(X, A);
+    const r = R(X, base(X, A, { etatAttendu: undefined }));
+    t('F2A-P4l · compte vivant ILLISIBLE (`u_`) : refus `u_illisible` AVANT toute autre garde — jamais écrasé sans avoir su le lire (décision à prendre : voie de secours explicite, hors périmètre)', r.j.error === 'u_illisible' && intact(X, A, g), r.j);
+    const Y = neuf(); posseder(Y, A, 2, SANTE0); Y.props['h_' + A] = 'GZ:!!pas-du-base64!!'; const g2 = GARDE(Y, A);
+    const r2 = R(Y, base(Y, A, { etatAttendu: undefined }));
+    t('F2A-P4m · `h_` illisible : refus `h_illisible`, la santé n\'est pas traitée comme absente', r2.j.error === 'h_illisible' && intact(Y, A, g2), r2.j); }
+
+  /* ── Préservation des champs FUTURS (anticipation « deload » : aucune donnée n'est ajoutée ici, on vérifie ce qui existe) ── */
+  { const X = neuf(); posseder(X, A, 1); const ses = seances(0, 2, 'f').map((s, i) => Object.assign(s, { deload: i === 1, refProgression: i !== 1, exs: s.exs.map((e) => Object.assign({}, e, { sets: e.sets.map((x) => Object.assign({}, x, { rir: 2, charge: { kg: x.kg, unite: 'kg' } })) })) }));
+    const d = DON(A, 0, 'r'); d.sessions = ses;
+    const r = R(X, base(X, A, { data: d }));
+    t('F2A-P5a · des champs que le serveur ne connaît pas (`deload`, `refProgression`, `rir`, charge structurée) traversent sauvegarde → restauration SANS PERTE, à l\'octet de contenu près', r.j.status === 'ok' && J(lire(X, A)) === J(ses), r.j);
+    const sansFlag = Object.assign(copie(ses[1]), {}); delete sansFlag.deload; delete sansFlag.refProgression;
+    envoyer(X, A, [sansFlag]);
+    t('F2A-P5b · LIMITE DOCUMENTÉE (B02, le test passe quand elle EST là) : un appareil ANCIEN qui renvoie la même séance (même `id`) SANS ces champs les efface — le dernier arrivé gagne sur une même séance : une future distinction « deload » devra le prévoir', lire(X, A).filter((s) => s.id === ses[1].id).every((s) => s.deload === undefined), lire(X, A).map((s) => [s.id, s.deload])); }
+}
+
 /** Une section qui PLANTE ne doit pas cacher les autres : le plantage est un rouge nommé, la suite est jouée. */
 async function garde(nom, f, t) { try { await f(); } catch (e) { t('F2A-' + nom + '-PLANTAGE · la section ' + nom + ' s\'est arrêtée sur une erreur (ne prouve rien : les tests suivants de la section n\'ont pas tourné)', false, String(e && e.stack || e).split('\n').slice(0, 3).join(' | ')); } }
 async function jouer(t) {
@@ -843,5 +998,6 @@ async function jouer(t) {
   if (voulu('U')) await garde('U', () => sectionU(t), t);
   if (voulu('S')) await garde('S', () => sectionS(t), t);
   if (voulu('M')) await garde('M', () => sectionM(t), t);
+  if (voulu('P')) await garde('P', () => sectionP(t), t);
 }
 module.exports = { jouer, seance, seances, sansId, modifie, attendu, verifier, ident };

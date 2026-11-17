@@ -175,7 +175,7 @@ function compteH(X, email, o) {
   X.ctx.saveUserData_(email, Object.assign({ email, profile, prs: {}, sessions: [] }, o.racine || {}));
 }
 const envoiH = (X, email, hidden, autres) => X.envoi(email, Object.assign(hidden === undefined ? {} : { hiddenFoods: hidden }, autres || {}));
-const restaure = (X, email, data) => X.post({ action: 'adminRestore', adminToken: ADMIN, email, data, sansSante: true });      // 16/11/2026 : la garde de complétude de la restauration exige de DIRE qu'une sauvegarde n'a pas de santé — ces comptes de test n'en ont pas
+const restaure = (X, email, data) => X.post({ action: 'adminRestore', adminToken: ADMIN, email, data, sansSante: true, sourceEmail: email, etatAttendu: typeof X.ctx._etatCompteLire_ === 'function' ? X.ctx._etatCompteLire_(email).etat : undefined });   // 18/11/2026 : contrat v4 (identité source + précondition d'état), lu sans prendre le verrou ; un serveur d'AVANT (autre Code.js, compatibilité) n'a pas cette fonction : il ignore ces champs      // 16/11/2026 : la garde de complétude de la restauration exige de DIRE qu'une sauvegarde n'a pas de santé — ces comptes de test n'en ont pas
 const sansBruit = c => { const x = copie(c || {}); delete x.updatedAt; if (x.profile) delete x.profile.hiddenFoods; return x; };
 const preuve = (titre, o) => console.log('   PREUVE ' + titre + ' :: ' + canon(o).slice(0, 700));
 
@@ -321,7 +321,7 @@ function serveurTests(t) {
     r = restaure(X4, AL, { email: AL, prs: {} }); t('B-ND141 R10 structure invalide (pas de `profile`) : refus « data.profile required », aucune écriture', r.j.error === 'data.profile required' && X4.ecritures.length === nEcr && memes2(hid(X4, AL), ACTUEL));
     r = restaure(X4, '', BACKUP()); t('B-ND141 R10b e-mail absent : refus, aucune écriture', r.j.error === 'email required' && X4.ecritures.length === nEcr); }
   { /* R11 : l'objet reçu — comparaison D-141 / master */
-    const mut = (code) => { const X = neuf({ code }); compteH(X, AL, { hidden: [E('nom:recent', T(2))] }); const corps = { adminToken: ADMIN, email: AL, sansSante: true, data: BACKUP([E('nom:b', T(4))], { profile: { savedFoods: copie(FAV), foodLog: copie(LOG) } }) }; delete corps.data.email;      // 16/11/2026 : appel DIRECT de handleAdminRestore_ (pas par `restaure`) — la garde de complétude exige de dire qu'une sauvegarde n'a pas de santé
+    const mut = (code) => { const X = neuf({ code }); compteH(X, AL, { hidden: [E('nom:recent', T(2))] }); const corps = { adminToken: ADMIN, email: AL, sansSante: true, sourceEmail: AL, etatAttendu: typeof X.ctx._etatCompteLire_ === 'function' ? X.ctx._etatCompteLire_(AL).etat : undefined, data: BACKUP([E('nom:b', T(4))], { profile: { savedFoods: copie(FAV), foodLog: copie(LOG) } }) }; delete corps.data.email;      // 18/11/2026 : contrat v4 (la mutation vérifiée est celle de `body.data`, pas de la racine de la requête) ;      // 16/11/2026 : appel DIRECT de handleAdminRestore_ (pas par `restaure`) — la garde de complétude exige de dire qu'une sauvegarde n'a pas de santé
       const avant = copie(corps); X.ctx.handleAdminRestore_(corps);
       const diff = { racine: ['email', 'updatedAt'].filter(k => canon(corps.data[k]) !== canon(avant.data[k])), profile: Object.keys(Object.assign({}, avant.data.profile, corps.data.profile)).filter(k => canon(corps.data.profile[k]) !== canon(avant.data.profile[k])) };
       return { diff, X, corps }; };
@@ -562,11 +562,16 @@ async function processusTests(t) {
   const course2 = async (P, k) => {                                          // PP2 : une restauration admin ANCIENNE contre un envoi de masquage, lancés ENSEMBLE
     const m = email('d141b'); await P.init(0, m, { code: CODE_PERSO, extra: { nutProto: 3 }, profile: { name: 'Avant', hiddenFoods: [{ k: 'nom:pp2-avant-' + k, t: ago(50) }] } });
     const SAUV = { email: m, profile: { name: 'Sauvegarde ' + k, hiddenFoods: [{ k: 'nom:pp2-sauv-' + k, t: ago(60) }] }, prs: {}, sessions: [] };
+    /* ORACLE RÉÉCRIT le 18/11/2026 (P3 : précondition d'état obligatoire, sous verrou) : la restauration porte l'état lu AVANT la course. Deux issues légitimes, jamais une perte :
+       (a) elle passe la première → TOUT est là, comme avant ; (b) l'envoi de masquage passe le premier → la restauration est REFUSÉE (`etat_change`), RIEN n'est écrasé : le compte garde son nom d'avant et ses deux masquages. */
+    const etat2 = lj(await P.post(1, { action: 'adminReadAccount', adminToken: JETON, email: m })).etat;
     const [rr, rs] = await P.simultane([
-      { k: 1, corps: { action: 'adminRestore', adminToken: JETON, email: m, data: SAUV, sansSante: true } },
+      { k: 1, corps: { action: 'adminRestore', adminToken: JETON, email: m, data: SAUV, sansSante: true, sourceEmail: m, etatAttendu: etat2 } },
       { k: 2, corps: corps(m, { hiddenFoods: [{ k: 'nom:pp2-conc-' + k, t: ago(5) }], foodLog: [ligne('C', 'pp2-c-' + (1000000 + k))], requestId: rid() }) }], true);
     const c = await P.lire(0, m), jr = lj(rr), js = lj(rs);
-    const ok = jr.status === 'ok' && js.ok === true && a(c, 'nom:pp2-avant-' + k) && a(c, 'nom:pp2-sauv-' + k) && a(c, 'nom:pp2-conc-' + k) && c.profile.name === 'Sauvegarde ' + k && c.nutProto === 3;
+    const restauree = jr.status === 'ok' && js.ok === true && a(c, 'nom:pp2-avant-' + k) && a(c, 'nom:pp2-sauv-' + k) && a(c, 'nom:pp2-conc-' + k) && c.profile.name === 'Sauvegarde ' + k && c.nutProto === 3;
+    const refusee = jr.error === 'etat_change' && js.ok === true && a(c, 'nom:pp2-avant-' + k) && !a(c, 'nom:pp2-sauv-' + k) && a(c, 'nom:pp2-conc-' + k) && c.profile.name === 'Avant' && c.nutProto === 3;
+    const ok = restauree || refusee;
     return { ok, k, jr: jr.status, js: js.ok === true ? 'ok' : js.code, avant: a(c, 'nom:pp2-avant-' + k), sauv: a(c, 'nom:pp2-sauv-' + k), conc: a(c, 'nom:pp2-conc-' + k), nom: c.profile.name, np: c.nutProto };
   };
   const pool = lancerPool(dirPool, 3); let poolSans = null;
@@ -583,14 +588,16 @@ async function processusTests(t) {
     let casse1 = 0, casse2 = 0; const essais = REP;
     for (let k = 0; k < essais; k++) { if (!(await course1(poolSans, k)).ok) casse1++; }
     for (let k = 0; k < essais; k++) { if (!(await course2(poolSans, k)).ok) casse2++; }
-    t('B-ND141 PP3 ⭐⭐ CONTRÔLE NÉGATIF DU BANC (processus dont le verrou ne verrouille RIEN) : la course PP1 PERD un masquage acquitté (' + casse1 + '/' + essais + ') et la course PP2 PERD le masquage de l\'envoi OU le contenu restauré (' + casse2 + '/' + essais + ') — sans cela, PP1 et PP2 seraient des verts qui ne peuvent pas rougir',
-      casse1 >= 1 && casse2 >= 1, J({ casse1, casse2, essais }));
+    t('B-ND141 PP3 ⭐⭐ CONTRÔLE NÉGATIF DU BANC (processus dont le verrou ne verrouille RIEN) : la course PP1 PERD un masquage acquitté (' + casse1 + '/' + essais + ') ; la course PP2 (restauration + envoi, ' + casse2 + '/' + essais + ' pertes observées) n\'a plus de contrôle négatif propre depuis la précondition d\'état (P3) — voir la note — sans quoi PP1 serait un vert qui ne peut pas rougir',
+      /* ORACLE RÉÉCRIT le 18/11/2026 (P3 : précondition d'état obligatoire). Sans verrou, la course PP2 ne PERD plus rien de façon observable : la restauration porte l'état lu avant la course, et si l'envoi passe le premier elle est REFUSÉE (`etat_change`) — elle ne peut plus écraser. Le contrôle négatif de PP1 reste entier (casse1). Celui de PP2 n'est plus atteignable de l'extérieur (la fenêtre résiduelle entre la vérification et l'écriture ne se force pas avec de vrais processus) : il est porté par `F2A-P3e` (saveProfile entre la lecture et l'écriture) et les mutations M71/M72 (précondition retirée, ou prise avant le verrou). */
+      casse1 >= 1, J({ casse1, casse2, essais }));
 
     const m4 = email('d141c'); await pool.init(0, m4, { code: CODE_PERSO, extra: { nutProto: 3 }, profile: { name: 'Avant', hiddenFoods: [{ k: 'nom:pp4-avant', t: ago(50) }] } });
     const env4 = (n) => corps(m4, { hiddenFoods: [{ k: 'nom:pp4-nouveau', t: ago(5) }], foodLog: [ligne('S', 'pp4-s-' + (1000000 + n))], requestId: rid() });
     fs.writeFileSync(propSusp(dirPool), '1');                                                    // la suspension, posée UNE fois dans les propriétés partagées
     const s0 = lj(await pool.post(0, env4(1))), s2 = lj(await pool.post(2, env4(2)));
-    const rr = lj(await pool.post(1, { action: 'adminRestore', adminToken: JETON, email: m4, sansSante: true, data: { email: m4, profile: { name: 'Sauvegarde', hiddenFoods: [{ k: 'nom:pp4-sauv', t: ago(60) }] }, prs: {}, sessions: [] } }));
+    const etat4 = lj(await pool.post(1, { action: 'adminReadAccount', adminToken: JETON, email: m4 })).etat;
+    const rr = lj(await pool.post(1, { action: 'adminRestore', adminToken: JETON, email: m4, sansSante: true, sourceEmail: m4, etatAttendu: etat4, data: { email: m4, profile: { name: 'Sauvegarde', hiddenFoods: [{ k: 'nom:pp4-sauv', t: ago(60) }] }, prs: {}, sessions: [] } }));
     const cS = await pool.lire(1, m4);
     fs.unlinkSync(propSusp(dirPool));                                                            // la reprise : instantanée, sans redéploiement
     const rd = lj(await pool.post(0, env4(3))); const cF = await pool.lire(0, m4);

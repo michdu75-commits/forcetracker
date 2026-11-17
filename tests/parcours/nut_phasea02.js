@@ -327,7 +327,7 @@ module.exports.ecran = async function ecran(t0, b, PORT, PORT_ANCIEN) {
     await garde('PB12', async () => {
       const X = P1.serveur(); const m = email('adm'); X.compte(m, { code: CODE_PERSO });
       X.props.ADMIN_TOKEN = 'admintoken-test-000001';
-      const restaurer = (mm, data) => X.post({ action: 'adminRestore', adminToken: 'admintoken-test-000001', email: mm, data, sansSante: true });      // 16/11/2026 : la garde de complétude exige de dire qu'une sauvegarde n'a pas de santé
+      const restaurer = (mm, data) => X.post({ action: 'adminRestore', adminToken: 'admintoken-test-000001', email: mm, data, sansSante: true, sourceEmail: mm, etatAttendu: X.ctx._etatCompteLire_(mm).etat });   // 18/11/2026 : contrat v4      // 16/11/2026 : la garde de complétude exige de dire qu'une sauvegarde n'a pas de santé
       env(X, m, { foodLog: [ligne('R', 'pb-ad-00000001')], foodSupprimes: [{ i: 'pb-ad-00000009', t: 2 }] });
       const r = restaurer(m, { profile: { name: 'Restauré', foodLog: [ligne('R', 'pb-ad-00000001'), ligne('Vieux', 'pb-ad-00000002')] }, sessions: [] });   // une sauvegarde d'AVANT l'état v3 : ni marqueur, ni registre
       const c = X.lireCompte(m);
@@ -339,11 +339,11 @@ module.exports.ecran = async function ecran(t0, b, PORT, PORT_ANCIEN) {
       t('PB12b ⭐ … une sauvegarde qui porte un marqueur PLUS ÉLEVÉ le garde (5) ; un marqueur plus bas (2) ne fait jamais reculer le compte (il reste à 5)',
         r2.j.status === 'ok' && r3.j.status === 'ok' && X.lireCompte(m).nutProto === 5, J({ np: X.lireCompte(m).nutProto }));
       const Y = P1.serveur(); const my = email('adm0'); Y.compte(my, { code: CODE_PERSO }); Y.props.ADMIN_TOKEN = 'admintoken-test-000001';
-      const rY = Y.post({ action: 'adminRestore', adminToken: 'admintoken-test-000001', email: my, sansSante: true, data: { profile: { name: 'Restauré Y' }, sessions: [] } });
+      const rY = Y.post({ action: 'adminRestore', adminToken: 'admintoken-test-000001', email: my, sansSante: true, sourceEmail: my, etatAttendu: Y.ctx._etatCompteLire_(my).etat, data: { profile: { name: 'Restauré Y' }, sessions: [] } });
       t('PB12c ⭐ … et sur un compte SANS état v3 une restauration n\'invente aucun marqueur',
         rY.j.status === 'ok' && Y.lireCompte(my).nutProto === undefined, rY.t.slice(0, 100));
       Y.props[SUSPENSION] = '1';
-      const rY2 = Y.post({ action: 'adminRestore', adminToken: 'admintoken-test-000001', email: my, sansSante: true, data: { profile: { name: 'Restauré pendant la suspension' }, sessions: [] } });
+      const rY2 = Y.post({ action: 'adminRestore', adminToken: 'admintoken-test-000001', email: my, sansSante: true, sourceEmail: my, etatAttendu: Y.ctx._etatCompteLire_(my).etat, data: { profile: { name: 'Restauré pendant la suspension' }, sessions: [] } });
       t('PB12d la restauration admin reste possible pendant la suspension (c\'est un acte d\'administrateur conscient, pas une synchronisation d\'appareil)',
         rY2.j.status === 'ok' && Y.lireCompte(my).profile.name === 'Restauré pendant la suspension', rY2.t.slice(0, 100));
     });

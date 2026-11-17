@@ -13,7 +13,7 @@ import os, re, shutil, subprocess, sys, tempfile
 
 SRC = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CO = 'Code.js'
-COPIES = ('Code.js', 'tests/_garde_reseau.js', 'tests/parcours/nut_secu_p1.js', 'tests/parcours/f2_seances_union.js', 'tools/banc_f2_seances_union.js', 'tools/nut_serveur_proc.js')
+COPIES = ('Code.js', 'tests/_garde_reseau.js', 'tests/parcours/nut_secu_p1.js', 'tests/parcours/f2_seances_union.js', 'tools/banc_f2_seances_union.js', 'tools/nut_serveur_proc.js', 'tools/aide_restauration_v4.js')
 SHA_AVANT = 'fd8bf7039fff0aae4564bb585dd5e1f13c84da4e'   # master ft-v1266, juste AVANT F2-A'
 
 APPEL = "        existing.sessions = _sessFusion_(exSess, inSess).liste;\n"
@@ -106,6 +106,31 @@ MUT = [
     ("M51 restauration : la relecture ne compare plus le PROFIL (ni la sante) champ par champ", "        if (_sessCanon_((readBack.profile || {})[c], false) !== _sessCanon_(data.profile[c], false)) _manquants.push('profile.' + c);", "        if (false) _manquants.push('profile.' + c);", ['F2A-S16c', 'F2A-S16d'], 'S', 'GARDE'),
     ("M52 restauration : la relecture invente un `partial` (faux positif : un `partial` des que le nom change)", "    } else if (_sessCanon_(readBack[k], false) !== _sessCanon_(data[k], false)) _manquants.push(k);", "    } else if (true) _manquants.push(k);", ['F2A-S16e', 'F2A-S07'], 'S', 'GARDE'),
     ("M53 restauration : la relecture oublie les records (`prs`)", "    } else if (_sessCanon_(readBack[k], false) !== _sessCanon_(data[k], false)) _manquants.push(k);", "    } else if (k !== 'prs' && _sessCanon_(readBack[k], false) !== _sessCanon_(data[k], false)) _manquants.push(k);", ['F2A-S16b'], 'S', 'GARDE'),
+    # ── 18/11/2026 (arbitrage de Michel : P1–P4) : une neutralisation PAR protection ajoutée ──
+    ("M60 P1 : `sourceEmail` n'est plus exigé (l'identité est de nouveau devinée)", "  if (typeof _src !== 'string' || !_src.trim()) return json_(", "  if (false) return json_(", ['F2A-P1a', 'F2A-P1e'], 'P', 'GARDE'),
+    ("M61 P1 : `sourceEmail` n'est plus comparé au compte visé (les données de B vers A)", "[['sourceEmail', _src], ['data.email', data.email], ['data.profile.email', data.profile.email]]", "[['data.email', data.email], ['data.profile.email', data.profile.email]]", ['F2A-P1b'], 'P', 'GARDE'),
+    ("M62 P1 : `data.email` n'est plus comparé", "['data.email', data.email], ['data.profile.email', data.profile.email]]", "['data.profile.email', data.profile.email]]", ['F2A-P1c'], 'P', 'GARDE'),
+    ("M63 P1 : `data.profile.email` n'est plus comparé", ", ['data.profile.email', data.profile.email]]", "]", ['F2A-P1d'], 'P', 'GARDE'),
+    ("M64 P1 : la comparaison n'est plus normalisée (une ancienne sauvegarde légitime à adresse en majuscules est refusée)", "x[1].toLowerCase().trim() !== email); }).map(function(x) { return x[0]; });", "x[1] !== email); }).map(function(x) { return x[0]; });", ['F2A-P1f'], 'P', 'GARDE'),
+    ("M65 P2 : une propriété PRÉSENTE mais illisible est de nouveau rendue comme une ABSENCE (`not_found`)", "    if (c.erreur) return json_({status:'error', ok:false, error:c.erreur, detail:'une propriété", "    if (false) return json_({status:'error', ok:false, error:c.erreur, detail:'une propriété", ['F2A-P2g'], 'P', 'GARDE'),
+    ("M66 P2 : la lecture admin n'exige plus le jeton", "function handleAdminReadAccount_(body) {\n  if (!_checkTok_('ADMIN_TOKEN', body.adminToken)) return json_(", "function handleAdminReadAccount_(body) {\n  if (false) return json_(", ['F2A-P2a'], 'P', 'GARDE'),
+    ("M67 P2 : la lecture admin ne prend plus le verrou (un instantané incohérent devient possible)", "  const _hv = _nutVerrouPrendre_();\n  if (!_hv) return json_({status:'error', ok:false, error:'busy', code:'NUT_LOCK_BUSY', retryable:true});\n  try {\n    const c = _etatCompteLire_(email);", "  const _hv = {};\n  try {\n    const c = _etatCompteLire_(email);", ['F2A-P2j', 'F2A-P2k'], 'P', 'GARDE'),
+    ("M68 P3 : l'état ne couvre plus `h_` (une santé modifiée sans changement de date passe)", "_sha256hex_(_sessCanon_({ u: u, h: h }, false))", "_sha256hex_(_sessCanon_({ u: u }, false))", ['F2A-P3c'], 'P', 'GARDE'),
+    ("M69 P3 : l'état se réduit à `updatedAt` (le piège que l'arbitrage interdit)", "_sha256hex_(_sessCanon_({ u: u, h: h }, false))", "_sha256hex_(String(u && u.updatedAt))", ['F2A-P3c', 'F2A-P3d'], 'P', 'GARDE'),
+    ("M70 P3 : `etatAttendu` n'est plus OBLIGATOIRE", "    if (typeof body.etatAttendu !== 'string' || !body.etatAttendu) return json_(", "    if (false) return json_(", ['F2A-P3a'], 'P', 'GARDE'),
+    ("M71 P3 : un état périmé n'est plus refusé (une saisie récente est écrasée en silence)", "    if (body.etatAttendu !== _lu.etat) return json_(", "    if (false) return json_(", ['F2A-P3b', 'F2A-P3c', 'F2A-P3d', 'F2A-P3e'], 'P', 'GARDE'),
+    ("M72 P3 : le verrou occupé n'arrête plus la restauration (la précondition n'est plus sous verrou)", "  if (!_hv) return json_({status:'error', error:'busy', ok:false, code:'NUT_LOCK_BUSY', retryable:true});", "  if (false) return json_({status:'error', error:'busy', ok:false, code:'NUT_LOCK_BUSY', retryable:true});", ['F2A-P3i'], 'P', 'GARDE'),
+    ("M73 P3 : la réponse « ok » ne porte plus le nouvel état", "    etat: _etatCompteLire_(email).etat   // 🔒 P3", "    etat: 'x'   // 🔒 P3", ['F2A-P3f'], 'P', 'GARDE'),
+    ("M74 P4 : une migration partielle (santé restée dans `u_`) + sansSante n'est plus refusée", "    if (nonMigres.length) return { error: 'sante_non_migree', champs: nonMigres };", "    if (false) return { error: 'sante_non_migree', champs: nonMigres };", ['F2A-P4a', 'F2A-P4b'], 'P', 'GARDE'),
+    ("M75 P4 : une divergence `u_` ≠ `h_` n'est plus refusée", "  if (divergents.length) return { error: 'sante_divergente_u_h', champs: divergents };", "  if (false) return { error: 'sante_divergente_u_h', champs: divergents };", ['F2A-P4d'], 'P', 'GARDE'),
+    ("M76 P4 : un champ inconnu dans `h_` n'est plus refusé", "  if (inconnus.length) return { error: 'sante_h_champ_inconnu', champs: inconnus };", "  if (false) return { error: 'sante_h_champ_inconnu', champs: inconnus };", ['F2A-P4e'], 'P', 'GARDE'),
+    ("M77 P4 : une santé vivante peut de nouveau être retirée sans confirmation (suppression silencieuse)", "  if (JSON.stringify(_sansDoublonTrie_(perdue)) !== JSON.stringify(_sansDoublonTrie_(confirmee))) return", "  if (false) return", ['F2A-P4f', 'F2A-P4g', 'F2A-P4i'], 'P', 'GARDE'),
+    ("M78 P4 : une confirmation EXCESSIVE est acceptée (la liste n'a plus à être exacte)", "  if (JSON.stringify(_sansDoublonTrie_(perdue)) !== JSON.stringify(_sansDoublonTrie_(confirmee))) return", "  if (_sansDoublonTrie_(perdue).some(function(c) { return _sansDoublonTrie_(confirmee).indexOf(c) < 0; })) return", ['F2A-P4g'], 'P', 'GARDE'),
+    ("M79 P4 : une valeur REMPLACÉE n'est plus comptée comme une perte", "(apres[c] === undefined || _sessCanon_(apres[c], false) !== _sessCanon_(vivante[c], false))", "(apres[c] === undefined)", ['F2A-P4i'], 'P', 'GARDE'),
+    ("M80 P4 : une confirmation qui n'est pas une liste n'est plus reconnue comme invalide", "  if (confirmee !== undefined && !Array.isArray(confirmee)) return { error: 'sante_confirmation_invalide', champs: [] };", "  if (false) return { error: 'sante_confirmation_invalide', champs: [] };", ['F2A-P4g'], 'P', 'GARDE'),
+    ("M81 P2/P4 : `h_` illisible est de nouveau traité comme « pas de santé »", "if (!lh.ok) return { erreur: 'h_illisible' };", "if (!lh.ok) lh = { ok: true, v: null };", ['F2A-P2h', 'F2A-P4m'], 'P', 'GARDE'),
+    ("M82 P2/P3 : `u_` illisible est de nouveau traité comme un compte absent", "if (!lu.ok) return { erreur: 'u_illisible' };", "if (!lu.ok) lu = { ok: true, v: null };", ['F2A-P2g', 'F2A-P2i', 'F2A-P4l'], 'P', 'GARDE'),
+    ("M83 P4 : D6 — la santé migrée est comptée comme perdue avec sansSante (faux refus)", "    apres = h;", "    apres = {};", ['F2A-P4j'], 'P', 'GARDE'),
 ]
 
 
