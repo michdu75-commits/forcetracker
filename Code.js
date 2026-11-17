@@ -2065,51 +2065,27 @@ function _sessCanon_(v, sansSynced) {
 function _sessIdentite_(s) {
   var id = s.id, t = typeof id;
   if ((t === 'string' && id.trim() !== '') || (t === 'number' && isFinite(id))) return 'i:' + String(id);
-  /* ⭐ U-29 (16/11/2026, durci le même jour après la contre-expertise) — UNE SÉANCE SANS `id` MAIS AVEC UN `ts` PEUT ÊTRE IDENTIFIÉE PAR SON `ts` — À UNE CONDITION : UNE PREUVE, JAMAIS LE `ts` SEUL.
-     `ts` est l'instant de CRÉATION (finishWorkout) et la correction d'une séance le RECOPIE (`ts: ancien.ts`). Avant U-29 : une ancienne séance corrigée 20 fois laissait 21 versions (mesuré).
-     ⛔ MAIS `ts` seul n'est PAS une identité (contre-expertise, défaut 1) : deux séances DISTINCTES sans `id` de même `ts` (un `ts` posé en bloc à une migration, deux appareils) étaient fusionnées, la 2ᵉ ÉCRASAIT la 1ʳᵉ, réponse « ok ».
-     La preuve exigée = le `ts` ET le JOUR (`date`) ET la liste ORDONNÉE des NOMS d'exercices (`_sessSignature_`) : une correction change des séries (kg, reps, note), pas le jour ni les exercices. Sans cette preuve (pas de jour, pas
-     d'exercice nommé), ou si elle diffère → l'identité reste le CONTENU : les deux séances sont gardées. Et `_sessFusion_` retire aussi la règle quand la même identité apparaît DEUX FOIS (en base ou dans l'envoi) : ambiguïté → on garde tout.
-     ⚠️ LIMITE ÉCRITE : deux séances distinctes de même `ts`, même jour, mêmes exercices dans le même ordre, l'une en base et l'autre dans l'envoi, sont prises pour une correction — c'est indiscernable d'une correction avec les seules données ;
-     (une séance corrigée dont la liste d'exercices change reste, elle, en deux versions : un doublon vaut mieux qu'une perte). Une séance sans `id` NI `ts` reste identifiée par son contenu. */
-  if ((id === undefined || id === null) && typeof s.ts === 'number' && isFinite(s.ts) && s.ts > 0) {   // `id` ABSENT seulement : un `id` présent mais invalide (liste, objet, espaces) reste jugé sur le contenu
-    var sg = _sessSignature_(s);
-    if (sg !== null) return 't:' + String(s.ts) + '|' + sg;
-  }
+  /* ⛔ U-29 RETIRÉ LE 17/11/2026 (contre-expertise ciblée, écart `F2-ancien-identite-ambigue`) — UNE SÉANCE SANS `id` FIABLE N'A PAS D'IDENTITÉ AUTRE QUE SON CONTENU.
+     Le 16/11, une séance sans `id` mais avec un `ts` était identifiée par `ts` (puis, après une 1ʳᵉ contre-expertise, par `ts` + jour + noms d'exercices ordonnés). La contre-expertise du 17/11 a démontré que ce rapprochement
+     n'est PAS une preuve d'identité : deux séances DISTINCTES sans `id`, de même `ts`, de même jour et aux mêmes exercices mais aux séries différentes (kg, reps) étaient fusionnées, la seconde ÉCRASAIT la première, réponse « ok ».
+     Décision de la mission du 17/11 : ne remplacer une version que sur une identité FIABLE (un `id` valide) ; ne jamais inventer de rapprochement ; préférer un doublon à une perte. Une séance sans `id` valide (absent, vide, objet,
+     liste) est donc jugée sur son CONTENU seul (hors `synced`) : une copie strictement identique est reconnue (multi-ensemble : N copies légitimes restent N ; rejouer un envoi ne change rien), une séance corrigée reste en
+     deux versions. Aucune migration, aucune suppression : une base qui contient déjà des doublons les garde. */
   return 'e:' + _sessCanon_(s, true);
-}
-/** La preuve qu'une séance sans `id` est « la même » d'une version à l'autre : le jour + les noms d'exercices dans l'ordre. null = pas de preuve (jour vide, aucun exercice, un exercice sans nom). */
-function _sessSignature_(s) {
-  var d = typeof s.date === 'string' ? s.date.trim() : '';
-  if (d === '' || !Array.isArray(s.exs) || s.exs.length === 0) return null;
-  var noms = [];
-  for (var i = 0; i < s.exs.length; i++) {
-    var e = s.exs[i], n = (e && typeof e === 'object' && typeof e.name === 'string') ? e.name.trim() : '';
-    if (n === '') return null;
-    noms.push(n);
-  }
-  return d + '|' + noms.join('\u0001');
 }
 function _sessFusion_(stockees, recues) {
   var liste = stockees.slice(), parId = Object.create(null), libres = Object.create(null);
   var res = { liste: liste, ajoutees: 0, remplacees: 0, ignorees: 0 };
   function valide(s) { return !!s && typeof s === 'object' && !Array.isArray(s); }
-  /* AMBIGUÏTÉ : une identité « ts + preuve » portée par DEUX séances ou plus, en base OU dans l'envoi, n'identifie plus rien : chacune retombe sur son contenu (on garde tout). */
-  var nbS = Object.create(null), nbR = Object.create(null), ambigus = Object.create(null);
-  liste.forEach(function(s) { if (valide(s)) { var q = _sessIdentite_(s); if (q.charAt(0) === 't') nbS[q] = (nbS[q] || 0) + 1; } });
-  recues.forEach(function(s) { if (valide(s)) { var q = _sessIdentite_(s); if (q.charAt(0) === 't') nbR[q] = (nbR[q] || 0) + 1; } });
-  Object.keys(nbS).forEach(function(q) { if (nbS[q] > 1) ambigus[q] = true; });
-  Object.keys(nbR).forEach(function(q) { if (nbR[q] > 1) ambigus[q] = true; });
-  function cle(s) { var q = _sessIdentite_(s); return (q.charAt(0) === 't' && ambigus[q]) ? 'e:' + _sessCanon_(s, true) : q; }
   liste.forEach(function(s, i) {
     if (!valide(s)) return;                                   // ce qui est déjà en base n'est jamais jugé ni retiré
-    var k = cle(s);
+    var k = _sessIdentite_(s);
     if (k.charAt(0) !== 'e') { if (!(k in parId)) parId[k] = i; }
     else (libres[k] || (libres[k] = [])).push(i);
   });
   recues.forEach(function(s) {
     if (!valide(s)) { res.ignorees++; return; }
-    var k = cle(s), j;
+    var k = _sessIdentite_(s), j;
     if (k.charAt(0) !== 'e') {
       if (!(k in parId)) { parId[k] = liste.length; liste.push(s); res.ajoutees++; return; }
       j = parId[k];
@@ -5056,7 +5032,12 @@ function handleAdminRestore_(body) {
      · GARDE DE COMPLÉTUDE, AVANT toute écriture : si le compte n'a aucune santé nulle part (ni dans l'envoi, ni dans `sante`, ni déjà sur le serveur) et que l'appelant ne dit pas explicitement `sansSante: true`, la restauration est REFUSÉE
        (`sante_non_precisee`, rien n'est écrit) : on ne sait pas si la sauvegarde avait une santé qu'on aurait oublié d'envoyer. Un compte VIVANT qui porte déjà sa santé garde le comportement d'avant (sa santé n'est pas touchée) ;
      · ÉCHEC PARTIEL EXPLICITE : l'écriture qui échoue renvoie `restauration_echouee` (la santé écrite en premier est RÉTABLIE à son état d'avant) ; une relecture qui ne retrouve pas ce qui devait être écrit renvoie `partial` avec la liste des manquants (jamais « ok »).
-     ⛔ L'outil de restauration lui-même (celui qui lit les sauvegardes Drive) est HORS DÉPÔT et n'a pas été modifié : il doit envoyer `sante` (ou `sansSante: true`) — voir `docs/F2A-QUALIFICATION-TEST.md`. Cette garde ne change AUCUNE écriture de `u_` / `h_` (ARCH-06 reste un lot distinct). */
+     ⛔ L'outil de restauration lui-même (celui qui lit les sauvegardes Drive) est HORS DÉPÔT et n'a pas été modifié : il doit envoyer `sante` (ou `sansSante: true`) — voir `docs/F2A-QUALIFICATION-TEST.md`. Cette garde ne change AUCUNE écriture de `u_` / `h_` (ARCH-06 reste un lot distinct).
+     🔒 DURCI LE 17/11/2026 (contre-expertise ciblée : `REST-sante-vide`, `REST-meme-nombre-contenu-corrompu`) :
+     · `sante: {}` (ou une `sante` sans aucun champ de santé connu) NE PROUVE PAS une sauvegarde complète : refusée (`sante_vide_ambigue`) sauf déclaration explicite `sansSante: true` ; l'absence de toute déclaration est refusée (`sante_non_precisee`),
+       y compris sur un compte vivant qui porte déjà sa santé (elle n'est de toute façon jamais effacée par défaut) ;
+     · `sansSante: true` n'est qu'une déclaration COHÉRENTE avec une sauvegarde sans santé : combinée à une santé présente (dans `sante` ou dans `data.profile`), elle est refusée (`sans_sante_incoherent`) — jamais d'effacement silencieux ;
+     · la RELECTURE compare le CONTENU (séances, records, profil, chaque champ de `data` écrit), pas seulement les nombres : même cardinalité mais contenu différent → `partial` avec les noms des champs en écart (jamais « ok »). */
   const _santeFichier = body.sante;
   if (_santeFichier !== undefined && (_santeFichier === null || typeof _santeFichier !== 'object' || Array.isArray(_santeFichier))) {
     return json_({status:'error', error:'sante invalide : un objet (la section `sante` du fichier de sauvegarde) est attendu'});
@@ -5081,10 +5062,15 @@ function handleAdminRestore_(body) {
       _CHAMPS_SANTE_.forEach(function(c) { if (_santeFichier[c] !== undefined) _pf[c] = _santeFichier[c]; });
       data = Object.assign({}, data, { profile: _pf });
     }
-    const _santeAttendue = _CHAMPS_SANTE_.filter(function(c) { return data.profile[c] !== undefined; });
-    const _santeSurCompte = _courant && _courant.profile && _CHAMPS_SANTE_.some(function(c) { return _courant.profile[c] !== undefined; });
-    if (!_santeFichier && !_santeAttendue.length && !_santeSurCompte && body.sansSante !== true) {
-      return json_({status:'error', error:'sante_non_precisee', ok:false, detail:'aucune santé dans l\'envoi, dans `sante`, ni sur le compte : envoyer la section `sante` du fichier de sauvegarde, ou `sansSante: true` si la sauvegarde n\'en a vraiment pas — rien n\'a été écrit'});
+    const _santeDansEnvoi = _CHAMPS_SANTE_.filter(function(c) { return body.data.profile[c] !== undefined; });
+    const _santeDansFichier = _santeFichier ? _CHAMPS_SANTE_.filter(function(c) { return _santeFichier[c] !== undefined; }) : [];
+    const _santeSurCompte = !!(_courant && _courant.profile && _CHAMPS_SANTE_.some(function(c) { return _courant.profile[c] !== undefined; }));
+    const _aSante = _santeDansEnvoi.length > 0 || _santeDansFichier.length > 0;
+    if (body.sansSante === true && _aSante) {
+      return json_({status:'error', error:'sans_sante_incoherent', ok:false, detail:'`sansSante: true` déclare une sauvegarde SANS santé, mais une santé est présente (' + _santeDansEnvoi.concat(_santeDansFichier).join(', ') + ') — rien n\'a été écrit'});
+    }
+    if (!_aSante && body.sansSante !== true) {
+      return json_({status:'error', error: (_santeFichier ? 'sante_vide_ambigue' : 'sante_non_precisee'), ok:false, compte_porte_une_sante:_santeSurCompte, detail:(_santeFichier ? 'une section `sante` VIDE ne prouve pas une sauvegarde complète' : 'aucune santé dans l\'envoi ni dans `sante`') + ' : envoyer la section `sante` du fichier de sauvegarde, ou `sansSante: true` si la sauvegarde n\'en a vraiment pas — rien n\'a été écrit'});
     }
     data.email = email;
     data.updatedAt = new Date().toISOString();
@@ -5109,15 +5095,19 @@ function handleAdminRestore_(body) {
   }
 
   const readBack = loadUserData_(email) || {};
-  /* relecture : ce qui devait être écrit l'a-t-il été ? (séances, records, chaque champ de santé du fichier) — sinon `partial` + la liste, jamais « ok » */
+  /* relecture de CONTENU : ce qui devait être écrit l'a-t-il été, à l'identique ? Chaque clé de `data` écrite (séances, records, … — et, pour le profil, chaque champ écrit, santé comprise) est comparée sous forme canonique
+     (clés triées) à ce que la relecture rend : même nombre d'éléments mais contenu différent = `partial` + les NOMS des champs en écart, jamais « ok ». (Seules transformations légitimes : aucune après `data.email`, `data.updatedAt`
+     et `data.nutProto`, déjà posés AVANT l'écriture, donc comparés tels quels ; la santé est rangée dans `h_` puis recomposée à la lecture.) */
   const _manquants = [];
-  if ((readBack.sessions || []).length !== (data.sessions || []).length) _manquants.push('sessions');
-  if (Object.keys(readBack.prs || {}).length !== Object.keys(data.prs || {}).length) _manquants.push('prs');
-  _CHAMPS_SANTE_.forEach(function(c) {
-    if (data.profile[c] !== undefined && JSON.stringify((readBack.profile || {})[c]) !== JSON.stringify(data.profile[c])) _manquants.push('sante.' + c);
+  Object.keys(data).forEach(function(k) {
+    if (k === 'profile') {
+      Object.keys(data.profile).forEach(function(c) {
+        if (_sessCanon_((readBack.profile || {})[c], false) !== _sessCanon_(data.profile[c], false)) _manquants.push('profile.' + c);
+      });
+    } else if (_sessCanon_(readBack[k], false) !== _sessCanon_(data[k], false)) _manquants.push(k);
   });
   if (_manquants.length) {
-    return json_({status:'partial', ok:false, error:'restauration_incomplete', manquants:_manquants, sessions:(readBack.sessions || []).length, prs:Object.keys(readBack.prs || {}).length});
+    return json_({status:'partial', ok:false, error:'restauration_incomplete', manquants:_manquants.slice(0, 40), sessions:(readBack.sessions || []).length, prs:Object.keys(readBack.prs || {}).length});
   }
   return json_({
     status: 'ok',

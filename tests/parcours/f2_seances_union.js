@@ -49,24 +49,21 @@ const canon = (v, sansSynced) => {
 const valide = (s) => !!s && typeof s === 'object' && !Array.isArray(s);
 const idOk = (id) => (typeof id === 'string' && id.trim() !== '') || (typeof id === 'number' && isFinite(id));
 const tsOk = (ts) => typeof ts === 'number' && isFinite(ts) && ts > 0;
-/** U-29 durci (contre-expertise, défaut 1) : le `ts` SEUL n'identifie PAS une séance sans `id`. Il faut en plus une PREUVE écrite ICI, à part du code : le jour (`date`) et la liste ordonnée des NOMS d'exercices. */
-const signature = (s) => { const d = typeof s.date === 'string' ? s.date.trim() : ''; if (!d || !Array.isArray(s.exs) || !s.exs.length) return null; const noms = []; for (const e of s.exs) { const n = e && typeof e === 'object' && typeof e.name === 'string' ? e.name.trim() : ''; if (!n) return null; noms.push(n); } return d + '|' + noms.join('\u0001'); };
-const identBrute = (s) => (idOk(s.id) ? 'id:' + String(s.id) : ((s.id === undefined || s.id === null) && tsOk(s.ts) && signature(s) !== null ? 'ts:' + String(s.ts) + '|' + signature(s) : 'fp:' + canon(s, true)));
+/** 17/11/2026 (contre-expertise ciblée, `F2-ancien-identite-ambigue`) : une séance SANS `id` valide n'a pour identité que son CONTENU (hors `synced`). `ts` + jour + mêmes exercices n'est PAS une preuve d'identité (oracle réécrit, voir la section U). */
+const identBrute = (s) => (idOk(s.id) ? 'id:' + String(s.id) : 'fp:' + canon(s, true));
 const ident = identBrute;
-/** AMBIGUÏTÉ : une identité « ts + preuve » portée par 2 séances ou plus, dans la base OU dans l'envoi (chaque liste jugée séparément), n'identifie plus rien : on garde tout (contenu). */
-const ambigus = (...listes) => { const amb = new Set(); listes.forEach((l) => { const m = new Map(); (Array.isArray(l) ? l : []).filter(valide).forEach((s) => { const k = identBrute(s); if (k.indexOf('ts:') === 0) m.set(k, (m.get(k) || 0) + 1); }); m.forEach((n, k) => { if (n > 1) amb.add(k); }); }); return amb; };
-const identA = (s, amb) => { const k = identBrute(s); return amb.has(k) ? 'fp:' + canon(s, true) : k; };
+const identA = (s) => identBrute(s);
 /** La liste EXACTE (ordre compris) que le contrat prescrit : la base intacte (remplacements en place) + les séances inconnues de l'envoi, ajoutées à la fin. */
 function attendu(base, envoi) {
-  const res = base.slice(), pris = new Set(), amb = ambigus(base, envoi);
+  const res = base.slice(), pris = new Set();
   (Array.isArray(envoi) ? envoi : []).forEach((s) => {
     if (!valide(s)) return;
-    const k = identA(s, amb);
+    const k = identA(s);
     if (k.indexOf('fp:') !== 0) {
-      const i = res.findIndex((r) => valide(r) && identA(r, amb) === k);
+      const i = res.findIndex((r) => valide(r) && identA(r) === k);
       if (i < 0) res.push(s); else if (J(res[i]) !== J(s)) res[i] = s;
     } else {
-      const i = res.findIndex((r, n) => n < base.length && !pris.has(n) && valide(r) && identA(r, amb) === k);
+      const i = res.findIndex((r, n) => n < base.length && !pris.has(n) && valide(r) && identA(r) === k);
       if (i < 0) res.push(s); else { pris.add(i); if (J(res[i]) !== J(s)) res[i] = s; }
     }
   });
@@ -76,17 +73,17 @@ function attendu(base, envoi) {
     N jamais moins de séances · I1 chaque séance de la base est toujours là · I2 chaque séance de l'envoi est là · I3 la version de l'envoi l'emporte sur un même identifiant
     · I4 aucun identifiant n'est dupliqué au-delà de ce que la base avait · I5 l'ordre de la base est conservé · REF identique au contrat ci-dessus. */
 function verifier(base, envoi, apres) {
-  const ko = [], ev = (Array.isArray(envoi) ? envoi : []).filter(valide), amb = ambigus(base, envoi);
+  const ko = [], ev = (Array.isArray(envoi) ? envoi : []).filter(valide);
   if (apres.length < base.length) ko.push('N');
-  const compter = (l) => { const m = new Map(); l.filter(valide).forEach((s) => m.set(identA(s, amb), (m.get(identA(s, amb)) || 0) + 1)); return m; };
+  const compter = (l) => { const m = new Map(); l.filter(valide).forEach((s) => m.set(identA(s), (m.get(identA(s)) || 0) + 1)); return m; };
   const A = compter(apres), B = compter(base), E = compter(ev);
   B.forEach((n, k) => { if ((A.get(k) || 0) < n) ko.push('I1'); });
   E.forEach((n, k) => { if ((A.get(k) || 0) < (k.indexOf('fp:') === 0 ? n : 1)) ko.push('I2'); });
-  const derniere = new Map(); ev.forEach((s) => { if (identA(s, amb).indexOf('fp:') !== 0) derniere.set(identA(s, amb), s); });
-  derniere.forEach((s, k) => { if (!apres.some((a) => valide(a) && identA(a, amb) === k && J(a) === J(s))) ko.push('I3'); });
+  const derniere = new Map(); ev.forEach((s) => { if (identA(s).indexOf('fp:') !== 0) derniere.set(identA(s), s); });
+  derniere.forEach((s, k) => { if (!apres.some((a) => valide(a) && identA(a) === k && J(a) === J(s))) ko.push('I3'); });
   A.forEach((n, k) => { if (k.indexOf('fp:') !== 0 && n > Math.max(B.get(k) || 0, 1)) ko.push('I4'); });
   for (let i = 0; i < base.length && i < apres.length; i++) {
-    const ok = valide(base[i]) ? (valide(apres[i]) && identA(apres[i], amb) === identA(base[i], amb)) : J(apres[i]) === J(base[i]);
+    const ok = valide(base[i]) ? (valide(apres[i]) && identA(apres[i]) === identA(base[i])) : J(apres[i]) === J(base[i]);
     if (!ok) { ko.push('I5'); break; }
   }
   if (J(apres) !== J(attendu(base, envoi))) ko.push('REF');
@@ -148,7 +145,7 @@ function retablirRestauration(src) {
     [/  \/\* 🧷 F2-A′ · RESTAURATION[\s\S]*?\n  \}\n\n(?=  \/\* NUT-SYNC-02 phase A : une restauration réécrit)/, '\n'],
     [/    \/\* 🧷 la santé du fichier[\s\S]*?\n    \}\n(?=    data\.email = email;)/, ''],
     [/    \/\* ÉCHEC PARTIEL EXPLICITE[\s\S]*?\n    \}\n  \} finally \{ _nutVerrouRendre_\(_hv, 'adminRestore'\); \}/, "    saveUserData_(email, data);\n  } finally { _nutVerrouRendre_(_hv, 'adminRestore'); }"],
-    [/  \/\* relecture : ce qui devait[\s\S]*?\n  \}\n(?=  return json_\(\{\n    status: 'ok',)/, ''],
+    [/  \/\* relecture de CONTENU : ce qui devait[\s\S]*?\n  \}\n(?=  return json_\(\{\n    status: 'ok',)/, ''],
   ];
   let r = src;
   for (const [re, par] of etapes) { if (!re.test(r)) return null; r = r.replace(re, () => par); }
@@ -604,76 +601,92 @@ async function sectionF(t) {
   }
 }
 
-/* ═══════════════════════════════ U — U-29 : une ancienne séance SANS `id` mais AVEC son `ts`, corrigée plusieurs fois, ne se duplique plus ═══════════════════════════════ */
+/* ═══════════════════════════════ U — IDENTITÉ DES SÉANCES SANS `id` : leur CONTENU seul (17/11/2026 : U-29 RETIRÉ après la contre-expertise ciblée) ═══════════════════════════════
+   ⛔ HISTORIQUE DE L'ORACLE (R30 — une décision retirée s'écrit) : le 16/11, F2-A′ identifiait une séance sans `id` par son `ts` (U-29), puis par `ts` + jour + noms d'exercices. La contre-expertise du 17/11 a démontré que ce
+   rapprochement n'est PAS une preuve d'identité : deux séances DISTINCTES de même `ts`, même jour, mêmes exercices mais séries différentes étaient fusionnées (la 2ᵉ écrasait la 1ʳᵉ). Décision de la mission du 17/11 :
+   « préférer un doublon à une perte ». Les témoins U01, U06, U08, U14 (qui attendaient UNE séance après correction) sont donc RÉÉCRITS en leur contraire — justification d'oracle écrite ici, pas pour obtenir un vert : ils
+   affirment maintenant que la version corrigée d'une séance sans `id` s'AJOUTE, sans rien perdre. Les témoins U03-U05, U09-U13, U15-U21 (collisions, ambiguïtés) tiennent tels quels. */
 function sectionU(t) {
-  console.log('\n── U · U-29 : l\'identité d\'une séance sans `id` est son `ts` (instant de création, recopié à chaque correction) ──');
+  console.log('\n── U · séances sans `id` fiable : identité = contenu seul ; `ts` + jour + exercices n\'est PAS une preuve ──');
   const X = P1.serveur();
   const versions = (s, n) => Array.from({ length: n }, (_, k) => modifie(s, 'v' + (k + 1)));
   const T = tsSeul(1);
   let mail = mailDe('u01'); compteAvec(X, mail, [T]);
   versions(T, 20).forEach((v) => envoyer(X, mail, [v]));
   let ap = lire(X, mail);
-  t('F2A-U01 · une séance SANS id mais AVEC `ts`, corrigée 20 fois (20 envois successifs) : UNE seule séance au serveur, la dernière version (avant U-29 : 21 versions)', ap.length === 1 && ap[0].note === 'v20', { n: ap.length, note: ap[0] && ap[0].note });
+  t('F2A-U01 · (RÉÉCRIT, oracle du 17/11) une séance SANS id mais AVEC `ts`, corrigée 20 fois : 21 versions au serveur, AUCUNE perdue — un doublon plutôt qu\'une perte (U-29 retiré)', ap.length === 21 && nbPerdues([T].concat(versions(T, 20)), ap) === 0, ap.length);
   const S0 = sansId(1);
   mail = mailDe('u02'); compteAvec(X, mail, [S0]);
   versions(S0, 20).forEach((v) => envoyer(X, mail, [v]));
   ap = lire(X, mail);
-  t('F2A-U02 · ⛔ LIMITE DOCUMENTÉE, INCHANGÉE : une séance sans id NI `ts` corrigée 20 fois laisse 21 versions (un doublon vaut mieux qu\'une perte ; aucune heuristique de date ou d\'exercices)', ap.length === 21, ap.length);
+  t('F2A-U02 · une séance sans id NI `ts` corrigée 20 fois laisse 21 versions (même règle : aucune heuristique de date ou d\'exercices)', ap.length === 21, ap.length);
   const A = tsSeul(2), B = Object.assign(copie(A), { ts: A.ts + 1 });
   let e = essai(X, [A], [B], 'u03');
-  t('F2A-U03 · deux séances sans id, MÊME contenu (même jour, mêmes exercices), `ts` DIFFÉRENTS : deux séances, jamais fusionnées (la double séance d\'un même jour n\'est pas une correction)', e.apres.length === 2 && nbPerdues([A], e.apres) === 0, e.apres.length);
+  t('F2A-U03 · deux séances sans id, MÊME contenu (même jour, mêmes exercices), `ts` DIFFÉRENTS : deux séances, jamais fusionnées', e.apres.length === 2 && nbPerdues([A], e.apres) === 0, e.apres.length);
   e = essai(X, [tsSeul(3)], [seance(3, 't', { id: tsSeul(3).ts })], 'u04');
-  t('F2A-U04 · un `id` présent n\'est JAMAIS confondu avec un `ts` : la séance sans id (ts = T) et celle d\'id T sont 2 séances (pas d\'heuristique entre les deux identités)', e.apres.length === 2, e.apres.length);
+  t('F2A-U04 · un `id` présent n\'est JAMAIS confondu avec un `ts` : la séance sans id (ts = T) et celle d\'id T sont 2 séances', e.apres.length === 2, e.apres.length);
   e = essai(X, [seance(4, 'x', { id: { a: 1 } })], [seance(4, 'x', { id: { b: 2 } })], 'u05');
-  t('F2A-U05 · un `id` PRÉSENT mais invalide (objet) n\'active pas la règle du `ts` : deux séances de même `ts` et d\'identifiants objets différents restent 2', e.apres.length === 2, e.apres.length);
+  t('F2A-U05 · un `id` PRÉSENT mais invalide (objet) n\'est pas une identité : deux séances de même `ts` et d\'identifiants objets différents restent 2', e.apres.length === 2, e.apres.length);
   const base = seances(1, 30).concat([tsSeul(1), tsSeul(2), tsSeul(3)]);
   e = essai(X, base, [modifie(tsSeul(2), 'corrigée')].concat(seances(1, 30).slice(-5)), 'u06');
-  t('F2A-U06 · dans un compte de 33 séances (3 sans id mais avec `ts`), la correction de l\'une remplace À SA PLACE : 33 séances, ordre de la base intact, rien d\'ajouté', e.apres.length === 33 && J(e.apres.map(ident)) === J(base.map(ident)) && e.apres[31].note === 'corrigée', e.apres.length);
+  t('F2A-U06 · (RÉÉCRIT) dans un compte de 33 séances (3 sans id mais avec `ts`), la version corrigée de l\'une est AJOUTÉE : 34 séances, ordre de la base intact, la séance d\'origine toujours là', e.apres.length === 34 && J(e.apres.slice(0, 33).map(ident)) === J(base.map(ident)) && e.apres[33].note === 'corrigée', e.apres.length);
   e = essai(X, [tsSeul(5)], [modifie(tsSeul(5), 'a')], 'u07');
   t('F2A-U07 · … et rejouer le même envoi ne change rien (idempotent)', e.rejeu === true);
-  console.log('\n── U2 · deux appareils se renvoient la même ancienne séance corrigée chacun de son côté : aucune copie ──');
+  console.log('\n── U2 · deux appareils se renvoient la même ancienne séance corrigée chacun de son côté : aucune perte ──');
   mail = mailDe('u08'); compteAvec(X, mail, [tsSeul(6)]);
   for (let k = 0; k < 10; k++) { envoyer(X, mail, [modifie(tsSeul(6), 'tel' + k)]); envoyer(X, mail, [modifie(tsSeul(6), 'tab' + k)]); }
   ap = lire(X, mail);
-  t('F2A-U08 · deux appareils corrigent la même ancienne séance chacun 10 fois, en alternance : 1 séance (le dernier arrivé gagne — limite écrite de la section B), jamais 21', ap.length === 1 && ap[0].note === 'tab9', ap.length);
+  t('F2A-U08 · (RÉÉCRIT) deux appareils corrigent la même ancienne séance chacun 10 fois : 21 séances (l\'origine + 20 versions), aucune perdue, aucune copie identique', ap.length === 21 && new Set(ap.map((s) => canon(s, true))).size === 21 && nbPerdues([tsSeul(6)], ap) === 0, ap.length);
 
-  console.log('\n── U3 · COLLISION (contre-expertise 16/11, défaut 1) : deux séances DISTINCTES sans `id` et de même `ts` ne sont JAMAIS fusionnées destructivement ──');
-  const TS = 1760000000000, PA = { ts: TS, note: 'séance A' }, PB = { ts: TS, note: 'séance B' };       // ni `id`, ni jour, ni exercice : AUCUNE preuve d'identité
+  console.log('\n── U3 · COLLISION : deux séances DISTINCTES sans `id` et de même `ts` ne sont JAMAIS fusionnées destructivement ──');
+  const TS = 1760000000000, PA = { ts: TS, note: 'séance A' }, PB = { ts: TS, note: 'séance B' };       // ni `id`, ni jour, ni exercice
   e = essai(X, [PA], [PB], 'u09');
-  t('F2A-U09 · la sonde de la contre-expertise : A en base, B dans l\'envoi (même `ts`, sans `id`, sans preuve) : DEUX séances, A intacte et à sa place (avant : B écrasait A, réponse « ok »)', e.apres.length === 2 && J(e.apres[0]) === J(PA) && J(e.apres[1]) === J(PB) && e.rejeu, e.apres.length);
+  t('F2A-U09 · la sonde de la contre-expertise du 16/11 : A en base, B dans l\'envoi (même `ts`, sans `id`) : DEUX séances, A intacte et à sa place', e.apres.length === 2 && J(e.apres[0]) === J(PA) && J(e.apres[1]) === J(PB) && e.rejeu, e.apres.length);
   e = essai(X, [PB], [PA], 'u10');
-  t('F2A-U10 · … et dans l\'AUTRE ordre (B puis A) : deux séances, les mêmes contenus (l\'ensemble ne dépend pas de l\'ordre d\'envoi)', e.apres.length === 2 && J(contenus(e.apres)) === J(contenus([PA, PB])) && e.rejeu, e.apres.length);
+  t('F2A-U10 · … et dans l\'AUTRE ordre (B puis A) : deux séances, les mêmes contenus', e.apres.length === 2 && J(contenus(e.apres)) === J(contenus([PA, PB])) && e.rejeu, e.apres.length);
   e = essai(X, [seances(1, 1)[0]], [PA, PB], 'u11');
   t('F2A-U11 · … et A et B dans le MÊME envoi : les deux sont enregistrées', e.apres.length === 3 && nbPerdues([PA, PB], e.apres) === 0, e.apres.length);
-  const D1 = tsSeul(8, { note: 'séance du matin' }), D2 = Object.assign(copie(D1), { exs: [{ name: 'Squat', sets: [{ kg: 100, reps: 5, done: true, type: 'normal' }] }], note: 'séance du soir' });     // même `ts`, même jour, EXERCICES DIFFÉRENTS : deux séances
+  const D1 = tsSeul(8, { note: 'séance du matin' }), D2 = Object.assign(copie(D1), { exs: [{ name: 'Squat', sets: [{ kg: 100, reps: 5, done: true, type: 'normal' }] }], note: 'séance du soir' });
   e = essai(X, [D1], [D2], 'u12');
-  t('F2A-U12 · même `ts`, même jour mais exercices DIFFÉRENTS (la preuve diffère) : deux séances, aucune écrasée', e.apres.length === 2 && nbPerdues([D1], e.apres) === 0 && J(contenus(e.apres)) === J(contenus([D1, D2])), e.apres.length);
+  t('F2A-U12 · même `ts`, même jour mais exercices DIFFÉRENTS : deux séances, aucune écrasée', e.apres.length === 2 && nbPerdues([D1], e.apres) === 0 && J(contenus(e.apres)) === J(contenus([D1, D2])), e.apres.length);
   const D3 = Object.assign(copie(D1), { date: dateDe(9), note: 'un autre jour' });
   e = essai(X, [D1], [D3], 'u13');
   t('F2A-U13 · même `ts`, même exercices mais un AUTRE JOUR : deux séances', e.apres.length === 2 && J(contenus(e.apres)) === J(contenus([D1, D3])), e.apres.length);
   const E1 = modifie(D1, 'corrigée : séries refaites'); E1.exs = [{ name: D1.exs[0].name, sets: [{ kg: 80, reps: 10, done: true, type: 'normal' }] }];
   e = essai(X, [D1], [E1], 'u14');
-  t('F2A-U14 · CONTRÔLE POSITIF : la MÊME séance (même `ts`, même jour, mêmes exercices) dont seules les séries changent : UNE séance, la version corrigée (U-29 reste utile)', e.apres.length === 1 && J(e.apres[0]) === J(E1) && e.rejeu, e.apres.length);
+  t('F2A-U14 · (RÉÉCRIT, oracle du 17/11) LE CAS DE LA CONTRE-EXPERTISE CIBLÉE : même `ts`, même jour, MÊMES exercices, séries différentes, sans `id` — ce n\'est PAS une preuve d\'identité : les DEUX séances survivent', e.apres.length === 2 && J(contenus(e.apres)) === J(contenus([D1, E1])) && e.rejeu, e.apres.length);
+  e = essai(X, [E1], [D1], 'u14b');
+  t('F2A-U14b · … dans l\'AUTRE ordre : les deux survivent, mêmes contenus', e.apres.length === 2 && J(contenus(e.apres)) === J(contenus([D1, E1])) && e.rejeu, e.apres.length);
+  e = essai(X, [seances(1, 2)[0]], [D1, E1], 'u14c');
+  t('F2A-U14c · … et dans le MÊME envoi : les deux sont enregistrées', e.apres.length === 3 && nbPerdues([D1, E1], e.apres) === 0, e.apres.length);
   e = essai(X, [D1, Object.assign(copie(D1), { note: 'jumelle' })], [E1], 'u15');
-  t('F2A-U15 · AMBIGUÏTÉ en base : deux séances de même `ts` + même preuve déjà en base, et une version corrigée de l\'une arrive : on ne devine pas laquelle — les TROIS sont gardées', e.apres.length === 3 && nbPerdues([D1], e.apres) === 0, e.apres.length);
+  t('F2A-U15 · deux séances de même `ts` + même jour + mêmes exercices déjà en base et une version corrigée de l\'une arrive : les TROIS sont gardées', e.apres.length === 3 && nbPerdues([D1], e.apres) === 0, e.apres.length);
   e = essai(X, [D1], [E1, Object.assign(copie(E1), { note: 'jumelle dans l\'envoi' })], 'u16');
-  t('F2A-U16 · AMBIGUÏTÉ dans l\'envoi : deux séances de même `ts` + même preuve arrivent : on ne devine pas — la séance de la base et les deux de l\'envoi sont gardées', e.apres.length === 3 && nbPerdues([D1], e.apres) === 0 && e.rejeu, e.apres.length);
+  t('F2A-U16 · deux séances de même `ts` + même preuve dans l\'envoi : la séance de la base et les deux de l\'envoi sont gardées', e.apres.length === 3 && nbPerdues([D1], e.apres) === 0 && e.rejeu, e.apres.length);
   mail = mailDe('u17'); compteAvec(X, mail, [PA]);
   const apres17 = [];
   [[PB], [PB, PA], [PA], [PB]].forEach((env) => { envoyer(X, mail, env); apres17.push(J(contenus(lire(X, mail)))); });
-  t('F2A-U17 · rejeux et envois croisés (B ; B+A ; A ; B) : le contenu final est exactement {A, B}, sans copie, et ne change plus après le 1ᵉʳ envoi de B (idempotence)', apres17.every((x) => x === J(contenus([PA, PB]))) && lire(X, mail).length === 2, lire(X, mail).length);
+  t('F2A-U17 · rejeux et envois croisés (B ; B+A ; A ; B) : le contenu final est exactement {A, B}, sans copie, et ne change plus (idempotence)', apres17.every((x) => x === J(contenus([PA, PB]))) && lire(X, mail).length === 2, lire(X, mail).length);
   e = essai(X, [sansId(20)], [sansId(21)], 'u18');
-  t('F2A-U18 · CONTRÔLE : sans `id` NI `ts` (aucune identité) : deux séances différentes restent deux, comme avant U-29', e.apres.length === 2, e.apres.length);
-  const ancienClient = (s) => { const c = copie(s); delete c.ts; return c; };       // un appareil ANCIEN qui n'envoie pas `ts`
+  t('F2A-U18 · sans `id` NI `ts` : deux séances différentes restent deux', e.apres.length === 2, e.apres.length);
+  const ancienClient = (s) => { const c = copie(s); delete c.ts; return c; };
   e = essai(X, [D1], [ancienClient(modifie(D1, 'envoyée par un ancien appareil'))], 'u19');
-  t('F2A-U19 · un appareil ANCIEN (sans `ts`) envoie une version corrigée d\'une séance à `ts` : la base est conservée, la version est ajoutée (un doublon vaut mieux qu\'une perte)', e.apres.length === 2 && nbPerdues([D1], e.apres) === 0, e.apres.length);
+  t('F2A-U19 · un appareil ANCIEN (sans `ts`) envoie une version corrigée : la base est conservée, la version est ajoutée', e.apres.length === 2 && nbPerdues([D1], e.apres) === 0, e.apres.length);
   const N1 = tsSeul(10, { note: 'sans jour 1' }), N2 = Object.assign(copie(N1), { note: 'sans jour 2', volume: 777 }); delete N1.date; delete N2.date;
   e = essai(X, [N1], [N2], 'u20');
-  t('F2A-U20 · même `ts` et mêmes exercices mais AUCUN JOUR (pas de preuve de jour) : deux séances, aucune écrasée', e.apres.length === 2 && nbPerdues([N1], e.apres) === 0 && e.rejeu, e.apres.length);
+  t('F2A-U20 · même `ts` et mêmes exercices mais AUCUN JOUR : deux séances, aucune écrasée', e.apres.length === 2 && nbPerdues([N1], e.apres) === 0 && e.rejeu, e.apres.length);
   const O1 = tsSeul(11), O2 = Object.assign(copie(O1), { exs: [{ name: 'Squat', sets: [{ kg: 90, reps: 5, done: true, type: 'normal' }] }, { name: 'Développé couché', sets: [{ kg: 60, reps: 8, done: true, type: 'normal' }] }], note: 'ordre inversé' });
   const O0 = Object.assign(copie(O1), { exs: [O2.exs[1], O2.exs[0]] });
   e = essai(X, [O0], [O2], 'u21');
-  t('F2A-U21 · même `ts`, même jour, mêmes exercices mais dans un AUTRE ORDRE (la preuve est ordonnée) : deux séances, jamais fusionnées', e.apres.length === 2 && J(contenus(e.apres)) === J(contenus([O0, O2])), e.apres.length);
+  t('F2A-U21 · même `ts`, même jour, mêmes exercices dans un AUTRE ORDRE : deux séances', e.apres.length === 2 && J(contenus(e.apres)) === J(contenus([O0, O2])), e.apres.length);
+  console.log('\n── U4 · copies strictement identiques : multiplicités légitimes et idempotence ──');
+  const K1 = tsSeul(12, { note: 'copie' });
+  e = essai(X, [K1, copie(K1)], [copie(K1), copie(K1)], 'u22');
+  t('F2A-U22 · deux copies STRICTEMENT identiques déjà en base, le même envoi de deux copies : toujours DEUX (une copie reconnue n\'est pas ajoutée, la multiplicité légitime est conservée)', e.apres.length === 2 && e.rejeu, e.apres.length);
+  e = essai(X, [K1], [copie(K1), copie(K1), copie(K1)], 'u23');
+  t('F2A-U23 · une copie en base, trois copies identiques dans l\'envoi : TROIS au total (deux de plus, jamais d\'écrasement), et rejouer ne change plus rien', e.apres.length === 3 && e.rejeu, e.apres.length);
+  e = essai(X, [K1], [Object.assign(copie(K1), { synced: !K1.synced })], 'u24');
+  t('F2A-U24 · seul `synced` diffère (drapeau de synchro, pas du contenu) : c\'est la MÊME séance, une seule', e.apres.length === 1, e.apres.length);
 }
 
 /* ═══════════════════════════════ S — sauvegarde : elle dit ce qu'elle n'a pas pu écrire ; restauration LOCALE ISOLÉE (comptes inventés, Drive en mémoire) ═══════════════════════════════ */
@@ -724,11 +737,11 @@ function sectionS(t) {
   t('F2A-S08 · `sante` ne laisse passer QUE les champs de santé connus : un champ étranger (`premium`, `name`, `hiddenFoods`) glissé dans `sante` n\'atteint pas le profil', rv1.j.status === 'ok' && cv.profile.premium === undefined && cv.profile.name === 'N' && J(cv.profile.bloodTests) === J(sante.bloodTests), J(Object.keys(cv.profile || {})));
   const V2 = P1.serveur(); V2.props.ADMIN_TOKEN = ADM;
   const rvi = ['x', [1], null, 7].map((s) => V2.post({ action: 'adminRestore', adminToken: ADM, email: u0.email, data: u0.data, sante: s }));
-  t('F2A-S08b · une `sante` qui n\'est pas un objet (texte, liste, null, nombre) est refusée, rien n\'est écrit', rvi.every((r) => r.j.status === 'error') && brut(V2) === '[]', rvi.map((r) => r.j.error));
+  t('F2A-S08b · une `sante` qui n\'est pas un objet (texte, liste, null, nombre) est refusée, rien n\'est écrit', rvi.every((r) => r.j.status === 'error' && /sante invalide/.test(r.j.error)) && brut(V2) === '[]', rvi.map((r) => r.j.error));      // 17/11 : l'erreur doit être CELLE du type (« sante invalide »), pas un refus de complétude qui masquerait l'absence du contrôle de type
   /* ── un compte VIVANT qui porte déjà sa santé garde le comportement d'avant ── */
   const apres09 = J(sans(W.lireCompte(u0.email)));
   const r09 = W.post({ action: 'adminRestore', adminToken: ADM, email: u0.email, data: u0.data });
-  t('F2A-S09 · un compte VIVANT qui porte déjà sa santé : restaurer `data` seule reste accepté (comportement d\'avant, sa santé n\'est pas touchée) — la garde ne bloque que le cas où la santé serait perdue', r09.j.status === 'ok' && J(sans(W.lireCompte(u0.email))) === apres09, r09.j.status);
+  t('F2A-S09 · (RÉÉCRIT, oracle du 17/11) un compte VIVANT qui porte déjà sa santé : restaurer `data` SEULE est REFUSÉ comme les autres (`sante_non_precisee`) — l\'absence de déclaration n\'est jamais acceptée ; rien n\'est écrit, sa santé est intacte', r09.j.status === 'error' && r09.j.error === 'sante_non_precisee' && r09.j.compte_porte_une_sante === true && J(sans(W.lireCompte(u0.email))) === apres09, J(r09.j).slice(0, 120));
   const nouvelle = { bloodTests: [{ date: '2026-10-01', valeurs: { fer: 11 } }], healthProfile: { allergies: ['autre'] } };
   W.post({ action: 'adminRestore', adminToken: ADM, email: u0.email, data: u0.data, sante: nouvelle });
   t('F2A-S10 · … et une `sante` fournie REMPLACE celle du compte vivant (retour à l\'état de la sauvegarde)', J((W.lireCompte(u0.email).profile || {}).bloodTests) === J(nouvelle.bloodTests), J((W.lireCompte(u0.email).profile || {}).bloodTests));
@@ -752,6 +765,33 @@ function sectionS(t) {
   const rh = H.post({ action: 'adminRestore', adminToken: ADM, email: u0.email, data: u0.data, sante: sante });
   H.ctx.loadUserData_ = orig;
   t('F2A-S13 · RELECTURE INCOMPLÈTE : si le serveur ne retrouve pas ce qu\'il vient d\'écrire (séances), la réponse est `partial` avec la liste des manquants — jamais « ok »', rh.j.status === 'partial' && rh.j.error === 'restauration_incomplete' && rh.j.manquants.indexOf('sessions') >= 0, J(rh.j).slice(0, 180));
+  /* ── 17/11 (contre-expertise ciblée) : `sante: {}` ne prouve rien ; `sansSante` doit être COHÉRENT ; la relecture compare le CONTENU ── */
+  const Q = P1.serveur(); Q.props.ADMIN_TOKEN = ADM;
+  const rq = Q.post({ action: 'adminRestore', adminToken: ADM, email: u0.email, data: u0.data, sante: {} });
+  t('F2A-S14 · ⛔ `sante: {}` (section vide) NE PROUVE PAS une sauvegarde complète : refusée (`sante_vide_ambigue`), RIEN n\'est écrit (avant le 17/11 : acceptée, compte restauré sans santé, réponse « ok »)', rq.j.status === 'error' && rq.j.error === 'sante_vide_ambigue' && brut(Q) === '[]', J(rq.j).slice(0, 120));
+  const rq2 = Q.post({ action: 'adminRestore', adminToken: ADM, email: u0.email, data: u0.data, sante: {}, sansSante: true });
+  t('F2A-S14b · … `sante: {}` AVEC la déclaration explicite `sansSante: true` : acceptée (la sauvegarde n\'a vraiment pas de santé, et l\'appelant le dit)', rq2.j.status === 'ok' && (Q.lireCompte(u0.email).profile || {}).bloodTests === undefined, J(rq2.j).slice(0, 100));
+  const R = P1.serveur(); R.props.ADMIN_TOKEN = ADM;
+  const rr1 = R.post({ action: 'adminRestore', adminToken: ADM, email: u0.email, data: u0.data, sante: sante, sansSante: true });
+  const rr2 = R.post({ action: 'adminRestore', adminToken: ADM, email: u0.email, data: Object.assign({}, u0.data, { profile: Object.assign({}, u0.data.profile, sante) }), sansSante: true });
+  t('F2A-S15 · `sansSante: true` n\'est qu\'une déclaration COHÉRENTE : combinée à une santé présente (dans `sante`, ou dans `data.profile`) elle est refusée (`sans_sante_incoherent`), rien n\'est écrit — jamais d\'effacement silencieux', rr1.j.error === 'sans_sante_incoherent' && rr2.j.error === 'sans_sante_incoherent' && brut(R) === '[]', [rr1.j.error, rr2.j.error]);
+  const rr3 = W.post({ action: 'adminRestore', adminToken: ADM, email: u0.email, data: u0.data, sansSante: true });
+  t('F2A-S15b · compte VIVANT qui porte sa santé + `sansSante: true` cohérent avec une sauvegarde sans santé : acceptée, sa santé N\'EST PAS effacée (aucun effacement de santé par défaut)', rr3.j.status === 'ok' && J((W.lireCompte(u0.email).profile || {}).bloodTests) === J(nouvelle.bloodTests), J(rr3.j).slice(0, 100));
+  /* relecture de CONTENU : même cardinalité, contenu différent. L'appel 2 de `loadUserData_` est la relecture (le 1ᵉʳ lit le compte courant). */
+  const corrompre = (nom, f, attendu) => {
+    const S = P1.serveur(); S.props.ADMIN_TOKEN = ADM; let n = 0; const o = S.ctx.loadUserData_;
+    S.ctx.loadUserData_ = (e) => { const d = o(e); n++; if (n >= 2 && d) f(d); return d; };
+    const r = S.post({ action: 'adminRestore', adminToken: ADM, email: u0.email, data: u0.data, sante: sante });
+    S.ctx.loadUserData_ = o;
+    t('F2A-S16' + nom[0] + ' · RELECTURE DE CONTENU — ' + nom[1] + ' : même nombre d\'éléments, contenu différent → `partial` avec le NOM du champ en écart (jamais « ok »)', r.j.status === 'partial' && r.j.manquants.indexOf(attendu) >= 0, J(r.j).slice(0, 160));
+  };
+  corrompre(['a', 'une série d\'une séance change (60 séances, toujours 60)'], (d) => { d.sessions[0].exs[0].sets[0].kg += 7; }, 'sessions');
+  corrompre(['b', 'un record change (même nombre de records)'], (d) => { d.prs.Squat = { rm1: 999 }; }, 'prs');
+  corrompre(['c', 'un champ du profil change (le prénom)'], (d) => { d.profile.name = 'AUTRE'; }, 'profile.name');
+  corrompre(['d', 'un champ de SANTÉ change (même nombre de bilans)'], (d) => { d.profile.bloodTests[0].valeurs.fer = 1; }, 'profile.bloodTests');
+  const Hh = P1.serveur(); Hh.props.ADMIN_TOKEN = ADM;
+  const rh2 = Hh.post({ action: 'adminRestore', adminToken: ADM, email: u0.email, data: u0.data, sante: sante });
+  t('F2A-S16e · CONTRÔLE POSITIF : sans corruption, la même restauration est « ok » (la comparaison de contenu ne fabrique pas de faux `partial`)', rh2.j.status === 'ok', J(rh2.j).slice(0, 100));
   /* ── F2-A′ après restauration : un appareil resté amputé ne retire rien ── */
   const mail = comptes[0].mail; const apres0 = Y.lireCompte(mail).sessions.length;
   Y.post({ action: 'saveProfile', email: mail, sessions: copie(comptes[0].sess.slice(-50)) });
@@ -765,22 +805,26 @@ function sectionM(t) {
   const anciennes = [tsSeul(1), tsSeul(2), tsSeul(3)];
   compteAvec(X, mail, seances(1, 40).concat(anciennes));
   const appareils = [0, 1, 2].map(() => ({ vu: seances(1, 40).concat(anciennes) }));
-  const attendus = new Map(); seances(1, 40).concat(anciennes).forEach((s) => attendus.set(ident(s), s.note || ''));
+  /* 17/11 : ORACLE EN MULTI-ENSEMBLE (sans `id`, l'identité est le contenu ; N copies identiques légitimes restent N — deux séances corrigées le même tour peuvent avoir le même contenu) : la multiplicité attendue d'un contenu
+     est le PLUS GRAND nombre de ses copies dans un même envoi (ou dans la base de départ) — c'est le contrat de la section Z09, pas une assouplissement. */
+  const attendus = new Map(), multDe = (l) => { const m = new Map(); l.forEach((s) => m.set(ident(s), (m.get(ident(s)) || 0) + 1)); return m; };
+  const noter = (l) => multDe(l).forEach((n, k) => { if (n > (attendus.get(k) || 0)) attendus.set(k, n); });
+  noter(seances(1, 40).concat(anciennes));
   let compteurNeuf = 0, ok = true, det = null;
   for (let tour = 0; tour < 60 && ok; tour++) {
     const a = appareils[tour % 3];
-    const sous = a.vu.filter(() => rnd() < 0.55).map((s) => (rnd() < 0.2 && ident(s).indexOf('ts:') === 0 ? modifie(s, 'a' + tour) : s));
+    const sous = a.vu.filter(() => rnd() < 0.55).map((s) => (rnd() < 0.2 && !idOk(s.id) && tsOk(s.ts) ? modifie(s, 'a' + tour) : s));
     const neuves = seances(1, Math.floor(rnd() * 3), 'n' + (++compteurNeuf) + '_');
     const envoi = sous.concat(neuves);
-    envoi.forEach((s) => attendus.set(ident(s), s.note || ''));
+    noter(envoi);
     envoyer(X, mail, envoi);
-    const cloud = lire(X, mail), ids = cloud.map(ident);
-    if (new Set(ids).size !== ids.length || Array.from(attendus.keys()).some((k) => ids.indexOf(k) < 0) || ids.length !== attendus.size) { ok = false; det = { tour, cloud: cloud.length, attendus: attendus.size }; }
+    const cloud = lire(X, mail), vus = multDe(cloud), total = Array.from(attendus.values()).reduce((x, y) => x + y, 0);
+    if (cloud.length !== total || Array.from(attendus.entries()).some(([k, n]) => (vus.get(k) || 0) !== n)) { ok = false; det = { tour, cloud: cloud.length, attendus: total }; }
     a.vu = copie(cloud);                                         // l'appareil se met à jour depuis le cloud (restauration / nouvel appareil)
   }
-  t('F2A-M01 · 60 tours sur 3 appareils (envois amputés ~45 % + 0 à 2 séances neuves + corrections d\'anciennes séances à `ts`) : à CHAQUE tour le serveur = exactement l\'union de tout ce qui a été envoyé, aucune copie', ok, det);
+  t('F2A-M01 · 60 tours sur 3 appareils (envois amputés ~45 % + 0 à 2 séances neuves + corrections d\'anciennes séances à `ts`) : à CHAQUE tour le serveur = exactement l\'union (multi-ensemble) de tout ce qui a été envoyé, aucune copie en trop', ok, det);
   const final = lire(X, mail);
-  t('F2A-M02 · … les 3 anciennes séances à `ts` n\'existent qu\'UNE fois chacune à la fin (aucune copie après 60 tours de corrections concurrentes)', anciennes.every((s) => final.filter((x) => valide(x) && ident(x) === ident(s)).length === 1), final.length);
+  t('F2A-M02 · (RÉÉCRIT, oracle du 17/11) … à la fin chaque contenu existe avec EXACTEMENT sa multiplicité attendue (aucune copie en trop) et les 3 anciennes séances à `ts` d\'origine sont toujours là : les corrections s\'AJOUTENT, rien n\'est écrasé', Array.from(multDe(final).entries()).every(([k, n]) => n === attendus.get(k)) && anciennes.every((s) => final.filter((x) => valide(x) && canon(x, true) === canon(s, true)).length === 1), final.length);
 }
 
 /** Une section qui PLANTE ne doit pas cacher les autres : le plantage est un rouge nommé, la suite est jouée. */

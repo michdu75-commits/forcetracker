@@ -1,14 +1,15 @@
 # 🧷 F2-A′ — état du candidat et PRÉPARATION de sa qualification sur FT-TEST-P1
 
 > **Écrit le 16/11/2026, mis à jour le même jour après la contre-expertise indépendante** (« GO CORRECTIONS PRINCIPAL » puis « corrections locales Principal » de Michel : corrections locales, commits locaux, tests ciblés ; **ni push, ni merge, ni déploiement**).
-> Branche : `claude/f2a-prime-v2-2026-11-16` (depuis `claude/f2a-prime-qualif-2026-11-16`, elle-même depuis master `e4456bf4`, ft-v1267). Fichier applicatif touché : **`Code.js` seul**.
+> **Mis à jour le 17/11/2026** (« GO corrections locales Principal », mission de fermeture : 3 écarts F2-A′ de la contre-expertise ciblée finale — voir § 2.2 et § 2.4).
+> Branche : `claude/f2a-prime-v3-2026-11-17` (depuis `claude/f2a-prime-v2-2026-11-16 @4b4b3475`, elle-même depuis master `e4456bf4`, ft-v1267). Fichier applicatif touché : **`Code.js` seul**.
 > ⛔ **Rien ici n'autorise un déploiement.** Ce document dit où l'on en est et ce qu'il faudra, au prochain GO TEST, pour qualifier le candidat.
 
 ## 1. Les quatre états (jamais confondus)
 
 | État | Valeur |
 |---|---|
-| Corrigé sur branche | **OUI** — `claude/f2a-prime-v2-2026-11-16` (les commits au-dessus de master : `git log e4456bf4..HEAD`). La branche précédente `claude/f2a-prime-qualif-2026-11-16 @79fc953d`, l'ancienne `fix/f2-seances-union-2026-11-12 @cd1418cb` et la branche d'essai distante `test/f2a-prime-2026-11-13 @fb92ae19` sont **intactes**. |
+| Corrigé sur branche | **OUI** — `claude/f2a-prime-v3-2026-11-17` (les commits au-dessus de master : `git log e4456bf4..HEAD`). Les branches précédentes `claude/f2a-prime-v2-2026-11-16 @4b4b3475`, `claude/f2a-prime-qualif-2026-11-16 @79fc953d`, l'ancienne `fix/f2-seances-union-2026-11-12 @cd1418cb` et la branche d'essai distante `test/f2a-prime-2026-11-13 @fb92ae19` sont **intactes**. |
 | Intégré | **NON** |
 | Publié (Apps Script) | **NON** (production @195 inchangée) |
 | Vérifié (TEST réel / iPhone) | **NON** pour cette version. (L'essai TEST @5 du 13/11 portait la version d'avant les correctifs de ce document.) |
@@ -16,24 +17,24 @@
 ## 2. Ce que le candidat change dans `Code.js` (par rapport à master)
 
 1. **F2-A′ (inchangé)** — les séances du compte se **fusionnent par identifiant** au lieu de se remplacer ; aucune suppression implicite ; le garde-fou de taille (refus sous 60 %) est remplacé par un simple *signal*.
-2. **U-29 — DURCI le 16/11 après la contre-expertise (défaut 1)** — une séance **sans `id` mais avec un `ts`** n'est plus identifiée par son `ts` **seul** (la contre-expertise a reproduit la collision : deux séances DISTINCTES sans `id` de même `ts` se fusionnaient, la 2ᵉ écrasait la 1ʳᵉ, réponse « ok »).
-   Elle l'est par une **preuve** : `ts` + **le jour** + **la liste ordonnée des noms d'exercices** (`_sessSignature_`). Une correction change des séries, pas le jour ni les exercices → UNE séance (la version la plus récente, à sa place). Sans preuve (pas de jour, pas d'exercice nommé) ou si elle diffère
-   → l'identité reste le **contenu** : les deux séances sont gardées. **Ambiguïté** : si la même identité « ts + preuve » apparaît DEUX FOIS (en base ou dans l'envoi), elle ne désigne plus rien : tout est gardé. Un `id` n'est jamais confondu avec un `ts` ; un `id` présent mais invalide n'active pas la règle.
-   ⚠️ **Limite écrite** : deux séances distinctes de même `ts`, même jour, mêmes exercices dans le même ordre, l'une en base, l'autre dans l'envoi, sont prises pour une correction (indiscernable avec les seules données) ; une séance corrigée dont la liste d'exercices change reste en deux versions (un doublon vaut mieux qu'une perte) ; une séance sans `id` NI `ts` reste jugée sur son contenu.
+2. **Identité des séances sans `id` — U-29 RETIRÉ le 17/11 (écart `F2-ancien-identite-ambigue`)** — le 16/11, une séance sans `id` était identifiée par son `ts`, puis (1ʳᵉ contre-expertise) par `ts` + jour + noms d'exercices. **La contre-expertise ciblée du 17/11 a démontré que ce rapprochement n'est pas une preuve d'identité** : deux séances distinctes sans `id`, de même `ts`, même jour et mêmes exercices mais aux séries différentes, étaient fusionnées (la seconde écrasait la première, réponse « ok »).
+   **Règle actuelle** : une séance **sans `id` valide** n'a pour identité que son **contenu** (hors `synced`) : une copie strictement identique est reconnue (multi-ensemble : N copies légitimes restent N, rejouer un envoi ne change rien), une séance corrigée **reste en deux versions** (un doublon plutôt qu'une perte). Aucune migration, aucune suppression ; un `id` n'est jamais confondu avec un `ts`. `_sessSignature_` et la règle d'ambiguïté sont supprimés (moins de code).
+   ⚠️ **Conséquence assumée** : une ancienne séance sans `id`, corrigée 20 fois, laisse 21 versions (mesuré, comme avant U-29) ; les témoins U01, U06, U08, U14, M02 qui attendaient « une seule séance » sont réécrits en leur contraire, avec la justification d'oracle écrite dans le banc.
 3. **Sauvegarde qui dit ce qu'elle n'a pas pu écrire (écart « 13 contre 14 » du 15/11)** — `backupAllUserData_` ajoute au fichier `user_count_attendu` (les clés `u_` trouvées) et `erreurs` (clé + raison de chaque compte non sauvegardé), et le journal du serveur le dit. Avant : un compte dont `u_` ne se relit pas était **sauté en silence**. Rien d'autre ne change (mêmes `users`, `user_count` inchangé ; les lecteurs actuels ignorent les nouveaux champs).
 4. **Restauration — le piège `data` seule est fermé (nouveau, contre-expertise)** — le fichier de sauvegarde range la santé dans une section **`sante` séparée** ; restaurer `data` seule faisait revenir un compte sans santé, réponse « ok ». `handleAdminRestore_` :
    · accepte `body.sante` (la section du fichier pour ce compte) et la **fusionne** — **champs de santé connus seulement** (`_CHAMPS_SANTE_`) ;
    · **garde de complétude AVANT toute écriture** : si le compte n'a de santé nulle part (ni dans l'envoi, ni dans `sante`, ni déjà sur le serveur) et que l'appelant ne dit pas `sansSante: true`, la restauration est **REFUSÉE** (`sante_non_precisee`, rien n'est écrit). Un compte vivant qui porte déjà sa santé garde le comportement d'avant ;
    · **échec partiel explicite** : l'écriture qui échoue renvoie `restauration_echouee` et **rétablit la santé** (`h_`, écrite en premier) à son état d'avant ; une relecture qui ne retrouve pas ce qui devait être écrit (séances, records, champs de santé) renvoie `partial` avec la liste des manquants — jamais « ok » ;
-   · **aucune écriture de `u_` / `h_` ne change** (ARCH-06 reste un lot distinct).
+   · **aucune écriture de `u_` / `h_` ne change** (ARCH-06 reste un lot distinct) ;
+   · **DURCI le 17/11 (écarts `REST-sante-vide` et `REST-meme-nombre-contenu-corrompu`)** : `sante: {}` (section vide) **ne prouve pas** une sauvegarde complète → refusée (`sante_vide_ambigue`) sauf `sansSante: true` ; l'**absence** de toute déclaration est refusée (`sante_non_precisee`), **même sur un compte vivant** qui porte déjà sa santé (jamais effacée par défaut) ; `sansSante: true` n'est qu'une déclaration **cohérente** (avec une santé présente : `sans_sante_incoherent`) ; la **relecture compare le CONTENU** (séances, records, chaque champ du profil, santé comprise), pas seulement les nombres : même cardinalité mais contenu différent → `partial` avec le nom des champs en écart.
    ⛔ **CHANGEMENT DE CONTRAT À VALIDER PAR MICHEL AVANT TOUT DÉPLOIEMENT** : l'outil de restauration lui-même (celui qui lit les sauvegardes Drive) est **HORS DÉPÔT** et n'a pas été modifié ni consulté. Il doit désormais envoyer `sante` (ou `sansSante: true`) ; sans cela, toute restauration sur un compte sans santé est refusée (sûr, mais bloquant en cas d'incident si on l'ignore). **Blocage à traiter par une mission distincte** : mettre à jour l'outil réel, puis le qualifier en local isolé.
 
 ## 3. Preuves locales (comptes inventés, Drive et propriétés en mémoire, aucun réseau)
 
 | Quoi | Résultat |
 |---|---|
-| Banc `B-F2A` (`tools/banc_f2_seances_union.js`) | **136 OK / 0 rouge** (114 d'avant + collision U-29 U09–U21, restauration S05–S13) — journal brut dans l'archive |
-| Mutations `tools/mut_f2_seances_union.py` | voir le journal brut de l'archive (les mutations M26–M28 et M33 sont réancrées sur le nouveau code ; M34–M50 couvrent la preuve, l'ambiguïté et la restauration) |
+| Banc `B-F2A` (`tools/banc_f2_seances_union.js`) | voir le journal brut de l'archive (le nombre de témoins change à chaque lot : il n'est pas figé ici) — le même banc sur l'ANCIEN `Code.js` (`4b4b3475`) rougit sur les témoins des 3 écarts |
+| Mutations `tools/mut_f2_seances_union.py` | voir le journal brut de l'archive (M26–M28, M34 : identité = contenu seul ; M42–M44, M49–M53 : garde de complétude, `sante` vide, cohérence de `sansSante`, relecture de contenu) |
 | Benches voisins qui chargent `Code.js` | journaux **complets** dans l'archive ; `nut_phasea02` exige `FT_ANCIEN_CLIENT_REF=922c5d51 FT_DEPOT_GIT=…`. ⚠️ Quatre bancs voisins (`nut_d141_minimal`, `nut_phasea01`, `nut_phasea02`, `nut_fiabilite`) appelaient `adminRestore` sur des comptes SANS santé : leur appel porte désormais `sansSante: true` (la forme de l'appel change, ce qu'ils vérifient non) |
 | Outil de lecture des sauvegardes (`tools/diag_sauvegardes.py`) | auto-test 9/9, **lecture seule, hors ligne**, adresses masquées (empreinte de 8 caractères) — voir § 4 |
 | NON EXÉCUTÉ | le banc `chaos` (exige PostgreSQL local, absent ici) · la D-031 complète (interdite par le GO) · tout contrôle sur un vrai Apps Script ou un iPhone |
@@ -61,6 +62,9 @@ Le banc affiche **114** témoins dans un dépôt Git qui contient l'objet de mas
 | Aucune borne de taille | une base ne fait que croître : l'alerte de réservoir à 70 % est une décision à part. Les limites Apps Script (9 Ko par valeur, 500 Ko par magasin) **n'ont jamais été mesurées**. |
 | Six listes (U-03), collisions d'identifiant « Autre activité » (U-06), miroir Supabase | hors F2-A′. |
 
+## 4 bis. Outil de restauration réel (hors dépôt) — contrat et blocage
+Le contrat exact, les vérifications de compatibilité et la recette locale fictive sont dans **`docs/RESTAURATION-OUTIL-CONTRAT.md`**. Blocage : l'outil réel n'est pas dans le dépôt ; sa mise en conformité et la qualification d'une restauration RÉELLE sont une **mission distincte** (condition de passage TEST).
+
 ## 5. Conditions du prochain GO TEST (rien n'est supposé acquis)
 
 1. **GO explicite de Michel** « déploiement F2-A′ sur TEST uniquement » **pour CE candidat** (les GO du 13/11 portaient sur des versions antérieures).
@@ -80,11 +84,12 @@ Le banc affiche **114** témoins dans un dépôt Git qui contient l'objet de mas
 | T1 | compte neuf, 60 séances ; envoi de 50 + 1 neuve | **61** séances (jamais 51) |
 | T2 | envoi vide ; champ `sessions` absent | rien ne change |
 | T3 | deux « appareils » alternés, 20 tours, envois amputés à ~55 % | le serveur = l'union exacte, aucune copie |
-| T4 | ancienne séance **à `ts` + jour + exercices** corrigée 20 fois | **1** séance (la dernière version) |
-| T4b | deux séances distinctes sans `id`, même `ts`, sans jour ni exercice, envoyées dans les deux ordres | **2** séances, contenus intacts |
+| T4 | ancienne séance sans `id` (avec `ts`, jour, exercices) corrigée 20 fois | 21 versions, aucune perdue (U-29 retiré : un doublon plutôt qu'une perte) |
+| T4b | deux séances distinctes sans `id`, même `ts`, **même jour, mêmes exercices, séries différentes**, envoyées dans les deux ordres | **2** séances, contenus intacts |
 | T5 | ancienne séance **sans `id` ni `ts`** corrigée 20 fois | 21 versions (limite écrite, aucune perte) |
 | T6 | lancer la sauvegarde sur le TEST ; lire le fichier | `user_count_attendu`, `erreurs` présents ; avec un compte illisible fabriqué, il est NOMMÉ |
-| T7 | restaurer un compte inventé depuis ce fichier avec `sante` envoyée à part | identique à l'original ; sans `sante` ni `sansSante` : **refus** `sante_non_precisee`, rien d'écrit |
+| T7 | restaurer un compte inventé depuis ce fichier avec `sante` envoyée à part | identique à l'original ; sans `sante` ni `sansSante` : **refus** `sante_non_precisee` ; `sante: {}` : **refus** `sante_vide_ambigue` ; rien d'écrit |
+| T7b | restauration avec un `Code.js` de test qui altère une valeur à la relecture (même nombre d'éléments) | `partial` + nom du champ, jamais « ok » |
 | T8 | rejouer le même envoi | aucune différence (idempotent) |
 | T9 | `loadProfile` après chaque étape (code perso fictif) | séances et santé cohérentes |
 | T10 | **limites Apps Script** : remplir un compte jusqu'au refus d'une propriété (9 Ko / valeur, 500 Ko / magasin) | un refus **explicite**, rien d'écrit à moitié (ARCH-11 / CH-12, jamais mesuré) |
