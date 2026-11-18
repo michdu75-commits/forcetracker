@@ -34,3 +34,4 @@ tests/milo/ab-report.json
 # `require` relatifs à __dirname — dehors, la tranche plante au lieu de mesurer.
 tests/parcours/_tranche_tmp*.js
 tests/**/_tmp*.js
+tests/gardes/__pycache__/

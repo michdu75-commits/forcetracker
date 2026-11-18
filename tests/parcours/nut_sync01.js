@@ -16,6 +16,7 @@ const { execSync } = require('child_process');
 const J = (x) => JSON.stringify(x);
 const RACINE = path.join(__dirname, '..', '..');
 const P1 = require('./nut_secu_p1.js');
+const { jourLocal } = require('../_jour.js');   // « aujourd'hui » des fixtures : le jour du téléphone, jamais celui de Greenwich (RECETTE-01)
 const EMAIL = 'alice@example.test';
 const COMMIT_AVANT = '22ccce77';
 const CODE_PERSO = '4242';
@@ -36,8 +37,9 @@ const QUOTA = `(() => { if (window.__Qinst) return; window.__Qinst = 1; window._
     return o.apply(this, arguments);
   }; })();`;
 
-/* Une ligne du journal, avec la forme réelle d'une entrée V2 (voir journal_ecriture.js). `id` absent = ancienne ligne. */
-const ligne = (nom, o) => Object.assign({ date: new Date().toISOString().slice(0, 10), meal: 'dejeuner', name: nom, q: 100, u: 'g', kcal: 130, prot: 3, carbs: 28, fat: 1, ts: 1760000000000,
+/* Une ligne du journal, avec la forme réelle d'une entrée V2 (voir journal_ecriture.js). `id` absent = ancienne ligne.
+   La date est le jour LOCAL du processus : ce banc ouvre ses contextes SANS `timezoneId`, le navigateur suit donc le même fuseau (cas `jourLocal` de tests/_jour.js). */
+const ligne = (nom, o) => Object.assign({ date: jourLocal(0), meal: 'dejeuner', name: nom, q: 100, u: 'g', kcal: 130, prot: 3, carbs: 28, fat: 1, ts: 1760000000000,
   per100: null, v: 1, saisie: 'liste', origine: 'reprise', n2: { s: 1, m: 'd', no: [], st: 'declaree' } }, o || {});
 
 module.exports.ecran = async function ecran(t, b, PORT) {

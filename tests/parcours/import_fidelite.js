@@ -12,6 +12,7 @@
    ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
 'use strict';
 const vm = require('vm');
+const { jourParis } = require('../_jour.js');
 
 const js = x => JSON.stringify(x).slice(0, 600);
 const L = (name, sets, reps, kg, note, extra) => Object.assign({ name, sets, reps, repsPerSet: [], kg, kgPerSet: [], supersetGroup: '', setType: '', note: note || '' }, extra || {});
@@ -452,7 +453,7 @@ module.exports.ecran = async function (t, b, PORT) {
   };
   const c0 = await cal('', 4);
   t('IIF-G01 ⭐⭐ programme de 4 semaines SANS date de début : « Date de début à définir » — pas de « Semaine 1 / 4 » fabriqué, pas de barre, pas de boutons ±', /Date de début à définir/.test(c0.texte) && !/Semaine\s*1\s*\/\s*4/.test(c0.texte) && !/^−$|\|−\||\|\+\|/.test(c0.pm) && /Définir/.test(c0.pm), js(c0));
-  const il8 = new Date(Date.now() - 8 * 86400000).toISOString().split('T')[0];
+  const il8 = jourParis(-8);      // le jour de Paris (le contexte est ouvert en `Europe/Paris`), jamais celui de Greenwich — RECETTE-01 / tests/_jour.js (annexe `dates`, 16/11/2026)
   const c1 = await cal(il8, 4);
   t('IIF-G02 ⭐ avec une vraie date de début, le calcul existant est INCHANGÉ (début il y a 8 jours → « Semaine 2 / 4 », dates affichées, boutons ±)', /Semaine\s*2\s*\/\s*4/.test(c1.texte) && !/Date de début à définir/.test(c1.texte), js(c1));
   const shift = await pg.evaluate(() => { S.programmes[0].startDate = ''; shiftProgStart(0, 1); return S.programmes[0].startDate; });

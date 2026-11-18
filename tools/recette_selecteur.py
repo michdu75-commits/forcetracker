@@ -51,8 +51,15 @@ def lire(p):
         return f.read()
 
 
-def git(*a):
-    return subprocess.run(['git'] + list(a), cwd=RACINE, capture_output=True, text=True).stdout
+def git(*a, tolere=False):
+    """⛔ INFRA-04 : une commande git qui ÉCHOUE n'est plus une sortie vide. Une référence invalide + un fichier non suivi rendait « documentation, code 0 »
+    (l'erreur était perdue). `tolere=True` seulement pour `git show ref:fichier` : un fichier absent d'un des deux côtés d'un diff est NORMAL."""
+    r = subprocess.run(['git'] + list(a), cwd=RACINE, capture_output=True, text=True)
+    if r.returncode != 0 and not tolere:
+        print('⛔ git %s a ÉCHOUÉ (code %d) : %s' % (' '.join(a[:3]), r.returncode, r.stderr.strip()[:200]), file=sys.stderr)
+        print('   La sélection serait fausse EN SILENCE : rien n\'est sélectionné. Corriger la référence et relancer.', file=sys.stderr)
+        raise SystemExit(2)
+    return r.stdout
 
 
 def fonctions_du_code():
@@ -117,17 +124,41 @@ def citations(nom):
     return sorted(fichiers), blocs
 
 
-def zones_du_diff(spec):
+def declarees(reg):
+    """Les chemins que le registre déclare comme déclencheurs (`fichier:…`)."""
+    return {d[8:] for sc in reg['scenarios'] for d in sc['declencheurs'] if d.startswith('fichier:')}
+
+
+def zones_fichier(f, decl):
+    """Zones « fichier: » d'un chemin : celles du dictionnaire historique ET toute déclaration du registre (INFRA-05 : `data/ciqual.json`, `tools/alias.py`
+    étaient déclarés par 6 scénarios sans qu'AUCUN diff puisse jamais les produire — le registre ne vérifiait que l'existence, pas l'atteignabilité)."""
+    z = set()
+    if f in ZONES_FICHIER:
+        z.add(ZONES_FICHIER[f])
+    if f in decl:
+        z.add('fichier:' + f)
+    return z
+
+
+def ligne_version_seule(x):
+    """Une ligne qui ne change QUE le numéro de cache de sw.js : `const CACHE = 'ft-vNN';` éventuellement suivi d'un COMMENTAIRE. ⛔ INFRA-06 : `re.match`
+    sur le début de la ligne laissait passer du code exécutable écrit APRÈS le point-virgule."""
+    return re.fullmatch(r"\s*const CACHE = 'ft-v\d+'\s*;?\s*(//.*)?", x) is not None
+
+
+def zones_du_diff(spec, decl=None):
     """Fonctions et zones touchées par un diff. `spec` = « ref » (ref → arbre de travail) ou « a..b »."""
     if '..' in spec:
         a, b = spec.split('..', 1)
         diff = git('diff', '-U0', a, b)
-        lire_ap = lambda f: git('show', '%s:%s' % (b, f))
+        lire_ap = lambda f: git('show', '%s:%s' % (b, f), tolere=True)
     else:
         a = spec
         diff = git('diff', '-U0', a)
         lire_ap = lambda f: lire(f) if os.path.exists(os.path.join(RACINE, f)) else ''
-    lire_av = lambda f: git('show', '%s:%s' % (a, f))
+    lire_av = lambda f: git('show', '%s:%s' % (a, f), tolere=True)
+    if decl is None:
+        decl = declarees(json.load(open(REG, encoding='utf-8')))
     zones, fichiers = set(), {}
     if '..' not in spec:   # l'arbre de travail : les fichiers NOUVEAUX ne sont pas dans `git diff`
         for f in git('ls-files', '--others', '--exclude-standard').split('\n'):
@@ -147,16 +178,15 @@ def zones_du_diff(spec):
         elif cur and l.startswith('-') and not l.startswith('---'):
             fichiers[cur]['retraits'].append(l[1:])
     for f, info in fichiers.items():
+        zones |= zones_fichier(f, decl)      # AVANT « documentation » / « infra-test » : une zone métier et une zone d'infrastructure se CUMULENT
         if f.endswith('.md') or f.startswith('docs/'):
             zones.add('documentation'); continue
         if f.startswith(('tests/', 'tools/', '.github/')):
             zones.add('infra-test:' + f); continue
         if f == 'sw.js':
             chg = [x for x in info['ajouts'] + info['retraits'] if x.strip()]
-            zones.add('sw.js:version' if chg and all(re.match(r"\s*const CACHE = 'ft-v\d+'", x) for x in chg) else 'sw.js:logique')
+            zones.add('sw.js:version' if chg and all(ligne_version_seule(x) for x in chg) else 'sw.js:logique')
             continue
-        if f in ZONES_FICHIER:
-            zones.add(ZONES_FICHIER[f])
         for mz, rx in MOTIFS.items():
             if any(re.search(rx, x) for x in info['ajouts']):
                 zones.add(mz)
@@ -200,7 +230,7 @@ def selectionner(entrees, reg, noms, publication=False):
         for niv, lst in sc['tests_associes'].items():
             for tid in lst:
                 ajouter(niv if niv in niveaux else 'T2', tid)
-        if sc['type'] in ('MANUEL', 'HYBRIDE') and sc.get('manuel_si') and sc['niveau'] in ('T4', 'T6'):
+        if sc.get('manuel_si'):      # ⛔ INFRA-07 : 13 scénarios AUTO portaient un `manuel_si` (gestes iPhone, repos, RIR…) qui n'était JAMAIS restitué
             manuels.append(sc)
     if carrefours_vus:
         ajouter('T2', 'annexe'); ajouter('T2', 'passe')
@@ -232,6 +262,11 @@ def afficher(res, reg, entrees):
         print('  · %s — %s\n      pourquoi pas automatique : %s' % (s['id'], s['scenario'], s['manuel_si']))
     if not t4:
         print('  — aucun')
+    autres = [s for s in res['manuels'] if s['niveau'] not in ('T4', 'T6')]
+    if autres:
+        print('\nMANUEL CONDITIONNEL (scénarios AUTOMATIQUES dont le registre dit qu\'un geste réel reste nécessaire — ne pas les oublier) :')
+        for s in autres:
+            print('  · %s — %s\n      pourquoi : %s' % (s['id'], s['scenario'][:110], s['manuel_si']))
     t6 = [s for s in res['manuels'] if s['niveau'] == 'T6']
     if t6:
         print('\nT6 (recette lourde, à planifier, pas bloquant pour un micro-lot) :')
@@ -245,7 +280,7 @@ def afficher(res, reg, entrees):
         for n, f, b in res['sans_scenario']:
             print('  · %s — citée par %d bloc(s) de la passe%s' % (n, b, (' et ' + ', '.join(f[:4])) if f else ''))
     auto = sum(len(v) for k, v in res['niveaux'].items())
-    print('\n──── %d contrôle(s) automatique(s) · %d manuel(s) T4 · %d T6 à planifier ────' % (auto, len(t4), len(t6)))
+    print('\n──── %d contrôle(s) automatique(s) · %d manuel(s) T4 · %d T6 à planifier · %d manuel(s) conditionnel(s) ────' % (auto, len(t4), len(t6), len(autres)))
 
 
 def auto_test(reg, noms):
@@ -302,7 +337,7 @@ def zones_du_diff_texte(fichier, ajouts, retraits):
     """Même règle que `zones_du_diff` pour sw.js, sur un diff fabriqué (auto-test)."""
     chg = [x for x in ajouts + retraits if x.strip()]
     if fichier == 'sw.js':
-        return {'sw.js:version' if chg and all(re.match(r"\s*const CACHE = 'ft-v\d+'", x) for x in chg) else 'sw.js:logique'}
+        return {'sw.js:version' if chg and all(ligne_version_seule(x) for x in chg) else 'sw.js:logique'}
     return set()
 
 
@@ -319,7 +354,11 @@ def main():
             print('  · ' + x)
         return 2
     publication = '--publication' in args
-    args = [a for a in args if a != '--publication']
+    accepter = set()
+    for a in args:
+        if a.startswith('--accepter-sans-scenario='):
+            accepter |= {x for x in a.split('=', 1)[1].split(',') if x}
+    args = [a for a in args if a != '--publication' and not a.startswith('--accepter-sans-scenario=')]
     entrees = set()
     if args and args[0] == '--diff':
         entrees = zones_du_diff(args[1] if len(args) > 1 else 'origin/master')
@@ -328,8 +367,20 @@ def main():
             entrees |= {x for x in a.split(',') if x}
     if not entrees:
         print(__doc__); return 2
+    # ⛔ INFRA-04 : un nom que ni le code ni le registre ne connaissent SÉLECTIONNAIT RIEN, code 0 (une faute de frappe valait « rien à tester »)
+    connus = set(noms) | set(reg['carrefours']['liste']) | {d for sc in reg['scenarios'] for d in sc['declencheurs']}
+    inconnus = sorted(e for e in entrees if e not in connus and not e.startswith(('infra-test:', 'fichier:', 'sw.js:', 'motif:', 'source:')) and e != 'documentation')
+    if inconnus and not (args and args[0] == '--diff'):
+        print('⛔ entrée(s) INCONNUE(S) : %s — ni dans le code servi, ni dans le registre : la sélection serait vide EN SILENCE.' % ', '.join(inconnus))
+        return 2
     res = selectionner(entrees, reg, noms, publication)
     afficher(res, reg, entrees)
+    # ⛔ avec --publication, une fonction modifiée SANS scénario n'est plus un simple avertissement : le lot doit écrire son témoin, ou l'écrire en exception explicite
+    manque = [n for n, _, _ in res['sans_scenario'] if n not in accepter]
+    if publication and manque:
+        print('\n⛔ PUBLICATION REFUSÉE : %d fonction(s) modifiée(s) SANS scénario : %s' % (len(manque), ', '.join(sorted(manque)[:8])))
+        print('   → écrire le témoin, ou accepter EXPLICITEMENT : --accepter-sans-scenario=%s (avec la raison dans le rapport)' % ','.join(sorted(manque)[:3]))
+        return 1
     return 0
 
 

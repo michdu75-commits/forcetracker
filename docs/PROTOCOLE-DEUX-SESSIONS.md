@@ -6,6 +6,36 @@
 > dans **`CLAUDE.md` (règle 13)** et **`docs/REGLES-OR.md#13`**, et les 4 conditions de validité
 > d'une passe sont outillées par **`tools/passe_valide.sh`** (5 mutations éprouvées, toutes mordent).
 >
+> ⭐ **INFRA-QA-01 · LOT L0 (16/11/2026, branche locale `claude/qa-l0-2026-11-16`, NON intégré, NON publié)** — les audits des 15-16/11
+> ont mesuré que ces gardes laissaient passer (11 faux verts sur 20 scénarios réalistes pour `passe_valide.sh`, 6/13 pour
+> `passe_repartie.py`, 8/12 pour `recette_annexe.py`). Ce qui change, en une ligne par garde : **`passe_valide.sh`** refuse un arbre sale
+> (non suivis compris) au départ ET à l'arrivée, prouve le distant AVANT et APRÈS (une publication pendant la passe, E21), exige UNE ligne
+> de total ancrée dont ✅ = N et ❌ = K, voit les rouges à toute indentation, et ne dit plus « PASSE VALIDE » en mode d'épreuve (code 3) ;
+> **`tools/temoins.py` + `tests/recette/temoins-attendus.json`** vérifient les IDENTITÉS (un témoin omis, remplacé par un doublon, garde le
+> même total : il est maintenant refusé) — ⚠️ le manifeste n'existe pas encore : **la 1ʳᵉ passe après intégration se lance avec
+> `tools/passe_valide.sh --calibrer`** (une passe valide qui écrit le manifeste ; relire `git diff`, committer, relancer sans l'option) ;
+> **`passe_repartie.py`** idem sur la réunion des processus ; **`recette_annexe.py`** refuse suite vide / total non recoupé / défaut connu
+> aggravé (`plafonds`) et sort 3 avec `--strict` s'il reste un défaut connu ; **`recette_selecteur.py`** ne perd plus une erreur git, refuse un
+> nom inconnu, restitue les gestes manuels des scénarios AUTO et, avec `--publication`, refuse une fonction sans scénario.
+> Témoin permanent : **`python3 tests/gardes/arene.py tout`** (l'arène) et **`python3 tests/gardes/mutants.py <garde>`** (les mutants de chaque garde — `valide`, `repartie`, `annexe`, `selecteur`, `decoupe`, `temoins`).
+>
+> ⭐ **2ᵉ PASSE (16/11/2026, après la contre-expertise indépendante — branche locale `claude/qa-l0-v2-2026-11-16`, NON intégrée, NON publiée)** — cinq défauts reproduits sont corrigés, chacun avec ses scénarios et ses mutants :
+> **(1)** `recette_annexe.py --strict` (alias `--publication`) REFUSE une suite dont les identités ne sont pas calibrées (avant : « PASS » sur une suite amputée) ; sans `--strict`, le résultat est écrit « DIAGNOSTIC, PAS UNE VALIDATION ».
+> **(2)** le calibrage n'est plus déduit du SEUL journal à certifier : `passe_valide.sh --calibrer --croiser <dossier d'une passe répartie du même commit>` n'écrit le manifeste que si les DEUX exécutions (séquentielle et répartie) jouent exactement les mêmes témoins ;
+> la passe répartie laisse sa provenance (`PASSE.json` : commit, K, verdict, empreinte SHA-256 de chaque journal) ; un retrait de témoin exige `--accepter-retraits`.
+> ⚠️ **Limite écrite** : un témoin retiré du CODE disparaît des deux passes — il se voit dans le diff du manifeste, jamais écrasé sans `--accepter-retraits`.
+> **(3)** une calibration d'annexe ne crée ni ne répare plus le manifeste principal ; le manifeste est versionné (version 2), validé (N = somme des comptes, commit obligatoire) et écrit atomiquement.
+> **(4)** l'identité d'un témoin ne normalise plus aveuglément toutes les dates et toutes les heures : un libellé est son squelette + ses jetons de date (littéral ET décalage en jours) ; une durée (« 1:30 ») reste littérale ; l'horloge qui avance
+> (mois, année, 29 février) est jouée par l'arène. **(5)** `passe_repartie.py` refuse si `git status` FINAL (ou `git rev-parse` au départ) échoue — un code 128 à sortie vide valait « arbre propre ».
+> Le découpeur RÉEL (`tools/decouper_passe.js`, `tools/verifier_decoupe.js`) est éprouvé par l'arène (`arene.py decoupe`) sur un mini-runner de même structure : copies conformes, réunion = passe séquentielle, partitions permutées, instruction oubliée / doublée / réécrite / module éclaté.
+>
+> ⭐ **3ᵉ PASSE (17/11/2026, mission de fermeture — branche locale `claude/qa-l0-v3-2026-11-17`, NON intégrée, NON publiée)** — deux écarts de la contre-expertise ciblée : **(a) `QA-heure-liee-date`** : l'heure collée à une date est un jeton significatif (« à 07:30 » ≠ « à 08:30 ») ;
+> seule exception écrite et nommée : un libellé qui dit porter l'heure de consultation (l'horloge de la passe) — `LIBELLES_A_HORLOGE`. **(b) `QA-retrait-annexe`** : `calibrer_annexe` refuse un référentiel d'annexe qui RETIRE des identités sans `--accepter-retraits`
+> (diff lisible : identité, attendu / vu) et écrit la provenance de chaque calibration (`annexes_prov`). **Nouveau : `tools/inventaire_temoins.py`** — l'inventaire INDÉPENDANT des témoins attendus (lecture du code source : appels `t('libellé littéral', …)` par fichier, avec la partition) et sa
+> confrontation à un journal : c'est la revue à faire AVANT le futur calibrage, parce que le premier calibrage ne voit pas un témoin omis dans les DEUX modes. ⚠️ Il n'inventorie pas les libellés construits (gabarits, boucles) et « 0 absent » ne prouve pas que le journal est complet.
+>
+> ⚠️ **Rien de tout cela n'a été joué sur la vraie D-031** (NO-GO) : le manifeste des identités n'existe toujours pas, et le premier calibrage exigera désormais une passe séquentielle ET une passe répartie du même commit.
+>
 > ⏳ **DEUX POINTS NE SONT PAS TRANCHÉS, DONC PAS APPLIQUÉS** — et ils restent décrits ci-dessous
 > **tels quels**, comme propositions, pour qu'on n'aille pas croire plus tard qu'ils ont été oubliés
 > (**R30**) :

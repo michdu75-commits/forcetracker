@@ -1462,6 +1462,8 @@ console.log('\n═══ 12. Journal alimentaire : la provenance de chaque ligne
     addFoodEntry();
     o.scan=S.foodLog[nb()-1];
     // ── ③ SCAN puis la personne RETOUCHE les kcal a la main (une vraie frappe) ──────
+    //    ⚠️ NUT-VERROU-01 (29/10/2026, ft-v1263) : une fiche IDENTIFIEE (scan Open Food Facts ici) est VERROUILLEE — la frappe est
+    //    refusee, les kcal restent ceux de la fiche × la quantite, aucune correction n'est tracee (voir le temoin plus bas).
     openAddFood();
     src({saisie:'camera-code-local',origine:'off',sourceId:'3017620422003'});
     scanBloc({name:'Pate a tartiner',kcal:539,prot:6.3,carbs:57.5,fat:30.9});
@@ -1498,9 +1500,16 @@ console.log('\n═══ 12. Journal alimentaire : la provenance de chaque ligne
       !!(E(J.scan).per100 && E(J.scan).per100.kcal===539), JSON.stringify(E(J.scan).per100));
     t('/!\\ valeurs NON retouchees → aucune correction tracée', !!C(J.scan) && C(J.scan).length===0,
       JSON.stringify(E(J.scan).n2));
-    t('⭐⭐ VALEURS RETOUCHEES A LA MAIN : la ligne le dit — correction tracée (200 au lieu du calcul de la fiche)',
-      E(J.retouche).kcal===200 && !!C(J.retouche) && C(J.retouche).some(x=>x.c==='kcal' && x.v===200 && x.avant!==200),
-      JSON.stringify(E(J.retouche).n2));
+    /* 🔒 NUT-VERROU-01 (décision de Michel du 29/10/2026, publiée en ft-v1263) — CE TÉMOIN DISAIT L'INVERSE : « une valeur retouchée à la
+       main est une correction tracée (200 au lieu du calcul de la fiche) ». Sur une fiche IDENTIFIÉE (CIQUAL, Open Food Facts, enseigne) la
+       règle a changé : seule la quantité se modifie, les calories et macros viennent TOUJOURS de la fiche × la quantité (`app.js` :
+       `_afSaisieValeur` refuse la frappe, `corrections` est vide sur une fiche verrouillée). Il est RÉÉCRIT sur le même scénario, pas
+       assoupli : la valeur tapée ne doit ni être gardée, ni être tracée, ni toucher le pour-100 g. La correction tracée (CR-2) reste testée
+       sur les fiches NON identifiées (`nut2_parcours.js` P14/P15, banc du moteur ⑩ ⑪). */
+    t('⭐⭐ VALEURS RETOUCHEES A LA MAIN SUR UNE FICHE IDENTIFIEE (NUT-VERROU-01) : la frappe ne change RIEN — les kcal viennent de la fiche (comme sans frappe), aucune correction tracée',
+      typeof E(J.retouche).kcal==='number' && E(J.retouche).kcal!==200 && E(J.retouche).kcal===E(J.scan).kcal && !!C(J.retouche) && C(J.retouche).length===0
+      && !!(E(J.retouche).per100 && E(J.retouche).per100.kcal===539),
+      JSON.stringify({kcal:E(J.retouche).kcal, kcalSansFrappe:E(J.scan).kcal, per100:E(J.retouche).per100, n2:E(J.retouche).n2}));
     t('⭐⭐ LA PROVENANCE NE SURVIT PAS A LA SAISIE SUIVANTE (sinon le journal ment)',
       E(J.apresScan).origine==='utilisateur' && E(J.apresScan).saisie==='manuel' && E(J.apresScan).q===150
       && !E(J.apresScan).sourceId, JSON.stringify(J.apresScan));

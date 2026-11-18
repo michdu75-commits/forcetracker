@@ -1,5 +1,5 @@
 {
-  "_lisez_moi": "Rouges ACCEPTÉS par la commande `python3 tools/recette_annexe.py`. Chaque entrée nomme la suite, le libellé EXACT du témoin, son statut, la raison et la référence. Un libellé qui change n'est plus reconnu : il redevient un ÉCHEC (on ne masque rien par approximation). Statuts : « DÉFAUT CONNU » = défaut réel, écrit, dont la correction attend une décision ; « TÉMOIN PÉRIMÉ » = témoin qui ne mesure plus la bonne chose, en attente de réparation. Un rouge absent de cette liste fait échouer la commande.",
+  "_lisez_moi": "Rouges ACCEPTÉS par la commande `python3 tools/recette_annexe.py`. Chaque entrée nomme la suite, le libellé EXACT du témoin, son statut, la raison et la référence. Un libellé qui change n'est plus reconnu : il redevient un ÉCHEC (on ne masque rien par approximation). Statuts : « DÉFAUT CONNU » = défaut réel, écrit, dont la correction attend une décision ; « TÉMOIN PÉRIMÉ » = témoin qui ne mesure plus la bonne chose, en attente de réparation. Un rouge absent de cette liste fait échouer la commande. `plafonds` (INFRA-QA-01 · L0) : la valeur mesurée de CE défaut ne doit pas dépasser son pire état accepté (relevé au 16/11/2026) — un défaut connu qui s'AGGRAVE fait échouer la commande, une valeur illisible aussi ; on ne desserre un plafond que par une décision écrite.",
   "defauts": [
     {
       "suite": "discussions",
@@ -7,7 +7,8 @@
       "statut": "DÉFAUT CONNU",
       "raison": "Taille du prompt de Milo au-dessus du budget fixé par ce témoin. Rouge identique sur master, déjà constaté et écrit lors du Lot 1 ; la borne 400 / 150 000 reste un chantier ouvert. La valeur mesurée est réaffichée à chaque exécution.",
       "reference": "CLAUDE.md ft-v1239 (« Le banc tests/discussions/runner.js (hors passe complète) garde ses 2 rouges de taille de prompt, identiques sur master »)",
-      "depuis": "ft-v1239"
+      "depuis": "ft-v1239",
+      "plafonds": {"maison": 71801, "salle": 76720}
     },
     {
       "suite": "discussions",
@@ -15,7 +16,8 @@
       "statut": "DÉFAUT CONNU",
       "raison": "Même cause que le précédent : la partie mise en cache du prompt dépasse le budget de ce témoin. Même référence.",
       "reference": "CLAUDE.md ft-v1239",
-      "depuis": "ft-v1239"
+      "depuis": "ft-v1239",
+      "plafonds": {"avant marqueur": 68785}
     }
   ]
 }

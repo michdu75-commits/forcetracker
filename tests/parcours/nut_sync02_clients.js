@@ -233,7 +233,8 @@ module.exports = async function sectionE(t, b, PORT, pool, O, erreursGlobales) {
     const m = email('e04'); await pool.init(0, m, { code: CODE_PERSO });
     const A = await appareil('A', 1, m);
     await A.graine(SEMENCE.slice(0, 3).map(copie)); await A.sync();
-    await A.ev(() => { S.foodLog.push({ id: 'neuf-0000000a', date: new Date().toISOString().slice(0, 10), meal: 'dejeuner', name: 'Repas neuf test', q: 100, u: 'g', kcal: 77.7, prot: 2, carbs: 10, fat: 1, ts: 1760000099999, v: 1, saisie: 'liste', origine: 'reprise', n2: { s: 1, m: 'd', no: [], st: 'declaree' } }); persist(); });
+    /* Ce code s'exécute DANS LA PAGE : le « jour » est celui de l'app (`today()`), jamais le jour de Greenwich (cf. en-tête de tests/_jour.js). */
+    await A.ev(() => { S.foodLog.push({ id: 'neuf-0000000a', date: today(), meal: 'dejeuner', name: 'Repas neuf test', q: 100, u: 'g', kcal: 77.7, prot: 2, carbs: 10, fat: 1, ts: 1760000099999, v: 1, saisie: 'liste', origine: 'reprise', n2: { s: 1, m: 'd', no: [], st: 'declaree' } }); persist(); });
     await A.supprimer('sem3-00000003');
     A.perdreReponse = true;                                                                  // le serveur ÉCRIT, mais la réponse est perdue
     await A.sync();
