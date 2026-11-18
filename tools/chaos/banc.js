@@ -124,9 +124,10 @@ function main() {
   let e = etatFinal(h);
   const perduAS = !(e.as.sessions || []).some((s) => s.id === 'S_ADDED_BY_A');
   const perduSB = !(e.sb.sessions || []).some((s) => s.id === 'S_ADDED_BY_A');
-  t('M1a', 'PERTE MESUREE cote Apps Script : l ajout de A disparait', perduAS,
+  // F2-A\u2032 (12/11/2026) : Apps Script FUSIONNE les seances par identifiant — l ajout de A ne disparait plus quand B sauvegarde un etat ancien (avant : PERTE MESUREE).
+  t('M1a', 'Apps Script GARDE l ajout de A quand B sauvegarde un etat ANCIEN (fusion par identifiant, F2-A\u2032 : plus de perte)', !perduAS,
     (e.as.sessions || []).map((s) => s.id));
-  t('M1b', 'PERTE MESUREE cote Supabase : l ajout de A disparait aussi', perduSB,
+  t('M1b', 'PERTE MESUREE cote Supabase : l ajout de A disparait TOUJOURS (le miroir remplace la liste : hors perimetre de F2-A\u2032)', perduSB,
     (e.sb.sessions || []).map((s) => s.id));
 
   console.log('\n=== M2 — B modifie un AUTRE champ ===');
@@ -199,8 +200,12 @@ function main() {
     const ids = (e.as.sessions || []).map((s) => s.id);
     const dernier = ordre[1] === 'A' ? 'A_ONLY' : 'B_ONLY';
     const premier = ordre[1] === 'A' ? 'B_ONLY' : 'A_ONLY';
-    t('M5-' + ordre.join(''), 'seul le DERNIER ecrivain survit (' + dernier + ' present, ' +
-      premier + ' perdu)', ids.includes(dernier) && !ids.includes(premier), ids);
+    const idsSb = (e.sb.sessions || []).map((s) => s.id);
+    // F2-A\u2032 : cote Apps Script les DEUX ajouts survivent, quel que soit l ordre (avant : seul le dernier ecrivain survivait).
+    t('M5-' + ordre.join(''), 'Apps Script GARDE les DEUX ajouts (A_ONLY et B_ONLY presents, quel que soit l ordre : fusion F2-A\u2032)',
+      ids.includes('A_ONLY') && ids.includes('B_ONLY'), ids);
+    t('M5s-' + ordre.join(''), 'Supabase : seul le DERNIER ecrivain survit (' + dernier + ' present, ' +
+      premier + ' perdu) — le miroir remplace toujours la liste, hors perimetre de F2-A\u2032', idsSb.includes(dernier) && !idsSb.includes(premier), idsSb);
   }
 
   console.log('\n=== M6 — A et B modifient la MEME entree ===');
@@ -246,7 +251,7 @@ function main() {
   const videSess = Object.assign({}, clone(base), { token: jA, sessions: [] });
   ecrireDeuxCotes(h, videSess, H_A);
   e = etatFinal(h);
-  t('S3a', 'un `sessions: []` EXPLICITE est refuse par Apps Script',
+  t('S3a', 'un `sessions: []` EXPLICITE ne change rien cote Apps Script (les seances sont gardees)',
     (e.as.sessions || []).length === 2, e.as.sessions);
   t('S3b', 'un `sessions: []` EXPLICITE est ecrit par Supabase (absence != vide)',
     (e.sb.sessions || []).length === 0, e.sb.sessions);
@@ -259,7 +264,7 @@ function main() {
   const amp = clone(gros); amp.sessions = amp.sessions.slice(0, 50);
   ecrireDeuxCotes(h, Object.assign({}, amp, { token: jA }), H_A);
   e = etatFinal(h);
-  t('SR-a', 'Apps Script REFUSE un retrecissement brutal (500 -> 50)',
+  t('SR-a', 'Apps Script GARDE tout (500 -> 50) : fusion par identifiant (F2-A\u2032), rien n\'est refuse et rien n\'est perdu',
     (e.as.sessions || []).length === 500, (e.as.sessions || []).length);
   t('SR-b', '⛔ Supabase l ACCEPTE : le miroir tombe a 50',
     (e.sb.sessions || []).length === 50, (e.sb.sessions || []).length);
