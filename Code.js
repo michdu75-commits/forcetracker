@@ -5020,6 +5020,37 @@ function authorizeAndListTriggers() {
    UNE SEULE lecture de l'état d'un compte sert la lecture admin (P2), la précondition d'écriture (P3) et la garde de santé (P4) : trois fonctions n'auraient pas la même idée de « l'état ».
    ⛔ `_unpackUser_` rend `null` quand une ungzip ÉCHOUE : `loadUserData_` lit alors le compte comme ABSENT. Ici, une propriété PRÉSENTE mais illisible est une ERREUR (`u_illisible` / `h_illisible`),
    jamais une absence — sinon une lecture ratée deviendrait « aucune donnée » et une restauration écraserait ce qu'elle n'a pas su lire. */
+/** 🔒 V5-B (18/11/2026) — STRUCTURE EXPLOITABLE : un JSON LISIBLE n'est pas pour autant un compte. Rend `null` si la structure est exploitable, sinon le MOTIF (jamais une valeur) : `racine_non_objet`, `objet_vide`, `profile_non_objet` (tableau, chaîne, nombre…),
+    et, pour les données reçues à restaurer (`strict`), `profile_absent`, `sessions_non_liste`, `prs_non_objet`. ⛔ Rien n'est inventé ni migré : une structure inexploitable est REFUSÉE, jamais « réparée ». Les anciens formats LÉGITIMES passent : `profile` absent ou `null` sur un compte vivant, `sessions`/`prs` absents ou `null`. */
+function _structureCompte_(d, strict) {
+  var objet = function(x) { return x !== null && typeof x === 'object' && !Array.isArray(x); };
+  if (!objet(d)) return 'racine_non_objet';
+  if (!Object.keys(d).length) return 'objet_vide';
+  if (d.profile !== undefined && d.profile !== null && !objet(d.profile)) return 'profile_non_objet';
+  if (strict) {
+    if (!objet(d.profile)) return 'profile_absent';
+    if (d.sessions !== undefined && d.sessions !== null && !Array.isArray(d.sessions)) return 'sessions_non_liste';
+    if (d.prs !== undefined && d.prs !== null && !objet(d.prs)) return 'prs_non_objet';
+  }
+  return null;
+}
+/** 🔒 V5-A (18/11/2026) — POSTCONDITION d'une restauration : l'état RELU doit être EXACTEMENT l'état attendu — les VALEURS attendues ET les ABSENCES attendues. Calculée sous le verrou, jamais sur la réponse d'une écriture.
+    État attendu : le haut niveau et le profil NON santé = ce qui a été écrit ; la santé = ce qui a été écrit (`ecritSante`) — ou, en `sansSante` (D6), la santé du compte d'AVANT, intacte. Tout champ présent à la relecture sans être attendu (ex. `bloodTests` dont le retrait était demandé) est un RÉSIDU.
+    Rend { manquants, residuels } (noms de champs, jamais de valeur) ; deux listes vides = conforme. */
+function _postRestauration_(relu, data, ecritSante, santeAvant, sansSante) {
+  var manquants = [], residuels = [], R = relu || {}, rp = R.profile || {}, dp = data.profile || {};
+  var egal = function(a, b) { return _sessCanon_(a, false) === _sessCanon_(b, false); };
+  Object.keys(data).forEach(function(k) { if (k !== 'profile' && !egal(R[k], data[k])) manquants.push(k); });
+  Object.keys(R).forEach(function(k) { if (k !== 'profile' && data[k] === undefined) residuels.push(k); });
+  var attendue = sansSante ? (santeAvant || {}) : ecritSante;
+  Object.keys(dp).forEach(function(c) { if (_CHAMPS_SANTE_.indexOf(c) < 0 && !egal(rp[c], dp[c])) manquants.push('profile.' + c); });
+  Object.keys(rp).forEach(function(c) { if (_CHAMPS_SANTE_.indexOf(c) < 0 && dp[c] === undefined) residuels.push('profile.' + c); });
+  _CHAMPS_SANTE_.forEach(function(c) {
+    if (attendue[c] !== undefined) { if (!egal(rp[c], attendue[c])) manquants.push('profile.' + c); }
+    else if (rp[c] !== undefined) residuels.push('profile.' + c);
+  });
+  return { manquants: manquants, residuels: residuels };
+}
 function _etatCompteLire_(email) {
   var sp = PropertiesService.getScriptProperties();
   var ru = sp.getProperty(userKey_(email)), rh = sp.getProperty(santeKey_(email));
@@ -5030,7 +5061,7 @@ function _etatCompteLire_(email) {
     try { var o = JSON.parse(txt); return (o && typeof o === 'object' && !Array.isArray(o)) ? { ok: true, v: o } : { ok: false }; } catch (e) { return { ok: false }; }
   }
   var u = null, h = null;
-  if (presentU) { var lu = lire(ru); if (!lu.ok) return { erreur: 'u_illisible' }; u = lu.v; }
+  if (presentU) { var lu = lire(ru); if (!lu.ok) return { erreur: 'u_illisible' }; u = lu.v; var _m = _structureCompte_(u, false); if (_m) return { erreur: 'u_structure_inexploitable', motif: _m }; }   // 🔒 V5-B : lisible ≠ exploitable
   if (presentH) { var lh = lire(rh); if (!lh.ok) return { erreur: 'h_illisible' }; h = lh.v; }
   /* L'ÉTAT est une empreinte du CONTENU des deux clés (clés triées, indépendante de la compression) : toute modification de `u_` OU de `h_` la change — y compris une santé modifiée sans que `updatedAt` bouge. */
   return { u: u, h: h, etat: (u === null && h === null) ? 'VIDE' : _sha256hex_(_sessCanon_({ u: u, h: h }, false)) };
@@ -5067,7 +5098,7 @@ function handleAdminReadAccount_(body) {
   if (!_hv) return json_({status:'error', ok:false, error:'busy', code:'NUT_LOCK_BUSY', retryable:true});
   try {
     const c = _etatCompteLire_(email);
-    if (c.erreur) return json_({status:'error', ok:false, error:c.erreur, detail:'une propriété du compte est PRÉSENTE mais illisible : refusé, jamais traité comme une absence'});
+    if (c.erreur) return json_({status:'error', ok:false, error:c.erreur, motif:c.motif, detail:'une propriété du compte est PRÉSENTE mais illisible ou de structure inexploitable : refusé, jamais traité comme une absence'});
     if (c.u === null && c.h === null) return json_({status:'not_found', etat:'VIDE'});
     Logger.log('[FT adminReadAccount] lecture admin (aucun contenu journalisé)');
     return json_({status:'ok', u:c.u, h:c.h, etat:c.etat});
@@ -5086,6 +5117,8 @@ function handleAdminRestore_(body) {
   if (!email) return json_({status:'error', error:'email required'});
   let data = body.data;
   if (!data || !data.profile) return json_({status:'error', error:'data.profile required'});
+  const _motifStruct = _structureCompte_(data, true);   // 🔒 V5-B : des données lisibles mais de structure inexploitable (profil en tableau ou en chaîne, objet vide…) ne sont JAMAIS écrites
+  if (_motifStruct) return json_({status:'error', ok:false, error:'donnees_structure_inexploitable', motif:_motifStruct, detail:'les données à restaurer ne forment pas un compte exploitable — rien n\'a été écrit, rien n\'est inventé ni migré'});
   /* 🔒 P1 — DÉBUT (18/11/2026) IDENTITÉ DU COMPTE : aucune restauration INTER-COMPTES. `data.email = email` (plus bas) RÉÉCRIT l'adresse du fichier : sans ce contrôle, les données de B s'écrivaient chez A, réponse « ok ».
      L'appelant doit DIRE de quelle entrée de la sauvegarde viennent les données (`sourceEmail`, l'adresse de l'ENTRÉE du fichier) ; elle doit désigner le compte visé, comme `data.email` et `data.profile.email` s'ils existent.
      ⛔ Une identité absente n'est JAMAIS devinée : `sourceEmail` manquant = refus (`identite_source_absente`). Une ancienne sauvegarde LÉGITIME garde son adresse d'entrée : elle passe.
@@ -5113,6 +5146,7 @@ function handleAdminRestore_(body) {
   }
 
   /* NUT-SYNC-02 phase A : une restauration réécrit le compte ENTIER — sous le même verrou que `saveProfile`, jamais entre sa lecture et son écriture. Occupé : réponse réessayable, rien n'est écrit. */
+  let _verdict = { manquants: [], residuels: [] }, _classe = null;   // 🔒 V5-A
   const _hv = _nutVerrouPrendre_();
   if (!_hv) return json_({status:'error', error:'busy', ok:false, code:'NUT_LOCK_BUSY', retryable:true});
   try {
@@ -5125,7 +5159,7 @@ function handleAdminRestore_(body) {
     /* 🔒 P3 — DÉBUT (18/11/2026) PRÉCONDITION D'ÉTAT, SOUS LE MÊME VERROU QUE TOUS LES ÉCRIVAINS (`saveProfile`, e-mail vérifié, code perso, `pushHealth`, résumé du coach). L'état est l'empreinte du CONTENU de `u_` ET de `h_` (pas seulement `updatedAt`) :
        une saisie arrivée depuis la lecture — santé comprise, même sans changement de date — fait refuser la restauration (`etat_change`) AVANT toute écriture. OBLIGATOIRE : sans `etatAttendu` (lu par `adminReadAccount`), refus. Compte illisible : refus, jamais écrasé. */
     const _lu = _etatCompteLire_(email);
-    if (_lu.erreur) return json_({status:'error', ok:false, error:_lu.erreur, detail:'le compte vivant est présent mais illisible : restauration refusée, rien n\'a été écrit'});
+    if (_lu.erreur) return json_({status:'error', ok:false, error:_lu.erreur, motif:_lu.motif, detail:'le compte vivant est présent mais illisible ou de structure inexploitable : restauration refusée, rien n\'a été écrit'});
     if (typeof body.etatAttendu !== 'string' || !body.etatAttendu) return json_({status:'error', ok:false, error:'precondition_absente', detail:'`etatAttendu` (lu par adminReadAccount) est obligatoire : on n\'écrase jamais un compte sans avoir vérifié son état — rien n\'a été écrit'});
     if (body.etatAttendu !== _lu.etat) return json_({status:'error', ok:false, error:'etat_change', detail:'le compte a changé depuis la lecture (u_ ou h_) — rien n\'a été écrit'});
     /* 🔒 P3 — FIN */
@@ -5159,16 +5193,28 @@ function handleAdminRestore_(body) {
        pourrait de nouveau écrire dans un compte dont les appareils à jour ont des suppressions à re-déclarer (leur guérison les renverra). Le marqueur du compte est donc conservé. */
     var _proto = _nutProtoDe_(_courant);
     if (_proto >= NUT_PROTOCOLE_MIN_ && !(Number(data.nutProto) >= _proto)) data.nutProto = _proto;
-    /* ÉCHEC PARTIEL EXPLICITE : `saveUserData_` écrit la santé (`h_`) AVANT `u_`. Si l'écriture échoue entre les deux, on rétablit `h_` tel qu'il était et on le DIT (jamais « ok », jamais un compte à moitié restauré en silence). */
+    /* ÉCHEC PARTIEL EXPLICITE : `saveUserData_` écrit la santé (`h_`) AVANT `u_`. Si l'écriture échoue entre les deux, on rétablit `h_` tel qu'il était et on le DIT (jamais « ok », jamais un compte à moitié restauré en silence).
+       🔒 V5-A (18/11/2026) — TROIS ISSUES, JAMAIS CONFONDUES, et toutes jugées sur l'ÉTAT RELU sous le verrou (pas sur ce que `saveUserData_` raconte : il ABSORBE l'échec d'écriture de `h_` et écrit quand même `u_`, ce qui laissait « ok » avec `bloodTests` encore là) :
+         · `ecriture:'aucune'`     — l'état relu est celui d'AVANT (empreinte identique) : échec SANS écriture ;
+         · `ecriture:'partielle'`  — l'état a changé et n'est pas l'état attendu : ÉCRITURE PARTIELLE, résultat AMBIGU (`etat_ambigu`) — jamais de nouvel essai automatique, jamais de rétablissement automatique (l'instantané de l'outil sert) ;
+         · `ecriture:'indeterminee'` — l'état ne se relit pas.
+       Le « ok » exige la POSTCONDITION (`_postRestauration_`) : valeurs attendues ET absences attendues, et, en `sansSante` (D6), `h_` octet pour octet. */
     const _sp = PropertiesService.getScriptProperties(), _hAvant = _sp.getProperty(santeKey_(email));
+    const _classer = function() { const a = _etatCompteLire_(email); return a.erreur ? { ecriture: 'indeterminee', etat: null } : { ecriture: (a.etat === _lu.etat ? 'aucune' : 'partielle'), etat: a.etat }; };
     try {
       saveUserData_(email, data);
     } catch (eEcriture) {
       let _retabli = true;
       try { if (_hAvant === null || _hAvant === undefined) _sp.deleteProperty(santeKey_(email)); else _sp.setProperty(santeKey_(email), _hAvant); } catch (e2) { _retabli = false; }
       Logger.log('[FT adminRestore] ÉCRITURE ÉCHOUÉE pour ' + email + ' : ' + eEcriture.message + (_retabli ? ' (santé rétablie à son état d\'avant)' : ' ⚠️ santé NON rétablie — état à vérifier'));
-      return json_({status:'error', ok:false, error:'restauration_echouee', sante_retablie:_retabli, detail:String(eEcriture && eEcriture.message || eEcriture).slice(0, 160)});
+      const _c = _classer();
+      return json_({status:'error', ok:false, error:'restauration_echouee', sante_retablie:_retabli, ecriture:_c.ecriture, etat_ambigu:(_c.ecriture !== 'aucune'), nouvel_essai_automatique:false, etat:_c.etat, detail:String(eEcriture && eEcriture.message || eEcriture).slice(0, 160)});
     }
+    /* la POSTCONDITION, sous le même verrou : aucun écrivain concurrent ne peut s'intercaler entre l'écriture et sa vérification */
+    const _santeAvant = _lu.h || {};
+    _verdict = _postRestauration_(loadUserData_(email) || {}, data, _ecritSante, _santeAvant, body.sansSante === true);
+    if (body.sansSante === true && _sp.getProperty(santeKey_(email)) !== _hAvant) _verdict.manquants.push('h_');   // D6 : `h_` n'est PAS touché, octet pour octet
+    if (_verdict.manquants.length || _verdict.residuels.length) _classe = _classer();
   } finally { _nutVerrouRendre_(_hv, 'adminRestore'); }
 
   try { _mirrorUserToSheet_(email, data); } catch(e) {
@@ -5176,19 +5222,10 @@ function handleAdminRestore_(body) {
   }
 
   const readBack = loadUserData_(email) || {};
-  /* relecture de CONTENU : ce qui devait être écrit l'a-t-il été, à l'identique ? Chaque clé de `data` écrite (séances, records, … — et, pour le profil, chaque champ écrit, santé comprise) est comparée sous forme canonique
-     (clés triées) à ce que la relecture rend : même nombre d'éléments mais contenu différent = `partial` + les NOMS des champs en écart, jamais « ok ». (Seules transformations légitimes : aucune après `data.email`, `data.updatedAt`
-     et `data.nutProto`, déjà posés AVANT l'écriture, donc comparés tels quels ; la santé est rangée dans `h_` puis recomposée à la lecture.) */
-  const _manquants = [];
-  Object.keys(data).forEach(function(k) {
-    if (k === 'profile') {
-      Object.keys(data.profile).forEach(function(c) {
-        if (_sessCanon_((readBack.profile || {})[c], false) !== _sessCanon_(data.profile[c], false)) _manquants.push('profile.' + c);
-      });
-    } else if (_sessCanon_(readBack[k], false) !== _sessCanon_(data[k], false)) _manquants.push(k);
-  });
-  if (_manquants.length) {
-    return json_({status:'partial', ok:false, error:'restauration_incomplete', manquants:_manquants.slice(0, 40), sessions:(readBack.sessions || []).length, prs:Object.keys(readBack.prs || {}).length});
+  /* relecture de CONTENU : valeurs ET absences (voir `_postRestauration_`). Même nombre d'éléments mais contenu différent, ou champ qui devait disparaître et qui est encore là = `partial` + les NOMS (jamais « ok », jamais une valeur). */
+  if (_verdict.manquants.length || _verdict.residuels.length) {
+    return json_({status:'partial', ok:false, error:'restauration_incomplete', ecriture:_classe.ecriture, etat_ambigu:true, nouvel_essai_automatique:false, etat:_classe.etat, manquants:_verdict.manquants.slice(0, 40), residuels:_verdict.residuels.slice(0, 40), sessions:(readBack.sessions || []).length, prs:Object.keys(readBack.prs || {}).length,
+      detail:'l\'état relu diffère de l\'état attendu : écriture ' + _classe.ecriture + ' — aucun nouvel essai automatique ; instantané de sécurité de l\'outil à utiliser'});
   }
   return json_({
     status: 'ok',

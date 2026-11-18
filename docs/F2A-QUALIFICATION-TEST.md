@@ -107,6 +107,9 @@ Le contrat exact, les vérifications de compatibilité et la recette locale fict
 | T15 | **P4** : santé seulement dans `u_` + `sansSante` ; migration partielle ; divergence `u_`/`h_` ; champ inconnu dans `h_` ; perte non confirmée / confirmation inexacte | `sante_non_migree` ; `sante_divergente_u_h` ; `sante_h_champ_inconnu` ; `sante_supprimee_non_confirmee` / `sante_confirmation_invalide` |
 | T16 | lecture admin puis restauration d'un compte **absent** | `not_found`/`VIDE`, puis création avec `etatAttendu:"VIDE"` |
 | T17 | **limites Apps Script réelles** pour la route de lecture (valeur de `u_` volumineuse, 9 Ko / 500 Ko) | réponse complète ou refus explicite, jamais une lecture tronquée présentée comme complète |
+| T18 | **V5-A** : restauration demandant le retrait de `bloodTests` (`santePerdueConfirmee`), **écriture de `h_` refusée** (à provoquer sur TEST : propriété `h_…` du compte fictif remplie jusqu'au plafond, ou valeur trop grande) | **jamais « ok »** : `partial` / `restauration_incomplete`, `ecriture:"partielle"`, `residuels:["profile.bloodTests"]`, `etat_ambigu:true` ; **une seule** tentative d'écriture de `h_` (aucun nouvel essai) ; `h_` d'avant intact — **vérifier en réel que `saveUserData_` absorbe bien l'échec** |
+| T19 | **V5-A** : échec d'écriture de `u_` (santé rétablie) ; D6 `sansSante` + stockage de `h_` saturé | `restauration_echouee`, `ecriture:"aucune"`, état identique à l'état d'avant ; D6 : « ok », `h_` octet pour octet |
+| T20 | **V5-B** : `u_` du compte fictif réécrit à `{}`, puis avec un profil en tableau / chaîne ; données à restaurer avec profil en tableau / chaîne, `sessions` en chaîne | `u_structure_inexploitable` (lecture **et** restauration) ; `donnees_structure_inexploitable` ; compte intact ; un ancien compte sans `profile` se lit normalement |
 
 ## 7. Retour arrière
 

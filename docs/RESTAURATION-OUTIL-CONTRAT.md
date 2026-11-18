@@ -1,4 +1,4 @@
-# 🔧 Outil de restauration (hors dépôt) — le CONTRAT v4 que le serveur exige
+# 🔧 Outil de restauration (hors dépôt) — le CONTRAT v4 que le serveur exige (+ addendum V5 du 18/11, § 7)
 
 > **18/11/2026** — arbitrage de Michel : **P1 à P4 retenus** (« les propositions de code initiales ne le sont pas telles quelles »). Candidat `claude/f2a-prime-v4-2026-11-17` (depuis F2-A′ v3 `0a723a05`). ⛔ Rien ici n'est exécuté sur un vrai compte : le contrat est éprouvé **en local** (banc `B-F2A`, section P, vrai `Code.js` en mémoire).
 > Ce document dit ce que `adminRestore` et `adminReadAccount` **exigent et refusent** ; l'outil réel (privé, hors dépôt) s'y conforme. **Contrat v4 ≠ production @195** : l'ancien contrat (v3, 17/11) n'est plus accepté par ce serveur.
@@ -60,6 +60,19 @@ Aucune valeur n'est jamais rendue, seulement des **noms de champs**. `sansSante:
 
 ## 6. Preuves locales
 `node tools/banc_f2_seances_union.js` (section `P`) : chaque témoin de refus est **rouge sur le `Code.js` v3** (`0a723a05`) et **vert sur v4** ; `python3 tools/mut_f2_seances_union.py M60,…,M83` : une neutralisation par protection, toutes détectées. **Rien n'a tourné sur un vrai Apps Script.**
+
+## 7. V5 (18/11/2026) — postcondition de restauration et structure exploitable (correction ciblée, rien de P1–P4 n'est rouvert)
+**Réponses nouvelles ou précisées de `adminRestore`** (noms de champs seulement, jamais de valeur) :
+| Réponse | Sens |
+|---|---|
+| `{status:"ok", …}` | **uniquement** si l'état **relu sous le verrou** est l'état attendu : les **valeurs** attendues **et** les **absences** attendues (un champ de santé dont le retrait était demandé ne doit plus être là) ; en `sansSante` (D6), `h_` est vérifié **octet pour octet** |
+| `{status:"partial", error:"restauration_incomplete", ecriture:"partielle", etat_ambigu:true, nouvel_essai_automatique:false, manquants:[…], residuels:[…], etat}` | l'état relu diffère de l'état attendu : `manquants` = valeur attendue absente ou différente ; `residuels` = champ présent alors qu'il devait disparaître. **Résultat ambigu : aucun nouvel essai automatique, aucun rétablissement automatique** (l'instantané de l'outil sert) |
+| `{status:"error", error:"restauration_echouee", ecriture:"aucune"\|"partielle"\|"indeterminee", etat_ambigu, nouvel_essai_automatique:false, sante_retablie, etat}` | l'écriture a levé une erreur. **`aucune`** = l'état relu est **identique** à l'état d'avant (échec sans écriture) ; **`partielle`** = l'état a changé (ambigu) ; **`indeterminee`** = l'état ne se relit pas |
+| `{status:"error", error:"donnees_structure_inexploitable", motif}` | les données à restaurer sont lisibles mais pas exploitables : `racine_non_objet`, `objet_vide`, `profile_non_objet` (tableau, chaîne, nombre), `profile_absent`, `sessions_non_liste`, `prs_non_objet` — **refus avant toute écriture, rien n'est inventé ni migré** |
+| `{status:"error", error:"u_structure_inexploitable", motif}` (aussi sur `adminReadAccount`) | le `u_` **vivant** est lisible mais inexploitable (`{}`, profil en tableau/chaîne/nombre) : lecture **et** restauration refusées, jamais traité comme « absent » |
+**Pourquoi** : `saveUserData_` **absorbe** l'échec d'écriture de `h_` et écrit quand même `u_` ; `adminRestore` répondait « ok » alors que `bloodTests` (dont le retrait était demandé) était encore là. Le jugement porte désormais sur **l'état relu**, jamais sur la parole de l'écriture.
+**Anciens formats légitimes préservés** : `profile` absent ou `null` sur un compte vivant ; `sessions` / `prs` absents ou `null`. **Limite dite** : un compte vivant de structure inexploitable n'est pas restaurable par cette route (même décision que pour un compte illisible : voie de secours explicite, hors périmètre).
+**Outil privé** : le vérificateur indépendant traite désormais un champ **présent mais non attendu** comme un **écart** (`ECART_RELECTURE`), jamais comme un avertissement ; il distingue `ecriture:"aucune"` / `"partielle"` ; il n'a **aucun** nouvel essai hors `busy` (réponse émise avant toute écriture). Preuves : `tests/parcours/f2_seances_union.js` section `Q` (Q01–Q28), mutants M84–M101 ; recette de l'outil section `W`, mutants G37–G40.
 
 ---
 
