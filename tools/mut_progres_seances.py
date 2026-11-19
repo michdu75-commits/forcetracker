@@ -94,7 +94,7 @@ MUT = [
     ('M28 [deguisee] les seances sans date (ou mal datees) disparaissent du regroupement',
      [(SE, "  flist.forEach(s=>{const m=_sessMoisDe(s),an=m==='?'?'?':m.slice(0,4);", "  flist.forEach(s=>{if(_sessMoisDe(s)==='?')return;const m=_sessMoisDe(s),an=m==='?'?'?':m.slice(0,4);")], 'GARDE', 'PS-E39'),
     ('M29 une porte d\'entree garde le filtre de muscle (la seance visee peut etre cachee)',
-     [(SE, "  _sessFiltres=[];\n  _sessOuvrir(mois);", "  _sessOuvrir(mois);")], 'GARDE', 'PS-E40'),
+     [(SE, "  _sessFiltres=[]; _sessGenre='';", "  _sessGenre='';")], 'GARDE', 'PS-E40'),   # 19/11/2026 (G2 bis) : ancre mise a jour — depuis le filtre de TYPE (05/11) la porte remet aussi `_sessGenre` ; unique dans setup.js
     ('M30 [deguisee] fermer le detail replie les mois (le retour ne ramene plus au mois)',
      [(SE, "  _sessId=null;_sessEdits=null;_sdDelConfirm=false;\n", "  _sessId=null;_sessEdits=null;_sdDelConfirm=false;\n  try{Object.keys(_sessMoisOuvert).forEach(k=>delete _sessMoisOuvert[k]);renderSessions();}catch(e){}\n")], 'GARDE', 'PS-E13b'),
     # ── PROGRES-SEANCES-INTEGRATION-01 (session-B, 14/10) : decision de Michel — le mois courant s'ouvre seul en entree normale ──
@@ -158,7 +158,7 @@ MUT = [
     ('M55 l\'aide « ? » de Progres annonce encore quatre onglets dont Badges',
      [(SC, "<b>Progrès a trois onglets, et Séances passe en premier.</b>", "<b>Progrès a quatre onglets, et Séances passe en premier.</b>")], 'GARDE', 'PS-E51'),
     ('M59 [deguisee] l\'aide de l\'ACCUEIL renvoie encore a « l\'onglet Badges dans Progres »',
-     [(SC, "Pour tout voir : Menu ☰ → <b>Ton suivi</b> → <b>Badges</b>.'},", "Consulte l\\'onglet Badges dans Progrès pour tout voir.'},")], 'GARDE', 'PS-E51'),
+     [(SC, "{i:'🏅',t:'Tes badges sont dans Menu ☰ → <b>Ton suivi</b> → <b>Badges</b>.'},", "{i:'🏅',t:'Consulte l\\'onglet Badges dans Progrès pour tout voir.'},")], 'GARDE', 'PS-E51'),   # 19/11/2026 (G2 bis) : ancre mise a jour — l'audit des aides (0f36473b) a reecrit la ligne ; unique dans screens.js
     # [!!] 1re version (`marginTop='2px'`) : 0 rouge, et c'etait la MUTATION — mesure : la marge est appliquee (2px calcule)
     #      mais le rectangle du « + » ne bouge pas d'un pixel. Un decalage qui ne deplace rien ne prouve rien : translateY.
     ('M56 [deguisee] ouvrir Badges deplace le « + » central de 2 px (regle d\'or #9)',
