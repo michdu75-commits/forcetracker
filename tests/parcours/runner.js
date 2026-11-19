@@ -14527,6 +14527,9 @@ console.log('\n-- CXXIX. « Scanner » et « Importer » sont rangés, pas retir
       (R2) — deux copies auraient divergé, et l'une porte trois garde-fous anti-TCA. */
 {
   const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  /* 19/11/2026 (G2 bis) — ⛔ HORLOGE FIGÉE À 10:00 UTC (midi Paris) : `_ideesPourLeReste` coupe « ce qu'il te reste » à partir de 20 h Europe/Paris (garde anti-TCA, VOULU). Sans horloge fixée, ce bloc rougissait chaque soir
+     après 20 h (mesuré à l'horloge fictive : 18:50Z vert / 19:05Z rouge en hiver ; 17:50Z vert / 18:05Z rouge en été, soit toujours 20 h 05 Paris) — un défaut de TEST, pas de l'app. Le JOUR reste celui de la passe (seule l'heure est fixée). */
+  { const _h = new Date(); _h.setUTCHours(10, 0, 0, 0); await cx.clock.setFixedTime(_h); }
   const pg=await cx.newPage();
   await pg.addInitScript(seedScript({}));
   await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(2300);
