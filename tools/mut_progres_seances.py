@@ -25,11 +25,17 @@ AVANT = 'a0eab5b3'
 SE, LO, CO, SC, IX, CT, AP = 'setup.js', 'log.js', 'coach.js', 'screens.js', 'index.html', 'constants.js', 'app.js'
 FICHIERS = ('setup.js', 'log.js', 'coach.js', 'screens.js', 'index.html', 'constants.js', 'app.js', 'style.css')
 
+# 19/11/2026 (G2) — ancres communes reecrites apres ft-v1266 (« Autre activite » : filtre de TYPE, `_sessCarteEnveloppe`, panneau du calendrier). Chacune est UNIQUE (verifiee avant campagne par le script d'ancres des preuves privees, hors depot ; l'outil lui-meme refuse toute ancre absente ou multiple : INVALIDE).
+LISTE_VIDE = "  if(!flist.length){el.innerHTML='<div class=\"empty\">'+(_sessFiltres.length?'Aucune séance pour '+(_sessFiltres.length>1?'ces muscles':'ce muscle'):'Aucun enregistrement de ce type')+'</div>';return;}"
+CIBLE = "  const _cible=_sessCibles.indexOf(s.ts||s.id||0)>=0;"
+PORTE_FILTRES = "  _sessFiltres=[]; _sessGenre='';"
+
 MUT = [
     ("M00 code d'AVANT le chantier remis mot pour mot (master a0eab5b3)", 'AVANT', 'GARDE', 'PS-E01'),
     ('M1 le plafond de 20 cartes revient',
-     [(SE, "  if(!flist.length){el.innerHTML='<div class=\"empty\">Aucune séance pour '+(_sessFiltres.length>1?'ces muscles':'ce muscle')+'</div>';return;}\n  /* 🗂️",
-           "  flist=flist.slice(0,20);\n  if(!flist.length){el.innerHTML='<div class=\"empty\">Aucune séance pour ce muscle</div>';return;}\n  /* 🗂️")], 'GARDE', 'PS-S2'),
+     # 19/11/2026 (G2) : ancre mise a jour — le message de liste vide depend du filtre de TYPE depuis ft-v1266 ; la mutation ne change QUE le plafond (`flist` est un `let`, l'affectation est valide)
+     [(SE, LISTE_VIDE + "\n  /* 🗂️",
+           "  flist=flist.slice(0,20);\n" + LISTE_VIDE + "\n  /* 🗂️")], 'GARDE', 'PS-S2'),
     ('M2 [deguisee] le regroupement perd la plus ancienne seance de chaque mois',
      [(SE, "          +(o?'<div class=\"sess-mois-cartes\">'+L.map(_sessCarteHtml).join('')+'</div>':'')",
            "          +(o?'<div class=\"sess-mois-cartes\">'+L.slice(0,Math.max(1,L.length-1)).map(_sessCarteHtml).join('')+'</div>':'')")], 'GARDE', 'PS-E11'),
@@ -59,12 +65,13 @@ MUT = [
     ('M13 le sous-onglet est de nouveau force (Exercices a chaque ouverture)',
      [(SE, "  switchProgTab(_progTab,document.getElementById(PROG_ONGLETS[_progTab][0]));", "  switchProgTab('exo',document.getElementById('ptab-exo'));")], 'GARDE', 'PS-E02'),
     ('M14 le calendrier ne vise plus la seance (« Revoir la seance » nu)',
-     [(SC, "    +'<div onclick=\"goSessionsHistory('+_argAttr(sess.map(s=>s.ts||s.id||0))+')\" class=\"ft-press\"", "    +'<div onclick=\"goSessionsHistory()\" class=\"ft-press\"")], 'GARDE', 'PS-E28'),
+     # 19/11/2026 (G2) : le panneau du calendrier passe `tout.map(…)` (et porte `data-calpanel-revoir`) depuis ft-v1266
+     [(SC, "goSessionsHistory('+_argAttr(tout.map(s=>s.ts||s.id||0))+')\" class=\"ft-press\" data-calpanel-revoir", "goSessionsHistory()\" class=\"ft-press\" data-calpanel-revoir")], 'GARDE', 'PS-E28'),
     ('M15 [deguisee] la cible marque tout le MOIS au lieu des seances visees',
-     [(SE, "    const _cible=_sessCibles.indexOf(s.ts||s.id||0)>=0;",
-           "    const _cible=(S.sessions||[]).some(x=>_sessCibles.indexOf(x.ts||x.id||0)>=0&&_sessMoisDe(x)===_sessMoisDe(s));")], 'GARDE', 'PS-E28'),
+     [(SE, CIBLE,
+           "  const _cible=(S.sessions||[]).some(x=>_sessCibles.indexOf(x.ts||x.id||0)>=0&&_sessMoisDe(x)===_sessMoisDe(s));")], 'GARDE', 'PS-E28'),
     ('M16 [deguisee] la cible par DATE de la 1re cle (une seule seance du jour retrouvee)',
-     [(SE, "    const _cible=_sessCibles.indexOf(s.ts||s.id||0)>=0;", "    const _cible=_sessCibles.length>0&&(s.ts||s.id||0)===_sessCibles[0];")], 'GARDE', 'PS-E28'),
+     [(SE, CIBLE, "  const _cible=_sessCibles.length>0&&(s.ts||s.id||0)===_sessCibles[0];")], 'GARDE', 'PS-E28'),
     ('M17 consulter un mois ecrit une cle de stockage',
      [(SE, "function basculerSessMois(m){_sessMoisOuvert[m]=!_sessMoisEstOuvert(m);renderSessions();}",
            "function basculerSessMois(m){_sessMoisOuvert[m]=!_sessMoisEstOuvert(m);try{localStorage.setItem('ft4_sessMois',JSON.stringify(_sessMoisOuvert));}catch(e){}renderSessions();}")], 'GARDE', 'PS-E36'),
@@ -125,8 +132,8 @@ MUT = [
     ('M41 la diapo « Tes progres » du Guide revient a l\'ancienne legende',
      [(AP, "cap:'Progrès s\\'ouvre sur <b>Séances</b> : tout ton <b>historique</b>", "cap:'Tes <b>records</b>, ton poids, ta masse grasse et tes badges — tout en graphiques clairs. <b>Séances</b> : tout ton <b>historique</b>")], 'GARDE', 'PS-S8'),
     ('M42 [deguisee] sans seance ce mois-ci, l\'historique s\'affiche VIDE (rien d\'ouvert, rien d\'invente… et plus rien du tout)',
-     [(SE, "  if(!flist.length){el.innerHTML='<div class=\"empty\">Aucune séance pour '+(_sessFiltres.length>1?'ces muscles':'ce muscle')+'</div>';return;}\n  /* 🗂️",
-           "  if(!flist.length){el.innerHTML='<div class=\"empty\">Aucune séance pour '+(_sessFiltres.length>1?'ces muscles':'ce muscle')+'</div>';return;}\n  if(!flist.some(s=>_sessMoisDe(s)===today().slice(0,7))){el.innerHTML='';return;}\n  /* 🗂️")], 'GARDE', 'PS-E41'),
+     [(SE, LISTE_VIDE + "\n  /* 🗂️",
+           LISTE_VIDE + "\n  if(!flist.some(s=>_sessMoisDe(s)===today().slice(0,7))){el.innerHTML='';return;}\n  /* 🗂️")], 'GARDE', 'PS-E41'),
     ('M43 [deguisee] les mois d\'une annee passee s\'ouvrent par defaut',
      [(SE, ":(m===today().slice(0,7));}", ":(m===today().slice(0,7)||m.slice(0,4)!==today().slice(0,4));}")], 'GARDE', 'PS-E45'),
     # publication ft-v1255 (15/10) : la pop-up « Quoi de neuf » de Progres → Seances doit ATTEINDRE la personne
@@ -194,7 +201,8 @@ MUT = [
     ('M71 [deguisee] le filtre est enregistre (nouvelle cle ft4_sessFiltres)',
      [(SE, "  else _sessFiltres=_sessFiltres.indexOf(code)>=0", "  try{localStorage.setItem('ft4_sessFiltres',JSON.stringify(_sessFiltres));}catch(e){}\n  if(code==null){} else _sessFiltres=_sessFiltres.indexOf(code)>=0")], 'GARDE', 'PS-E62'),
     ('M72 [deguisee] seule la tuile remet a « Tous » : le calendrier garde le filtre (la seance visee peut etre cachee)',
-     [(SE, "  _sessFiltres=[];\n  _sessOuvrir(mois);", "  if(!_sessCibles.length)_sessFiltres=[];\n  _sessOuvrir(mois);")], 'GARDE', 'PS-E61'),
+     # 19/11/2026 (G2) : meme ancre que M29, deja reecrite — la porte remet aussi `_sessGenre` ; M72 ne retire que la remise a « Tous » du filtre de MUSCLE quand une cible existe (defaut d'origine inchange)
+     [(SE, PORTE_FILTRES, "  if(!_sessCibles.length)_sessFiltres=[]; _sessGenre='';")], 'GARDE', 'PS-E61'),
     ('M73 le point rouge du nouveau filtre est retire',
      [(CT, "  {id:'sess-filtre-multi', screen:'progress',", "  {id:'sess-filtre-multi-retire', screen:'retire',")], 'GARDE', 'PS-S11'),
     ('M74 l\'aide « ? » de Progres decrit encore l\'ancien geste (une seule pastille)',
