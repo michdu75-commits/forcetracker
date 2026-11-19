@@ -263,6 +263,17 @@ SC_VALIDE = [
      dict(runner=SAIN, manifeste_avec=runner_js(extra=True), calibrage=dict(croiser='sain'), manifeste_modifie=False)),
     ('E30j', 'CONTRÔLE : le même retrait, accepté EXPLICITEMENT (--accepter-retraits) : manifeste réécrit', 'VALIDE',
      dict(runner=SAIN, manifeste_avec=runner_js(extra=True), calibrage=dict(croiser='sain', retraits=True), manifeste_modifie=True)),
+    # ── 19/11/2026 (G2 bis) : le calibrage devant une passe INCOMPLETE ou INCOHERENTE — modules interrompus, témoins absents, dupliqués, inattendus. Chaque scenario refuse ET laisse le manifeste intact. ──
+    ('E40', "CALIBRAGE d'une passe où un MODULE PLANTE (format réel « ❌ ⛔ MODULE … PLANTÉ », 34 témoins non joués, code 1) : refusé, aucun manifeste écrit — une passe interrompue n'est jamais une référence", 'REFUS',
+     dict(runner=runner_js(n_ok=8518, reds=1, red_fmt="  ❌ ⛔ MODULE ./seance_ux.js · ecran a PLANTÉ après 27 témoin(s) — la suite de ce module n'a PAS été jouée%.0s"), sans_manifeste=True, calibrage=dict(croiser='sain', reference=SAIN), manifeste_modifie=False)),
+    ('E41', "CALIBRAGE d'un module planté DONT LE PLANTAGE EST CACHE : 34 témoins consécutifs manquent, total ajusté (8 518 / 8 518), code 0, zéro rouge — la passe répartie de référence en joue 8 552 : refusé", 'REFUS',
+     dict(runner=runner_js(n_ok=8518), sans_manifeste=True, calibrage=dict(croiser='sain', reference=SAIN), manifeste_modifie=False)),
+    ('E42', "CALIBRAGE : un témoin est REMPLACÉ par un DOUBLON (même total, même nombre de lignes, 0 rouge) alors que la référence répartie a les 8 552 distincts : refusé", 'REFUS',
+     dict(runner=runner_js(dup=(4000, 4001)), sans_manifeste=True, calibrage=dict(croiser='sain', reference=SAIN), manifeste_modifie=False)),
+    ('E43', "CALIBRAGE : un témoin INATTENDU en plus dans la séquentielle seulement (la référence répartie ne le joue pas) : refusé — deux exécutions qui ne jouent pas les mêmes témoins ne calibrent rien", 'REFUS',
+     dict(runner=runner_js(extra=True), sans_manifeste=True, calibrage=dict(croiser='sain', reference=SAIN), manifeste_modifie=False)),
+    ('E44', "CALIBRAGE : un rouge RÉEL isolé (aucun module planté, tous les témoins joués, code 1, 1 ❌) : refusé — le calibrage ne se fait jamais sur une passe qui a un rouge, connu ou non", 'REFUS',
+     dict(runner=runner_js(reds=1), sans_manifeste=True, calibrage=dict(croiser='sain', reference=SAIN), manifeste_modifie=False)),
     # défaut 4 : un manifeste vide ou d'ancien format n'est PAS une référence
     ('E34', 'MANIFESTE VIDE (« passe » {}) : ⑦ ne le prend pas pour une référence — l\'inconnu bloque', 'REFUS', dict(runner=SAIN, manifeste_forme='vide')),
     ('E34b', 'MANIFESTE d\'ANCIEN FORMAT (version 1) : refusé (relancer le calibrage)', 'REFUS', dict(runner=SAIN, manifeste_forme='v1')),
