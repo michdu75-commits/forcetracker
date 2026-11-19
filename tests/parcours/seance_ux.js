@@ -17,9 +17,12 @@
    ═════════════════════════════════════════════════════════════════════════════════════════════ */
 'use strict';
 
+/* 19/11/2026 (G2 bis) — « dernier bilan mensuel annonce » = le MOIS PRECEDENT du jour de la passe, jamais un mois ecrit en dur : avec '2026-09' et une seance de fixture en octobre, le bilan mensuel de
+   octobre s'ouvrait 2,2 s apres le lancement des le 1er novembre et interceptait les clics (plantage du module, 34 temoins non joues). Meme motif que `moisPrec` des autres modules. */
+const MOIS_PREC = (() => { const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - 1); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); })();
 const BASE = { ft4_bw: '80', ft4_age: '40', ft4_ht: '178', ft4_gender: 'H', ft4_goal: 'force', ft4_ob2: '1', ft4_name: 'Test',
   ft4_email: 't@t.t', ft4_devtoken: 'f'.repeat(64), ft4_tester_eq_v1: '1', ft4_ok: '1', ft4_stmig1: '1',
-  ft4_guide_shown: '1', ft4_wn_seen: '999', ft4_lms: '2026-09' };
+  ft4_guide_shown: '1', ft4_wn_seen: '999', ft4_lms: MOIS_PREC };
 const _det = o => JSON.stringify(o);
 const DC = 'Développé Couché', DM = 'Développé Militaire';
 // Une séance passée (pour « Dernière séance » et la colonne Précédent) et trois programmes.

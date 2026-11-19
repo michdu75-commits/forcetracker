@@ -67,7 +67,9 @@ function fixture() {
   return out;
 }
 const cleDe = s => s.ts || s.id || 0;                  // la clé de la carte et de openSessDetail
-const OFF_DBF = -305;                                   // la séance au débrief rangé (année précédente)
+/* 19/11/2026 (G2 bis) — « la séance au débrief rangé, ANNÉE PRÉCÉDENTE » : -305 jours n'est l'année précédente que jusqu'au 1er novembre (PS-E29 rougit depuis). On prend, parmi les décalages de la fixture (-35 - 15 k, k = 0..26),
+   le PREMIER qui tombe dans l'année précédente du jour de la passe (hors k = 20 : c'est FIX[25], la « autre vieille séance » de PS-E15, qui doit rester une AUTRE séance) : toujours un jour où il n'y a qu'une séance, toujours l'année d'avant. */
+const OFF_DBF = (() => { const an = new Date().getFullYear(); for (let k = 0; k <= 26; k++) { if (k === 20) continue; const off = -35 - 15 * k; if (new Date(Date.now() + off * 864e5).getFullYear() < an) return off; } return -35 - 15 * 26; })();   // la séance au débrief rangé (année précédente)
 const TXT_DBF = 'DEBRIEF-PS01 rangé pour une vieille séance.';
 
 module.exports.fixture = fixture;

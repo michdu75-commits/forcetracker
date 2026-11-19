@@ -28,7 +28,11 @@ const SDT = 'Soulevé de Terre', DC = 'Développé Couché', SQ = 'Squat à la B
 const S_ = (kg, reps, done, type) => ({ kg, reps, done: !!done, type: type || 'N' });
 const HISTO = () => {
   const s = (date, exs) => { const ts = Date.parse(date + 'T18:00:00'); return { id: ts, ts, date, synced: true, volume: 3000, exs }; };
-  return [s('2026-10-14', [{ name: SQ, sets: [S_(100, 5, 1), S_(100, 5, 1)] }]), s('2026-10-10', [{ name: CB, sets: [S_(30, 10, 1)] }])];
+  /* 19/11/2026 (G2 bis) — les deux seances de fixture sont d'AUJOURD'HUI a minuit passe (mois courant, jamais dans le futur, jamais repliees), pas de dates ecrites en dur : le mois en cours est ouvert par defaut dans Progres, un mois ancien est REPLIE et
+     ses cartes n'existent pas (temoin B-FFD-8e : `cartes0.length >= 1` rougissait des le 1er novembre). Heures differentes : les deux `id` restent distincts. */
+  const auj = (() => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); })();
+  const s2 = (date, hm, exs) => { const ts = Date.parse(date + 'T' + hm + ':00'); return { id: ts, ts, date, synced: true, volume: 3000, exs }; };
+  return [s2(auj, '00:10', [{ name: SQ, sets: [S_(100, 5, 1), S_(100, 5, 1)] }]), s2(auj, '00:05', [{ name: CB, sets: [S_(30, 10, 1)] }])];
 };
 /* La séance EN COURS : le soulevé de terre a son échauffement et 2 séries de travail faites ; le développé couché n'a AUCUNE série
    faite (même pas l'échauffement : la question « un échauffement SEUL colore-t-il ? » n'est pas celle-ci). */
