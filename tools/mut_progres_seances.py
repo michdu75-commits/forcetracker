@@ -126,7 +126,7 @@ MUT = [
     # ⚠️ M39 re-visee : retirer seulement `nowrap` ne fait passer AUCUNE etiquette a la ligne (mesure du 14/10 : 0 rouge,
     #    la mutation ne fabriquait pas le defaut qu'elle pretendait). Celle-ci le fabrique : « Corps & sante » sur 2 lignes a 390 px.
     ('M39 une etiquette d\'onglet passe sur deux lignes (white-space:normal, onglets plus larges)',
-     [('style.css', "#s-progress .nu-tab{flex:1 1 auto;white-space:nowrap;padding:10px 6px;}", "#s-progress .nu-tab{flex:1 1 auto;white-space:normal;padding:10px 22px;}")], 'GARDE', 'PS-E43'),
+     [('style.css', "#s-progress .nu-tab{flex:1 1 auto;white-space:nowrap;padding:10px 6px;}", "#s-progress .nu-tab{flex:1 1 auto;white-space:normal;padding:10px 40px;}")], 'GARDE', 'PS-E43'),   # 19/11/2026 (G2) : 22 px -> 40 px. Depuis D-078 la barre n'a que 3 onglets : 22 px ne fabriquaient plus le defaut (PS-E43 mesurait 1 ligne, a raison) ; 40 px donne lignes [1,1,3] a 390 px et PS-E43 rougit. Oracle inchange. (≤ 360 px la regle `@media` de style.css ecrase ce padding : la mutation ne mord qu'a 390 px, ou ce test la mesure.)
     ('M40 la marque bleue survit a une entree normale',
      [(SE, "  if(!_progCibleNav) _sessCibles=[];", "  if(!_progCibleNav) {}")], 'GARDE', 'PS-E48'),
     ('M41 la diapo « Tes progres » du Guide revient a l\'ancienne legende',
