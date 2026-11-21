@@ -1790,7 +1790,7 @@ function _extractForceProgram(reply){
 function _normalizeForceProg(prog){
   const norm=ex=>({name:String(ex.name||'Exercice'),
     sets:(Array.isArray(ex.sets)?ex.sets:[]).map(s=>({kg:parseFloat(s.kg)||0,reps:parseInt(s.reps)||5,type:(s.type==='W'?'W':'N'),rest:_secRepos(s.rest)}))});
-  const out={id:'p'+Date.now(),name:String(prog.name||'Programme Force'),force:true};
+  const out={id:'p'+Date.now(),name:String(prog.name||'Programme Force'),force:true,prescrit:true};   // D-163 (sonde H03) : un programme de Milo s'écrit « prescrit » comme tous les autres (import, création à la main, « Sauvegarder comme programme ») — ses charges font foi au 1ᵉʳ usage. Le drapeau ne décide plus de rien (la règle vaut pour tous les programmes) ; il dit seulement d'où vient la valeur.
   if(Array.isArray(prog.days)&&prog.days.length){
     out.days=prog.days.map((d,i)=>({label:String(d.label||('Jour '+(i+1))),exs:(Array.isArray(d.exs)?d.exs:[]).map(norm)}));
     if(prog.weeks)out.weeks=parseInt(prog.weeks)||0;
@@ -3655,7 +3655,8 @@ function buildCoachContext(msg, opts) {
             else if(typeof _serieDeTravail==='function' ? _serieDeTravail(x) : (!ech && x.type!=='X')){
               _rirTrav++; if(_r!==null) _rirNotes++;
             } else if(x.type==='X') _rirEchec++;
-            return `${num}${x.kg||'?'}×${x.reps||'?'}${(x.type&&x.type!=='N'&&!ech)?'('+x.type+')':''}${rir}${n?'[💬 '+n+']':''}`;
+            /* ⚖️ D-164 — une série choisie « au poids du corps » se lit « PDC×8 » / « PDC+10kg×8 » / « PDC−20kg×8 » : le sens est dit, aucun kilo n'est inventé (le poids de corps n'est pas ajouté). */
+            return `${num}${(typeof _kgTxtSerie==='function'?_kgTxtSerie(x):(x.kg||'?'))}×${x.reps||'?'}${(x.type&&x.type!=='N'&&!ech)?'('+x.type+')':''}${rir}${n?'[💬 '+n+']':''}`;
           }).join(' · ')
         : '—';
       // 🔀 « par bras » sur la ligne elle-même : sans ça, Milo lit « 28×8 » et croit à une
@@ -3695,7 +3696,7 @@ function buildCoachContext(msg, opts) {
   let wktText='';
   const _wkt=(typeof S!=='undefined')?S.wkt:null;
   if(_wkt&&_wkt.exs&&_wkt.exs.length){
-    const _fmt=arr=>arr.map(x=>`${x.kg||'?'}×${x.reps||'?'}${(x.type&&x.type!=='N')?'('+x.type+')':''}`).join(', ');
+    const _fmt=arr=>arr.map(x=>`${(typeof _kgTxtSerie==='function'?_kgTxtSerie(x):(x.kg||'?'))}×${x.reps||'?'}${(x.type&&x.type!=='N')?'('+x.type+')':''}`).join(', ');   // D-164 : voir `_ligneSeance`
     const exLines=_wkt.exs.map(e=>{
       const sets=e.sets||[];
       const done=sets.filter(x=>x.done);
@@ -4218,7 +4219,7 @@ ${(()=>{
   const nSet=x=>{const t=(x.sets||[]).filter(z=>z&&z.type!=='É'&&z.type!=='W');
     if(!t.length) return '';
     const r=t[0]&&(t[0].maxi?'max':(t[0].reps===null?'?':(+t[0].reps||0)));   // IMPORT-IA-FIDELITE-01 (correction D) : « Non renseigné » reste « ? » pour Milo, jamais « 0 » ni un nombre inventé
-    return ' '+t.length+'×'+r+((+t[0].kg>0)?' @'+t[0].kg+'kg':'');};
+    return ' '+t.length+'×'+r+((+t[0].kg>0)?' @'+t[0].kg+'kg':((typeof _pdcDe==='function'&&_pdcDe(t[0])!==null)?' @'+_kgTxtSerie(t[0]):''));};   // D-164 : un PDC / lest / assistance PRESCRIT se dit (« @PDC+12kg »), jamais un « 0 » ni rien
   const exList=(exs,max)=>(exs||[]).slice(0,max).map(e=>(e&&e.name?e.name+nSet(e)+(e.group?' [superset '+e.group+']':''):'')).filter(Boolean).join(' · ')
     + (((exs||[]).length>max)?' · …+'+((exs||[]).length-max):'');
   const L=progs.slice(-3).map(p=>{
@@ -6132,9 +6133,17 @@ function _dbfVolEcrire(vol){
     else localStorage.removeItem(_DBF_ENCOURS);
   }catch(e){}
 }
-function _dbfVolPoser(id){ const v=_dbfVolLire(); v[String(id)]={ts:Date.now(), page:_DBF_PAGE}; _dbfVolEcrire(v); }
+/* D-170 : combien de temps on ATTEND une analyse avant de la dire échouée (`_runSeDebrief` l'abandonne à ce délai, LECTURE DU CORPS COMPRISE — `_fetchBorne` : annulation réelle de la requête ;
+   message + « Réessayer »). ⛔ CE LOT M : ce délai ne LÈVE aucun verrou à lui seul — il TERMINE l'opération, et c'est la fin de l'opération qui rend la main à la mise à jour. */
+const _DBF_DELAI_MS = 90000;
+/* D-170 (CE lot M) : les analyses EN COURS dans CETTE page, en mémoire — la mémoire de la page meurt avec la page, donc rien ne peut rester « vif » d'une page précédente, et rien n'expire
+   « au bout de N secondes » : une analyse est vive tant que son opération (`_runSeDebrief`) n'est pas terminée. (Avant : une entrée du stockage plus jeune que 120 s ; passé ce délai une
+   analyse encore en vol était déclarée « non vive » et la mise à jour rechargeait par-dessus.) `_dbfVolPoser` la pose, le `finally` de `_runSeDebrief` la retire. */
+const _dbfActifs = new Set();
+function _dbfAnalyseVive(){ return _dbfActifs.size>0; }
+function _dbfVolPoser(id){ const v=_dbfVolLire(); v[String(id)]={ts:Date.now(), page:_DBF_PAGE}; _dbfVolEcrire(v); _dbfActifs.add(String(id)); }
 function _dbfVolRetirer(id){
-  if(id==null || id==='') return;
+  if(id==null || id==='') return;   // ⛔ n'enlève PAS `_dbfActifs` : seule la FIN de l'opération (`finally` de `_runSeDebrief`) le fait — `_dbfOublier` (séance supprimée) passe aussi par ici, pendant que l'appel court encore
   const v=_dbfVolLire(); if(!Object.prototype.hasOwnProperty.call(v, String(id))) return;
   delete v[String(id)]; _dbfVolEcrire(v);
 }
@@ -6321,7 +6330,7 @@ function _pt001FmtSess(s){
   const exs = (s.exs||s.exercises||[]);
   return exs.map(e=>{
     const ds=(e.sets||[]).filter(x=>x.done);
-    const setsStr=ds.length?ds.map(x=>`${x.kg||'?'}×${x.reps||'?'}${(x.type&&x.type!=='N')?'('+x.type+')':''}`).join(' '):'—';
+    const setsStr=ds.length?ds.map(x=>`${(typeof _kgTxtSerie==='function'?_kgTxtSerie(x):(x.kg||'?'))}×${x.reps||'?'}${(x.type&&x.type!=='N')?'('+x.type+')':''}`).join(' '):'—';   // D-164 : voir `_ligneSeance`
     return `${e.name}: ${setsStr}${e.note?' [note: '+e.note+']':''}`;
   }).join(' · ');
 }
@@ -8558,7 +8567,7 @@ const _DRAWER_CONTENT = {
         {ic:'🏃',t:'Cardio en séance',d:'Bloc cardio sous tes exercices (replié par défaut). Choisis le type (elliptique, tapis, vélo, rameur, corde...), l\'intensité (léger/modéré/intense) et la durée. L\'app <b>estime</b> les calories de l\'activité (sans le repos). Tu as une montre ? Tape ses calories dans <b>« Calories de ta montre »</b> : cette valeur <b>remplace</b> l\'estimation, elle ne s\'y ajoute jamais, et <b>« ↩︎ Revenir à l\'estimation »</b> la retire. ⛔ Ces calories ne s\'ajoutent <b>pas</b> à ta cible du jour (Nutrition) : ton niveau d\'activité du Profil compte déjà ton entraînement.'},
         /* 🚶 Mission « Autre activité » (05/11/2026) — règle d'or #11, point 4 : l'aide détaillée est l'endroit du POURQUOI. */
         {ic:'🚶',t:'Autre activité : marche, vélo, randonnée, course…',d:'<b>Séance → « Autre activité »</b> (juste sous « Programme ») enregistre une sortie qui n\'est pas une séance de musculation : <b>marche, marche sportive, randonnée, balade, vélo loisir ou sportif, course à pied</b>, ou un nom à toi. La <b>durée</b> est obligatoire ; la date, l\'heure, la distance, l\'intensité et les notes sont facultatives. Elle apparaît dans le <b>calendrier de l\'Accueil</b> et dans <b>Progrès → Séances</b> (filtre « Activités »), où tu peux la <b>modifier</b> ou la <b>supprimer</b>.<br><br>🔥 <b>Les calories</b> : l\'app estime (barème MET × ton poids × la durée). Si ta montre donne mieux, tape sa valeur dans <b>« Calories de ta montre »</b> : <b>elle remplace l\'estimation, jamais additionnée</b> (estimation 300, montre 255 → <b>255</b>). Ce sont des calories d\'<b>activité</b>, sans le repos. Un <b>poids qui change</b> ne recalcule jamais une activité déjà enregistrée ; changer la durée ou le type refait l\'estimation, pas ta valeur de montre.<br><br>⛔ <b>Ce qu\'elle ne fait pas</b> : aucune série, aucun volume, aucun record ; elle ne compte pas comme une « séance » (badges, fréquence, niveau d\'activité conseillé), ne change pas ton score de récupération et <b>ne change pas ta cible du jour</b> en Nutrition — ton niveau d\'activité tient déjà compte de ton entraînement, y ajouter la marche serait la compter deux fois. Dans les <b>bilans</b> de la semaine et du mois, elle a sa ligne à part (musculation · cardio · autres), et les séries et le volume ne parlent que de la musculation.'},
-        {ic:'📋',t:'Programmes',d:'<b>QUATRE FAÇONS D\'EN OBTENIR UN, et elles sont toutes dans 📋 Mes Programmes</b> (Séance → « Programme ») : <b>📷 Importer</b> une photo ou un <b>PDF</b> — l\'IA le lit et <b>garde tes jours</b> (Push, Pull, Legs…) ; <b>🏗️ Générer</b> un programme complet avec Milo ; <b>+ Créer</b> le tien à la main ; ou <b>💾 Sauvegarder</b> la séance en cours. ⚠️ <b>Si ton programme a PLUSIEURS JOURS, passe par l\'import</b> : un programme créé à la main est forcément une séance unique — l\'éditeur sait afficher les jours, il ne sait pas en ajouter. \u26a0\ufe0f L\'aper\u00e7u d\'import <b>marque en orange</b> les exercices qu\'il ne conna\u00eet pas et qui vont \u00eatre <b>cr\u00e9\u00e9s</b>. Un exercice cr\u00e9\u00e9 n\'a <b>ni photo, ni figurine, ni historique</b> \u2014 le bouton <b>\u00ab \ud83d\udd17 Rattacher \u00bb</b> le relie \u00e0 celui de ton catalogue et tout revient. <i>Exemple : \u00ab Presse 45 degr\u00e9s \u00bb \u2192 <b>Press Jambes 45\u00b0</b>.</i> \ud83c\udfc3 <b>Le cardio d\'un programme va dans le bloc Cardio</b>, plus dans la liste des exercices. Une ligne du genre \u00ab Cardio l\u00e9ger \u2014 8 minutes \u00bb n\'est pas un exercice : elle n\'a ni charge ni figurine, et elle faussait ton tonnage. \u2b50 \u00c7a marche AUSSI sur les programmes d\u00e9j\u00e0 import\u00e9s, au moment de les charger \u2014 rien \u00e0 r\u00e9importer. \u26d4 Deux limites : un cardio au MILIEU de la s\u00e9ance reste un exercice, et un exercice qui porte une CHARGE n\'est jamais d\u00e9plac\u00e9, m\u00eame si sa note parle de minutes. ⓘ L\'import lit <b>8 pages au maximum</b> (au-delà, il est <b>refusé</b> : coupe ton PDF) et <b>15 Mo</b> par fichier, et demande une connexion. Sauvegarde ta séance en cours comme programme réutilisable. Charge-le pour retrouver les exercices avec les poids de la dernière fois. Bouton 🤖 (Premium) pour une analyse IA de ton programme. Bouton ✏️ pour modifier les exercices. Bouton 📄 PDF pour exporter le programme en vrai fichier PDF (feuille propre avec une colonne « Poids » à remplir à la salle). Sur iPhone, le menu Partager s\'ouvre (Enregistrer dans Fichiers, envoyer…) ; sur ordi, le PDF se télécharge. Marche aussi hors-ligne. Astuce : dans l\'éditeur, le bouton « max » à côté des reps met une série en « maxi » (nombre max de répétitions) au lieu d\'un chiffre. L\'éditeur règle aussi le TEMPS DE REPOS série par série (colonne « Repos ») et, nouveau, un champ 💬 Commentaire par exercice (consigne, réglage machine, prise…) qui s\'affichera sous l\'exercice à chaque séance.'},
+        {ic:'📋',t:'Programmes',d:'<b>QUATRE FAÇONS D\'EN OBTENIR UN, et elles sont toutes dans 📋 Mes Programmes</b> (Séance → « Programme ») : <b>📷 Importer</b> une photo ou un <b>PDF</b> — l\'IA le lit et <b>garde tes jours</b> (Push, Pull, Legs…) ; <b>🏗️ Générer</b> un programme complet avec Milo ; <b>+ Créer</b> le tien à la main ; ou <b>💾 Sauvegarder</b> la séance en cours. ⚠️ <b>Si ton programme a PLUSIEURS JOURS, passe par l\'import</b> : un programme créé à la main est forcément une séance unique — l\'éditeur sait afficher les jours, il ne sait pas en ajouter. \u26a0\ufe0f L\'aper\u00e7u d\'import <b>marque en orange</b> les exercices qu\'il ne conna\u00eet pas et qui vont \u00eatre <b>cr\u00e9\u00e9s</b>. Un exercice cr\u00e9\u00e9 n\'a <b>ni photo, ni figurine, ni historique</b> \u2014 le bouton <b>\u00ab \ud83d\udd17 Rattacher \u00bb</b> le relie \u00e0 celui de ton catalogue et tout revient. <i>Exemple : \u00ab Presse 45 degr\u00e9s \u00bb \u2192 <b>Press Jambes 45\u00b0</b>.</i> \ud83c\udfc3 <b>Le cardio d\'un programme va dans le bloc Cardio</b>, plus dans la liste des exercices. Une ligne du genre \u00ab Cardio l\u00e9ger \u2014 8 minutes \u00bb n\'est pas un exercice : elle n\'a ni charge ni figurine, et elle faussait ton tonnage. \u2b50 \u00c7a marche AUSSI sur les programmes d\u00e9j\u00e0 import\u00e9s, au moment de les charger \u2014 rien \u00e0 r\u00e9importer. \u26d4 Deux limites : un cardio au MILIEU de la s\u00e9ance reste un exercice, et un exercice qui porte une CHARGE n\'est jamais d\u00e9plac\u00e9, m\u00eame si sa note parle de minutes. ⓘ L\'import lit <b>8 pages au maximum</b> (au-delà, il est <b>refusé</b> : coupe ton PDF) et <b>15 Mo</b> par fichier, et demande une connexion. Sauvegarde ta séance en cours comme programme réutilisable. Charge-le : la première fois qu\'un jour s\'ouvre, ce sont les valeurs écrites dans le programme (jamais celles d\'un autre programme) ; ensuite, chaque série retrouve ce que tu as fait la dernière fois sur CE jour — charge, répétitions et repos. Une valeur que tu modifies toi-même dans ✏️ passe avant l\'historique, pour cette série et ce champ seulement. Dans ✏️, chaque série peut aussi porter son propre commentaire (💬 Commentaire par série). Bouton 🤖 (Premium) pour une analyse IA de ton programme. Bouton ✏️ pour modifier les exercices. Bouton 📄 PDF pour exporter le programme en vrai fichier PDF (feuille propre avec une colonne « Poids » à remplir à la salle). Sur iPhone, le menu Partager s\'ouvre (Enregistrer dans Fichiers, envoyer…) ; sur ordi, le PDF se télécharge. Marche aussi hors-ligne. Astuce : dans l\'éditeur, le bouton « max » à côté des reps met une série en « maxi » (nombre max de répétitions) au lieu d\'un chiffre. L\'éditeur règle aussi le TEMPS DE REPOS série par série (colonne « Repos ») et, nouveau, un champ 💬 Commentaire par exercice (consigne, réglage machine, prise…) qui s\'affichera sous l\'exercice à chaque séance.'},
         /* 🚪 AIDE DÉTAILLÉE (règle d'or #11, point 4) — elle est posée JUSTE APRÈS
            « Programmes », parce que c'est là qu'on vient chercher pourquoi une question
            inattendue est apparue. Elle porte ce que l'aide `?` ne dit pas : la différence
@@ -8680,14 +8689,10 @@ const _DRAWER_CONTENT = {
   about: {
     title:'ℹ️ À propos',
     html:()=>{
-      // Lit le cache SW actif → version réelle chargée sur ce téléphone
-      if('caches' in window){
-        caches.keys().then(keys=>{
-          const ft=keys.find(k=>k.startsWith('ft-v'));
-          const el=document.getElementById('_about-ver');
-          if(el&&ft)el.textContent=ft;
-        });
-      }
+      /* 🔄 MAJV (15/11/2026) : la version affichée est celle du code qui TOURNE (`APP_BUILD`, app.js), plus la clé du cache — qui, après une mise à jour reçue
+         ailleurs que sur l'Accueil, annonçait le code NEUF pendant que l'ANCIEN tournait encore. Le badge (`.app-ver`) et la ligne « mise à jour … prête »
+         (`.app-maj`) sont remplis par le SEUL propriétaire de ces libellés (`_setAppVersionEls`, R2), une fois le panneau inséré. */
+      setTimeout(()=>{ if(typeof _setAppVersionEls==='function')_setAppVersionEls(); },0);
       // Remplit la taille du stockage (asynchrone)
       if(typeof _fillStorageInfo==='function')setTimeout(_fillStorageInfo,50);
       /* ── D'OÙ L'APP EST-ELLE OUVERTE ? (13/08/2026) ────────────────────────────────────
@@ -8709,7 +8714,8 @@ const _DRAWER_CONTENT = {
       return`<div style="text-align:center;padding:10px 0 20px;">
       <img src="logo.png" style="width:80px;height:80px;border-radius:20px;margin-bottom:16px;">
       <div style="font-family:var(--font-cond);font-size:28px;font-weight:700;background:linear-gradient(135deg,#FF2D55,#FF6D00);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:6px;">Force Tracker</div>
-      <div id="_about-ver" style="display:inline-block;background:rgba(255,45,85,.12);color:var(--red);font-family:var(--font-cond);font-size:15px;font-weight:700;padding:5px 16px;border-radius:20px;letter-spacing:.05em;border:1px solid rgba(255,45,85,.22);margin-bottom:20px;">…</div>
+      <div id="_about-ver" class="app-ver" style="display:inline-block;background:rgba(255,45,85,.12);color:var(--red);font-family:var(--font-cond);font-size:15px;font-weight:700;padding:5px 16px;border-radius:20px;letter-spacing:.05em;border:1px solid rgba(255,45,85,.22);margin-bottom:20px;">…</div>
+      <div class="app-maj" style="font-size:12.5px;font-weight:700;color:var(--t2);margin:-8px 0 18px;"></div>
       ${_origHtml}
       <div style="background:var(--bg3);border-radius:12px;padding:16px;text-align:left;margin-bottom:12px;font-size:13px;line-height:1.7;color:var(--t2);">
         Application de suivi de musculation Progressive Web App.<br>

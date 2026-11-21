@@ -1596,9 +1596,9 @@ function persist(){
     localStorage.setItem('ft4_cb',S.colorblind||'');
     localStorage.setItem('ft4_lh',S.leftHand?'1':'0');
   }catch(e){ _persistRepli(e, _rep); }
-  // Mise à jour reportée (app.js) : elle ne s'applique QUE sur l'accueil, sans séance en cours ni
-  // récapitulatif ouvert — voir `_majPeutSAppliquer`. Une seule décision, un seul endroit (R2).
-  try{ if(typeof _appliquerMaj==='function')_appliquerMaj(); }catch(e){}
+  // Mise à jour en attente (app.js) : l'enregistrement ne la déclenche plus (D-170, lot M) — il met seulement le bandeau à jour (il peut paraître quand un verrou vient de se lever).
+  // La mise à jour elle-même ne part que du choix « Mettre à jour » — voir `_majPeutSAppliquer`. Une seule décision, un seul endroit (R2).
+  try{ if(typeof _majRefresh==='function')_majRefresh(); }catch(e){}
   _cloudSyncDebounced();
 }
 

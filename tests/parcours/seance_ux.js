@@ -100,7 +100,12 @@ async function ecran(t, b, PORT) {
       cta.lib !== null && cta.pro !== null && cta.proTop >= cta.lib - 2 && /openProgModal\(/.test(cta.proOnclick || '') && (cta.types === null || cta.pro <= cta.types) && (cta.cardio === null || cta.pro <= cta.cardio), _det(cta));
     t('B-UXS-A3 avant séance : aucun « Ajouter un exercice » (le geste d\'une séance déjà ouverte)', (await parTexte(X, 'Ajouter un exercice')) === 0, '');
     t('B-UXS-A4 ⭐ le cardio n\'est pas dominant : il vient APRÈS Séance libre, Programme et les types de séance', cta.cardio !== null && cta.cardio > cta.pro && (cta.types === null || cta.cardio > cta.types), _det(cta));
-    t('B-UXS-A5 avant séance, la barre de marque reste (logo visible) et l\'en-tête de séance est absent', (await rect(X, '#tb-logo')) !== null && (await parTexte(X, 'Séance en cours', '.topbar *')) === 0, '');
+    /* RÉÉCRIT le 16/11/2026 (CE lot M, D-176 de Michel : l'en-tête GLOBAL n'existe que sur l'Accueil). AVANT : « avant séance, la barre de marque reste (logo visible) et l'en-tête de séance est absent » — la 1ʳᵉ moitié approuvait
+       l'ancien comportement (logo sur l'écran Séance), que la décision retire. L'INVARIANT GARDÉ : avant séance, l'en-tête de SÉANCE est absent (aucun « Séance en cours », aucune commande « Terminer » dans la barre haute) — et la marque
+       ne le remplace pas non plus. AJOUTÉ : le logo n'est plus visible sur l'écran Séance (l'écran porte son propre titre « Séance »), et il l'est toujours sur l'Accueil (le test rougit si l'en-tête disparaît partout). */
+    t('B-UXS-A5 avant séance : l\'en-tête GLOBAL (logo) n\'est plus sur l\'écran Séance (D-176) mais le titre « Séance » est là, l\'en-tête de séance est absent, et le logo est bien sur l\'Accueil',
+      (await rect(X, '#tb-logo')) === null && (await parTexte(X, 'Séance en cours', '.topbar *')) === 0 && (await rect(X, '#log-hdr .log-h1')) !== null
+      && await (async () => { await X.pg.evaluate(() => goScreen('home', document.getElementById('nb-home'))); await X.pg.waitForTimeout(250); const r = await rect(X, '#tb-logo'); await X.pg.evaluate(() => goScreen('log', document.getElementById('nb-log'))); await X.pg.waitForTimeout(250); return r !== null; })(), '');
     t('B-UXS-A6 aucun « + Créer ma séance » à l\'écran (libellé remplacé par la décision du 16/10)', (await parTexte(X, 'Créer ma séance')) === 0, '');
     t('B-UXS-A7 la date de la séance reste réglable (étiquette liée au champ date) et dit « Aujourd\'hui » le jour même',
       await X.pg.evaluate(([VIS]) => { const vis = eval(VIS); const l = [...document.querySelectorAll('label[for="s-date"]')].filter(vis); return l.length >= 1 && /Aujourd/.test(l[0].textContent); }, [VIS]), '');

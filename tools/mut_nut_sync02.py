@@ -89,7 +89,7 @@ MUT = [
     ('K42 une suppression rejetee n est plus comptee parmi celles a renvoyer',
      [(ST, "function _foodSupprimesEnAttente(){ return _foodSupprimesNormaliser(S.foodSupprimes).filter(e=>!e.c); }", "function _foodSupprimesEnAttente(){ return _foodSupprimesNormaliser(S.foodSupprimes).filter(e=>!e.c && !e.x); }")], G('E01c'), 'E', 'GARDE'),
     ('K43 persist() ne declenche plus la synchronisation differee : une suppression non confirmee n est plus renvoyee a l ouverture suivante',
-     [(ST, "  try{ if(typeof _appliquerMaj==='function')_appliquerMaj(); }catch(e){}\n  _cloudSyncDebounced();\n}", "  try{ if(typeof _appliquerMaj==='function')_appliquerMaj(); }catch(e){}\n}")], G('E12'), 'E', 'GARDE'),
+     [(ST, "  try{ if(typeof _majRefresh==='function')_majRefresh(); }catch(e){}\n  _cloudSyncDebounced();\n}", "  try{ if(typeof _majRefresh==='function')_majRefresh(); }catch(e){}\n}")], G('E12'), 'E', 'GARDE'),
     # ── client : les conflits ──
     ('K34 un conflit fait perdre la version de la personne (plus de copie)',
      [(SU, "    S.foodLog.push(copie); conflits++; journal=true;", "    conflits++; journal=true;")], G('E02'), 'E', 'GARDE'),

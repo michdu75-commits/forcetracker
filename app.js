@@ -11427,14 +11427,27 @@ function _brouillonDejaEnregistre(draft){
     }
   }catch(e){}
 })();
-// Remplit les libellés de version (.app-ver) avec le VRAI build tournant (cache SW ft-vNN) → jamais périmé
+/* 🔄 LA VERSION AFFICHÉE EST CELLE DU CODE QUI TOURNE — PAS CELLE DU CACHE (MAJV, lot E, 15/11/2026).
+   ⛔⛔ LE DÉFAUT (démontré par rejeu le 14/11 ; banc `tests/parcours/maj_version.js`) : ce libellé lisait la CLÉ DU CACHE du service worker
+   (`caches.keys()`). Or une mise à jour installe le NOUVEAU cache, supprime l'ancien — et la page, elle, GARDE l'ancien code en mémoire jusqu'à
+   ce qu'elle se recharge, ce qui n'arrive que sur l'Accueil (ft-v1184 : on n'arrache jamais l'écran). Une app restée ouverte sur Séance ou
+   Profil affichait donc « ft-v1267 » pendant que l'ancien code `ft-v1266` tournait encore (import non regroupé, éditeur sans « Aujourd'hui »).
+   *Un numéro qui ne dit pas ce qui tourne est pire qu'un numéro absent : il fait chercher le défaut dans le mauvais code.*
+   👉 La seule chose qui sait quel code est en mémoire, c'est le code lui-même : `APP_BUILD`. Il doit valoir EXACTEMENT `const CACHE` de `sw.js`.
+   Deux endroits qui portent le même nombre (R2), donc un GARDE : `tools/check_regles.py` (contrôle « version du code ») et le banc
+   `tests/parcours/maj_version.js` (MAJV-D2) REFUSENT la livraison s'ils divergent. ⛔ Le nouveau numéro se pose aux DEUX endroits, dans le même
+   mouvement (règle d'or #5) — oublier celui-ci ne casse rien en silence : c'est le garde qui rougit, pas l'écran d'un utilisateur.
+   ⚠️ Déclarée AVANT la ligne de démarrage plus bas : une `const` lue avant sa ligne est une ReferenceError (TDZ) — la famille de pannes de
+   Safari de ft-v144 → v153 (docs/GALERES-ET-LECONS.md).
+   Ce que dit le CACHE, lui, se dit À PART : la version plus récente qu'un service worker neuf a installée (`.app-maj`, voir `_majRefresh`).
+   `.app-ver` ne porte JAMAIS que le numéro du code qui tourne : l'export (`_ecrireExport`) et le banc de Milo le recopient tel quel. */
+const APP_BUILD='ft-v1267';
+// Remplit les libellés de version : `.app-ver` = le code qui TOURNE (APP_BUILD) ; `.app-maj` = « mise à jour ft-vNNNN prête » quand un service worker neuf l'attend (vide sinon).
+// `data-pre` : le séparateur propre à chaque endroit (le pied du Menu écrit « ft-v1266 · mise à jour ft-v1267 prête », le badge d'« À propos » l'écrit seul sur sa ligne).
 function _setAppVersionEls(){
-  if(!('caches' in window))return;
-  caches.keys().then(keys=>{
-    const ft=(keys||[]).find(k=>k&&k.startsWith('ft-v'));
-    if(!ft)return;
-    document.querySelectorAll('.app-ver').forEach(el=>{el.textContent=ft;});
-  }).catch(()=>{});
+  const maj=(window._swReloadPending&&window._majVersion)?window._majVersion:'';
+  document.querySelectorAll('.app-ver').forEach(el=>{ if(el.textContent!==APP_BUILD)el.textContent=APP_BUILD; });
+  document.querySelectorAll('.app-maj').forEach(el=>{ const x=maj?(el.getAttribute('data-pre')||'')+'mise à jour '+maj+' prête':''; if(el.textContent!==x)el.textContent=x; });
 }
 (async()=>{let cv='?';try{const ks=await caches.keys();cv=ks.find(k=>k.startsWith('ft-v'))||'?';}catch(e){}try{_setAppVersionEls();}catch(e){}console.log('[FT] boot',cv,'— _adminMode=',window._adminMode,'_curScreen=',window._curScreen,'_premiumPending=',window._premiumPending,'openRestoreAccount=',typeof openRestoreAccount);})();
 /* ⏱️ SEANCE-REPOS-01 (22/10/2026, décisions de Michel — docs/SEANCE-REPOS-01.md) : LE REPOS EN COURS SURVIT À UN REDÉMARRAGE.
@@ -13321,6 +13334,8 @@ function clearErrLog(){ try{localStorage.removeItem('ft4_errlog');}catch(e){} re
 // Si une séance est en cours, on reporte le rechargement — persist() (state.js) le déclenchera
 // dès que S.wkt redevient vide (fin de séance ou annulation).
 window._swReloadPending=false;
+window._majVersion=null;   // la version PLUS RÉCENTE que le code qui tourne, quand un service worker neuf l'a installée (null = rien de neuf à dire) — voir `_majLireVersion`
+window._majFerme=null;     // la version pour laquelle la personne a dit « Plus tard » : EN MÉMOIRE SEULEMENT, aucun stockage (un redémarrage repart de zéro, et c'est voulu)
 /* 🛑 UNE MISE À JOUR NE COUPE JAMAIS QUELQU'UN EN PLEIN TRAVAIL (15/08/2026)
    Michel, en rentrant de la salle : *« putain la mise à jour s'est faite au moment où j'ai terminé
    ma séance, donc j'ai pas vu mon récapitulatif »*.
@@ -13350,6 +13365,19 @@ window._swReloadPending=false;
    👉 On lit maintenant `_seanceOuverte()` (log.js), la MÊME définition que le verrou d'écran —
    démarrée, ou avec des exercices, ou avec un cardio noté. Et **pause comprise** : une séance en
    pause n'est pas une séance finie. */
+/* 🔄 MAJV (15/11/2026) — la PERSONNE demande la mise à jour (« Mettre à jour », ex « Redémarrer maintenant »). L'ÉCRAN affiché n'est plus un obstacle (c'est elle qui a choisi le moment ; lot M, 17/11 : le paramètre
+   `ecranLibre` n'existe plus, la décision ne lit plus l'écran). Tout le reste tient pour elle aussi — jamais
+   pendant une séance (pause comprise), une fin de séance, un récapitulatif, un banc payant : *la demande explicite n'ouvre aucune de ces portes*.
+   Le même appel, `_majPeutSAppliquer()`, dit si l'avis a le droit de s'afficher (R2 : une seule décision). */
+/* 🔒 D-170 (16/11/2026, Michel) — AUCUN REDÉMARRAGE PENDANT : la séance · son enregistrement · la GÉNÉRATION du briefing de Milo · sa CONSULTATION.
+   Ordre voulu : terminer → enregistrer → générer et montrer le briefing → la personne le lit et le FERMER → alors seulement la mise à jour SE PROPOSE (bandeau sur tous les écrans ;
+   lot M, 17/11/2026 : l'application automatique sur l'Accueil est supprimée, la mise à jour ne part que du choix « Mettre à jour »). ⛔ Toutes les raisons d'attendre vivent dans `_majPeutSAppliquer` (R2) :
+   `_reloadForUpdate`, `controllerchange`, `persist()` et le retour à l'Accueil ne font que MONTRER le bandeau ; « Mettre à jour » passe par `_appliquerMaj`, le SEUL `location.reload` de la mise à jour.
+   ⚠️ Un verrou qui ne se lève pas est PIRE que pas de verrou (il éteindrait toutes les mises à jour en silence) : chacun se lève à la FIN de son opération — réponse, échec, exception.
+   ⛔⛔ CE LOT M (16/11/2026, contre-expertise U02 / U06 / U07) : IL NE SE LÈVE JAMAIS « AU BOUT D'UN DÉLAI ». Le « dernier filet » de 120 s qui existait ici levait le verrou d'une opération
+   ENCORE ACTIVE (une fin de séance dont la réponse du serveur ne finit pas de venir, une analyse encore en vol) et la page se rechargeait par-dessus : récapitulatif perdu, requête annulée.
+   Ce qui garantit qu'aucun verrou ne reste posé pour toujours, c'est que chaque opération qu'il protège SE TERMINE : leurs attentes réseau sont BORNÉES de bout en bout, corps de la réponse
+   compris (`_fetchBorne`, tracking.js : annulation réelle de la requête + abandon de l'attente) ; leur issue est dite (toast / « Réessayer ») et la séance reste enregistrée en local. */
 function _majPeutSAppliquer(){
   if(!window._swReloadPending) return false;
   if(typeof _seanceOuverte==='function' ? _seanceOuverte()
@@ -13371,9 +13399,13 @@ function _majPeutSAppliquer(){
      de `finishWorkout` et **levé sur ses 5 sorties**, y compris les trois refus (pas de séance,
      pas d'exercice, pas de série validée). Il manquait **un lecteur**, pas un mécanisme.
      ⛔ Et `typeof` est indispensable : `_finishing` vit dans un AUTRE fichier, chargé après. */
-  if(typeof _finishing!=='undefined' && _finishing) return false;      // fin de séance en cours
+  if(typeof _finishing!=='undefined' && _finishing) return false;      // fin de séance en cours — levé par la FIN de `finishWorkout` (`finally`), jamais par l'écoulement d'un délai (lot M)
   const ov=document.getElementById('ov-session-end');
   if(ov&&ov.classList.contains('open')) return false;                  // récapitulatif à l'écran
+  /* D-170 : le briefing de Milo en cours de GÉNÉRATION (même quand la personne a déjà quitté le récapitulatif : un rechargement annulerait la requête), sa
+     CONSULTATION depuis Progrès, et les bilans de semaine / de mois qui s'ouvrent tout seuls (ils sont déjà marqués « annoncés » : refermés par un rechargement, ils ne reviennent pas). */
+  if(typeof _dbfAnalyseVive==='function' && _dbfAnalyseVive()) return false;
+  if(['ov-debrief-milo','ov-week-summary','ov-month-summary'].some(id=>{ const o=document.getElementById(id); return !!(o&&o.classList.contains('open')); })) return false;
   /* ⛔⛔ LE BANC D'ESSAI EST LA SEULE CHOSE DE L'APP QUI COÛTE DE L'ARGENT (01/09/2026).
      Trouvé en vérifiant s'il était prudent de déployer pendant que Michel lançait une passe :
      l'écran Admin le protégeait par hasard (`_curScreen !== 'home'`), mais **une passe lancée
@@ -13381,23 +13413,75 @@ function _majPeutSAppliquer(){
      *Un garde-fou qui protège par effet de bord ne protège pas : il se contente de ne pas
      avoir échoué encore.* */
   if(typeof _evRunning!=='undefined' && _evRunning) return false;      // passe payante en cours
-  if(window._curScreen&&window._curScreen!=='home') return false;      // la personne fait autre chose
+  /* D-170 (lot M, 17/11/2026) : l'ÉCRAN affiché n'est plus une raison d'attendre — la mise à jour ne part plus toute seule, c'est la PERSONNE qui la demande, au moment qu'elle choisit. */
   return true;
 }
+/* ⛔⛔ D-170 (lot M, 17/11/2026, Michel) : AUCUN RECHARGEMENT AUTOMATIQUE, MÊME SUR L'ACCUEIL. `_appliquerMaj` n'est appelée QUE par `majRedemarrer` (le bouton « Mettre à jour » du bandeau) :
+   l'arrivée d'une nouvelle version (`controllerchange`, `SW_UPDATED`), `persist()` et le retour à l'Accueil ne font plus que MONTRER / mettre à jour le bandeau (`_majRefresh`). C'est le SEUL rechargement de la mise à jour (la ligne ci-dessous). */
 function _appliquerMaj(){
-  if(!_majPeutSAppliquer()) return false;
+  if(!_majPeutSAppliquer()){ _majRefresh(); return false; }              // une opération est en cours : on le DIT (bandeau, toast), on ne recharge pas
   window._swReloadPending=false;
   try{localStorage.setItem('ft4_just_updated','1');}catch(e){} // → badge « Application mise à jour » au reboot
   window.location.reload();
   return true;
 }
+/* 🔄 UNE MISE À JOUR EN ATTENTE SE VOIT — ET ELLE NE S'IMPOSE JAMAIS (MAJV, lot E, 15/11/2026).
+   LE TROU (mesuré par rejeu, voir `_setAppVersionEls`) : hors séance, une mise à jour reportée ne disait RIEN — le toast ci-dessous n'existe
+   que pendant une séance. Michel, sur l'écran Séance ou Profil, ne pouvait pas savoir que l'ancien code tournait encore.
+   LA RÈGLE (R24, informer sans bloquer) : un bandeau EN FLUX, comme celui du mode démo — il pousse le contenu, il ne le recouvre pas, il ne
+   déplace pas le bouton central (la barre du bas est ancrée en bas, règle d'or #9 : mesuré, banc MAJV-F). Une SORTIE visible (« Plus tard »).
+   · il n'existe que si une version PLUS RÉCENTE attend (`_majVersion`) ; la toute 1ʳᵉ installation n'est pas une mise à jour (rien de plus
+     récent que le code qui tourne) ; il se tait pendant une séance, un récap, un banc payant (`_majPeutSAppliquer()`) ; lot M (D-170) : sur TOUS les écrans, l'Accueil compris, dès
+     qu'elle est disponible ET sûre — et rien ne se recharge tout seul nulle part (le « s'applique toute seule sur l'Accueil » de ft-v1184 est SUPPRIMÉ, décision de Michel du 17/11/2026) ;
+   · « Plus tard » ne vaut que pour CETTE version, en mémoire, SANS minuteur : aucune relance automatique. La proposition revient au prochain lancement, ou au retour à l'Accueil depuis un autre écran
+     (`_majRepropose`) — sans recharger ; une version plus récente rouvre aussi l'avis (R15 : un seul chemin de fermeture, un seul marqueur) ;
+   · « Mettre à jour » ENREGISTRE d'abord (`persist()`), puis recharge — et seulement si rien n'interdit : jamais de séance coupée. */
+function _majRefresh(){
+  try{
+    const rt=document.getElementById('root'); if(!rt) return;
+    if(!window._swReloadPending&&!rt.classList.contains('maj-on')) return;   // rien à dire, rien à éteindre : `persist()` passe ici à chaque enregistrement
+    _setAppVersionEls();                                                  // l'étiquette : ce qui TOURNE ; ce qui attend, À PART (`.app-maj`)
+    const voir=!!(window._swReloadPending&&window._majVersion)&&_majPeutSAppliquer()&&window._majFerme!==window._majVersion;
+    rt.classList.toggle('maj-on',voir);
+    const x=document.getElementById('maj-txt'); if(x&&voir)x.textContent='🔄 Mise à jour '+window._majVersion+' prête';
+  }catch(e){}
+}
+// La version qui ATTEND : le cache que le service worker neuf a installé (l'ancien est supprimé à son activation). Rien de plus récent que le code → null.
+function _majLireVersion(){
+  try{
+    if(!('caches' in window)) return;
+    caches.keys().then(ks=>{
+      window._majVersion=(ks||[]).filter(k=>k&&k.indexOf('ft-v')===0&&k!==APP_BUILD).pop()||null;
+      _majRefresh();
+    }).catch(()=>{});
+  }catch(e){}
+}
+/* DEUX VERROUS, EXPRÈS : celui-ci dit POURQUOI (le toast — sans lui la personne appuie et ne sait pas pourquoi rien ne se passe) ; celui de `_appliquerMaj()` est le filet,
+   parce qu'un rechargement ne se rattrape pas. Les retirer tous les deux est la mutation M33 du banc (`tools/mut_maj_version.py`). */
+function majRedemarrer(){
+  if(!window._swReloadPending) return false;                             // rien n'attend : rien à redémarrer (le bloc « on appuie sur tous les boutons » l'appelle à vide)
+  if(!_majPeutSAppliquer()){
+    if(typeof toast==='function') toast('Pas maintenant — la mise à jour se propose après ta séance ou ton enregistrement','info');
+    _majRefresh(); return false;
+  }
+  try{persist();}catch(e){}                                              // on enregistre D'ABORD : le rechargement ne doit rien emporter
+  return _appliquerMaj();
+}
+function majPlusTard(){
+  window._majFerme=window._majVersion;
+  _majRefresh();
+}
+// Retour à l'Accueil depuis un autre écran : « Plus tard » ne vaut plus, la proposition peut revenir (sans recharger, sans minuteur). Appelée par `_applyScreen` (screens.js).
+function _majRepropose(){
+  window._majFerme=null;
+  _majRefresh();
+}
 function _reloadForUpdate(){
-  window._swReloadPending=true;
-  if(_appliquerMaj()) return;
-  // Reportée : on ne prévient que pendant une séance (le seul cas où l'attente peut durer).
-  // Même définition que ci-dessus — sinon la séance qui commence par du cardio ne dirait rien.
-  if((typeof _seanceOuverte==='function'?_seanceOuverte():(S.wkt&&S.wkt.exs&&S.wkt.exs.length))&&typeof toast==='function')
-    toast('Mise à jour disponible — appliquée à la fin de la séance','info');
+  window._swReloadPending=true;                      // D-170 : la nouvelle version est arrivée — on ne recharge RIEN ici, on la DIT
+  _majLireVersion();                                 // cherche la version qui attend et montre le bandeau (`_majRefresh`) si rien ne l'interdit
+  // Une opération en cours (séance, enregistrement, briefing…) : le bandeau se tait, le toast dit quand elle sera proposée. Même décision que partout (R2).
+  if(!_majPeutSAppliquer()&&typeof toast==='function')
+    toast('Mise à jour disponible — elle te sera proposée après ta séance ou ton enregistrement','info');
 }
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{

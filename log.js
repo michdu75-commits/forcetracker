@@ -592,7 +592,7 @@ function lancerTypeSeance(d){
     _dateSeanceReelle();                       // S-01 : une séance vide d'un autre jour prend la date du jour
     S.wkt.exs=modele.map(function(x){
       const sets=[];
-      for(let i=0;i<(x.sets||3);i++) sets.push({kg:0,reps:x.reps||10,type:'N',rest:x.rest||120});
+      for(let i=0;i<(x.sets||3);i++) sets.push({kg:null,reps:x.reps||10,type:'N',rest:x.rest||120});   // 18/11/2026 (lot Z) : la carte « type de séance » ne connaît AUCUNE charge → inconnue (`null`), plus un « 0 écrit »
       /* ⚠️ Le nom passe par le résolveur (ft-v996) : si un exercice est renommé au catalogue,
          la séance générée suit au lieu de porter un nom périmé (la dette de ft-v1023). */
       return {name:(typeof exNomCatalogue==='function')?exNomCatalogue(x.n):x.n, sets:sets};
@@ -829,19 +829,25 @@ function applyDropset(){
   const fait=ex.sets.map(s=>!!(s&&s.done)).lastIndexOf(true);   // dernière série validée (-1 : aucune)
   const p0=_dropDebut(ex), suite=!!ex.dropset&&fait>=p0;        // « Modifier paliers » après un palier fait
   const derniere=fait>=0?ex.sets[fait]:null, prochaine=ex.sets[fait+1]||null;
-  let baseKg,baseReps;
-  if(!derniere){                                                 // rien de fait : le départ d'avant
-    baseKg=ex.sets[0]?.kg||(getPrev(ex.name)[0]?.kg)||0;
-    baseReps=ex.sets[0]?.reps||(getPrev(ex.name)[0]?.reps)||8;
+  /* ⚖️ 18/11/2026 (lot Z, contre-sonde 4 + applyDropset) — LA BASE DES PALIERS SUIT LES CINQ ÉTATS D'UNE CHARGE : inconnue (`null`) · ZÉRO ÉCRIT · kilos · PDC / lest / assistance · « à vide ». Avant : `a.kg||b.kg||0` faisait passer un zéro écrit DERRIÈRE l'historique (`0||50`)
+     et fabriquait un `0` quand rien n'était connu. Maintenant : la 1ʳᵉ série qui a une charge CONNUE (zéro compris) fait la base ; sinon la base reste INCONNUE (`null`) et les paliers aussi — on n'invente rien. `ancre` = la série dont la base vient : son PDC / « à vide » se recopie. */
+  const kgDe=s=>(s&&_kgConnu(s.kg)&&isFinite(+s.kg))?+s.kg:null;
+  let ancre,baseReps;
+  if(!derniere){                                                 // rien de fait : le départ d'avant — de la source ADMISSIBLE seulement (`_reprise`, 17/11/2026 lot C), jamais la dernière fois d'un autre programme
+    const h=(_reprise(ex)||{sets:[]}).sets[0];
+    ancre=(kgDe(ex.sets[0])===null&&kgDe(h)!==null)?h:ex.sets[0];  // la série du jour d'abord (zéro écrit compris) ; sinon la source admissible
+    baseReps=ex.sets[0]?.reps||h?.reps||8;
   }else{                                                         // la prochaine série prévue, sinon la dernière faite
-    baseKg=+((suite||!prochaine)?derniere:prochaine).kg||+derniere.kg||0;
+    const ref=(suite||!prochaine)?derniere:prochaine;
+    ancre=kgDe(ref)===null?derniere:ref;
     baseReps=+(prochaine||derniere).reps||+derniere.reps||8;
   }
+  const baseKg=kgDe(ancre);
   const f=_dropCfgPct/100;const dir=_dropCfgDir;
   const newSets=[];let kg=baseKg;
   for(let i=0;i<_dropCfgPaliers;i++){
-    if(i>0||suite)kg=_roundToGym(dir==='down'?kg*(1-f):kg*(1+f));   // la suite repart de la dernière charge faite
-    newSets.push({kg:kg||0,reps:baseReps,done:false,type:'N'});
+    if((i>0||suite)&&kg!==null)kg=_roundToGym(dir==='down'?kg*(1-f):kg*(1+f));   // la suite repart de la dernière charge faite ; une charge inconnue le reste
+    newSets.push({kg:kg===null?null:(kg||0),reps:baseReps,done:false,type:'N',..._pdcVideDe(ancre)});
   }
   const garde=ex.sets.slice(0,fait+1);                           // le passé : intact, à sa place
   ex.sets=garde.concat(newSets);ex.dropset={paliers:(suite?garde.length-p0:0)+_dropCfgPaliers,pct:_dropCfgPct,direction:dir};
@@ -852,8 +858,10 @@ function applyDropset(){
 function removeDropset(ei){
   const ex=S.wkt.exs[ei];if(!ex||!ex.dropset)return;
   const fait=ex.sets.map(s=>!!(s&&s.done)).lastIndexOf(true);
+  /* ⚖️ 18/11/2026 (lot Z, contre-sonde 4) — la série qui reste prend la 1ʳᵉ série TELLE QU'ELLE EST : charge inconnue (`null`) inconnue, zéro écrit 0, PDC / lest / « à vide » recopiés (avant : `kg||0` fabriquait un zéro). */
+  const s0=ex.sets[0]||null, depart={kg:(s0&&_kgConnu(s0.kg))?s0.kg:null,reps:(s0&&s0.reps)||8,done:false,type:'N',..._pdcVideDe(s0)};   // même forme qu'avant (mêmes champs, même ordre)
   ex.sets=fait>=0?ex.sets.slice(0,fait+1)                         // CC-01 : seule la partie non faite part
-    :[{kg:ex.sets[0]?.kg||0,reps:ex.sets[0]?.reps||8,done:false,type:'N'}];
+    :[depart];
   delete ex.dropset;persist();renderExBlocks();toast('Dropset supprimé','info');
 }
 /* 🧩 LOT 6 / ML-B — UN GROUPEMENT N'EXISTE QU'À PARTIR DE DEUX MEMBRES (29/09/2026).
@@ -934,11 +942,12 @@ function addToGroup(gid){
   const gt=members[0].e.groupType||'super';
   if(gt==='super'){_exPickerMode='addToGroup';_addToGroupGid=gid;openExPicker();return;}
   const last=members[members.length-1];
-  const lastKg=last.e.sets.slice(-1)[0]?.kg||0;
+  /* ⚖️ 18/11/2026 (lot Z) — les cinq états d'une charge se lisent, ils ne se fabriquent pas : une charge INCONNUE le reste (`null`, avant : `kg||0` = 0), un zéro écrit reste 0, un PDC / lest / « à vide » se recopie ; seul un nombre > 0 prend le facteur. */
+  const lastSet=last.e.sets.slice(-1)[0], lastKg=(lastSet&&_kgConnu(lastSet.kg)&&isFinite(+lastSet.kg))?+lastSet.kg:null;
   const factor=(gt==='drop'||gt==='pyramid-down')?0.9:1.1;
-  const newKg=lastKg?_roundToGym(lastKg*factor):0;
+  const newKg=lastKg===null?null:(lastKg>0?_roundToGym(lastKg*factor):0);
   const t=gt==='drop'?'D':'N';
-  const clone={name:last.e.name,sets:[{kg:newKg,reps:last.e.sets[0]?.reps||8,done:false,type:t}],group:gid,groupType:gt};
+  const clone={name:last.e.name,sets:[{kg:newKg,reps:last.e.sets[0]?.reps||8,done:false,type:t,..._pdcVideDe(lastSet)}],group:gid,groupType:gt};
   S.wkt.exs.splice(last.i+1,0,clone);
   persist();renderExBlocks();
 }
@@ -949,7 +958,7 @@ function _doAddToGroup(name){
   if(!gid&&src&&S.wkt&&S.wkt.exs.indexOf(src)>=0&&!src.group){gid='ss'+Date.now();src.group=gid;src.groupType='super';}
   const members=_ssMembers(gid);if(!members.length)return;
   const last=members[members.length-1];
-  const newEx={name,sets:[{kg:0,reps:5,done:false,type:'N'}],group:gid,groupType:'super'};
+  const newEx={name,sets:[_serieDepuis(null,{reps:5},'N')],group:gid,groupType:'super'};   // 18/11/2026 (lot Z) : sans source, la charge est INCONNUE (`null`), plus un « 0 écrit »
   S.wkt.exs.splice(last.i+1,0,newEx);
   persist();renderExBlocks();toast(name+' ajouté à la supersérie','success');
 }
@@ -1060,13 +1069,16 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize,blockIdx,blockCount){
   /* rapprochement PAR RÔLE (voir _prevAligneDetail). ⛔ D-093 : la colonne n'affiche que la série EXACTE de la dernière
      fois (`exact`) — au-delà, « — ». Le repli (la dernière série répétée) ne sert plus qu'aux suggestions grises des champs. */
   const prevDet=_prevAligneDetail(prev, ex.sets), prevAl=prevDet.map(d=>d.p);
+  /* ⛔ D-164 (arbitrage du 17/11/2026) — LA SUGGESTION GRISE DU CHAMP DE CHARGE ET DE RÉPÉTITIONS N'EST QUE CELLE D'UNE SOURCE ADMISSIBLE (18/11 : les répétitions suivent la même règle que la charge) : ✓ sur un champ vide la reprend (`toggleSet` lit ce que le champ
+     affiche), donc ce que le champ affiche ne doit jamais venir d'un AUTRE programme ni d'un autre jour. La colonne « Précédent » (`prevAl`), elle, montre toujours la dernière fois : c'est une comparaison, pas une valeur reprise. */
+  const _vs=_reprise(ex), _sugDet=_vs?_prevAligneDetail(_vs.sets, ex.sets):[];   // la source ADMISSIBLE (ou rien) : le propriétaire unique `_reprise`, lu aussi par l'ajout d'un exercice / d'une série
   const doneSets=ex.sets.filter(s=>s.done);
   // ⚠️ Même règle que le tonnage de la séance : un unilatéral compte double (la série se
   // refait de l'autre côté). Si ce chiffre-ci ne doublait pas, l'exercice et la séance
   // afficheraient deux tonnages différents pour le même travail — et c'est toujours celui
   // qu'on ne comprend pas qui fait douter du reste.
   const _uni=(typeof estUnilateral==='function')&&estUnilateral(ex.name);
-  const vol=doneSets.reduce((a,s)=>a+(s.kg||0)*(s.reps||0),0)*(_uni?2:1);
+  const vol=doneSets.reduce((a,s)=>a+_chargeTonnage(s)*(s.reps||0),0)*(_uni?2:1);   // D-164 : un lest compte, comme dans le volume de la séance (`_chargeTonnage`, un seul propriétaire)
   const _uniTag=_uni?`<span class="uni-tag" onclick="event.stopPropagation();openUniHelp('${_escAttrJs(ex.name)}')">🔀 ${uniLabel(ex.name)}</span>`:'';
   const maxRM=doneSets.filter(s=>s.kg&&s.reps).reduce((b,s)=>Math.max(b,bz(s.kg,s.reps)),0);
   const _cThumb=_exImg(ex.name); // vignette repliée : la photo ou l'animation, sinon « Aucune illustration disponible » (24/10/2026)
@@ -1135,6 +1147,7 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize,blockIdx,blockCount){
   }
 
   // Vue développée
+  const _recLest=_recordLest(ex.name);   // D-164 : le record de lest (dérivé de l'historique, jamais mêlé aux records de charge), dit à côté du 1RM — seulement s'il existe
   const _exImgSrc=_exImg(ex.name);const hasLocalGif=!!_exImgSrc;
   // la vignette : la photo ou l'animation, sinon « Aucune illustration disponible » (24/10/2026) — plus de muscle deviné
   const _curSi=ex.sets.findIndex(x=>x&&!x.done);   // UX SÉANCE : la série à faire maintenant (affichage seul)
@@ -1142,6 +1155,7 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize,blockIdx,blockCount){
   const _noteExPrev=_noteExPrecedente(ex);           // D-087 : la note générale de l'exercice la dernière fois (ou null)
   const _rowsHtml=ex.sets.map((set,si)=>{
     const p=prevAl[si], pv=(prevDet[si]&&prevDet[si].exact)?p:null;   // pv : ce qu'on AFFICHE ; p : la suggestion grise
+    const _pk=_sugDet[si]?_sugDet[si].p:null;                         // la suggestion de CHARGE : seulement d'une source admissible (D-164, voir `_reprise`)
     const liveRM=set.kg&&set.reps?fmt(bz(set.kg,set.reps)):null;
     const _tt=set.type||'N', _tl=SET_TYPE_LABELS[set.type]||'Normal', _pn=_notesPrev[si];
     return`<div id="sr-wrap-${ei}-${si}">`
@@ -1158,12 +1172,12 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize,blockIdx,blockCount){
       /* D-086 — un commentaire de la dernière fois n'est plus écrit en petit dans la case (il s'y tassait sur 3-4
          lignes, et le REPLI de `_prevAligne` le recopiait sur les lignes en trop) : un point bleu le signale, l'appui
          sur « Précédent » l'affiche avec sa date et sa série (`openSetNote`). Rien n'est enregistré de plus. */
-      +`<div class="sprev${_pn?' a-note':''}" onclick="openSetNote(${ei},${si})" style="cursor:pointer;" title="${_pn?'Commentaire de la dernière fois — touche pour le lire':'Ajouter une note'}">${pv?`<div class="sprev-v"><span class="sprev-n">${pv.reps}×${pv.kg}</span><wbr>${_prevTypeBadge(pv)}<wbr>${_prevRirBadge(pv)}</div>`:'<div class="sprev-v">—</div>'}${_setPrevNote(set,p)}${_pn?'<span class="sprev-pt" aria-hidden="true"></span>':''}</div>`
-      +`<input class="sinp${set.reps===null?' sinp-nr':''}" type="number" value="${set.reps||''}" placeholder="${set.maxi?'max':(p?p.reps:(set.reps===null?'?':''))}"${set.reps===null?` title="${REPS_NON_RENSEIGNE} — saisis les répétitions"`:''} inputmode="numeric" step="1" enterkeyhint="next" onchange="upSet(${ei},${si},'reps',this.value)" oninput="_onRepsInput(this,${ei},${si})" onfocus="this.select();clearTimeout(_afTimer)" onkeydown="if(event.key==='Enter'){event.preventDefault();clearTimeout(_afTimer);const n=this.nextElementSibling;n.focus();n.select&&n.select();}">`
-      +`<input class="sinp" type="text" value="${set.kg||''}" placeholder="${p?p.kg:''}" inputmode="decimal" step="0.5" enterkeyhint="done" onchange="upSet(${ei},${si},'kg',this.value)" oninput="updateRMLive(${ei},${si})" onfocus="this.select()" onkeydown="if(event.key==='Enter'){event.preventDefault();confirmSetAndNext(${ei},${si});}">`
+      +`<div class="sprev${_pn?' a-note':''}" onclick="openSetNote(${ei},${si})" style="cursor:pointer;" title="${_pn?'Commentaire de la dernière fois — touche pour le lire':'Ajouter une note'}">${pv?`<div class="sprev-v"><span class="sprev-n">${pv.reps}×${_pdcDe(pv)!==null?_pdcTxt(pv.pdc):(_kgConnu(pv.kg)?pv.kg:'?')}</span><wbr>${_prevTypeBadge(pv)}<wbr>${_prevRirBadge(pv)}</div>`:'<div class="sprev-v">—</div>'}${_setPrevNote(set,p)}${_pn?'<span class="sprev-pt" aria-hidden="true"></span>':''}</div>`
+      +`<input class="sinp${set.reps===null?' sinp-nr':''}" type="number" value="${set.reps||''}" placeholder="${set.maxi?'max':(_pk?_pk.reps:(set.reps===null?'?':''))}"${set.reps===null?` title="${REPS_NON_RENSEIGNE} — saisis les répétitions"`:''} inputmode="numeric" step="1" enterkeyhint="next" onchange="upSet(${ei},${si},'reps',this.value)" oninput="_onRepsInput(this,${ei},${si})" onfocus="this.select();clearTimeout(_afTimer)" onkeydown="if(event.key==='Enter'){event.preventDefault();clearTimeout(_afTimer);const n=this.nextElementSibling;n.focus();n.select&&n.select();}">`
+      +`<input class="sinp${_pdcDe(set)!==null?' sinp-pdc':''}" type="text" value="${_pdcDe(set)!==null?_pdcTxt(set.pdc):(set.kg||'')}" placeholder="${set.vide?'à vide':(_pk&&_pdcDe(_pk)!==null?_pdcTxt(_pk.pdc):(_pk&&_kgConnu(_pk.kg)?_pk.kg:''))}" inputmode="decimal" step="0.5" enterkeyhint="done" onchange="upSet(${ei},${si},'kg',this.value)" oninput="updateRMLive(${ei},${si})" onfocus="this.select()" onblur="_pdcFin(${ei},${si})" onkeydown="if(event.key==='Enter'){event.preventDefault();confirmSetAndNext(${ei},${si});}">`
       +`<div class="srm" id="trm-${ei}-${si}">${set.done&&set.rm1?'~'+fmt(set.rm1):liveRM?'~'+liveRM:''}</div>`
       +`<button class="chk${set.done?' done':''}" onclick="toggleSet(${ei},${si})">${set.done?'✓':''}</button>`
-      +`</div></div>`;
+      +`</div>${_pdcStripHtml(ei,si,set)}</div>`;
   });
   const rows=_rowsHtml.join('');
 
@@ -1182,13 +1196,13 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize,blockIdx,blockCount){
       const isCur=!isDone&&si===curPi;
       const label=si===p0?'Charge de départ':(isDown?`Drop −${pct}%`:`+${pct}%`);
       const isLast=si===ex.sets.length-1;
-      const p=prevAl[si];
+      const p=prevAl[si], _pk=_sugDet[si]?_sugDet[si].p:null;        // D-164 : la suggestion de CHARGE, d'une source admissible seulement (comme les autres lignes)
       if(isCur){
         return`<div id="sr-wrap-${ei}-${si}"><div class="set-row" id="sr-${ei}-${si}" style="background:rgba(255,109,0,.06);">`
           +`<div class="snum" style="color:var(--orange);font-weight:800;">${si+1}</div>`
           +`<div class="ds-lbl" style="font-size:10px;color:var(--orange);font-weight:700;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${label}</div>`
-          +`<input class="sinp" type="number" value="${set.reps||''}" placeholder="${p?p.reps:''}" inputmode="numeric" step="1" onchange="upSet(${ei},${si},'reps',this.value)" oninput="_onRepsInput(this,${ei},${si})" onfocus="this.select();clearTimeout(_afTimer)">`
-          +`<input class="sinp" type="text" value="${set.kg||''}" placeholder="${p?p.kg:''}" inputmode="decimal" step="0.5" onchange="upSet(${ei},${si},'kg',this.value)" oninput="updateRMLive(${ei},${si})" onfocus="this.select()">`
+          +`<input class="sinp" type="number" value="${set.reps||''}" placeholder="${_pk?_pk.reps:''}" inputmode="numeric" step="1" onchange="upSet(${ei},${si},'reps',this.value)" oninput="_onRepsInput(this,${ei},${si})" onfocus="this.select();clearTimeout(_afTimer)">`
+          +`<input class="sinp${_pdcDe(set)!==null?' sinp-pdc':''}" type="text" value="${_pdcDe(set)!==null?_pdcTxt(set.pdc):(set.kg||'')}" placeholder="${set.vide?'à vide':(_pk&&_pdcDe(_pk)!==null?_pdcTxt(_pk.pdc):(_pk&&_kgConnu(_pk.kg)?_pk.kg:''))}" inputmode="decimal" step="0.5" onchange="upSet(${ei},${si},'kg',this.value)" oninput="updateRMLive(${ei},${si})" onfocus="this.select()">`   // D-164 : un palier dont la série porte un PDC (repris du programme ou de la dernière fois) le DIT, comme une série ordinaire
           +`<div></div>`
           +`<button class="chk" onclick="toggleSet(${ei},${si})"></button>`
           +`</div></div>`;
@@ -1197,7 +1211,7 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize,blockIdx,blockCount){
           +`<div class="snum">${si+1}</div>`
           +`<div class="ds-lbl" style="font-size:10px;color:${isDone?'#34D399':'var(--t3)'};flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${label}</div>`
           +`<div style="text-align:center;font-size:13px;color:${isDone?'var(--t2)':'var(--t3)'};">${set.reps||'?'}</div>`
-          +`<div style="text-align:center;font-size:14px;font-weight:700;color:${isDone?'var(--t1)':'var(--t3)'};">${set.kg||'—'}</div>`
+          +`<div style="text-align:center;font-size:14px;font-weight:700;color:${isDone?'var(--t1)':'var(--t3)'};">${_pdcDe(set)!==null?_pdcTxt(set.pdc):(set.kg||'—')}</div>`
           +`<div></div>`
           +`<div style="text-align:center;font-size:${isDone?'14':'10'}px;color:${isDone?'#34D399':'var(--t3)'};">${isDone?'✓':(isLast?'repos':'')}</div>`
           +`</div></div>`;
@@ -1234,7 +1248,7 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize,blockIdx,blockCount){
     +`<div style="flex:1;min-width:0;">`
     +`<div class="ex-name">${_escNote(ex.name)}${_uniTag} <span style="color:var(--t3);font-weight:400;font-size:13px">▾</span></div>`
     +``
-    +`<div class="ex-meta">${doneSets.length}/${ex.sets.length} ${(ex.dropset&&!_dropDebut(ex))?'palier':'série'}${ex.sets.length>1?'s':''}${ex.dropset?' · '+(ex.dropset.direction==='down'?'⬇':'⬆')+ex.dropset.pct+'%':''}${vol>0?' · '+Math.round(vol)+'kg':''}${maxRM>0?' · 1RM ~'+fmt(maxRM)+'kg':''}</div>`
+    +`<div class="ex-meta">${doneSets.length}/${ex.sets.length} ${(ex.dropset&&!_dropDebut(ex))?'palier':'série'}${ex.sets.length>1?'s':''}${ex.dropset?' · '+(ex.dropset.direction==='down'?'⬇':'⬆')+ex.dropset.pct+'%':''}${vol>0?' · '+Math.round(vol)+'kg':''}${maxRM>0?' · 1RM ~'+fmt(maxRM)+'kg':''}${_recLest?' · lest max +'+fmt(_recLest.lest)+' kg':''}</div>`
     +`</div>`
     +`<div style="pointer-events:auto;flex-shrink:0;display:flex;align-items:center;gap:4px;" onclick="event.stopPropagation()">`
     +((!inGroup&&!ex.dropset&&exCount>1)?_gripHtml(ei):'')
@@ -1316,9 +1330,8 @@ function _buildExHistChart(data){
 }
 // ─── MENU CONTEXTUEL EXERCICE (⋯) ────────────────────────────────────────────
 let _exMenuCtx=null;
-function openExMenu(ei,hasGif){
-  const ex=S.wkt.exs[ei];if(!ex)return;
-  _exMenuCtx={ei,nm:ex.name,hasGif:!!hasGif};
+// La feuille du bas partagée par le menu ⋯ d'un exercice et par « Supprimer une série » (D-173) : créée une fois, vidée et remplie par chacun.
+function _ovExMenu(){
   let ov=document.getElementById('ov-ex-menu');
   if(!ov){
     ov=document.createElement('div');ov.className='overlay';ov.id='ov-ex-menu';
@@ -1326,6 +1339,12 @@ function openExMenu(ei,hasGif){
     ov.onclick=e=>{if(e.target===ov)closeExMenu();};
     document.body.appendChild(ov);
   }
+  return ov;
+}
+function openExMenu(ei,hasGif){
+  const ex=S.wkt.exs[ei];if(!ex)return;
+  _exMenuCtx={ei,nm:ex.name,hasGif:!!hasGif};
+  const ov=_ovExMenu();
   const {nm}=_exMenuCtx;
   const safeNm=_escAttrJs(nm);
   const isCustom=(S.customExercises||[]).some(e=>e.n===nm);
@@ -1350,6 +1369,7 @@ function openExMenu(ei,hasGif){
     +(hasUserPhoto?mRow('🗑️','Retirer la photo',`closeExMenu();removeExImg('${safeNm}')`):'')
     +mRow('📊','Statistiques',`closeExMenu();openExHistory('${safeNm}')`)
     +mRow('📋','4 dernières séances',`closeExMenu();openDernieresSeances(${ei})`)   // D-093 : la comparaison série par série
+    +(_serieSupprimable(ex)?mRow('🧹','Supprimer une série…',`openSerieSuppr(${ei})`):'')   // D-173 : LA série choisie, pas la dernière
     +mRow('ℹ️','Types de série','closeExMenu();openTypeHelp()')
     +`<button ontouchstart="_rmHoldStart(this,${ei});event.preventDefault()" ontouchmove="event.preventDefault()" ontouchend="_rmHoldEnd(this)" ontouchcancel="_rmHoldEnd(this)" onmousedown="_rmHoldStart(this,${ei})" onmouseup="_rmHoldEnd(this)" onmouseleave="_rmHoldEnd(this)" style="display:flex;align-items:center;gap:14px;width:100%;padding:13px 18px;background:none;border:none;border-top:1px solid var(--sep);text-align:left;cursor:pointer;touch-action:none;user-select:none;-webkit-user-select:none;">`
     +`<span style="font-size:19px;width:26px;text-align:center;flex-shrink:0;">🗑️</span>`
@@ -1432,7 +1452,7 @@ function closeExHistory(){const el=document.getElementById('ov-ex-hist');if(el)e
 const _P4_MAX = 4;
 function _p4Serie(s){
   const n=(s.reps!==undefined&&s.reps!==null&&s.reps!=='')?s.reps:'?';
-  return _escNote(String(n))+' × '+_escNote(String((s.kg!==undefined&&s.kg!==null&&s.kg!=='')?s.kg:0));
+  return _escNote(String(n))+' × '+_escNote(_pdcDe(s)!==null?_pdcTxt(s.pdc):String((s.kg!==undefined&&s.kg!==null&&s.kg!=='')?s.kg:0));
 }
 function openDernieresSeances(ei){
   const ex=S.wkt&&S.wkt.exs&&S.wkt.exs[ei]; if(!ex) return;
@@ -1924,10 +1944,20 @@ function _prevAligneDetail(prev, sets){
   const pe=[], pt=[];
   (prev||[]).forEach(s=>{ (ech(s)?pe:pt).push(s); });
   let ie=0, it=0;
-  return (sets||[]).map(s=>{
+  const base=(sets||[]).map(s=>{
     if(ech(s)){ const x = pe[ie]; const p = x || pe[pe.length-1] || null; ie++; return {p, exact:!!x}; }
     const x = pt[it]; const p = x || pt[pt.length-1] || null; it++; return {p, exact:!!x};
   });
+  /* 🧵 D-163 × D-171 × D-173 (assemblage, 16/11/2026) — UNE SÉRIE RETROUVE SA SÉRIE D'AVANT PAR IDENTITÉ (`sid`) quand la séance d'avant en porte, jamais par sa seule position.
+     Le chargement d'un jour (`_seriesAvant`) le fait déjà pour les VALEURS ; cette fonction, elle, rapprochait encore par RÔLE et par ORDRE : après qu'une série a été déplacée dans l'éditeur (D-171) ou qu'une
+     série du milieu a été supprimée (D-173), la colonne « Précédent », la suggestion grise du champ de charge et le « commentaire de la dernière fois » montraient ceux de la VOISINE — et valider une série à charge
+     vide REPRENAIT cette suggestion : un zéro écrit devenait « PDC−20 », celui d'une autre série (D-164 : un PDC n'est jamais attribué que par un choix). Même source de vérité (R2) que `_seriesAvant`.
+     ⛔ Seules les séries qui portent un `sid` (celles d'un jour de programme) sont concernées ; une série ajoutée en séance, ou une séance d'avant sans identités, garde le rapprochement par rôle d'avant (à l'octet).
+     Une série identifiée SANS correspondante garde le rapprochement par rôle, SAUF si la série qu'il lui donnerait est déjà celle d'une AUTRE ligne par identité : « mieux vaut un tiret qu'un repère faux » (R29). */
+  if(!(prev||[]).some(x=>x&&x.sid)) return base;
+  const ident=(sets||[]).map(s=>_serieParIdentite(prev,s));
+  const prises=new Set(ident.filter(Boolean));
+  return base.map((d,i)=>ident[i]?{p:ident[i],exact:true}:((sets[i]&&sets[i].sid&&d.p&&prises.has(d.p))?{p:null,exact:false}:d));
 }
 function _prevAligne(prev, sets){ return _prevAligneDetail(prev, sets).map(d=>d.p); }
 /* D-086 — la séance « dernière fois » d'un exercice, avec sa date : la même que lit `getPrev` (R2), qui n'en garde que
@@ -1966,11 +1996,84 @@ const _REPOS_PRESETS=[30,45,60,90,120];
    ⛔ Rien n'est jamais enregistré à la place de la personne : ni dans le programme, ni dans la série tant qu'elle n'a pas validé. Une valeur
    suggérée (la dernière fois, grise dans le champ) n'est reprise que par SON appui sur ✓ — le mécanisme de toutes les séries.
    `0` (programmes d'AVANT, séries « maxi ») garde son ancien comportement : on ne réécrit pas l'existant. */
+/* ⛔ D4 (nuit du 15 au 16/11) — UNE CHARGE PRÉCÉDENTE INCONNUE NE S'ÉCRIT JAMAIS COMME UN MOT. Un champ vidé dans le détail d'une séance passée enregistre `null` (« je ne sais pas ») — et un poids tapé avec une virgule avant le correctif du 01/09/2026 s'est enregistré NaN, devenu `null` par `JSON.stringify` : de vraies histoires en portent. `_champNum`
+   (setup.js, 01/09/2026 : « null » DANS LE CHAMP KG) en avait protégé le détail ; la colonne « Précédent » et le grisé du champ de charge, eux, écrivaient `p.kg` tel quel : « 8×null » et « null » à l'écran (mesuré). La jumelle (R8) existait, elle n'était pas traitée.
+   Inconnue → « ? » dans « Précédent » (le même signe que l'aperçu et que Milo), et AUCUNE suggestion dans le champ. Un `0` reste un `0` (une série validée sans charge) : ce n'est pas à l'affichage d'en décider. */
+function _kgConnu(kg){ return kg!==null&&kg!==undefined&&kg!==''&&!(typeof kg==='number'&&!isFinite(kg)); }
+/* ⚖️ D-164 (Michel, 16/11/2026) — LE POIDS DU CORPS (PDC) EST UN CHOIX DE LA PERSONNE, JAMAIS UNE DÉDUCTION.
+   Une série porte, SI ET SEULEMENT SI la personne l'a choisi sur le pavé de charge, un champ facultatif `pdc` : un nombre signé — `0` = « PDC »,
+   `+10` = « PDC + lest 10 kg », `-20` = « PDC − assistance 20 kg ». ⛔ Le champ est ADDITIF : `kg` reste `0` (la valeur qu'une charge inconnue ou un exercice au poids du
+   corps avait déjà), donc le tonnage, les records / 1RM, les calories (MET), les statistiques et le CSV lisent exactement ce qu'ils lisaient — rien n'est
+   converti en kilos (le poids de corps change, une série passée ne se recalcule JAMAIS), et rien n'est tiré du NOM ou du type de l'exercice (aucune liste, aucune devinette :
+   `pdc` n'est posé que par le geste de la personne, ou repris tel quel de SA série d'avant — la même règle que `kg`). Cinq états ne se confondent jamais :
+   charge inconnue (`kg` absent / `null`, « ? ») · zéro écrit (`kg:0`) · barre à vide (`vide:true`) · charge en kilos (`kg>0`) · poids du corps (`pdc` numérique). */
+function _pdcDe(s){ return (s&&typeof s.pdc==='number'&&isFinite(s.pdc))?s.pdc:null; }
+function _pdcTxt(n,unite){ const a=Math.abs(n), v=String(Math.round(a*100)/100); return n===0?'PDC':('PDC'+(n>0?'+':'−')+v+(unite?' kg':'')); }
+/* L'inverse, pour la suggestion grise (placeholder) : « PDC » · « PDC+10 » · « PDC−20 » → 0 · 10 · −20 ; tout autre texte → null (jamais un nombre tiré d'un mot). */
+function _pdcLire(txt){ const m=/^PDC(?:([+−-])(\d+(?:[.,]\d+)?))?(?:\s*kg)?$/i.exec(String(txt==null?'':txt).trim()); return !m?null:(m[1]?((m[1]==='+'?1:-1)*numFR(m[2])):0); }
+/* La charge d'une série telle que Milo la lit : « PDC » · « PDC+10kg » · « PDC−20kg » pour une série choisie au poids du corps, sinon les kilos, ou « ? » quand ils sont inconnus (jamais « 0 » inventé). */
+/* ⚖️ D-164 (mission corrective du 16/11/2026, sondes P01/P02) — LES CINQ ÉTATS SE LISENT, ILS NE SE CONFONDENT PAS : charge INCONNUE (`null` / absent / vide) → « ? » · ZÉRO écrit (`0`) → `0` (avant : `x.kg||'?'` le lisait « ? » : un zéro
+   passait pour « je ne sais pas ») · barre « à vide » → « à vide » · poids du corps → « PDC… » · kilos → le nombre. Une charge en kilos qui a pris la place de « à vide » (`vide` resté sur la série) gagne : elle est lue comme des kilos. */
+function _kgTxtSerie(x){ const n=_pdcDe(x); if(n!==null)return _pdcTxt(n,true).replace(' ',''); if(x.vide&&!(+x.kg>0))return 'à vide'; return _kgConnu(x.kg)?x.kg:'?'; }
+/* La série de la dernière fois dit PDC → la nouvelle série le dit aussi (« reprise telle quelle », comme `kg`) ; sinon rien. */
+function _pdcRepris(pp){ const n=_pdcDe(pp); return n===null?{}:{pdc:n}; }
 function _repsNrBandeau(ex){
   const n=((ex&&ex.sets)||[]).filter(s=>s&&!s.done&&s.reps===null).length;
   return n?`<div class="reps-nr-hint">${REPS_NON_RENSEIGNE} dans le programme : saisis les répétitions${n>1?' de chaque série':''} pour valider.</div>`:'';
 }
+/* ⚖️ D-164 — LE PAVÉ DE CHARGE : trois choix MANUELS (« PDC » · « PDC + lest » · « PDC − assistance »), posés SEULEMENT par un appui. Le montant (lest ou
+   assistance) se tape dans le même champ de charge. `_pdcAtt` = le sens choisi quand le montant n'est pas encore tapé : de la mémoire de l'écran, jamais enregistrée. */
+let _pdcAtt=null;                                   // {ei,si,sg:'+'|'-'} ou null
+function _pdcAttendu(ei,si){ return !!(_pdcAtt&&_pdcAtt.ei===ei&&_pdcAtt.si===si); }
+function _pdcModeDe(ei,si,set){ if(_pdcAttendu(ei,si))return _pdcAtt.sg; const n=_pdcDe(set); return n===null?null:(n===0?'0':(n>0?'+':'-')); }
+/* Ce que le champ de charge AFFICHE : le texte du PDC, ou rien tant que le montant attend d'être tapé. */
+function _pdcChampTxt(ei,si,set){ return _pdcAttendu(ei,si)?'':(_pdcDe(set)!==null?_pdcTxt(set.pdc):''); }
+function _pdcStripHtml(ei,si,set){
+  const m=_pdcModeDe(ei,si,set), b=(k,txt)=>`<button type="button" class="kgm-b${m===k?' on':''}" data-m="${k}" aria-pressed="${m===k?'true':'false'}" onmousedown="event.preventDefault()" onclick="setPdcMode(${ei},${si},'${k}')">${txt}</button>`;
+  return `<div class="kgm" id="kgm-${ei}-${si}" role="group" aria-label="Charge au poids du corps — série ${si+1}">${b('0','PDC')}${b('+','PDC + lest')}${b('-','PDC − assistance')}</div>`;
+}
+/* Met à jour la ligne SANS la redessiner (le focus reste dans le champ) : texte, indice, couleur, boutons, 1RM vide. */
+function _pdcMajChamp(ei,si){
+  const set=S.wkt&&S.wkt.exs&&S.wkt.exs[ei]&&S.wkt.exs[ei].sets[si], row=document.getElementById(`sr-${ei}-${si}`); if(!set||!row)return;
+  const inp=row.querySelectorAll('.sinp')[1], att=_pdcAttendu(ei,si), n=_pdcDe(set);
+  if(inp){
+    inp.value=_pdcChampTxt(ei,si,set);
+    inp.placeholder=att?(_pdcAtt.sg==='+'?'lest kg':'assist. kg'):(n!==null?'':(set.vide?'à vide':'kg'));
+    inp.classList.toggle('sinp-pdc',n!==null||att);
+    if(att)inp.focus();
+    if(document.activeElement===inp)inp.select&&inp.select();           // le doigt est sur le champ : la frappe suivante REMPLACE le texte (« PDC−10 » → le montant tapé)
+  }
+  const strip=document.getElementById(`kgm-${ei}-${si}`), m=_pdcModeDe(ei,si,set);
+  if(strip)strip.querySelectorAll('.kgm-b').forEach(x=>{ const on=x.getAttribute('data-m')===m; x.classList.toggle('on',on); x.setAttribute('aria-pressed',on?'true':'false'); });
+  const trm=document.getElementById(`trm-${ei}-${si}`); if(trm&&(att||n!==null))trm.textContent='';   // aucun 1RM inventé pour une charge au poids du corps
+}
+function _pdcFin(ei,si){ if(_pdcAttendu(ei,si)){ _pdcAtt=null; _pdcMajChamp(ei,si); } }   // le champ est quitté sans montant : le sens attendu est oublié, la série reste « PDC »
+function setPdcMode(ei,si,m){
+  const set=S.wkt&&S.wkt.exs&&S.wkt.exs[ei]&&S.wkt.exs[ei].sets[si]; if(!set)return;
+  const courant=_pdcModeDe(ei,si,set), cur=_pdcDe(set);
+  if(courant===m){ delete set.pdc; _pdcAtt=null; }                  // le même choix une 2ᵉ fois = retour à une charge en kilos (aucun 4ᵉ bouton)
+  else{
+    set.kg=0; delete set.rm1; delete set.vide;                      // `kg` reste 0 : aucun calcul existant ne bouge ; D-164 (sonde P10) : « PDC » et « à vide » sont deux CHOIX contradictoires — le dernier geste gagne, jamais les deux sur une série
+    if(m==='0'){ set.pdc=0; _pdcAtt=null; }
+    else if(cur&&Math.abs(cur)>0){ set.pdc=(m==='+'?1:-1)*Math.abs(cur); _pdcAtt=null; }   // changer le SENS garde le montant déjà tapé
+    else{ if(cur===null)set.pdc=0; _pdcAtt={ei,si,sg:m}; }
+  }
+  persist(); _pdcMajChamp(ei,si);
+}
+/* Le montant tapé dans le champ d'une série au poids du corps. Un montant SANS sens (série « PDC » seul, rien choisi) est ambigu : on ne devine pas (R29), on le dit. */
+function _pdcSaisie(ei,si,v){
+  const s=S.wkt.exs[ei].sets[si], t=String(v==null?'':v).replace(/PDC|kg/ig,'').replace(/\s/g,''), cur=_pdcDe(s), att=_pdcAttendu(ei,si)?_pdcAtt.sg:null;
+  const n=Math.abs(numFR(t.replace(/^[+\-−–]/,'')));
+  if(!(n>0)){ if(!att)s.pdc=0; }                                    // champ vidé : plus de montant (le sens choisi attend encore)
+  else{
+    const sg=/^[-−–]/.test(t)?'-':(/^\+/.test(t)?'+':(att||(cur>0?'+':(cur<0?'-':null))));
+    if(!sg){ toast('Choisis « PDC + lest » ou « PDC − assistance » pour donner un montant','info'); _pdcMajChamp(ei,si); return; }
+    s.pdc=(sg==='-'?-1:1)*Math.round(n*100)/100; _pdcAtt=null;
+  }
+  s.kg=0; delete s.rm1; delete s.vide; persist(); _pdcMajChamp(ei,si);   // D-164 : un PDC écrit exclut « à vide » (voir `setPdcMode`)
+}
 function upSet(ei,si,f,v){
+  if(f==='kg'&&(_pdcDe(S.wkt.exs[ei].sets[si])!==null||_pdcAttendu(ei,si))){ _pdcSaisie(ei,si,v); return; }   // D-164 : le montant d'une charge au poids du corps ne passe jamais pour des kilos
   const s=S.wkt.exs[ei].sets[si], n=numFR(v)||0;
   s[f]=(f==='reps'&&s.reps===null&&!(n>0))?null:n;      // « Non renseigné » le reste tant qu'aucun nombre n'est saisi (effacer un champ vide ne l'invente pas à 0)
   if(s.kg&&s.reps)s.rm1=bz(s.kg,s.reps);persist();
@@ -1985,7 +2088,13 @@ function toggleSet(ei,si){
     if(!(lu>0)){ toast('Saisis les répétitions pour valider cette série','info'); if(inp){ inp.focus(); inp.select&&inp.select(); } return; }
     set.reps=lu;
   }
-  if(row){const inps=row.querySelectorAll('.sinp');if(!set.reps&&inps[0])set.reps=parseInt(inps[0].value||inps[0].placeholder)||0;if(!set.kg&&inps[1])set.kg=numFR(inps[1].value||inps[1].placeholder)||0;}
+  /* ⚖️ D-164 — un montant tapé puis « Entrée » / ✓ sans quitter le champ : il est lu ICI, avec son sens (le champ d'une charge au poids du corps n'est jamais lu comme des kilos). */
+  if(row&&!set.done&&(_pdcDe(set)!==null||_pdcAttendu(ei,si))){ const _ki=row.querySelectorAll('.sinp')[1]; if(_ki&&_ki.value!==_pdcChampTxt(ei,si,set))_pdcSaisie(ei,si,_ki.value); }
+  /* ⚖️ 17/11/2026 — la suggestion grise de CHARGE lue ci-dessous n'est JAMAIS celle d'un autre programme : le champ n'affiche que la dernière fois d'une source admissible (`_reprise`, dessiné par `_renderExHtml`) ; sinon il est vide et ✓ n'importe rien. */
+  if(row){const inps=row.querySelectorAll('.sinp');if(!set.reps&&inps[0])set.reps=parseInt(inps[0].value||inps[0].placeholder)||0;
+    if(!set.kg&&inps[1]&&_pdcDe(set)===null){ const _pd=inps[1].value?null:_pdcLire(inps[1].placeholder);   // la suggestion grise « PDC+10 » (la dernière fois) se reprend telle quelle, jamais lue comme 10 kg
+      /* ⚖️ D-164 — une charge INCONNUE (`null`) validée sans qu'on ait rien tapé ni de suggestion à reprendre RESTE inconnue : valider une série n'invente pas un zéro (un « 0 » tapé, lui, est un zéro écrit). */
+      if(_pd!==null)set.pdc=_pd; else if(set.kg===null&&String(inps[1].value||'').trim()===''&&!(numFR(inps[1].placeholder)>0)){ /* reste `null` */ } else set.kg=numFR(inps[1].value||inps[1].placeholder)||0; }}
   set.done=!set.done;if(set.kg&&set.reps)set.rm1=bz(set.kg,set.reps);
   // ── HORODATAGE DE LA SÉRIE (12/08/2026) ────────────────────────────────────────────
   // ⚠️ POURQUOI : jusqu'ici on écrivait `done=true` et RIEN d'autre — l'app ne savait pas
@@ -3737,20 +3846,88 @@ function chainInputs(ids,lastFn){
 }
 function addSet(ei){
   const ex=S.wkt.exs[ei];
-  // Nouvelle série basée sur la SÉANCE PRÉCÉDENTE (cohérent avec la colonne « Précédent »).
-  const prev=getPrev(ex.name);
-  // ⚠️ PAR RÔLE, pas par position (voir _prevAligne) : la nouvelle série est une série de
-  // TRAVAIL, elle se compare aux séries de travail d'avant — jamais à un échauffement.
-  const p=_prevAligne(prev, ex.sets.concat([{type:'N'}])).pop();
-  // Repli si aucune séance précédente : copie la DERNIÈRE série de la séance en cours
-  // → une nouvelle série ne repart jamais « à vide » (kg conservé).
+  /* ⚖️ 17/11/2026 (lot C de la finale, arbitrage de Michel) — LA SÉRIE AJOUTÉE SUIT LES RÈGLES DE LA VALIDATION D'UNE SÉRIE : elle ne reprend la dernière fois que d'une source ADMISSIBLE (`_reprise` : ce jour de ce programme, ou la
+     dernière séance libre), jamais « la dernière fois du même nom, tous programmes confondus ». ⚠️ PAR RÔLE, pas par position (voir _prevAligne) : la nouvelle série est une série de TRAVAIL, elle se compare aux séries de travail d'avant. */
+  const p=_reprisesPour(ex, ex.sets.concat([{type:'N'}])).pop();
+  /* Repli : une COPIE VOLONTAIRE de la DERNIÈRE série de CET exercice dans la séance en cours (une copie de séance, pas de l'historique : elle reste) → une nouvelle série ne repart jamais « à vide ».
+     Une charge inconnue (`null`) se copie inconnue : jamais transformée en zéro (D-164). */
   const last=ex.sets.length?ex.sets[ex.sets.length-1]:null;
-  const kg   = p ? p.kg   : (last ? (last.kg||0)   : 0);
-  const reps = p ? p.reps : (last ? (last.reps===null?null:(last.reps||8)) : 8);   // une série copiée d'une série « Non renseigné » l'est aussi (correction D)
-  ex.sets.push({kg,reps,type:'N',done:false,rm1:0});
+  const n=_serieDepuis(p||last,{kg:0,reps:8},'N');                 // D-164 : un PDC, un lest, une assistance, « à vide » suivent la série dont on part, comme son `kg`
+  if(!p&&last)n.reps=last.reps===null?null:(last.reps||8);         // une série copiée d'une série « Non renseigné » l'est aussi (correction D)
+  ex.sets.push(n);
   persist();renderExBlocks();
 }
 function rmLastSet(ei){const ex=S.wkt.exs[ei];if(ex.sets.length>1){ex.sets.pop();persist();renderExBlocks();}}
+/* 🧹 D-173 (décision de Michel, 16/11/2026) — SUPPRIMER PRÉCISÉMENT LA SÉRIE CHOISIE, PAS LA DERNIÈRE.
+   Avant : seul « − » (appui maintenu) retirait une série, et c'était TOUJOURS la dernière — 4 échauffements puis 3 séries de travail,
+   impossible d'enlever le 4ᵉ échauffement sans toucher aux autres. Maintenant : menu ⋯ de l'exercice → « Supprimer une série… » → la liste
+   des séries (numéro, type, charge × reps, ✓ si faite) → un appui sur la ligne voulue. ⭐ Ce n'est pas un 2ᵉ chemin : « − » reste, pour la dernière.
+   ⭐ GÉNÉRIQUE : aucun nom d'exercice, aucune position codée — la série visée est repérée par son OBJET (`ex.sets.indexOf`), donc rien ne
+   dépend d'un indice qui aurait pu bouger. Un superset est deux exercices ordinaires reliés par `group` : chaque exercice a sa liste.
+   ⛔ Séance en cours SEULEMENT (`S.wkt`) : ni le programme d'origine (les séries sont copiées au chargement), ni les séances enregistrées.
+   ⛔ Les autres séries ne sont pas touchées (mêmes objets : cases pointées, charges, reps, RIR, repos, notes, identités, ordre).
+   ⛔ Les règles existantes sont gardées : jamais la dernière série restante (on supprime l'exercice, `rmEx`) ; les PALIERS d'un dropset gardent leur réglage
+   « Modifier paliers » (le nombre de paliers y fait loi), mais ses séries NORMALES se suppriment comme les autres (CE lot M, voir plus bas). La précaution : une série DÉJÀ POINTÉE demande confirmation (elle
+   compte dans le volume, les records et les calories) ; une série non pointée part tout de suite.
+   🎯 Les indices portés par le repos qui court (la question du RIR : `_rirCible`, `_rirPending`) sont recalés, sinon la réponse irait
+   à la série d'à côté. */
+/* 🧹 D-173 (CE lot M, 16/11/2026) — LES STRUCTURES DÉGRESSIVES : SÉRIE COMPLÈTE ≠ PALIER. Un dropset posé par l'outil (`ex.dropset`) est une chaîne de PALIERS
+   (ses DERNIÈRES séries, `_dropDebut`) précédée, éventuellement, de séries NORMALES faites avant la méthode. ⭐ Une série normale d'un dropset se supprime comme toute série
+   (la chaîne et son réglage `ex.dropset` ne changent pas : `_dropDebut` se recalcule seul). ↪️ RÉVISÉ le 17/11/2026 (lot D, arbitrage de Michel) : UN PALIER ISOLÉ se supprime aussi, en recalant `ex.dropset.paliers` (jamais « 3 paliers » sur 2 lignes) ;
+   seul le DERNIER palier restant reste verrouillé (sémantique non décidée), la feuille le DIT (ligne grisée + phrase) au lieu de le perdre en silence. Un dégressif IMPORTÉ (séries de type « D », sans `ex.dropset`) n'a aucun réglage à tenir : ses lignes sont des séries comme les autres. */
+function _estPalierDrop(ex,si){ return !!(ex&&ex.dropset)&&si>=_dropDebut(ex); }
+function _nbPaliers(ex){ return (ex&&ex.dropset&&Array.isArray(ex.sets))?ex.sets.length-_dropDebut(ex):0; }
+/* 🧹 D-173 (lot D de fermeture, 17/11/2026, arbitrage de Michel) — UN PALIER ISOLÉ SE SUPPRIME, et le réglage suit : `ex.dropset.paliers` redevient le vrai nombre de paliers (jamais « 3 paliers » sur 2 lignes).
+   ⛔ SAUF LE DERNIER RESTANT : le retirer laisserait un dropset SANS palier — ce que cela doit devenir (série normale ? dropset retiré ?) n'est PAS décidé : on ne tranche pas, la ligne reste (🔒) et la feuille le DIT. */
+function _serieSupprimable(ex,si){
+  if(!ex||!Array.isArray(ex.sets)||ex.sets.length<2) return false;                   // jamais la dernière série restante (on supprime l'exercice, `rmEx`)
+  const ok=k=>!_estPalierDrop(ex,k)||_nbPaliers(ex)>=2;                              // un palier n'est supprimable que s'il en reste un autre
+  return si===undefined ? ex.sets.some((_,k)=>ok(k)) : ok(si);                       // sans `si` : l'exercice a-t-il au moins UNE série supprimable ?
+}
+function openSerieSuppr(ei){
+  const ex=S.wkt&&S.wkt.exs&&S.wkt.exs[ei]; if(!_serieSupprimable(ex)) return;
+  const ov=_ovExMenu();
+  const ligne=(set,si)=>{
+    const tp=set&&SET_TYPE_LABELS[set.type]||'Normal';
+    /* D-164 × D-173 (assemblage) : une série au poids du corps / « à vide » se dit comme partout (« PDC+12 », « à vide »), jamais « — kg » (ce serait la dire inconnue). */
+    const reps=(set&&set.reps)?set.reps:(set&&set.reps===null?'?':'—'), kg=(set&&(_pdcDe(set)!==null||(set.vide&&!(+set.kg>0))))?String(_kgTxtSerie(set)):((set&&_kgConnu(set.kg)&&+set.kg>0)?set.kg+' kg':'— kg');
+    if(_estPalierDrop(ex,si)&&!_serieSupprimable(ex,si)) return `<div style="display:flex;align-items:center;gap:12px;width:100%;min-height:48px;padding:8px 18px;border-top:1px solid var(--sep);opacity:.55;box-sizing:border-box;">`
+      +`<span style="font-size:15px;font-weight:800;color:var(--t2);width:22px;text-align:center;flex-shrink:0;">${si+1}</span>`
+      +`<span style="flex:1;min-width:0;font-size:15px;color:var(--t1);">Palier · ${_escNote(String(reps))} × ${_escNote(String(kg))}${set&&set.done?' <span style="color:var(--green);font-weight:700;">✓ fait</span>':''}</span>`
+      +`<span style="font-size:15px;flex-shrink:0;" aria-hidden="true">🔒</span></div>`;
+    return `<button onclick="supprimerSerie(${ei},${si})" style="display:flex;align-items:center;gap:12px;width:100%;min-height:48px;padding:8px 18px;background:none;border:none;border-top:1px solid var(--sep);text-align:left;cursor:pointer;touch-action:manipulation;">`
+      +`<span style="font-size:15px;font-weight:800;color:var(--t2);width:22px;text-align:center;flex-shrink:0;">${si+1}</span>`
+      +`<span style="flex:1;min-width:0;font-size:15px;color:var(--t1);">${_escNote(String(_estPalierDrop(ex,si)?'Palier':tp))} · ${_escNote(String(reps))} × ${_escNote(String(kg))}${set&&set.done?' <span style="color:var(--green);font-weight:700;">✓ faite</span>':''}</span>`
+      +`<span style="font-size:18px;flex-shrink:0;" aria-hidden="true">🗑️</span></button>`;
+  };
+  ov.innerHTML=`<div style="width:100%;max-width:430px;background:var(--bg2);border-radius:16px 16px 0 0;padding-bottom:calc(8px + env(safe-area-inset-bottom,0px));box-shadow:0 -4px 30px rgba(0,0,0,.5);">`
+    +`<div style="text-align:center;font-size:13px;font-weight:600;color:var(--t2);padding:13px 16px 11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Quelle série supprimer ? · ${_escNote(String(ex.name||''))}</div>`
+    +`<div style="max-height:56vh;overflow-y:auto;">${ex.sets.map(ligne).join('')}</div>`
+    +(ex.dropset&&ex.sets.some((_,k)=>_estPalierDrop(ex,k)&&!_serieSupprimable(ex,k))?`<div style="padding:8px 18px 0;font-size:12px;line-height:1.4;color:var(--t3);">🔒 Dernier palier du dropset : le retirer laisserait un dropset sans palier, rien n'est supprimé. « ⚙️ Modifier paliers » ou « ✕ Retirer dropset » règlent la structure.</div>`:'')
+    +`<button onclick="closeExMenu()" style="display:flex;align-items:center;justify-content:center;width:calc(100% - 32px);margin:10px 16px 0;padding:12px;border-radius:12px;background:var(--bg3);border:none;font-size:15px;font-weight:700;color:var(--t2);cursor:pointer;touch-action:manipulation;">Annuler</button>`
+    +`</div>`;
+  ov.classList.add('open');
+}
+function supprimerSerie(ei,si){
+  const ex=S.wkt&&S.wkt.exs&&S.wkt.exs[ei], set=ex&&ex.sets&&ex.sets[si];
+  closeExMenu();
+  if(!_serieSupprimable(ex,si)||!set) return;
+  const faire=()=>{
+    const e=(S.wkt&&S.wkt.exs)?S.wkt.exs.indexOf(ex):-1, k=ex.sets.indexOf(set);     // la série visée, retrouvée par son OBJET
+    if(e<0||k<0||!_serieSupprimable(ex,k)) return;
+    if(_estPalierDrop(ex,k)) ex.dropset.paliers=_nbPaliers(ex)-1;                     // D-173 : le réglage suit — le nombre de paliers reste celui des lignes (calculé AVANT le retrait)
+    ex.sets.splice(k,1);
+    const recaler=c=>(c&&c.ei===e)?(c.si===k?null:(c.si>k?Object.assign({},c,{si:c.si-1}):c)):c;   // la question du RIR — et le sens PDC en attente (`_pdcAtt`, ses autres champs gardés) — suivent leur série (ou disparaissent avec elle)
+    _pdcAtt=recaler(_pdcAtt)||null; const _attPdc=_pdcAtt;   // le redessin ci-dessous retire le champ du montant : `_pdcFin` (onblur) oublierait le sens attendu — c'est NOTRE redessin, pas la personne qui quitte le champ : on le rétablit après
+    if(Array.isArray(_rirPending)) _rirPending=_rirPending.map(recaler).filter(Boolean); else _rirPending=recaler(_rirPending)||null;
+    if(Array.isArray(_rirCible)){ _rirCible=_rirCible.map(recaler).filter(Boolean); if(!_rirCible.length) _rirCible=null; } else _rirCible=recaler(_rirCible)||null;
+    persist();renderExBlocks();
+    if(document.getElementById('rest-bar')&&document.getElementById('rest-bar').classList.contains('show')) _renderRirRow();
+    if(_attPdc){ _pdcAtt=_attPdc; _pdcMajChamp(_attPdc.ei,_attPdc.si); }
+  };
+  if(set.done) showConfirm((_estPalierDrop(ex,si)?'Supprimer le palier ':'Supprimer la série ')+(si+1)+' ?','Elle est déjà validée : son volume, ses records et ses calories disparaîtront de cette séance.',faire);
+  else faire();
+}
 function rmEx(ei){
   closeExMenu();
   const name=S.wkt.exs[ei]&&S.wkt.exs[ei].name||'cet exercice';
@@ -3884,8 +4061,10 @@ function addExercise(name){
   const prev=getPrev(name);
   // Pré-remplissage PAR SÉRIE depuis la séance précédente (série i → prev[i], repli dernière série).
   const _mod=[0,1,2].map(i=>({type:i===0&&prev.length?'É':'N'}));
-  const _pa=_prevAligne(prev,_mod);   // par RÔLE : l'échauffement ne prend pas la 1ʳᵉ série de travail
-  const sets=_mod.map((m,i)=>{const pp=_pa[i];return{kg:pp?pp.kg:0,reps:pp?pp.reps:5,type:m.type,done:false,rm1:0};});
+  /* ⚖️ 17/11/2026 (lot C de la finale, arbitrage de Michel) — LES VALEURS NE VIENNENT QUE D'UNE SOURCE ADMISSIBLE (`_reprise`), les mêmes règles que valider une série : ce jour de ce programme, ou la dernière séance libre — jamais « la dernière fois du même nom,
+     tous programmes confondus ». Sans source admissible : les valeurs de départ (charge à saisir, 5 répétitions), jamais une valeur empruntée. (La structure — un échauffement en tête quand l'exercice a déjà une histoire — reste celle de `prev`.) */
+  const _pa=_reprisesPour(name,_mod);   // par RÔLE : l'échauffement ne prend pas la 1ʳᵉ série de travail
+  const sets=_mod.map((m,i)=>_serieDepuis(_pa[i],{kg:0,reps:5},m.type));
   S.wkt.exs.push({name,sets});
   _expandedEx=S.wkt.exs.length-1;
   persist();renderExBlocks();
@@ -3948,11 +4127,10 @@ function openExPickerForReplace(ei){
    rôle échauffement / travail. */
 function _typeStructure(t){ return (t==='É'||t==='W')?t:'N'; }   // rôle seulement : une méthode (D, X…) appartient à l'ancien
 function _exerciceRemplacant(name, modeleSets, ancien){
-  const prev=(typeof getPrev==='function')?(getPrev(name)||[]):[];
   const mod=((modeleSets&&modeleSets.length)?modeleSets:[{type:'N'},{type:'N'},{type:'N'}])
     .map(s=>({type:_typeStructure(s&&s.type)}));
-  const pa=_prevAligne(prev,mod);   // par RÔLE, exactement comme `addExercise` (R13)
-  const sets=mod.map((m,i)=>{const pp=pa[i];return{kg:pp?pp.kg:0,reps:pp?pp.reps:5,type:m.type,done:false,rm1:0};});
+  const pa=_reprisesPour(name,mod);   // par RÔLE, exactement comme `addExercise` (R13) — et la même source admissible (17/11/2026, lot C : `_reprise`), jamais la dernière fois de tous les programmes
+  const sets=mod.map((m,i)=>_serieDepuis(pa[i],{kg:0,reps:5},m.type));
   const o={name,sets};
   if(ancien&&ancien.group){o.group=ancien.group;o.groupType=ancien.groupType||'super';}
   return o;
@@ -5049,15 +5227,45 @@ function _initSheetHandles(){
 function _facteurUni(sess, nom){
   return (sess&&sess.uniConv&&typeof estUnilateral==='function'&&estUnilateral(nom))?2:1;
 }
+/* ⚖️ D-164 (arbitrage VALIDÉ par Michel, 16/11/2026) — UN LEST RÉELLEMENT AJOUTÉ PARTICIPE AU TONNAGE, SELON LA CONVENTION EXISTANTE (kilos × répétitions × facteur unilatéral) : 3 répétitions avec 10 kg de lest = 30 kg de volume.
+   `_chargeTonnage` est le SEUL propriétaire de « combien de kilos cette série pèse dans le volume » (R2) — le volume de la séance (`_workVol`) et celui de la carte de l'exercice le lisent ici :
+   · des KILOS (`kg`) → ces kilos ; un LEST (`pdc` > 0) → le montant du lest ; · « PDC » seul (0) ET une ASSISTANCE (`pdc` < 0) → 0 : ⛔ AUCUNE règle de tonnage pour l'assistance n'est inventée (décision en attente), et le poids de corps n'est JAMAIS
+     ajouté (il change, une série passée ne se recalcule pas) ; · inconnue / zéro / « à vide » → 0, comme avant.
+   ⛔ Rien d'autre ne bouge : les records / 1RM (`_serieFaitFoiPourPR` lit `kg`), les calories (le moteur lit ses propres champs), les séances SANS PDC (le même nombre qu'avant, à l'octet) ; le volume ENREGISTRÉ d'une séance passée n'est pas réécrit. */
+function _chargeTonnage(s){ const n=_pdcDe(s); return n!==null?(n>0?n:0):(+s.kg||0); }
 function _workVol(sess, avecEchauffements){
   let v=0;
   (sess.exs||sess.exercises||[]).forEach(ex=>{
     const k=_facteurUni(sess, ex.name);
     (ex.sets||[]).forEach(s=>{
-      if(s.done&&(avecEchauffements||(s.type!=='É'&&s.type!=='W'))&&(s.kg||0)>0&&(s.reps||0)>0)v+=s.kg*s.reps*k;
+      const c=_chargeTonnage(s);
+      if(s.done&&(avecEchauffements||(s.type!=='É'&&s.type!=='W'))&&c>0&&(s.reps||0)>0)v+=c*s.reps*k;
     });
   });
   return v;
+}
+/* 🏋️ LE RECORD DE LEST — DÉRIVÉ des séances terminées (aucune donnée de plus, R17) et DISTINCT des charges ordinaires (`S.prs`), du PDC seul et de l'assistance (D-164, arbitrage de Michel : « des records spécifiques au lest »).
+   Le meilleur lest d'un exercice = la plus lourde série de TRAVAIL faite avec un lest (`pdc` > 0), à répétitions égales celle qui en a le plus. ⛔ Aucun record d'assistance (aucune règle inventée) ; ⛔ jamais mêlé à `S.prs` ; ⛔ jamais converti en kilos.
+   Même identité d'exercice que les records (`_memeExercice` : les alias comptent). `sansSess` : une séance à écarter (celle qu'on vient de finir, pour savoir si elle bat l'ancien). */
+function _meilleurLest(exs){
+  let best=null;
+  (exs||[]).forEach(s=>{ const n=_pdcDe(s); if(!s||!s.done||!(n>0)||!(+s.reps>0)||s.type==='É'||s.type==='W')return;
+    if(!best||n>best.lest||(n===best.lest&&+s.reps>best.reps))best={lest:n,reps:+s.reps}; });
+  return best;
+}
+function _recordLest(nom, sansSess){
+  const meme=_memeExercice(nom); let best=null;
+  _seancesTrain().forEach(s=>{ if(!s||s===sansSess)return;
+    (s.exs||s.exercises||[]).forEach(ex=>{ if(!ex||!meme(ex.name))return; const b=_meilleurLest(ex.sets);
+      if(b&&(!best||b.lest>best.lest||(b.lest===best.lest&&b.reps>best.reps)))best=Object.assign({date:s.date},b); }); });
+  return best;
+}
+/* Les exercices d'une séance dont le lest BAT le record d'avant (un 1ᵉʳ lest n'est pas un record : une référence, comme `premiere` pour `S.prs`). */
+function _lestRecordsBattus(sess){
+  const out=[];
+  (sess&&(sess.exs||sess.exercises)||[]).forEach(ex=>{ if(!ex||!ex.name)return; const b=_meilleurLest(ex.sets), old=b?_recordLest(ex.name,sess):null;
+    if(b&&old&&(b.lest>old.lest||(b.lest===old.lest&&b.reps>old.reps)))out.push({nom:ex.name,lest:b.lest,reps:b.reps}); });
+  return out;
 }
 
 /* 🧮 LE VOLUME DE TRAVAIL D'UNE SÉANCE ENREGISTRÉE, TEL QUE TOUS LES ÉCRANS LE MONTRENT (mission Séance de Michel du
@@ -5111,7 +5319,12 @@ function _serieFaitFoiPourPR(s){
 async function finishWorkout(){
   if(typeof kcalValiderChampsEnAttente==='function'&&!kcalValiderChampsEnAttente('#log-cardio'))return;   // la valeur de la montre tapée à l'instant (champ pas encore quitté) est lue AVANT d'enregistrer
   if(_finishing)return;
+  /* D-170 : `_finishing` est posé pour TOUTE la durée de l'opération et le `finally` en bas le lève sur TOUTE sortie, exception comprise : sans lui, une erreur après
+     l'enregistrement laissait le verrou posé (plus de mise à jour, et « Terminer » ignoré à la séance suivante). ⛔ CE LOT M (16/11) : il NE se lève PLUS « au bout de 120 s »
+     (il portait l'heure de pose pour cela) — un délai qui s'écoule ne dit pas que l'enregistrement est clos, et le rechargement qui suivait emportait le récapitulatif. Ce qui
+     garantit qu'il se lève, c'est que l'attente réseau de cette fonction, `syncSheets`, est BORNÉE de bout en bout (`_fetchBorne`, tracking.js : 8 s, corps compris). */
   _finishing=true;
+  try{
   _stopWktChrono();
   if(!S.wkt){_finishing=false;return;}
   const _hasCardio=!!((S.wkt.cardio&&S.wkt.cardio.duration)||(S.wkt.cardioAvant&&S.wkt.cardioAvant.duration));  // un échauffement SEUL suffit aussi à valider (02/08)
@@ -5134,7 +5347,7 @@ async function finishWorkout(){
   // quand. `uniConv:1` = « cette séance a été notée sous la convention unilatérale »
   // (charge par côté, volume ×2) — c'est ce qui protège l'historique d'avant.
   const vol=_workVol({exs:S.wkt.exs,uniConv:1});
-  const sess={id:Date.now(),date:S.wkt.date||today(),exs:S.wkt.exs,volume:Math.round(vol),uniConv:1,synced:false,ts:Date.now(),startHour:S.wkt.startHour,duration,progLabel:S.wkt.progLabel||''};
+  const sess={id:Date.now(),date:S.wkt.date||today(),exs:S.wkt.exs,volume:Math.round(vol),uniConv:1,synced:false,ts:Date.now(),startHour:S.wkt.startHour,duration,progLabel:S.wkt.progLabel||'',...(S.wkt.progId?{progId:S.wkt.progId}:{}),...(S.wkt.progDayId?{progDayId:S.wkt.progDayId}:{})};   // IMPORT PDF 15/11 : la séance sait de QUEL programme elle vient (progId) — c'est ce qui distingue « premier usage » de « programme déjà suivi » ; D-163 (16/11) : et de QUEL JOUR (progDayId, l'identité stable du jour — le libellé n'est qu'un repli)
   sess.exercises=sess.exs.map(ex=>({name:ex.name,sets:ex.sets}));
   if(S.wkt.runId) sess.runId=S.wkt.runId;   // LOT 3C : la séance enregistrée garde l'identité de la séance en cours (voir `_assurerRunIdSeance`)
   // Capturer les PRs avant mise à jour pour détecter les améliorations
@@ -5245,7 +5458,8 @@ async function finishWorkout(){
          de l'app, et c'est celui où un drapeau non écrit coûte le plus cher. */
       if(_ecrireSessionsLocal())toast(`Séance synchronisée ! 🔥 ${calData.total} kcal`,'success');
       else toast(`Séance envoyée, mais non notée sur le téléphone (stockage plein ?) — fais de la place`,'error');
-    }else toast(`Séance sauvegardée ! 🔥 ${calData.total} kcal`,'success');
+    }else if(res&&res.timeout) toast(`⏳ Réseau trop lent — ta séance est gardée, on réessaiera · 🔥 ${calData.total} kcal`,'info');   // D-170 : le délai (en-têtes ET corps, `_fetchBorne`) DIT l'issue : séance gardée, `synced:false`, la file de rattrapage la reprend
+    else toast(`Séance sauvegardée ! 🔥 ${calData.total} kcal`,'success');
   }else{
     toast(`Séance terminée ! 🔥 ${calData.total} kcal brûlées`,'success');
   }
@@ -5254,6 +5468,7 @@ async function finishWorkout(){
   // exos + chiffres + débrief de Milo + « comment tu t'es senti ».
   _showSessionEnd(sess,_bestPr,_prCount,_premieresRefs);
   _finishing=false;
+  }finally{ _finishing=false; }
 }
 
 // ─── ÉCRAN DE FIN DE SÉANCE (Étape 1) ─────────────────────────────
@@ -5293,6 +5508,10 @@ function _renderSeStats(sess,prCount,premieresRefs){
   const _refs=(premieresRefs||[]).filter(Boolean);
   if(_refs.length){const _e=t=>String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;');
     tiles.push('<div class="se-stat se-ref" style="grid-column:1/3;"><div class="se-stat-v" style="font-size:15px;">📌 Première référence enregistrée</div><div class="se-stat-l">'+_refs.map(_e).join(' · ')+'</div></div>');}
+  /* 🏋️ D-164 — un record de LEST se dit à part (jamais mêlé aux records de charge ni au compteur 🏆) : « Record de lest » + l'exercice et le lest. Dérivé, rien n'est enregistré. */
+  const _lestB=_lestRecordsBattus(sess);
+  if(_lestB.length){const _e=t=>String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+    tiles.push('<div class="se-stat pr" style="grid-column:1/3;"><div class="se-stat-v" style="font-size:15px;">🏋️ Record de lest'+(_lestB.length>1?'s':'')+'</div><div class="se-stat-l">'+_lestB.map(x=>_e(x.nom)+' +'+fmt(x.lest)+' kg × '+x.reps).join(' · ')+'</div></div>');}
   tiles.push('<div class="se-stat"><div class="se-stat-v">'+_kg(_volTot)+' kg</div><div class="se-stat-l">Volume total'+(_volTot!==_volTrav?' · dont '+_kg(_volTrav)+' kg de travail':'')+'</div></div>');
   tiles.push('<div class="se-stat"><div class="se-stat-v">'+nSets+'</div><div class="se-stat-l">Séries de travail'+(nValid!==nSets?' · '+nValid+' validées':'')+'</div></div>');
   if(dur)tiles.push('<div class="se-stat"><div class="se-stat-v">'+dur+' min</div><div class="se-stat-l">'+durSub+'</div></div>');
@@ -5304,7 +5523,8 @@ function _renderSeExs(sess){
   el.innerHTML=(sess.exs||[]).map(e=>{
     const done=(e.sets||[]).filter(s=>s.done&&s.type!=='É'&&s.type!=='W');
     let best=null;done.forEach(s=>{if(s.kg&&s.reps&&(!best||s.kg>best.kg||(s.kg===best.kg&&s.reps>best.reps)))best=s;});
-    const dt=done.length+' série'+(done.length>1?'s':'')+(best?' · top '+best.reps+'×'+best.kg+' kg':'');
+    const _bl=(!best)?_meilleurLest(done):null;   // D-164 : une série au poids du corps avec un lest se dit « PDC+10 kg », pas rien
+    const dt=done.length+' série'+(done.length>1?'s':'')+(best?' · top '+best.reps+'×'+best.kg+' kg':(_bl?' · top '+_bl.reps+'×PDC+'+fmt(_bl.lest)+' kg':''));
     const img=(typeof _exImg==='function')?_exImg(e.name):null;
     const thumb=img?'<img class="se-ex-img" src="'+img+'" alt="" draggable="false">':'<div class="se-ex-img"></div>';
     return '<div class="se-ex">'+thumb+'<div style="min-width:0;"><div class="se-ex-nm">'+_escNote(e.name)+'</div><div class="se-ex-dt">'+dt+'</div></div></div>';
@@ -5321,6 +5541,7 @@ function closeSessionEnd(dest){
   const ov=document.getElementById('ov-session-end');if(ov)ov.classList.remove('open');
   try{ if(dest==='coach'){goScreen('coach',document.getElementById('nb-coach'));} else {goScreen('home',document.getElementById('nb-home'));} }catch(e){}
   try{renderLog();}catch(e){}
+  try{ if(typeof _majRefresh==='function') _majRefresh(); }catch(e){}   // D-170 : le récapitulatif est FERMÉ → c'est maintenant que la mise à jour se propose (bandeau hors Accueil ; l'Accueil, lui, l'applique déjà via goScreen)
 }
 // Débrief de Milo INLINE sur l'écran de fin (local d'abord : un résumé local s'affiche toujours,
 // l'IA l'enrichit). Le débrief est POUSSÉ dans coachHistory (mémoire + visible dans le Coach).
@@ -5525,6 +5746,9 @@ async function _runSeDebrief(sess,prCount,slot){
   if(_dbfEnVol(sid)){ slot.innerHTML=chiffres+'<p class="se-dbf-off"><span class="se-load">Milo analyse déjà cette séance…</span></p>'; return; }
   if(!S.url || (typeof navigator!=='undefined' && navigator.onLine===false)){
     slot.innerHTML=avec('📡 Hors ligne — Milo pourra analyser ta séance quand tu auras du réseau.',true); return; }
+  /* D-170 (CE lot M) : `try` ouvert DÈS la pose du verrou « en vol » — tout ce qui suit (rendu, consigne, contexte, réseau) est l'opération, et le `finally` la clôt sur TOUTE sortie.
+     Avant, la construction de la consigne se faisait AVANT le `try` : une exception là laissait l'analyse « en vol » pour toujours — et ce n'est plus un délai qui lève le verrou. */
+  try{
   _dbfVolPoser(sid);
   // La carte de Progrès dit tout de suite « Milo analyse… » (sinon elle garde « Analyser » jusqu'à la réponse).
   try{ if(typeof renderSessions==='function' && document.getElementById('sess-list')) renderSessions(); }catch(e){}
@@ -5560,14 +5784,16 @@ async function _runSeDebrief(sess,prCount,slot){
     +(_seCardioTxt(sess) ? ' J\'ai aussi fait du cardio sur cette séance ('+_seCardioTxt(sess)+') : tiens-en compte, c\'est du travail réel.' : '')
     +((typeof _DEBRIEF_CONTINUITY!=='undefined')?_DEBRIEF_CONTINUITY:'')
     +((typeof _DEBRIEF_MEM_TAIL!=='undefined')?_DEBRIEF_MEM_TAIL:'');
-  try{
+  /* D-170 : UN DÉLAI D'ATTENTE (`_DBF_DELAI_MS`, coach.js). `fetch` n'en a aucun : une requête suspendue laissait « Milo analyse ta séance… » à l'écran POUR TOUJOURS, sans issue
+     dite — et, tant que l'analyse est « en vol », la mise à jour attend (`_dbfAnalyseVive`). Passé le délai : un ÉCHEC comme un autre (message + « Réessayer »).
+     ⛔ CE LOT M : le délai couvre aussi la LECTURE du corps (`_fetchBorne`, tracking.js : annulation réelle de la requête + abandon de l'attente) — avant, il ne couvrait que les
+     en-têtes, et c'est un autre délai (120 s) qui levait le verrou de la mise à jour : une analyse encore vivante était déclarée « morte » et la page rechargée par-dessus. */
     const payload={action:'coach',email:S.email||'',message:instr,context:buildCoachContext(instr,{seanceCiblee:sess}),history:(typeof _coachHistPayload==='function'?_coachHistPayload(8):coachHistory.slice(-8)),coachMemory:S.coachMemory||''};
     /* ⛔ UN SEUL ESSAI PAR CLIC (DEBRIEF-ON-DEMAND-01) : il y avait ici une boucle de 2 essais réseau, relancée
        toute seule 1,2 s plus tard — un nouvel essai CACHÉ, qui pouvait payer deux fois une requête arrivée
        au serveur. Un échec est un échec : « Réessayer » est un nouveau clic. */
-    const resp=await fetch(_aiUrl('coach'),{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});
-    if(!resp.ok)throw new Error('HTTP '+resp.status);
-    const data=await resp.json();
+    const {corps:data}=await _fetchBorne(_aiUrl('coach'),{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)},
+      (typeof _DBF_DELAI_MS!=='undefined')?_DBF_DELAI_MS:90000,r=>{ if(!r.ok)throw new Error('HTTP '+r.status); return r.json(); });
     let reply=data.reply||'';
     if(!reply)throw new Error('vide');
     /* 🛡️ SESSION-INTEGRITY-01 — HTTP 200 ≠ débrief. Le Worker renvoie `complete:false` avec « Désolé,
@@ -5592,11 +5818,14 @@ async function _runSeDebrief(sess,prCount,slot){
   }catch(e){
     if(typeof _dbfQuitte!=='undefined' && _dbfQuitte) return;   // la page s'en va : l'analyse est INTERROMPUE, pas ratée
     // Échec → rien n'est enregistré ; on le DIT et on propose un nouvel essai, qui sera un nouveau clic.
-    if(_dbfSlotEst(slot,sid)) slot.innerHTML=avec('\u26a0\ufe0f Milo n\'a pas pu analyser ta séance. Rien n\'est enregistré.',true);
+    /* D-170 : « Rien n'est enregistré » pouvait se lire « ta SÉANCE n'est pas enregistrée » — elle l'est, depuis la fin de séance ; c'est l'ANALYSE qui manque, on le dit. */
+    if(_dbfSlotEst(slot,sid)) slot.innerHTML=avec('\u26a0\ufe0f Milo n\'a pas pu analyser ta séance. Ta séance, elle, est bien enregistrée.',true);
   }finally{
+    _dbfActifs.delete(String(sid));   // D-170 (CE lot M) : l'opération est TERMINÉE (réponse, échec, délai, exception) — c'est CELA, et rien d'autre, qui rend la main à la mise à jour
     if(typeof _dbfQuitte!=='undefined' && _dbfQuitte) return;   // laisser « en vol » : la page suivante dira « interrompue »
     _dbfVolRetirer(sid);   // seulement CETTE séance (une autre peut être en vol, E5)
     try{ if(typeof renderSessions==='function' && document.getElementById('sess-list')) renderSessions(); }catch(e){}
+    try{ if(typeof _majRefresh==='function') _majRefresh(); }catch(e){}   // D-170 : le verrou « briefing en cours » vient de se lever → l'avis de mise à jour peut paraître (hors Accueil, jamais sur le récapitulatif encore ouvert)
   }
 }
 
@@ -5987,6 +6216,34 @@ function _dockDegager(){
     if(r.bottom>haut) sc.scrollTop+=Math.ceil(r.bottom-haut);
   }catch(e){}
 }
+/* 🔎 D-174 (bug iPhone du 16/11/2026) — APRÈS UN PINCH-ZOOM, LE DOCK (ET SON RIR) RESTE DANS LE BAS DE LA PAGE, HORS DE L'ÉCRAN.
+   Mesuré en Chromium 390×844 (page agrandie ×2, `Emulation.setPageScaleFactor`) : le dock est en `position:fixed`, donc posé sur
+   la page ENTIÈRE, pas sur la partie qu'on regarde. À ×2 la fenêtre visible ne couvre que 195×422 px de la page : le dock (y 590 → 760)
+   est tout entier dehors, et le RIR — sa rangée la plus basse — est la dernière chose à y revenir (à ×1,3 la rangée du haut se voit
+   encore, pas le RIR : c'est exactement ce que Michel décrit). ⛔ On NE DÉSACTIVE JAMAIS le zoom (`user-scalable`, `maximum-scale` :
+   accessibilité) ; on fait suivre le dock à la fenêtre visible. Tant que le zoom est ×1, RIEN ne change (la classe n'est pas posée,
+   aucun style en ligne) : le dock reste exactement où il était, le bouton central aussi (règle d'or #9).
+   ⚠️ CE QUI N'EST PAS PROUVÉ : la cause exacte sur iPhone (le geste de défilement n'a pas pu être rejoué en Chromium — le pan tactile
+   synthétique ne déplace pas la fenêtre visible, même sur une page témoin vide). La géométrie ci-dessus, elle, est mesurée. Le correctif
+   ne dépend pas du geste : il place le dock DANS la fenêtre visible. Validation iPhone obligatoire avant clôture.
+   ⛔ Affichage seul : aucun accès au moteur du repos (`startRest`/`updRest`/`restIv`), aucune donnée. Même dimension visuelle qu'à ×1
+   (le dock est contre-échelonné de 1/zoom) : mêmes boutons, mêmes cibles tactiles. */
+function _dockSuivreZoom(){
+  try{
+    const bar=document.getElementById('rest-bar'), v=window.visualViewport; if(!bar||!v) return;
+    const z=!!(v.scale>1.02&&bar.classList.contains('show'));
+    bar.classList.toggle('vv-zoom',z);
+    if(!z){ bar.style.transform=''; return; }                      // ×1 : le style d'origine (CSS) reprend, comme avant
+    const s=v.scale, w=bar.offsetWidth, h=bar.offsetHeight;        // tailles NON transformées
+    bar.style.transform='translate('+(v.offsetLeft+(v.width-w/s)/2)+'px,'+(v.offsetTop+v.height-(h+12)/s)+'px) scale('+(1/s)+')';
+  }catch(e){}
+}
+(function(){
+  let t=0; const aller=()=>{ if(t) return; t=requestAnimationFrame(()=>{ t=0; _dockSuivreZoom(); }); };
+  if(window.visualViewport){ window.visualViewport.addEventListener('resize',aller); window.visualViewport.addEventListener('scroll',aller); }
+  const bar=document.getElementById('rest-bar');                    // le dock apparaît / change de hauteur (RIR) : on le replace
+  if(bar&&typeof ResizeObserver!=='undefined') new ResizeObserver(aller).observe(bar);
+})();
 
 /* ── LE CHRONO CONTINUE EN NÉGATIF (14/08/2026, idée de Michel) ────────────────────────
    *« faudrait peut-être qu'il continue en chiffre négatif jusqu'à ce que la personne
@@ -6155,6 +6412,8 @@ function _onRepsInput(el,ei,si){
 function updateRMLive(ei,si){
   const row=document.getElementById(`sr-${ei}-${si}`);
   if(!row)return;
+  const _s=S.wkt&&S.wkt.exs&&S.wkt.exs[ei]&&S.wkt.exs[ei].sets[si];
+  if(_s&&(_pdcDe(_s)!==null||_pdcAttendu(ei,si))){ const _t=document.getElementById(`trm-${ei}-${si}`); if(_t)_t.textContent=''; return; }   // D-164 : le montant d'un lest / d'une assistance n'est pas une charge en kilos : aucun 1RM
   const inps=row.querySelectorAll('.sinp');
   const reps=parseInt(inps[0]&&(inps[0].value||inps[0].placeholder))||0;
   const kg=numFR(inps[1]&&(inps[1].value||inps[1].placeholder))||0;
@@ -7588,6 +7847,7 @@ async function analyzeImportPhotos(){
     const d=JSON.parse(_rawResp);
     if(d.status!=='ok'||!d.data)throw new Error(d.error||'Extraction échouée');
     _impExtracted=d.data;
+    _impLireCharges();     // IMPORT PDF 15/11 : les charges sont LUES une fois (forme canonique, fourchettes conservées en fin de note) — avant tout regroupement
     if(!S.premium){S.progImports=(S.progImports||0)+1;persist();if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();} // compte l'import réussi (limite gratuite)
     _mergeImportSeances(); // fusionne « Séance 1 - Dorsaux/Biceps/… » en UNE séance (groupes = sections internes)
     _mergeImportBlocsEch();      // ⛔ UN SEUL filet (IMPORT-IA-FIDELITE-01) : le regroupement échauffement + travail, AVANT le rattachement VM.
@@ -7595,6 +7855,7 @@ async function analyzeImportPhotos(){
                                  // reconnaître. Après, on rattacherait « Développé couché (échauffement) » — c'est-à-dire rien.
     _impConserverSpeciales();    // les séries « en couleur » du document ne sont plus jetées en silence
     _vmMatchExtracted();   // VM : rattache aux références EXLIB (évite les doublons) AVANT l'aperçu
+    _impCardioAConfirmer();      // D-167 : un échauffement d'un mouvement INCONNU avec une durée en note n'est jamais rangé au cardio sans un oui : l'aperçu demande (après le rattachement : on juge le nom FINAL)
     _impOuverts.clear(); _impRepos=null;   // un NOUVEAU scan repart d'un aperçu fermé (l'état d'écran d'avant ne le concerne plus)
     _renderImpConfirm();
     impGoStep(4);
@@ -7724,11 +7985,84 @@ function _restBrut(ex,s){
   if(ex&&ex.restPerSet&&plein(ex.restPerSet[s]))return ex.restPerSet[s];
   return (ex&&plein(ex.rest))?ex.rest:null;
 }
+/* ⚖️ LES CHARGES D'UN EXERCICE IMPORTÉ — UN SEUL PROPRIÉTAIRE (R2) — IMPORT PDF, mission du 15/11/2026, correction A.
+   ⛔⛔ LE DÉFAUT MESURÉ SUR UNE RECETTE iPHONE (exemples INVENTÉS, de la même forme). Un document écrivait un échauffement « Barre / 30 / 45 / 55 / 60 kg » (5 séries). Le modèle a rendu 4 charges (il a
+   omis « Barre ») ; l'app posait ces 4 valeurs sur les 4 PREMIÈRES séries et comblait la 5ᵉ avec `kg` de l'exercice : la barre avait disparu, toutes les charges étaient
+   décalées d'un cran et la dernière répétée, SANS un mot (aperçu : 30 × 10 · 45 × 5 · 55 × 3 · 60 × 1 · 60 × 1). Rejoué sur un équivalent fictif (banc B-ICF) : le défaut est
+   DOUBLE — le modèle omet une charge ; l'app, elle, en FABRIQUE une et décale les autres.
+   ⭐ LES RÈGLES. Aucune valeur n'est jamais inventée, même signalée (décision de Michel du 02/11 pour les reps, étendue aux charges) :
+     · un tableau de la BONNE longueur se lit série par série ; un tableau de la MAUVAISE longueur n'est JAMAIS aligné (on ne sait pas QUELLE série manque) : toutes les charges de
+       l'exercice restent « non renseignées » et les valeurs lues sont gardées à part (`_kgPartiel`) pour que l'aperçu le DISE ;
+     · une charge écrite pour tout l'exercice (« 55 kg », pas de tableau) vaut pour chaque série ; `kg: 0` ou absent = non renseignée ;
+     · « BARRE À VIDE » n'est PAS une charge non renseignée : un `0` dans un tableau qui contient au moins une charge positive, ou « barre » / « à vide » écrit en toutes lettres,
+       est `'vide'` (explicite) ; un tableau de zéros SEULS est du remplissage (charges inconnues) ;
+     · une valeur est un NOMBRE (« 137,5 », « 130 kg » → 137.5, 130) ; une fourchette (« 57-63 ») vaut sa BORNE BASSE (comme les repos, décision du 08/11) et son texte est conservé dans
+       la note (`_impLireCharges`) ; un texte sans chiffre (« charge confortable ») ne devient jamais un nombre.
+   Forme canonique d'un tableau de charges : nombre > 0 · `'vide'` · `null` (non renseignée), toujours de la longueur des séries. Lecture idempotente. */
+const _KG_VIDE=/^(?:(?:la )?barre(?: (?:a vide|seule|vide))?|(?:a )?vide)$/;
+function _kgLu(v){
+  if(v==null||v==='')return {n:null,vide:false};
+  if(typeof v==='number')return (isFinite(v)&&v>=0)?{n:v,vide:false}:{n:null,vide:false};
+  const s=String(v).trim();
+  if(_KG_VIDE.test(_naz(s)))return {n:0,vide:true};
+  if(!/\d/.test(s))return {n:null,vide:false};
+  if(/\d\s*[x×*]\s*\d/i.test(s))return {n:null,vide:false};             // « 2 x 30 kg » : deux haltères ou deux séries ? on ne devine pas (R29) — jamais « 2 kg »
+  /* ⚖️ D-164 / D-166 (16/11/2026) — DEUX LECTURES QUI CONVERTISSAIENT EN SILENCE, mesurées : `parseFloat` s'arrête au premier mot, donc « 10 kg lest » valait 10 kg (c'est un
+     LEST, pas une charge : le poids du corps n'y est pas) et « 2 haltères de 15 » valait 2 kg (deux haltères de 15 : 15 chacun ou 30 en tout ?). Aucune des deux n'est une charge
+     lisible : le texte reste dans la note (« Charge non lue : … ») et la PERSONNE tranche. ⛔ Aucun nom d'exercice n'entre ici — seulement les MOTS DE LA CHARGE écrite. */
+  if(/(?:^|[^a-z0-9])(?:pdc|bw|bodyweight|body weight|poids (?:du )?corps|lest\w*|assist\w*)(?![a-z0-9])/.test(_naz(s)))return {n:null,vide:false};
+  if(!_PLAGE_TXT.test(s)&&/\d[^\d]*[A-Za-zÀ-ÿ][^\d]*\d/.test(s.replace(/kg/ig,'')))return {n:null,vide:false};   // deux nombres séparés par des MOTS (« kg » n'en est pas un ; fourchette « 57-63 kg » intacte) : ambigu
+  const x=numFR(s.replace(/kg/ig,''));                                  // « 137,5 kg » → 137.5 ; « 57-63 » → 57 (parseFloat s'arrête au tiret : la BORNE BASSE)
+  return (isFinite(x)&&x>=0)?{n:x,vide:false}:{n:null,vide:false};
+}
+function _kgCanon(ex,n){
+  const brut=(ex&&Array.isArray(ex.kgPerSet))?ex.kgPerSet:[];
+  if(brut.length){
+    const lus=brut.map(_kgLu);
+    if(brut.length!==n)                                                  // ⛔ jamais aligné : on ne sait pas QUELLE série manque
+      return {kgs:Array(n).fill(null),partiel:lus.filter(x=>x.n>0||x.vide).map(x=>x.vide?'à vide':x.n)};
+    const positif=lus.some(x=>x.n>0);
+    return {kgs:lus.map(x=>x.n>0?x.n:((x.vide||(x.n===0&&positif))?'vide':null)),partiel:null};
+  }
+  const u=_kgLu(ex&&ex.kg);                                              // une charge pour tout l'exercice
+  return {kgs:Array(n).fill(u.n>0?u.n:(u.vide?'vide':null)),partiel:null};
+}
+/* La forme CANONIQUE d'une lecture : ce que `_fusionneBlocImport` et `_impMaterialiser` réécrivent dans `kgPerSet` (le `0` et le `null` ne se confondent plus). */
+function _kgPerSetDe(x){ return x.kgs.map((k,i)=>x.vides[i]?'vide':(k>0?k:null)); }
+/* 📏 LES FOURCHETTES DU DOCUMENT (« 36-40 kg », « 6-8 », « 10–15 ») — la CONSIGNE D'ORIGINE se conserve, le NOMBRE est la borne basse. Appelée UNE FOIS, à la réception
+   (avant tout regroupement : les notes sont ensuite recomposées). ⛔ À la FIN de la note, jamais au début : la preuve d'échauffement « note » ne reconnaît qu'une note qui COMMENCE
+   par le mot. ⛔ Une seule fois (idempotent) et seulement quand le document a écrit une fourchette — jamais une phrase inventée. Le nombre, lui, est lu par `_kgLu` / `_seriesImport`. */
+const _PLAGE_TXT=/^\s*\d+(?:[.,]\d+)?\s*(?:[-–—‐‑−]|à|a)\s*\d+(?:[.,]\d+)?\s*(?:kg)?\s*$/i;
+function _impLireCharges(){
+  ((_impExtracted&&_impExtracted.days)||[]).forEach(day=>(day.exercises||[]).forEach(ex=>{
+    if(!ex)return;
+    const n=(ex.repsPerSet&&ex.repsPerSet.length)?ex.repsPerSet.length:Math.max(1,parseInt(ex.sets)||1);
+    const vus=[], texte=(v,lib)=>{ if(typeof v==='string'&&_PLAGE_TXT.test(v)){ const m=v.trim(); if(!vus.some(x=>x.m===m))vus.push({m,lib}); } };
+    texte(ex.kg,'Charge'); (Array.isArray(ex.kgPerSet)?ex.kgPerSet:[]).forEach(v=>texte(v,'Charge'));          // les fourchettes ÉCRITES, lues AVANT la forme canonique
+    texte(ex.reps,'Reps'); (Array.isArray(ex.repsPerSet)?ex.repsPerSet:[]).forEach(v=>texte(v,'Reps'));
+    /* ⛔ D4 (nuit du 15 au 16/11) — « PRÉSERVER L'INFORMATION SOURCE » : une charge ÉCRITE mais qu'on ne sait pas lire (« 2 x 30 kg » : deux haltères ou deux séries ? · « Charge adaptée » · « confortable »)
+       restait « non renseignée » SANS QUE RIEN NE LE DISE : le texte du document disparaissait, l'aperçu ne montrait ni charge ni raison. Le texte reste maintenant à la FIN de la note (une fois, jamais en double si la note
+       le porte déjà) et l'aperçu le DIT ; aucun nombre n'est deviné (R29). Les fourchettes (ci-dessus) et les tableaux incomplets (ci-dessous) avaient déjà leur trace : c'était le seul cas sans. */
+    const nonLus=[], illisible=v=>{ if(typeof v!=='string')return; const s=v.trim(); if(!s||!/[A-Za-zÀ-ÿ0-9]/.test(s)||!s.replace(/kg/ig,'').trim()||_PLAGE_TXT.test(s))return; const k=_kgLu(s); if(k.n===null&&!k.vide&&nonLus.indexOf(s)<0)nonLus.push(s); };
+    illisible(ex.kg); (Array.isArray(ex.kgPerSet)?ex.kgPerSet:[]).forEach(illisible);
+    const K=_kgCanon(ex,n);
+    ex.kgPerSet=K.kgs;                                                   // la forme canonique, à la longueur des séries
+    if(K.partiel)ex._kgPartiel=[{nom:ex.name,n,valeurs:K.partiel}]; else delete ex._kgPartiel;
+    if(nonLus.length)ex._kgNonLue=nonLus;                                // transitoire (comme `_kgPartiel`) : l'aperçu le dit, jamais enregistré dans le programme
+    vus.forEach(x=>{ const note=String(ex.note||''); if(note.indexOf(x.m)<0)ex.note=(note?note+' | ':'')+x.lib+' : '+x.m; });
+    nonLus.forEach(m=>{ const note=String(ex.note||''); if(note.indexOf(m)<0)ex.note=(note?note+' | ':'')+'Charge non lue : '+m; });
+    if(K.partiel&&K.partiel.length){      // les valeurs LUES d'une lecture incomplète restent écrites À LA FIN de la note, une fois : l'aperçu disparaît à « Enregistrer », la note non (R29 : on montre les éléments, la personne place)
+      const note=String(ex.note||''), lues='Charges lues : '+K.partiel.join(' · ')+' ('+K.partiel.length+' pour '+n+' série'+(n>1?'s':'')+')';
+      if(note.indexOf(lues)<0&&!/\d+ pour \d+ s[ée]ries?/i.test(note))ex.note=(note?note+' | ':'')+lues;   // le Worker préparé écrit déjà « (4 pour 5 séries) » : jamais deux fois
+    }
+  }));
+}
 // Déplie un exercice importé en séries : c'est la MÊME convention que `_buildProgDay`
 // (repsPerSet s'il existe, sinon `sets` × `reps` uniformes) — R2, une seule règle de lecture.
 function _seriesImport(ex){
   const n=(ex.repsPerSet&&ex.repsPerSet.length)?ex.repsPerSet.length:Math.max(1,parseInt(ex.sets)||1);
-  const reps=[],kgs=[],rests=[];
+  const reps=[],kgs=[],vides=[],rests=[];
+  const K=_kgCanon(ex,n);   // IMPORT PDF 15/11 : une charge manquante n'est JAMAIS fabriquée (ni `kg` de l'exercice, ni la dernière répétée) — voir plus haut
   for(let s=0;s<n;s++){
     /* Les reps d'une série : ce que le document écrit — sinon RIEN : `null`, « Non renseigné » (IMPORT-IA-FIDELITE-01, correction D, 02/11/2026).
        ⛔ Avant : un 10 était mis à la place (« la séance a besoin d'un nombre »), puis signalé dans la note. Un 10 que le document n'a pas écrit,
@@ -7741,10 +8075,11 @@ function _seriesImport(ex){
     const brut=(Array.isArray(ex.repsPerSet)&&s<ex.repsPerSet.length)?ex.repsPerSet[s]:ex.reps;
     const lu=parseInt(brut);
     reps.push(lu>0?lu:null);
-    kgs .push((ex.kgPerSet &&ex.kgPerSet [s]!=null)?ex.kgPerSet [s]:(ex.kg||0));
+    const c=K.kgs[s];                      // nombre > 0 · 'vide' · null — JAMAIS comblé (IMPORT PDF 15/11)
+    kgs.push(c>0?c:(c==='vide'?0:null)); vides.push(c==='vide');   // D-164 (16/11, mission corrective) : une charge NON RENSEIGNÉE reste INCONNUE (`null`), elle ne devient plus un « zéro » ; « à vide » = 0 écrit (+ `vide`)
     rests.push(_restBrut(ex,s));          // `null` = rien d'écrit : le défaut de l'app s'applique, exactement comme avant
   }
-  return {n,reps,kgs,rests};
+  return {n,reps,kgs,vides,rests};
 }
 /* 📥 IMPORT-ECH-01 (06/10/2026) — LE MÊME FILET, QUAND LE NOM NE PORTE PLUS DE MARQUEUR.
    ⛔⛔ CE QUI A CHANGÉ, ET C'EST MESURÉ. Le filet ci-dessus ne reconnaît un échauffement qu'à un parenthésé EN FIN de
@@ -7761,7 +8096,7 @@ function _seriesImport(ex){
    COUPE le bloc ; un échauffement APRÈS le travail ouvre un autre bloc ; superset et dropset ne sont jamais touchés.
    ⛔ Chaque série garde ses reps, sa charge, son type, son repos, et l'ordre du document. */
 function _echNomTete(name){
-  const m=String(name==null?'':name).trim().match(/^(?:ech|[ée]chauffement|warm[\s-]?up)\s*[-–—:|]\s*(.+)$/i);
+  const m=String(name==null?'':name).trim().match(/^(?:ech|[ée]chauffement|warm[\s-]?up)\s*[-–—‐‑‒−:|]\s*(.+)$/i);   // IMPORT PDF 15/11 : + traits d'union typographiques U+2010 ‐ · U+2011 ‑ · U+2012 ‒ · U+2212 −
   return m&&m[1].trim()?m[1].trim():null;
 }
 /* ✂️ LE MARQUEUR À LA FIN DU NOM, APRÈS UN SÉPARATEUR — « Développé Couché - échauffement » (IMPORT PDF, 08/11/2026, « GO CORRECTIF IMPORT PDF »).
@@ -7780,7 +8115,7 @@ const _MARQUEUR_ECH_FIN=/^(?:ech|echauff\w*|warm[\s-]?up|warmup|mont[e]{1,2}s? e
 function _echNomQueue(name){
   /* On parcourt les séparateurs de DROITE À GAUCHE et on garde le premier dont TOUT ce qui suit est le marqueur : « warm-up » contient lui-même un tiret
      (« Squat | warm-up », « Squat - warm-up »), donc couper au tout dernier séparateur ne laisserait que « up ». Mesuré au premier banc (IPDF-F01). */
-  const s=String(name==null?'':name).trim(), re=/\s*[-–—:|\/]\s*/g, seps=[];
+  const s=String(name==null?'':name).trim(), re=/\s*[-–—‐‑‒−:|\/]\s*/g, seps=[];   // IMPORT PDF 15/11 : + traits d'union typographiques (U+2010 ‐, U+2011 ‑, U+2012 ‒, U+2212 −) — un PDF en produit, le Worker publié ne les normalise pas
   let m;
   while((m=re.exec(s))!==null)seps.push({deb:m.index,fin:m.index+m[0].length});
   for(let k=seps.length-1;k>=0;k--){
@@ -7818,10 +8153,12 @@ function _cleBlocImport(ex){
 }
 function _blocCompatible(ex){ return !!ex&&!ex.supersetGroup&&String(ex.setType||'').toUpperCase()!=='D'; }
 function _fusionneBlocImport(lignes){
-  const R=[],K=[],T=[],RE=[],SP=[];let nW=0,nLW=0;
+  const R=[],K=[],T=[],RE=[],SP=[],PK=[],NL=[];let nW=0,nLW=0;
   lignes.forEach(l=>{
     const x=_seriesImport(l),ty=_typesLigneImport(l),off=R.length;
-    R.push(...x.reps);K.push(...x.kgs);RE.push(...x.rests);
+    R.push(...x.reps);K.push(..._kgPerSetDe(x));RE.push(...x.rests);   // les charges restent CANONIQUES (barre « vide » ≠ non renseignée) et alignées ligne par ligne
+    if(Array.isArray(l._kgPartiel))PK.push(...l._kgPartiel);          // une lecture incomplète d'UNE ligne reste signalée sur l'exercice regroupé
+    if(Array.isArray(l._kgNonLue))l._kgNonLue.forEach(m=>{ if(NL.indexOf(m)<0)NL.push(m); });   // une charge écrite non lue d'UNE ligne aussi
     ty.forEach(v=>{T.push(v);if(v==='W')nW++;});
     if(ty.every(v=>v==='W'))nLW++;
     if(Array.isArray(l.specialSets))l.specialSets.forEach(k=>SP.push((parseInt(k)||0)+off));
@@ -7832,6 +8169,8 @@ function _fusionneBlocImport(lignes){
   delete o._propGrp; delete o._propRole;            // une proposition en attente n'est jamais recopiée dans l'exercice fusionné
   o.name=_nomBlocImport(base);
   o.repsPerSet=R;o.kgPerSet=K;o.setTypePerSet=T;o.sets=R.length;
+  if(PK.length)o._kgPartiel=PK; else delete o._kgPartiel;
+  if(NL.length)o._kgNonLue=NL; else delete o._kgNonLue;
   /* Repos PAR SÉRIE, toujours à la longueur des séries : une ligne sans repos garde « rien » ('') — le repos du travail ne
      déborde JAMAIS sur l'échauffement. ⛔ Et `rest` (celui de l'exercice) est vidé : `_restBrut` le lirait comme repli pour
      chaque série vide, c'est-à-dire qu'il recouvrirait le repos d'échauffement par celui du travail. */
@@ -7867,6 +8206,22 @@ function _impConserverSpeciales(){
     if(String(ex.note||'').indexOf('Séries en couleur')<0)ex.note=(ex.note?ex.note+' | ':'')+'Séries en couleur dans le document : n° '+idx.map(k=>k+1).join(', ');
   }));
 }
+/* ❓ D-167 — LES LIGNES QUE L'APERÇU DOIT DEMANDER AVANT D'EN FAIRE DU CARDIO (voir `_creneauAConfirmer`). Une sonde `{name, note, sets}` est reconstruite depuis la lecture des séries (ici `ex.sets` est un NOMBRE : le garde « aucune charge » attend le tableau).
+   Le drapeau `_cardioPropose` (la durée / le type lus) est TRANSITOIRE, comme `_kgPartiel` : il ne va jamais dans le programme enregistré. Rien n'est classé tant que la personne n'a pas répondu (`impCardioOui` / `impCardioNon`). */
+function _impSondeCardio(ex){
+  const x=_seriesImport(ex);
+  return {name:ex.name,note:ex.note,_cardioOk:ex._cardioOk,sets:x.kgs.map((k,i)=>({kg:k,vide:x.vides[i]}))};
+}
+function _impCardioAConfirmer(){
+  ((_impExtracted&&_impExtracted.days)||[]).forEach(day=>(day.exercises||[]).forEach(ex=>{
+    if(!ex)return;
+    if(ex._cardioOk===true){ delete ex._cardioPropose; return; }   // déjà répondu oui : la question ne revient pas
+    const p=_impSondeCardio(ex);
+    if(_creneauAConfirmer(p))ex._cardioPropose=_cardioDepuisEx(p); else delete ex._cardioPropose;
+  }));
+}
+function impCardioOui(di,ei){ const ex=_impEx(di,ei); if(!ex)return; ex._cardioOk=true; delete ex._cardioPropose; _renderImpConfirm(); }
+function impCardioNon(di,ei){ const ex=_impEx(di,ei); if(!ex)return; delete ex._cardioOk; delete ex._cardioPropose; _renderImpConfirm(); }   // « Garder comme exercice » : le comportement par défaut, la question ne revient pas
 /* 🔟 DES REPS QUE LE DOCUMENT N'ÉCRIT PAS — RETRAIT ÉCRIT (IMPORT-IA-FIDELITE-01, correction D, 02/11/2026, R30).
    Le premier jet de ce lot mettait 10 à la place, puis le DISAIT dans la note de l'exercice (`_impSignalerRepsAbsentes`, « 10 proposées, à
    corriger »). Michel : on ne transforme jamais, même en le signalant, l'absence de répétitions en 10 — une valeur inventée enregistrée dans le
@@ -7962,6 +8317,10 @@ function impGrouperEch(di,ei){
   const day=_impExtracted&&_impExtracted.days&&_impExtracted.days[di]; if(!day)return;
   const ex=day.exercises[ei], prev=day.exercises[ei-1];
   if(!ex||ex._propRole!=='travail'||!prev||prev._propGrp!==ex._propGrp)return;
+  /* D-167 (16/11/2026) — LES NUMÉROS DES SÉRIES « EN COULEUR » SUIVENT LA FUSION. La note « Séries en couleur dans le document : n° 2, 3 » de la ligne de TRAVAIL avait été écrite avec les rangs de CETTE ligne ; la fusion
+     place l'échauffement devant, donc ces séries deviennent les (2 + n), (3 + n) de l'exercice regroupé (la fusion d'office, elle, décale avant d'écrire : « n° 3, 4 » juste). On décale le numéro, jamais le sens. */
+  const _dec=_seriesImport(prev).n;
+  ex.note=String(ex.note||'').replace(/(Séries en couleur dans le document : n° )([\d, ]+)/,(m,a,b)=>a+b.split(',').map(k=>(parseInt(k)||0)+_dec).join(', '));
   const m=_fusionneBlocImport([prev,ex]);
   day.exercises.splice(ei-1,2,m);
   _vmMatchEx(m);                      // seul l'exercice fusionné est ré-examiné : les rattachements des autres ne bougent pas
@@ -8195,7 +8554,9 @@ function _vmConfirmRow(suggest, acceptCall, rejectCall, noThumb){
    ne peut pas annoncer autre chose que ce qui sera enregistré. */
 function _typeSerieImport(ex,si){
   const v=(ex.setTypePerSet&&ex.setTypePerSet[si]!=null)?String(ex.setTypePerSet[si]).toUpperCase():'';
-  return v==='W' ? 'É' : (ex.setType||'N');          // 'W' est le mot du backend, 'É' celui de l'app (R33 : traduit ICI, une fois)
+  /* ⛔ `setType:'W'` (l'ANCIEN format, accepté comme preuve d'échauffement par le regroupement) se traduisait seulement quand la ligne était regroupée : non regroupée, elle s'enregistrait avec la LETTRE « W » (hors N/É/X) et l'aperçu
+     l'appelait « Travail » (mesuré par l'étude des échauffements, nuit du 15 au 16/11). Le mot du backend se traduit ICI, pour les deux champs — une seule fois (R33). */
+  return (v==='W'||String(ex.setType||'').toUpperCase()==='W') ? 'É' : (ex.setType||'N');          // 'W' est le mot du backend, 'É' celui de l'app (R33 : traduit ICI, une fois)
 }
 /* 📉 Un dropset : le repos de l'EXERCICE vaut pour la FIN de la série dégressive, pas pour chaque palier (sinon 2 min entre deux
    paliers qui s'enchaînent). Un repos écrit pour un palier précis (`restPerSet`) reste à ce palier. */
@@ -8222,7 +8583,7 @@ function _impDropEnchaine(ex){
 }
 function _impVueSeries(ex){
   const x=_seriesImport(ex);
-  return Array.from({length:x.n},(_,si)=>({type:_typeSerieImport(ex,si),kg:+x.kgs[si]||0,reps:x.reps[si],repos:_reposSerieImport(ex,si)}));
+  return Array.from({length:x.n},(_,si)=>({type:_typeSerieImport(ex,si),kg:+x.kgs[si]||0,vide:!!x.vides[si],reps:x.reps[si],repos:_reposSerieImport(ex,si)}));
 }
 // « 90 s », « 1 min 30 », « 2 min » — la durée telle qu'on la dit
 function _fmtReposDit(sec){
@@ -8246,7 +8607,7 @@ function _impMaterialiser(ex){
   const types=Array.from({length:n},(_,si)=>_typeSerieImport(ex,si)==='É'?'W':'');
   const rests=Array.from({length:n},(_,si)=>{ const v=_restBrutSerieImport(ex,si); return v==null?'':String(v); });
   const x=_seriesImport(ex);
-  ex.repsPerSet=x.reps.slice(); ex.kgPerSet=x.kgs.slice(); ex.sets=n;
+  ex.repsPerSet=x.reps.slice(); ex.kgPerSet=_kgPerSetDe(x); ex.sets=n;
   ex.setTypePerSet=types; ex.restPerSet=rests; ex.rest='';
 }
 function _impEx(di,ei){ return _impExtracted&&_impExtracted.days&&_impExtracted.days[di]&&(_impExtracted.days[di].exercises||[])[ei]; }
@@ -8300,12 +8661,13 @@ function _impGroupesSeries(v){
 function _repsHtml(r){ return (r==null)?`<span class="imp-nr">${REPS_NON_RENSEIGNE}</span>`:_escNote(String(r)); }
 function _impLigneGroupe(g,avecLib){
   const s=g.s, n=s.length;
-  const memes=s.every(x=>x.kg===s[0].kg&&String(x.reps)===String(s[0].reps));
+  const memes=s.every(x=>x.kg===s[0].kg&&!!x.vide===!!s[0].vide&&String(x.reps)===String(s[0].reps));
   const lib={'É':'Échauffement','N':'Travail','D':'Dropset'}[g.t]||'Travail';
-  const kgTxt=s[0].kg?' @ '+s[0].kg+' kg':'';
+  const kgTxt=s[0].vide?' · à vide':(s[0].kg?' @ '+s[0].kg+' kg':'');
+  const avecCharges=s.some(x=>x.kg||x.vide);     // IMPORT PDF 15/11 : « à vide » s'écrit ; une charge manquante parmi des charges connues s'écrit « ? » (jamais une valeur voisine)
   const corps=memes
     ?(s[0].reps==null?_escNote(n+(n>1?' séries':' série')+' · reps ')+_repsHtml(null)+_escNote(kgTxt):_escNote(n+' × '+s[0].reps+' reps'+kgTxt))
-    :s.slice(0,7).map(x=>_escNote(x.kg?x.kg+' kg × ':'')+_repsHtml(x.reps)).join(' · ')+(n>7?' …':'');
+    :s.slice(0,7).map(x=>_escNote(x.vide?'à vide × ':(x.kg?x.kg+' kg × ':(avecCharges?'? × ':'')))+_repsHtml(x.reps)).join(' · ')+(n>7?' …':'');
   const rp=[]; s.forEach(x=>{ const e=_impReposEcrit(x.repos); const l=_impReposLib(x.repos)+(e?' (écrit : '+e+')':''); if(!rp.includes(l))rp.push(l); });
   const repos=(rp.length===1&&rp[0]==='—')?'repos non précisé':'repos '+rp.filter(l=>l!=='—').join(' · ')+(rp.includes('—')?' · —':'');
   return `<div>${avecLib?`<b>${lib}</b> · `:''}${n>1&&!memes?n+' séries : ':''}${corps} <span style="color:var(--t3);">— ${_escNote(repos)}</span></div>`;
@@ -8317,7 +8679,7 @@ function _impDetailSeries(di,ei,v){
     const titre=x.type==='É'?'Échauffement — touche pour passer en travail':(x.type==='D'?'Palier de dropset':'Travail — touche pour passer en échauffement');
     const flag=!!x.repos.txt;                  // un repos écrit en plage ou en texte : marqué ⚑ (le chiffre proposé n'est PAS celui du document)
     let h=`<div class="imp-set"><button class="imp-ty imp-ty-${cls}" ${x.type==='D'?'disabled':`onclick="impBasculerType(${di},${ei},${si})"`} title="${titre}">${ty}</button>`
-      +`<span class="imp-kr">${x.kg?x.kg+' kg':'—'} × ${_repsHtml(x.reps)}</span>`
+      +`<span class="imp-kr">${x.vide?'à vide':(x.kg?x.kg+' kg':'—')} × ${_repsHtml(x.reps)}</span>`
       +`<button class="imp-rp${flag?' imp-rp-flag':''}" onclick="impEditRepos(${di},${ei},${si})" title="${_impReposEcrit(x.repos)?'Écrit dans le document : '+_escNote(_impReposEcrit(x.repos))+' — touche pour corriger':'Corriger le repos'}">${flag?'⚑ ':''}${_escNote(_impReposLib(x.repos))}</button></div>`;
     if(ouvert){
       h+=`<div class="imp-rpe"><div class="imp-rpe-t">Repos de la série ${si+1}${x.repos.txt?` · écrit : « ${_escNote(x.repos.txt)} »`:''}</div><div class="imp-rpe-c">`
@@ -8382,8 +8744,13 @@ function _renderImpConfirm(){
             <div class="imp-sum">${g.map(x=>_impLigneGroupe(x,g.length>1)).join('')}</div>
             ${ex._echFusion?`<div class="imp-info">🔥 dont ${ex._echFusion} série${ex._echFusion>1?'s':''} d'échauffement — ${ex._echLignes} ligne${ex._echLignes>1?'s':''} du document regroupée${ex._echLignes>1?'s':''} ici</div>`:''}
             ${v.some(x=>x.reps==null)?`<div class="imp-info">🔢 Répétitions non écrites dans le document : rien n'est inventé, tu les saisiras pendant la séance.</div>`:''}
+            ${(ex._kgPartiel&&ex._kgPartiel.length)?`<div class="imp-info" style="color:var(--gold);">⚠️ Charges incomplètes dans la lecture du document : ${ex._kgPartiel.map(p=>_escNote(p.valeurs.length+' charge'+(p.valeurs.length>1?'s':'')+' lue'+(p.valeurs.length>1?'s':'')+' pour '+p.n+' série'+(p.n>1?'s':'')+(p.valeurs.length?' ('+p.valeurs.join(' · ')+')':''))).join(' · ')}. Rien n'est deviné ni décalé : les charges lues restent écrites dans la note de l'exercice, tu les placeras dans l'éditeur ou à la séance.</div>`:''}
+            ${(ex._kgNonLue&&ex._kgNonLue.length)?`<div class="imp-info" style="color:var(--gold);">⚠️ Charge écrite non lue dans le document : « ${ex._kgNonLue.map(_escNote).join(' », « ')} ». Rien n'est deviné : le texte reste écrit dans la note de l'exercice, tu saisiras la charge dans l'éditeur ou à la séance.</div>`:''}
             ${prop?`<div class="imp-prop"><div>🔗 Les <b>${nProp} série${nProp>1?'s':''} d'échauffement</b> juste au-dessus (« ${_escNote(prop.name)} ») semblent faire partie de cet exercice. Le nom ou le matériel n'est pas identique dans le document : <b>à toi de dire</b>.</div>`
               +`<div class="imp-prop-b"><button class="imp-b-ok" onclick="impGrouperEch(${di},${ei})">Regrouper en un exercice</button><button onclick="impGarderSepares(${di},${ei})">Garder séparés</button></div></div>`:''}
+            ${ex._cardioPropose?`<div class="imp-prop"><div>🏃 Cette ligne ressemble à un échauffement de <b>cardio</b> (${_escNote(String(ex._cardioPropose.duration))} min), mais son nom n'est pas un cardio connu : <b>à toi de dire</b>. Rien n'est rangé au cardio sans ton oui ; sans réponse, elle reste un exercice et ses séries sont gardées.</div>`
+              +`<div class="imp-prop-b"><button class="imp-b-ok" onclick="impCardioOui(${di},${ei})">Mettre dans le cardio</button><button onclick="impCardioNon(${di},${ei})">Garder comme exercice</button></div></div>`:''}
+            ${ex._cardioOk?`<div class="imp-info">🏃 Rangé dans le cardio du jour sur ta confirmation (ses séries ne sont pas gardées) · <span onclick="impCardioNon(${di},${ei})" style="color:var(--t3);cursor:pointer;text-decoration:underline;">annuler</span></div>`:''}
             ${ex._vmFrom?`<div class="imp-info" style="color:var(--green);">↔ reconnu depuis « ${_escNote(ex._vmFrom)} » · <span onclick="impUndoMatch(${di},${ei})" style="color:var(--t3);cursor:pointer;text-decoration:underline;">annuler</span></div>`:''}
             ${ex._vmSuggest?_vmConfirmRow(ex._vmSuggest,'impAcceptMatch('+di+','+ei+')','impRejectMatch('+di+','+ei+')',true):''}
             ${_neuf(ex)?_vmNouveauRow('impRattacher('+di+','+ei+')'):''}
@@ -8429,7 +8796,9 @@ function _setImpMode(mode){
   if(mode==='replace'){
     const progs=S.programmes||[];
     if(!progs.length){toast('Aucun programme existant à remplacer','info');_setImpMode('new');return;}
-    sel.innerHTML=progs.map((p,i)=>`<option value="${i}">${_escNote(_descProg(p,i))}</option>`).join('');
+    /* IMPORT PDF 15/11 (correction F) : AUCUNE cible présélectionnée — le navigateur choisirait la 1ʳᵉ option ; l'import reste bloqué tant que la personne n'a pas choisi (`finalImportProg`). */
+    sel.innerHTML='<option value="" selected disabled>Choisir le programme à remplacer</option>'+progs.map((p,i)=>`<option value="${i}">${_escNote(_descProg(p,i))}</option>`).join('');
+    sel.value=''; sel.style.outline='';
     sel.style.display='block';
     if(btnN)btnN.className='btn btn-bg2';
     if(btnR)btnR.className='btn btn-red';
@@ -8513,6 +8882,25 @@ function _cardioVersWkt(day){
   }catch(e){}
 }
 let _remplaceCible=null;   // { idx, id } — la cible confirmée d'un remplacement
+/* 📅 LE DÉBUT DE CYCLE APRÈS UN REMPLACEMENT — DIT, jamais perdu en silence (IMPORT PDF, mission du 15/11/2026, correction F).
+   Avant : le programme remplaçant repartait avec la date écrite par le NOUVEAU document — le plus souvent aucune — et le cycle du programme remplacé (« Semaine 3 / 8 »)
+   disparaissait sans un mot (« sans date de début : la semaine n'avance pas »). Maintenant, UNE règle (propriétaire unique, lue par la confirmation ET par l'enregistrement, R2) :
+     · le document écrit une date de début valable → c'est elle ;
+     · sinon, le programme remplacé en avait une et elle reste valable pour la durée du nouveau (`_dateProgValide`) → elle est CONSERVÉE ;
+     · sinon → sans date (on n'invente rien : un cycle déjà fini n'est pas une date). */
+function _debutRemplacement(cible){
+  const doc=_dateProgValide(_impExtracted&&_impExtracted.startDate,_impExtracted&&_impExtracted.weeks);
+  if(doc)return {date:doc,src:'document'};
+  const old=cible&&cible.startDate?_dateProgValide(cible.startDate,(_impExtracted&&_impExtracted.weeks)||cible.weeks):'';
+  return old?{date:old,src:'conserve'}:{date:'',src:'aucune'};
+}
+function _debutRemplacementTxt(cible){
+  const d=_debutRemplacement(cible);
+  const fr=x=>new Date(x).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'});
+  if(d.src==='document')return 'Début du cycle : '+fr(d.date)+' (écrit dans le document).';
+  if(d.src==='conserve')return 'Début du cycle conservé : '+fr(d.date)+' (celui du programme remplacé).';
+  return cible&&cible.startDate?'Le début du cycle du programme remplacé ('+fr(cible.startDate)+') ne peut pas être gardé (cycle déjà terminé pour la nouvelle durée) : le nouveau programme sera sans date de début.':'Sans date de début.';
+}
 function finalImportProg(){
   if(!_impExtracted||!(_impExtracted.days||[]).length){toast('Aucun programme à importer','error');return;}
   if(!S.programmes)S.programmes=[];
@@ -8520,12 +8908,21 @@ function finalImportProg(){
      ⛔ Placé AVANT tout effet de bord : la création des exercices perso plus bas ne doit pas avoir lieu si la personne annule. ⛔ Et la cible est
      revérifiée par son identifiant au moment d'agir : la liste a pu changer pendant que la fenêtre était ouverte. */
   if(_impMode==='replace'){
-    const idx=parseInt((document.getElementById('imp-replace-sel')||{}).value);
+    const _sel=document.getElementById('imp-replace-sel');
+    const idx=parseInt((_sel||{}).value);
     const cible=!isNaN(idx)?S.programmes[idx]:null;
-    if(cible&&!(_remplaceCible&&_remplaceCible.idx===idx&&_remplaceCible.id===cible.id)){
+    /* 🛑 AUCUNE CIBLE CHOISIE = RIEN NE SE PASSE (IMPORT PDF, mission du 15/11/2026, correction F). Avant : la liste PRÉSÉLECTIONNAIT le premier programme (le navigateur choisit la 1ʳᵉ
+       option) — un « Remplacer » vite fait visait donc un programme que la personne n'avait pas choisi ; et sans cible lisible, le code retombait sur « enregistrer comme nouveau ».
+       Maintenant la liste s'ouvre sur « Choisir le programme à remplacer » (aucune option choisie) et l'import est BLOQUÉ, avec la raison dite, tant qu'une cible n'est pas choisie explicitement. */
+    if(!cible){
+      toast('Choisis d\'abord le programme à remplacer','error');
+      if(_sel){ _sel.style.display='block'; _sel.style.outline='2px solid var(--gold)'; try{ _sel.focus(); }catch(e){} }
+      return;
+    }
+    if(!(_remplaceCible&&_remplaceCible.idx===idx&&_remplaceCible.id===cible.id)){
       const nEx=(_impExtracted.days||[]).reduce((k,dj)=>k+(dj.exercises||[]).length,0);
       showConfirm('Remplacer ce programme ?',
-        'Cible : '+_descProg(cible,idx)+'. Il sera remplacé par « '+(_impExtracted.name||'ce programme')+' » ('+(_impExtracted.days||[]).length+' séance'+((_impExtracted.days||[]).length>1?'s':'')+', '+nEx+' exercice'+(nEx>1?'s':'')+'). Tes séances déjà faites, tes records et tes autres programmes ne changent pas.',
+        'Cible : '+_descProg(cible,idx)+'. Il sera remplacé par « '+(_impExtracted.name||'ce programme')+' » ('+(_impExtracted.days||[]).length+' séance'+((_impExtracted.days||[]).length>1?'s':'')+', '+nEx+' exercice'+(nEx>1?'s':'')+'). '+_debutRemplacementTxt(cible)+' Tes séances déjà faites, tes records et tes autres programmes ne changent pas.',
         ()=>{ _remplaceCible={idx,id:cible.id}; try{ finalImportProg(); } finally { _remplaceCible=null; } }, 'Remplacer');
       return;
     }
@@ -8547,7 +8944,7 @@ function finalImportProg(){
        dirait « cardio » d'une ligne de musculation dont la durée traîne dans la note. */
     try{
       if(typeof _estCreneauCardio==='function'
-         && _estCreneauCardio({name:ex.name,note:ex.note,sets:[{kg:ex.kg||0}]}))return;
+         && _estCreneauCardio(_impSondeCardio(ex)))return;   // D-167 : la sonde lit les VRAIES séries (et le oui de la personne, `_cardioOk`)
     }catch(e){}
     /* 🔤 ft-v1172 — le dédoublonnage passe par `_cleNom` : sans lui, « Développé Épaules Guide /
        Haltères » et « Développé épaules guidé / haltères » sont DEUX entrées de `toCreate`, donc
@@ -8599,8 +8996,9 @@ function finalImportProg(){
         const _restAt=si=>_reposSerieImport(ex,si);  // IMPORT-IA-FIDELITE-01 : la MÊME fonction que l'aperçu (R2) — voir `_restBrutSerieImport`
         const _setDe=(si,kg,reps)=>{ const r=_restAt(si); const o={kg,reps,type:_typeAt(si) /* échec auto à l'import désactivé (ft-v292) — ex.specialSets plus converti en 'E' */,rest:r.prop}; if(r.txt)o.restTxt=r.txt; return o; };
         const _SI=_seriesImport(ex);        // IMPORT-IA-FIDELITE-01 : la MÊME lecture que l'aperçu (nombre de séries, reps, charges) — R2
-        sets=_SI.reps.map((r,si)=>_setDe(si,_SI.kgs[si],r));
+        sets=_SI.reps.map((r,si)=>{ const o=_setDe(si,_SI.kgs[si],r); if(_SI.vides[si])o.vide=true; return o; });   // IMPORT PDF 15/11 : « à vide » (0 kg ÉCRIT) ≠ charge non renseignée (0 sans `vide`)
         const obj={name:ex.name,note:ex.note||'',sets};
+        if(ex._cardioOk===true)obj._cardioOk=true;        // D-167 : le oui de la personne voyage jusqu'à `_extraireCardioMilo` (retiré juste après : jamais enregistré)
         if(group){obj.group=group;obj.groupType='super';} // FIX Emma : sans groupType='super' le superset importé n'était pas reconnu
         if(_impDropEnchaine(ex))obj.dropChaine=true;      // correction C : l'enchaînement des paliers est un fait ÉCRIT à l'import, pas une déduction (voir `toggleSet`)
         return obj;
@@ -8611,13 +9009,14 @@ function finalImportProg(){
       if(typeof _extraireCardioMilo==='function'){
         const _r=_extraireCardioMilo(_jour.exs);
         _jour.exs=_r.exs;
+        _jour.exs.forEach(e=>{ delete e._cardioOk; });   // D-167 : transitoire — ce qui reste exercice n'en garde aucune trace
         if(_r.avant)_jour.cardioAvant=_r.avant;
         if(_r.apres)_jour.cardio     =_r.apres;
       }
     }catch(e){}
     return _jour;
   };
-  const prog={id:'p'+Date.now(),name,
+  const prog={id:'p'+Date.now(),name,prescrit:true,   // IMPORT PDF 15/11 : les valeurs écrites par le document font foi au 1ᵉʳ usage (voir `_loadProgDayVraiment`)
     weeks:_impExtracted.weeks||0,
     startDate:_dateProgValide(_impExtracted.startDate,_impExtracted.weeks),
     days:_impExtracted.days.map((day,di)=>_buildProgDay(day,di))
@@ -8628,6 +9027,7 @@ function finalImportProg(){
       if(!(_remplaceCible&&_remplaceCible.idx===idx&&_remplaceCible.id===S.programmes[idx].id)){toast('La liste des programmes a changé — recommence le remplacement.','error');return;}
       const oldName=S.programmes[idx].name;
       prog.name=prog.name||oldName;
+      prog.startDate=_debutRemplacement(S.programmes[idx]).date;   // IMPORT PDF 15/11 : le début de cycle suit le remplacement (document > conservé > aucun) — voir `_debutRemplacement`
       S.programmes[idx]=prog;
       persist();impRecommencer(true);closeImportProg();   // ft-v1178 : scan consommé → on le vide
       toast('"'+oldName+'" mis à jour ✅','success');
@@ -9471,8 +9871,7 @@ function _startSessionFromMilo(idx,btn){
   // Règle : si Milo a précisé une valeur → on la respecte ; sinon SEULEMENT, on reprend la dernière fois.
   // (Différent d'un PROGRAMME, qui dit « 4×8 » sans charge → là, le pré-remplissage garde tout son sens.)
   const buildEx=e=>{
-    const prev=(typeof getPrev==='function')?(getPrev(e.name)||[]):[];
-    const _pa=_prevAligne(prev, e.sets||[]);   // par RÔLE (voir _prevAligne)
+    const _pa=_repriseMilo(e,data,'start');   // par RÔLE (voir _prevAligne) — 17/11/2026 (lot C) : la séance de Milo qui DÉMARRE est une séance LIBRE : « sinon la dernière fois » = la dernière séance LIBRE du même exercice (`_reprise`), jamais celle d'un programme
     /* 🏷️ ON GARDE L'AUTEUR DE LA SÉANCE (18/08/2026) — `_milo:true` dit « ces charges viennent
        d'une prescription de Milo, pas d'un choix de la personne ». Sans ce marqueur, le débrief
        lui reproche une montée en charge trop courte qu'il a lui-même écrite (arrivé le 18/08,
@@ -9480,9 +9879,9 @@ function _startSessionFromMilo(idx,btn){
        puisque `sess.exs` est copié depuis `S.wkt.exs`. Lu par `_verdictMontee` (coach.js). */
     const _o={name:e.name,note:e.note||'',_milo:true,sets:(e.sets||[]).map((s,i)=>{
       const pp=_pa[i];
-      const kg=(s.kg>0)?s.kg:(pp?pp.kg:0);                                   // Milo d'abord, sinon la dernière fois
+      const kg=(s.kg>0)?s.kg:(pp?pp.kg:null);                                // Milo d'abord, sinon la dernière fois ; sans source admissible : charge INCONNUE (`null`), jamais un zéro inventé (D-164, 18/11/2026)
       const reps=s.maxi?0:((s.reps>0)?s.reps:(pp?pp.reps:10));               // idem (série « maxi » = vide, à saisir)
-      return {kg,reps,maxi:!!s.maxi,type:s.type||'N',done:false,rm1:0,rest:_secRepos(s.rest)};
+      return {kg,reps,maxi:!!s.maxi,type:s.type||'N',done:false,rm1:0,rest:_secRepos(s.rest),...((s.kg>0)?{}:_pdcRepris(pp))};   // D-164 : Milo a donné des kilos → eux seuls ; sinon la dernière fois, PDC compris
     })};
     /* 🔗 L'étiquette de superset voyage AVEC l'exercice jusqu'au point de croisement.
        ⛔ On la transporte sur l'objet plutôt que de rezipper `data.exs` par INDICE plus bas :
@@ -9728,7 +10127,6 @@ function _applyMiloSession(mode){
   const data=(typeof _pendingMiloSessions!=='undefined')?_pendingMiloSessions[idx]:null;
   closeMiloSeance();
   if(!data){toast('Séance introuvable','error');return;}
-  const prev=(typeof getPrev==='function')?getPrev:null;
   /* ── SUPERSETS DEMANDÉS PAR MILO — LE GROUPEMENT A DÉMÉNAGÉ (05/09/2026) ─────────────
      Il vivait ICI, c'est-à-dire sur UNE SEULE des deux portes. Il est maintenant dans
      `_appliqueMiloSession`, le seul point que les deux traversent — exactement la
@@ -9736,7 +10134,7 @@ function _applyMiloSession(mode){
      imposée, chacun après avoir été posé au même mauvais endroit. **Troisième fois.**
      ⛔ Ne pas le remettre ici : cette porte-ci n'est PAS le cas normal. */
   const newExs=(data.exs||[]).map(e=>{
-    const pv=prev?(prev(e.name)||[]):[];
+    const _pa=_repriseMilo(e,data,mode);   // 18/11/2026 (lot S) : la même règle que l'autre porte, mais le CONTEXTE est celui de la séance EN COURS (jour de programme ou libre) — voir `_repriseMilo`
     /* ⛔ `_milo:true` MANQUAIT SUR CETTE PORTE (trouvé le 23/08 en branchant le contrôle
        d'intensité). `_startSessionFromMilo` le pose, `_applyMiloSession` ne le posait pas —
        donc une séance chargée en mode « remplacer » perdait son AUTEUR en route, et Milo
@@ -9744,10 +10142,10 @@ function _applyMiloSession(mode){
        très exactement l'incident du 18/08, par une porte qu'on n'avait pas regardée.
        *Le même marqueur, deux portes, une seule équipée* — R8 encore. */
     const obj={name:e.name,note:e.note||'',_milo:true,sets:(e.sets||[]).map((s,i)=>{
-      const pp=pv.length?(pv[i]||pv[pv.length-1]):null;
-      return {kg:(s.kg>0)?s.kg:(pp?pp.kg:0),
+      const pp=_pa[i];
+      return {kg:(s.kg>0)?s.kg:(pp?pp.kg:null),   // sans source admissible : inconnue (`null`), jamais un zéro inventé (18/11/2026)
               reps:s.maxi?0:((s.reps>0)?s.reps:(pp?pp.reps:10)),
-              maxi:!!s.maxi,type:s.type||'N',done:false,rm1:0,rest:_secRepos(s.rest)};
+              maxi:!!s.maxi,type:s.type||'N',done:false,rm1:0,rest:_secRepos(s.rest),...((s.kg>0)?{}:_pdcRepris(pp))};   // D-164 : voir `_startSessionFromMilo`
     })};
     if(e.supersetGroup!=null) obj.supersetGroup=e.supersetGroup;   // l'étiquette voyage sur l'objet
     return obj;
@@ -9868,13 +10266,52 @@ function _nomEstUnExerciceConnu(nom){
     return !!(r && r.match && /^exact/.test(String(r.via||'')));
   }catch(e){ return false; }
 }
-function _estCreneauCardio(o){
+/* ⛔ LE NOM DE BASE D'UNE LIGNE D'ÉCHAUFFEMENT (« Squat », « Bench Press », « Pull-up »), reconnu par la table d'ÉQUIVALENCES ou un synonyme anglais du catalogue, est un exercice de musculation — pas « exact », mais CERTAIN
+   (nuit du 15 au 16/11 ; mesuré : « Warm-up - Squat » sans charge lisible et « 10 min tranquille » en note devenait du cardio et ses séries disparaissaient). Utilisé UNIQUEMENT pour le nom de base (le marqueur retiré) : le
+   garde général `_nomEstUnExerciceConnu`, lui, reste strict (« exact ») pour ne pas refuser un créneau cardio légitime au premier nom qui ressemble vaguement. */
+function _nomBaseEquivalentConnu(nom){
+  try{
+    if(typeof _matchExercise!=='function')return false;
+    const r=_matchExercise(nom);
+    return !!(r&&r.match&&/^(synonyme|équivalence)/.test(String(r.via||'')));
+  }catch(e){ return false; }
+}
+/* ⚖️ D-167 (mission corrective du 16/11/2026, sonde E01) — UN ÉCHAUFFEMENT D'UN MOUVEMENT INCONNU N'EST JAMAIS CLASSÉ « CARDIO » SANS CONFIRMATION.
+   ⛔⛔ LE DÉFAUT MESURÉ : « Échauffement - Zeta fictif », une série de type W sans charge et « 10 min tranquille » en note, devenait du CARDIO — sa série disparaissait de l'exercice (retirer un exercice réel coûte infiniment plus cher que le laisser, R29).
+   Le nom n'était pas au catalogue (rien de plus qu'un exercice perso à créer) : le garde « nom de base connu » (1bis) ne le protégeait pas, la durée de la note faisait le reste.
+   ⭐ LA RÈGLE (propriétaire unique, R2) : une ligne qui nomme un MOUVEMENT derrière un marqueur d'échauffement (« Échauffement - X », « X (ECH) », « X - échauffement »), sans charge, avec une durée lisible, dont le nom de base n'est NI un exercice connu, NI une machine de cardio,
+   NI un libellé d'emplacement (« général », « mobilité »…), NI une durée → on ne sait pas si c'est du cardio : elle RESTE un exercice (ses séries intactes) et l'aperçu d'import DEMANDE (`_cardioPropose`, « Mettre dans le cardio » / « Garder comme exercice »).
+   Seul un oui explicite (`_cardioOk`, transitoire : jamais enregistré) la range au cardio. ⛔ Aucun nom d'exercice codé en dur : des motifs de MACHINES de cardio et de libellés d'emplacement (déjà là), jamais une liste de mouvements.
+   Un échauffement dont le nom est un simple créneau (« Échauffement », « Échauffement - 5 min », « Warm-up - vélo ») garde son comportement d'avant (E04). */
+function _creneauAConfirmer(o){
   try{
     if(!o||!o.name)return false;
+    const b=(typeof _nomSansEch==='function')?(_nomSansEch(o.name)||_echNomTete(o.name)||_echNomQueue(o.name)):null;
+    if(!b)return false;                                                                    // pas de mouvement nommé derrière un marqueur : rien à demander (une charge, un mouvement CONNU : les gardes ① et 1bis de `_estCreneauCardio`, appliqués par `brut` ci-dessous)
+    const nb=(typeof _naz==='function')?_naz(b):String(b).toLowerCase();
+    if(_RE_CRENEAU_CARDIO.test(nb)||_CARDIO_TYPES.some(([re])=>re.test(nb))||/\d\s*(?:min|minutes?|')/.test(nb))return false;   // un libellé d'emplacement, une machine, une durée : pas un mouvement nommé
+    if(typeof _exEquip==='function'&&_exEquip(b)==='cardio')return false;
+    return _estCreneauCardio(o,true);                                                       // et c'est bien ce que l'ancienne décision aurait rangé au cardio (durée lisible, créneau) : sinon il n'y a rien à demander
+  }catch(e){ return false; }
+}
+function _estCreneauCardio(o,brut){
+  try{
+    if(!o||!o.name)return false;
+    if(!brut&&o._cardioOk!==true&&_creneauAConfirmer(o))return false;   // D-167 : pas de cardio sans confirmation explicite — la ligne reste un exercice, séries intactes (`brut` : la décision d'AVANT, pour savoir s'il y a quelque chose à demander)
     const nom=(typeof _naz==='function')?_naz(o.name):String(o.name).toLowerCase();
     // ⛔ GARDE ① — une charge au bout d'une série = de la musculation, jamais du cardio.
     const sets=Array.isArray(o.sets)?o.sets:[];
-    if(sets.some(s=>s&&parseFloat(String(s.kg).replace(',','.'))>0))return false;
+    /* ⛔ ET UNE BARRE « À VIDE » EST UNE CHARGE (nuit du 15 au 16/11, D4) : depuis qu'une charge non lue vaut 0, ce garde ne voyait plus « Barre / 40 / 60 » ni la barre seule — l'échauffement « Warm-up - Squat — 10 min tranquille »
+       (barre à vide, durée dans la note) partait au bloc cardio et SES SÉRIES DISPARAISSAIENT du programme (mesuré par l'étude des échauffements : « retirer un exercice réel coûte infiniment plus cher… », R29). */
+    if(sets.some(s=>s&&(s.vide||parseFloat(String(s.kg).replace(',','.'))>0)))return false;
+    /* ⛔ GARDE ①bis — IMPORT PDF, mission du 15/11/2026 : « Développé Couché - échauffement » est l'échauffement D'UN EXERCICE DE MUSCULATION, jamais un créneau de cardio.
+       Sans charge lisible (un tableau de charges incomplet laisse désormais les charges « non renseignées » au lieu de les inventer), la durée de la note (« 2-3 min sur 95 kg »)
+       suffisait à faire passer la ligne pour « vélo léger 3 min » : l'échauffement sortait de la liste des exercices. Le nom de BASE (le marqueur d'échauffement retiré) est un exercice
+       CONNU → c'est de la musculation. */
+    try{
+      const _b=(typeof _nomSansEch==='function')?(_nomSansEch(o.name)||_echNomTete(o.name)||_echNomQueue(o.name)):null;
+      if(_b&&(_nomEstUnExerciceConnu(_b)||_nomBaseEquivalentConnu(_b)))return false;
+    }catch(e){}
     // ⛔ GARDE ② — une durée réellement lisible (`_cardioDepuisEx` n'invente jamais un chiffre).
     const c=_cardioDepuisEx(o);
     if(!c)return false;
@@ -10131,29 +10568,190 @@ function loadProgDay(progIdx,dayIdx){
   }
   return _loadProgDayVraiment(progIdx,dayIdx);
 }
-function _loadProgDayVraiment(progIdx,dayIdx){
-  const prog=(S.programmes||[])[progIdx];
-  if(!prog||!prog.days||!prog.days[dayIdx])return;
-  const day=prog.days[dayIdx];
-  S.wkt={date:today(),progLabel:day.label||('Jour '+(dayIdx+1)),exs:(day.exs||[]).map(e=>{
-    const prev=getPrev(e.name);
-    // Pré-remplissage PAR SÉRIE depuis la séance précédente (comme la colonne « Précédent »
-    // et addSet) — série i → prev[i], repli sur la dernière série précédente, sinon valeur du programme.
-    const _pa=_prevAligne(prev, e.sets||[]);   // par RÔLE (voir _prevAligne)
-    const obj={name:e.name,note:e.note||'',sets:(e.sets||[]).map((s,i)=>{
-      const pp=_pa[i];
+/* 🎯 UN PROGRAMME IMPORTÉ, À SON PREMIER USAGE, SE JOUE COMME LE DOCUMENT L'ÉCRIT — IMPORT PDF, mission du 15/11/2026, correction B.
+   ⛔⛔ LE DÉFAUT MESURÉ SUR LA RECETTE iPHONE DE MICHEL. À l'ouverture d'une séance, la dernière séance de CHAQUE exercice (`getPrev(nom)`, tous programmes confondus) REMPLAÇAIT
+   la charge ET les répétitions du programme (exemples INVENTÉS, de la même forme que ceux de la recette) : un développé couché prescrit « 100×2 puis 90×3 · 90×3 » s'ouvrait en « 90×2 » × 3 ; un squat prescrit « 120×3, 110×3, 110×3 »
+   s'ouvrait en « 80 · 95 · 105 ×3 » (exactement la dernière séance enregistrée) ; des échauffements de soulevé de terre prescrits 70 et 90 s'ouvraient en 60 et 80. Le top set et les back-off
+   étaient remplacés par une autre méthode, sans un mot. C'est R14 : un pré-remplissage juste pour un programme GÉNÉRIQUE (« 4×8 », sans charge) est faux pour des charges PRESCRITES.
+   ⭐ LA RÈGLE (propriétaire unique : ici). ⚠️ MISE À JOUR LE 16/11/2026 (D-163, contre-expertise « lot 1 ») : elle vaut pour TOUS les programmes — anciens, créés à la main, importés, générés (débutant), de Milo —, plus seulement pour ceux qui
+   portent `prescrit:true` (ce drapeau n'est plus LU : il reste écrit là où il l'était, il ne décide plus de rien). Avant, un programme d'avant la règle reprenait la dernière séance de CHAQUE exercice, tous programmes confondus (la charge 80 d'un AUTRE
+   programme remplaçait la prescription 100 au 1ᵉʳ usage — sondes H02/H03) :
+     · TANT QUE CE JOUR DU PROGRAMME N'A PAS ÉTÉ FAIT (aucune séance enregistrée avec le `progId` de ce programme et le libellé de ce jour) : les valeurs ÉCRITES par le document font
+       foi. L'historique reste VISIBLE (colonne « Précédent », feuille « 4 dernières séances ») et propose, en grisé dans le champ, une valeur pour ce que le document ne prescrit PAS
+       (charge « adaptée », répétitions non écrites) — reprise seulement par l'appui sur ✓ (le mécanisme de toutes les séries) ;
+     · UNE FOIS CE JOUR FAIT, la dernière séance DE CE JOUR reprend la main, comme avant (les adaptations volontaires — des échauffements allégés, une charge qui a bougé — se reprennent) :
+       jamais celle d'un AUTRE jour du programme (le développé couché lourd du jour 1 n'est pas le développé couché secondaire du jour 3) ni d'un autre programme ;
+     · (RETIRÉ le 16/11 : « un programme d'AVANT garde son comportement » — c'était exactement le défaut H02/H03 : la règle de l'identité ne doit pas dépendre d'un drapeau que seuls les programmes récents portent.)
+   ⛔ Aucun historique n'est modifié : `getPrev` et `_prevAligne` sont inchangés (la colonne « Précédent » garde son rapprochement par rôle) ; le chargement lit l'historique de CE jour, rien d'autre. */
+/* ⛔ R2 (« Autre activité », `state.js::_estAutre`) : un lecteur de « séances » passe par `_seancesTrain()`, jamais par `S.sessions` brut — une marche y est une ligne comme une autre.
+   Le témoin de SOURCE `C-ACT-J30` l'a fait rougir à la passe D-031 du 15/11 (« 83 lectures brutes trouvées, 82 connues ») : cette fonction ne s'était pas inscrite dans sa liste blanche. */
+/* ⛔ L'IDENTITÉ D'UN JOUR N'EST QUE SON LIBELLÉ (aucun identifiant de jour n'est enregistré) — et deux jours d'UN MÊME programme peuvent porter le MÊME libellé (« HAUT DU CORPS » le lundi lourd et le jeudi léger).
+   Mesuré (D1, nuit du 15 au 16/11) : faire l'un rendait l'AUTRE « déjà suivi », et le jeudi léger s'ouvrait avec les charges du lundi lourd — la prescription du document, remplacée sans un mot.
+   ⭐ Quand l'identité est AMBIGUË on ne choisit pas à la place du document : aucun jour de ce libellé n'est « suivi », la PRESCRIPTION reste (l'historique reste visible, en « Précédent »).
+   Aucune donnée n'est ajoutée : l'ambiguïté se lit dans le programme, jamais dans une clé enregistrée (R17). */
+function _joursMemeLibelle(prog,label){ return (prog.days||[]).filter((d,i)=>(d&&d.label||('Jour '+(i+1)))===label).length; }
+/* 🆔 D-163 (16/11/2026, décision de Michel) — L'IDENTITÉ STABLE D'UN JOUR. Chaque jour d'un programme reçoit un `id` à son 1ᵉʳ chargement (paresseusement : ni migration, ni écriture à l'import ni à la création), la séance
+   enregistrée le copie (`progDayId`) : « le dernier jour fait » se reconnaît alors par cet identifiant, jamais par un libellé — deux jours homonymes (un lundi lourd, un jeudi léger « HAUT DU CORPS ») se distinguent,
+   et un renommage ou une réorganisation des jours ne casse rien. REPLI (séances d'AVANT l'identifiant, sans `progDayId`) : le libellé, seulement s'il est UNIQUE dans le programme (la prudence de la nuit du 16/11 — on ne devine pas
+   entre deux jours homonymes). Un programme à UN seul jour (`day` absent) : le programme EST le jour.
+   ⭐ MÊME PRINCIPE, UN CRAN PLUS BAS (lot 1 du 16/11, homonymes H12 et déplacement de série D-171 × D-168) : un EXERCICE du programme porte `exId`, une SÉRIE `sid` — posés paresseusement au chargement du jour, copiés dans la séance
+   enregistrée, jamais retouchés après. « Le bloc B » retrouve SON bloc de la séance précédente même si deux blocs portent le même nom et que le programme a été réorganisé ; une série DÉPLACÉE garde SON historique. Aucun nom d'exercice n'est lu.
+   ⛔ Des identifiants courts (4 caractères) : ils ne servent qu'à reconnaître DANS un même jour / un même exercice (unicité vérifiée à la pose) ; deux identifiants en double (une copie de jour…) → le second est renouvelé, jamais deux fois le même. */
+function _idStable(pre){ return pre+Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+function _idJour(){ return _idStable('j'); }
+function _idCourt(pris){ let x; do{ x=Math.random().toString(36).slice(2,6); }while(!x||pris.has(x)); pris.add(x); return x; }
+function _assurerIdentites(prog,day){
+  if(!prog.id)prog.id=_idStable('p');   // un programme d'AVANT l'identifiant : il le reçoit ici, à son chargement (les séances d'avant ne lui sont pas rattachées — aucune valeur empruntée ailleurs)
+  if(day){ const k=(prog.days||[]).indexOf(day); if(!day.id||(prog.days||[]).some((d,i)=>i<k&&d&&d.id===day.id))day.id=_idJour(); }
+  const vusE=new Set();
+  ((day?day.exs:prog.exs)||[]).forEach(e=>{
+    if(!e)return;
+    if(!e.exId||vusE.has(e.exId))e.exId=_idCourt(vusE); else vusE.add(e.exId);
+    const vusS=new Set();
+    (e.sets||[]).forEach(s=>{ if(!s)return; if(!s.sid||vusS.has(s.sid))s.sid=_idCourt(vusS); else vusS.add(s.sid); });
+  });
+}
+/* D-163 — la liste des séances faites de CE jour, de la plus RÉCENTE à la plus ancienne selon la chronologie réelle (`_cmpSeances` : la date réalisée, puis l'ordre d'enregistrement), jamais selon l'ordre du tableau. */
+function _seancesDuJour(prog,label,day){
+  const unique=day&&_joursMemeLibelle(prog,label)===1;
+  return _seancesTrain().filter(s=>s&&s.progId&&s.progId===prog.id&&(!day||(s.progDayId?(!!day.id&&s.progDayId===day.id):(unique&&s.progLabel===label)))).sort(_cmpSeances);
+}
+/* ⚖️ D-164 / D-163 (arbitrage du 17/11/2026) — LES SÉANCES D'AVANT DONT UNE VALEUR PEUT ÊTRE REPRISE PAR LA SÉANCE EN COURS `w` d'un JOUR DE PROGRAMME : les séances TERMINÉES de CE jour de CE programme, la plus récente d'abord
+   (la même liste que le chargement du jour : `_seancesDuJour`, par identité). Un programme supprimé / un jour qu'on ne retrouve pas → AUCUNE (incertitude = rien). Jamais une séance d'un autre programme, d'un autre jour ou d'une séance libre.
+   Un seul propriétaire (R2), lu par `_reprise` ; ne décide que de ce qui est SUGGÉRÉ ou repris : la colonne « Précédent » montre toujours la dernière fois. Rien n'est écrit. */
+function _seancesDeCeJour(w){
+  const prog=(S.programmes||[]).find(p=>p&&p.id===w.progId);
+  if(!prog)return [];
+  const jours=!!(prog.days&&prog.days.length), day=w.progDayId?(prog.days||[]).find(d=>d&&d.id===w.progDayId):null;
+  if(jours&&!day)return [];
+  return _seancesDuJour(prog,w.progLabel,day);
+}
+/* ⚖️ D-164 × D-163 (lot S de la V3, 18/11/2026 — contre-sondes 1, 2, 3 de la contre-expertise) — UN SEUL SÉLECTEUR DE « D'OÙ UNE VALEUR (CHARGE ET RÉPÉTITIONS) PEUT-ELLE ÊTRE REPRISE ? » (R2) : la suggestion grise du champ de charge ET de répétitions
+   (donc ce que ✓ importe), l'AJOUT d'un exercice (`addExercise`) ou d'une série (`addSet`), le remplacement d'un exercice, la base d'un dropset et la séance de Milo lisent TOUS cette fonction — et elle lit EXACTEMENT ce que lit le CHARGEMENT du jour
+   (`_prevDuJour` sur `_seancesDuJour`) : même source, même bloc, jamais « la dernière fois du même nom, tous programmes confondus ». Avant : le chargement lisait l'IDENTITÉ du bloc, cette fonction lisait le NOM → deux blocs homonymes se croisaient (17 au lieu de 63),
+   un exercice absent de la dernière séance du jour reprenait une séance plus ancienne, un autre programme plus récent masquait la dernière séance de CE jour.
+   `bloc` : le BLOC concerné (`{name, exId?}` — son identité `exId` quand il en a une ; une chaîne = un bloc ajouté sans identité) ; `exs` : les blocs de la séance (défaut : la séance en cours), pour savoir si le nom est ambigu ; `w` : la séance concernée
+   (défaut : celle en cours ; `{}` = une séance libre à venir : le démarrage d'une séance de Milo). Rend `{sess,sets}` ou `null` : « rien d'admissible », jamais un zéro ni une valeur empruntée.
+   · séance d'un JOUR DE PROGRAMME : la DERNIÈRE séance terminée de CE jour de CE programme, et seulement elle (si elle ne contient pas le bloc → rien, JAMAIS une séance plus ancienne) ; le bloc se désigne par son identité, sinon par son nom / commentaire NON ambigus, jamais par le rang ;
+   · séance LIBRE (arbitrage « séance libre ») : la dernière séance LIBRE terminée où l'exercice figure — une séance de programme plus récente est SAUTÉE, pas lue ; même rapprochement du bloc, donc : plusieurs blocs de ce nom → on ne sait pas lequel est « le même » → rien.
+   ⛔ Lecture seule : ni l'historique ni la séance ne sont modifiés. */
+function _reprise(bloc,w,exs){
+  const c=(w===undefined)?S.wkt:w, e=(typeof bloc==='string')?{name:bloc}:bloc;
+  if(!c||!e||!e.name)return null;
+  const base=exs||((w===undefined&&S.wkt&&S.wkt.exs)||[]), lst=base.indexOf(e)>=0?base:base.concat([e]);
+  let jour;
+  if(c.progId)jour=_seancesDeCeJour(c);
+  else{ const v=_seancesExercice(e.name).find(x=>x&&x.sess&&!x.sess.progId); jour=v?[v.sess]:[]; }
+  const h=_prevDuJour(jour,e,lst);
+  return h.sets.length?{sess:jour[0],sets:h.sets}:null;
+}
+/* La série d'avant qui correspond à chaque série du MODÈLE (par rôle : échauffement ↔ échauffement, travail ↔ travail), ou `null` — le pré-remplissage d'un exercice ou d'une série qu'on AJOUTE (même rapprochement que « Précédent », source admissible seulement). */
+function _reprisesPour(bloc,modele,w,exs){ const v=_reprise(bloc,w,exs); return v?_prevAligne(v.sets,modele):(modele||[]).map(()=>null); }
+/* 🤖 LES DEUX PORTES D'UNE SÉANCE DE MILO LISENT LA MÊME RÈGLE (lot S, arbitrage de Michel du 18/11/2026) : Milo qui DÉMARRE une séance (`start`) la pose LIBRE — la dernière séance libre du même exercice ; Milo qui AJOUTE à une séance existante (`add`, ou la remplace)
+   respecte le CONTEXTE DE DESTINATION : le jour / le programme de la séance EN COURS (`S.wkt`), comme si l'exercice y était ajouté à la main. `e` : l'exercice de Milo (`{name, sets}`, sans identité) ; `data` : la séance de Milo ; `mode` : 'start' · 'add' · 'replace'. */
+function _repriseMilo(e,data,mode){
+  const exs=(mode==='add'?S.wkt.exs:[]).concat(data.exs||[]);
+  return _reprisesPour(e,e.sets||[],mode==='start'?{}:undefined,exs);
+}
+/* Les deux états qui accompagnent une charge « 0 » et se COPIENT tels quels avec elle : le PDC / lest / assistance (`pdc`) et la barre « à vide » (`vide`) — rien d'autre, jamais déduit. Un seul propriétaire (R2) : lu par `_serieDepuis`, `applyDropset`, `removeDropset`. */
+function _pdcVideDe(pp){ return pp?{..._pdcRepris(pp),...((pp.vide&&!(+pp.kg>0)&&_pdcDe(pp)===null)?{vide:true}:{})}:{}; }
+/* UNE SÉRIE NOUVELLE tirée d'UNE série source (`pp`, ou rien) : kilos, répétitions, PDC / lest / assistance, « à vide » — la charge inconnue (`null`) le reste, jamais un zéro (D-164).
+   ⛔ SANS SOURCE, LA CHARGE EST INCONNUE (`null`), JAMAIS UN ZÉRO (18/11/2026, lot Z, contre-sonde 5) : `def` ne porte que les RÉPÉTITIONS par défaut (un défaut d'affichage du produit) ; un `def.kg` éventuel d'un appelant est ignoré, il fabriquait un « 0 écrit » sans source.
+   Les 3 chemins d'ajout (`addExercise`, `addSet`, le remplacement d'un exercice) la construisent ici, une seule fois (R2). */
+function _serieDepuis(pp,def,type){
+  const n=pp?{kg:_kgConnu(pp.kg)?pp.kg:null,reps:pp.reps}:{kg:null,reps:def&&def.reps};
+  return {kg:n.kg,reps:n.reps,type,done:false,rm1:0,..._pdcVideDe(pp)};
+}
+/* L'instant d'une séance enregistrée (le repère de D-168 : une édition manuelle PLUS RÉCENTE que cette séance reprend la main sur elle). */
+function _tsSeance(s){ return +(s&&(s.ts||s.id))||Date.parse(s&&s.date)||0; }
+/* La DERNIÈRE séance TERMINÉE de ce jour, et ce qu'elle dit de CET exercice du programme (`e`, parmi les exercices `exs` du jour) : ses séries faites ET l'instant de la séance.
+   D-163 — L'EXERCICE SE RECONNAÎT PAR SON IDENTITÉ (`exId`), jamais par son nom ni par sa position : deux blocs de même nom (un top set puis un back-off listés à part) ne se croisent pas, même si le programme a été réorganisé (H12).
+   ⛔⛔ UNE SEULE SÉANCE EST LUE (arbitrage de Michel, 17/11/2026 — H07) : la dernière. Si elle ne contient pas l'exercice, on rend « rien » et le chargement reprend la PRESCRIPTION, jamais une séance plus ancienne
+      (l'ancien repli « une plus ancienne fournit la charge » est retiré : il donnait la valeur d'une séance que la personne n'avait plus refaite). Aucun retour à une recherche par nom dans tout l'historique.
+   · séance ENREGISTRÉE AVEC identités (au moins un de ses exercices porte `exId`) : seul le bloc de même `exId` compte ;
+   · bloc AJOUTÉ en séance (lot S, 18/11/2026 : il n'a pas d'`exId`, c'est `_reprise` qui le cherche) : le même rapprochement que ci-dessous — son nom, seulement s'il est unique des deux côtés ;
+   · séance d'AVANT les identités (aucun `exId`) : rapprochement par le NOM, et par le commentaire (`note`) dès que le nom n'est pas unique — SEULEMENT s'il est NON AMBIGU (arbitrage du 17/11 : « y compris si les commentaires coïncident »).
+     Deux blocs homonymes de même commentaire, d'un côté ou de l'autre, ne se départagent pas : le RANG n'est jamais lu (il donnait au 2ᵉ bloc la valeur du 2ᵉ d'avant, même après une permutation, une suppression ou une insertion) → la prescription.
+   ⛔ L'historique n'est jamais modifié : cette fonction ne fait que lire. */
+function _prevDuJour(seances,e,exs){
+  const nom=e.name, memeNom=(exs||[]).filter(x=>x&&x.name===nom), note=x=>String(x&&x.note||'').trim();
+  const s=(seances||[])[0];                                                       // la dernière séance terminée de CE jour (déjà triée, la plus récente d'abord, par `_seancesDuJour`)
+  if(!s)return {sets:[],ts:0};
+  const liste=(s.exs||s.exercises||[]).filter(Boolean);
+  let ex=null;
+  const ident=e.exId?liste.filter(x=>x.exId===e.exId):[];
+  if(ident.length===1)ex=ident[0];
+  else if(!ident.length&&(!e.exId||!liste.some(x=>x.exId))){                      // séance d'avant les identités — OU un bloc AJOUTÉ en séance (sans `exId`, rien à lire d'autre que son nom) : même rapprochement, seulement s'il est NON ambigu
+    const cands=liste.filter(x=>x.name===nom);
+    if(memeNom.length===1&&cands.length===1)ex=cands[0];                          // un seul bloc de ce nom de chaque côté : sans ambiguïté
+    else if(cands.length){
+      const freres=memeNom.filter(x=>note(x)===note(e)), pool=cands.filter(x=>note(x)===note(e));
+      if(freres.length===1&&pool.length===1)ex=pool[0];                           // le commentaire est UNIQUE de chaque côté : il désigne ce bloc (jamais le rang)
+    }
+  }
+  const sets=ex?(ex.sets||[]).filter(x=>x&&x.done!==false):[];
+  return sets.length?{sets,ts:_tsSeance(s)}:{sets:[],ts:0};
+}
+/* D-163 / D-168 — LES SÉRIES D'AVANT, PAR IDENTITÉ. Quand la séance d'avant porte des identités de série (`sid`), chaque série du programme retrouve SA série (même `sid`, même rôle échauffement / travail) : une série déplacée garde son historique, une série
+   ajoutée depuis n'en a pas (sa prescription reste). Sans identités (séance d'avant) : le rapprochement par RÔLE d'avant (`_prevAligne`), inchangé. */
+function _seriesAvant(prev,sets){
+  if(!(prev||[]).some(x=>x&&x.sid))return _prevAligne(prev,sets);
+  return (sets||[]).map(s=>_serieParIdentite(prev,s));
+}
+/* 🧵 UN SEUL PROPRIÉTAIRE de « quelle série d'avant est LA MIENNE ? » (R2, assemblage du 17/11/2026) : la même identité `sid`, le même rôle (échauffement / travail), et UNE seule candidate. Lue par le chargement d'un jour
+   (`_seriesAvant`) ET par la colonne « Précédent » / la suggestion grise / le commentaire de la dernière fois (`_prevAligneDetail`) — la copie qui y avait été recopiée pouvait diverger de la première. */
+function _serieParIdentite(prev,s){
+  const ech=x=>!!(x&&(x.type==='É'||x.type==='W'));
+  const m=(s&&s.sid)?(prev||[]).filter(x=>x&&x.sid===s.sid):[];
+  return (m.length===1&&ech(m[0])===ech(s))?m[0]:null;
+}
+/* 🧱 LA SÉANCE À PARTIR DES EXERCICES D'UN PROGRAMME — UN SEUL PROPRIÉTAIRE pour les programmes à plusieurs jours et à un seul jour (R2 ; avant : deux copies, l'une sans « à vide »).
+   `jour` = les séances DÉJÀ FAITES de ce jour, de la plus récente à la plus ancienne (D-163, TOUS les programmes) ; absent → comme un jour jamais fait (jamais l'historique d'un autre contexte).
+   · 1ᵉʳ usage (`jour` vide) : aucune reprise, les valeurs écrites par le programme font foi (l'historique reste visible en « Précédent » et en grisé).
+   · usages suivants : par série, la série correspondante (par IDENTITÉ `sid`, sinon par RÔLE `_prevAligne` pour une séance d'avant) de la dernière séance terminée de CE jour — charge, répétitions ET repos.
+   · D-168 : un champ ÉDITÉ À LA MAIN (`set.ed.kg` / `set.ed.reps` / `set.ed.rest`, l'instant de la retouche, posé par l'éditeur) PLUS RÉCENT que la séance qui le reprendrait garde la valeur du programme ; les autres séries ET les autres champs de la même
+     série gardent leur progression. Le REPOS suit la même règle depuis le 16/11 (sondes H09/H10) : ce que la séance d'avant avait pour cette série, sauf retouche plus récente du repos ; un repos inconnu (0) dans l'historique laisse celui du programme.
+   ⛔ Aucun nom d'exercice n'est lu pour décider (seulement pour départager, en dernier recours, des blocs d'AVANT les identités) : des séries, des types, des instants et des identifiants. */
+function _exsDeProgramme(exs,jour,repsDef){
+  return (exs||[]).map(e=>{
+    const h=_prevDuJour(jour||[],e,exs), prev=h.sets, ts=h.ts;
+    // Pré-remplissage PAR SÉRIE depuis la séance précédente (comme la colonne « Précédent » et addSet) — série i → sa série d'avant, sinon valeur du programme.
+    const _pa=_seriesAvant(prev, e.sets||[]);
+    const obj={name:e.name,note:e.note||'',...(e.exId?{exId:e.exId}:{}),sets:(e.sets||[]).map((s,i)=>{
+      const pp=_pa[i], ed=s.ed||{};
+      const ppKg=pp&&!(ed.kg>ts)?pp:null, ppReps=pp&&!(ed.reps>ts)?pp:null;   // D-168 : une édition manuelle plus récente que la séance reprend la main, champ par champ
+      const ppRest=(pp&&pp.rest>0&&!(ed.rest>ts))?pp:null;
+      /* ⚖️ D-164 (16/11, sondes P03 · P04) — LA CHARGE PRESCRITE SURVIT AU 1ᵉʳ CHARGEMENT, SA SÉMANTIQUE AUSSI : une charge INCONNUE (`null`) reste inconnue (avant : `s.kg||0` la rendait « zéro » ; un zéro écrit, lui, reste 0) ;
+         un PDC / lest / assistance PRESCRIT (`s.pdc`, posé par la personne dans un programme) se reprend tel quel — sauf quand la dernière fois a pris une vraie charge en kilos (l'historique, plus récent, gagne : même règle que `kg`).
+         ⛔ Jamais attribué d'après un nom ou un poids de corps : seul un `pdc` ÉCRIT (par la personne) passe. Et « PDC » et « à vide » ne coexistent jamais sur une série (deux choix contradictoires : le PDC, plus récent dans le geste, gagne). */
+      const _pdcSerie=(ppKg&&_pdcDe(ppKg)!==null)?_pdcRepris(ppKg):((ppKg&&ppKg.kg>0)?{}:_pdcRepris(s));
+      const _avecPdc=_pdcDe(_pdcSerie)!==null;
       return {
-        kg:pp?pp.kg:(s.kg||0),
-        reps:s.maxi?0:(pp?pp.reps:(s.reps===null?null:(s.reps||10))), // série "maxi" : reps vide, elle saisit ce qu'elle a fait ; `null` = « Non renseigné » (correction D) : champ à compléter, jamais un 10 d'office
+        kg:_avecPdc?0:(ppKg?(_kgConnu(ppKg.kg)?ppKg.kg:null):(_kgConnu(s.kg)?s.kg:null)),   // 18/11/2026 (lot Z) : une charge ABSENTE du programme est inconnue (`null`), jamais un 0 ; un zéro écrit reste 0
+        reps:s.maxi?0:(ppReps?ppReps.reps:(s.reps===null?null:(s.reps||repsDef))), // série "maxi" : reps vide, elle saisit ce qu'elle a fait ; `null` = « Non renseigné » (correction D) : champ à compléter, jamais un 10 d'office
         maxi:!!s.maxi,
-        type:s.type||'N',done:false,rm1:0,rest:_secRepos(s.rest),
+        type:s.type||'N',done:false,rm1:0,rest:_secRepos(ppRest?ppRest.rest:s.rest),
+        ...(s.sid?{sid:s.sid}:{}),                         // D-163 : l'identité de la série suit la série (la séance enregistrée la garde)
+        ...(s.note?{note:String(s.note)}:{}),              // D-171 : le commentaire PAR SÉRIE du programme devient le commentaire de la série (comme `ex.note` pour l'exercice)
+        ..._pdcSerie,                                     // D-164 : la dernière fois disait « PDC » → la série le redit (comme `kg`, donc sous la même règle D-163 / D-168) ; sinon le PDC écrit par le programme
+        ...((s.vide&&!_avecPdc&&!(ppKg&&ppKg.kg>0))?{vide:true}:{}),  // IMPORT PDF 15/11 : « à vide » suit la série (placeholder « à vide » : jamais la charge d'une autre série de l'historique) — sauf si la dernière fois a pris une vraie charge
         ...(s.restTxt?{restTxt:String(s.restTxt)}:{})   // IMPORT-IA-FIDELITE-01 : la consigne de repos écrite (une plage) suit la série
       };
     })};
     if(e.group){obj.group=e.group;obj.groupType=e.groupType||'super';} // propage le superset
     _recopierDropset(e,obj);                                              // LOT 6 / ML-A
     return obj;
-  })};
+  });
+}
+function _loadProgDayVraiment(progIdx,dayIdx){
+  const prog=(S.programmes||[])[progIdx];
+  if(!prog||!prog.days||!prog.days[dayIdx])return;
+  const day=prog.days[dayIdx];
+  const _lbl=day.label||('Jour '+(dayIdx+1));
+  _assurerIdentites(prog,day);                                  // D-163 : les identités (programme · jour · exercices · séries) se posent ici, paresseusement (persistées par le `persist()` plus bas) — aucun autre champ n'est touché
+  const _jour=_seancesDuJour(prog,_lbl,day);                    // D-163 : TOUS les programmes — les séances faites de CE jour de CE programme, la plus récente d'abord
+  // D-163 : « précédent » = la dernière séance de CE JOUR du programme (par identifiant), jamais l'historique d'ailleurs (voir plus haut).
+  S.wkt={date:today(),progLabel:_lbl,progId:prog.id,progDayId:day.id,exs:_exsDeProgramme(day.exs,_jour,10)};
   /* 🏃 ft-v1168 — LE CARDIO PART DANS SON BLOC, Y COMPRIS POUR UN PROGRAMME IMPORTÉ AVANT.
      ⛔⛔ POSÉ ICI, AVANT les avertissements : ceux-ci lisent `S.wkt.exs` et s'ATTACHENT aux
         exercices. Extraire APRÈS laisserait la ligne de cardio recevoir des avertissements de
@@ -10260,7 +10858,7 @@ function _beginnerProg(gender, style, freq, matos){
      « machines » et un « libre » — les ferait diverger : on corrigerait un déséquilibre d'un
      côté et pas de l'autre. La structure de la séance est la même, seul l'outil change. */
   const _tr = n => (matos==='libre' && _EX_LIBRE[n]) ? _EX_LIBRE[n] : n;
-  const _s3=(reps)=>[{kg:0,reps,type:'N',rest:0},{kg:0,reps,type:'N',rest:0},{kg:0,reps,type:'N',rest:0}];
+  const _s3=(reps)=>[{kg:null,reps,type:'N',rest:0},{kg:null,reps,type:'N',rest:0},{kg:null,reps,type:'N',rest:0}];   // 18/11/2026 (lot Z) : le générateur ne connaît AUCUNE charge → inconnue (`null`), plus un « 0 écrit » prescrit
   const ex=(name,reps)=>({name:_tr(name),sets:_s3(reps||12)}); // objet frais à chaque appel (pas de référence partagée)
   let days, name;
   if(style==='split'){
@@ -10508,12 +11106,16 @@ function saveAsProg(){
   if(!S.wkt||!S.wkt.exs||!S.wkt.exs.length){toast('Aucun exercice dans la séance','error');return;}
   if(!S.programmes)S.programmes=[];
   const prog={
-    id:'p'+Date.now(),name,
+    id:'p'+Date.now(),name,prescrit:true,   // D-163 : idem — ce que la séance a fait devient la prescription du 1ᵉʳ usage
     exs:S.wkt.exs.map(ex=>{
       // note conservée : sous le MÊME nom, saveAsProg REMPLACE le programme — sans elle, la
       // consigne posée dans l'éditeur serait détruite au premier « Sauvegarder » (perte silencieuse).
-      const o={name:ex.name,sets:ex.sets.map(s=>({kg:s.kg||0,reps:(s.reps===null?null:(s.reps||5)),maxi:!!s.maxi,type:s.type||'N',rest:_secRepos(s.rest)}))};   // `null` reste « Non renseigné » (correction D) : on ne l'enregistre pas en 5
-      if(ex.note)o.note=String(ex.note).slice(0,300);
+      /* IMPORT PDF 15/11 : `saveAsProg` est le SEUL copieur de séries d'une séance vers un programme — un champ qu'il ne recopie pas est un champ SUPPRIMÉ (R4). `vide` (« barre à vide »)
+         et `restTxt` (la consigne de repos écrite) voyagent donc ici ; et la consigne n'est plus coupée à 300 en silence (le plafond de sûreté est celui de l'éditeur, jamais en dessous du texte déjà là). */
+      /* ⚖️ D-164 (16/11, sonde P05) — `saveAsProg` est le SEUL copieur de séries d'une séance vers un programme : la charge garde sa SÉMANTIQUE (inconnue `null` ≠ zéro `0` ≠ « à vide » ≠ PDC / lest / assistance, `pdc` recopié tel quel).
+         Avant : `kg:s.kg||0` rendait « inconnue » = « zéro », et le PDC +12 d'une série disparaissait à l'enregistrement. Un PDC écrit exclut « à vide » (jamais les deux sur une même série). */
+      const o={name:ex.name,sets:ex.sets.map(s=>({kg:(_pdcDe(s)!==null?0:(s.kg===null?null:(s.kg||0))),reps:(s.reps===null?null:(s.reps||5)),maxi:!!s.maxi,type:s.type||'N',rest:_secRepos(s.rest),...(s.vide&&_pdcDe(s)===null?{vide:true}:{}),..._pdcRepris(s),...(s.restTxt?{restTxt:String(s.restTxt)}:{}),...(s.note?{note:String(s.note)}:{})}))};   // D-171 : le commentaire de la série voyage aussi (un copieur qui ne le nomme pas le supprimerait — R4). `null` reste « Non renseigné » (correction D) : on ne l'enregistre pas en 5
+      if(ex.note)o.note=String(ex.note).slice(0,Math.max(_NOTE_PROG_MAX,String(ex.note).length));
       if(ex.group){o.group=ex.group;o.groupType=ex.groupType||'super';} // conserve le superset
       _recopierDropset(ex,o);                                           // LOT 6 / ML-A
       return o;
@@ -10573,29 +11175,14 @@ function _loadProgVraiment(idx){
   const prog=(S.programmes||[])[idx];
   if(!prog)return;
   if(prog.days&&prog.days.length){closeProgModal();openDaySel(idx);return;}
+  /* D-163 : un programme à UN SEUL jour suit la même règle que les autres (`_exsDeProgramme`, une seule copie — avant, ce chargeur recopiait la construction des séries et perdait « à vide »).
+     Le programme EST le jour : sa séance porte son `progId`, « déjà suivi » = une séance faite avec ce `progId`. note : recopiée comme dans loadProgDay (elle manquait ICI seulement — trouvé 01/08). */
+  _assurerIdentites(prog,null);                                  // D-163 : programme sans identifiant (d'avant) et identités des exercices / séries — posées ici, paresseusement
   S.wkt={
     date:today(),
     progLabel:prog.name,
-    exs:(prog.exs||[]).map(e=>{
-      const prev=getPrev(e.name);
-      // Pré-remplissage PAR SÉRIE depuis la séance précédente (voir loadProgDay).
-      // note : recopiée comme dans loadProgDay — elle manquait ICI seulement (trouvé 01/08
-      // en ajoutant le champ 💬 de l'éditeur : un programme à 1 jour perdait son commentaire).
-      const _pa=_prevAligne(prev, e.sets||[]);   // par RÔLE (voir _prevAligne)
-      const obj={name:e.name,note:e.note||'',sets:(e.sets||[]).map((s,i)=>{
-        const pp=_pa[i];
-        return {
-          kg:pp?pp.kg:(s.kg||0),
-          reps:s.maxi?0:(pp?pp.reps:(s.reps===null?null:(s.reps||5))),   // `null` = « Non renseigné » (correction D) : jamais un 5 d'office
-          maxi:!!s.maxi,
-          type:s.type||'N',done:false,rm1:0,rest:_secRepos(s.rest),
-          ...(s.restTxt?{restTxt:String(s.restTxt)}:{})
-        };
-      })};
-      if(e.group){obj.group=e.group;obj.groupType=e.groupType||'super';} // propage le superset
-      _recopierDropset(e,obj);                                              // LOT 6 / ML-A
-      return obj;
-    })
+    progId:prog.id,
+    exs:_exsDeProgramme(prog.exs,_seancesDuJour(prog,prog.name,null),5)
   };
   /* 🏃 ft-v1168 — LA JUMELLE DU CARDIO AUSSI (R8). Un programme à UN SEUL jour n'a pas d'objet
      `day` : c'est le programme lui-même qui porte ses exercices. On passe donc `prog`, et le
@@ -10890,7 +11477,21 @@ function editProg(idx){
   _editProgIdx=idx;
   _editProgData=JSON.parse(JSON.stringify(prog));
   _renderProgEdit();
+  _ouvrirProgEdit();
+}
+/* ✏️ LA FENÊTRE S'OUVRE PAR UN SEUL CHEMIN (mission « import PDF », 15/11/2026 — lot C).
+   Les trois portes de l'éditeur (modifier un programme, en créer un, revenir du sélecteur d'exercices) ouvraient la fenêtre chacune de leur côté,
+   APRÈS l'avoir dessinée. Or une fenêtre fermée (`display:none`) répond « 0 » à toute mesure : la hauteur des champs 💬 se réglait donc sur du
+   vide — 24 px mesurés pour un commentaire qui en demande 294. ⛔ Le commentaire importé était alors lu sur UNE ligne, le reste caché.
+   👉 La mesure se refait ICI, fenêtre ouverte : c'est le seul moment où `scrollHeight` dit la vérité (et le rendu la refait aussi, pour les
+   re-dessins faits fenêtre ouverte : ajout d'une série, bascule, superset). */
+function _ouvrirProgEdit(){
   document.getElementById('ov-prog-edit').classList.add('open');
+  _ajusterNotesProg();
+}
+function _ajusterNotesProg(){
+  const el=document.getElementById('prog-edit-content');if(!el)return;
+  el.querySelectorAll('textarea[id^="prog-note-"],textarea[id^="prog-snote-"]').forEach(ta=>{ta.style.height='auto';ta.style.height=ta.scrollHeight+'px';});
 }
 /* ⭐⭐ CRÉER UN PROGRAMME DEPUIS ZÉRO (25/08/2026) — la porte qui manquait.
    AVANT, il n'existait AUCUN chemin pour créer un programme : la modale « Mes Programmes »
@@ -10909,9 +11510,9 @@ function creerProgramme(){
   if(!S.programmes)S.programmes=[];
   closeProgModal();
   _editProgIdx=S.programmes.length;          // index encore libre → « sauvegarder » ajoutera
-  _editProgData={id:'p'+Date.now(), name:'', exs:[]};
+  _editProgData={id:'p'+Date.now(), name:'', prescrit:true, exs:[]};   // D-163 : un programme créé à la main suit la même règle qu'un programme importé (les valeurs écrites font foi au 1ᵉʳ usage)
   _renderProgEdit();
-  document.getElementById('ov-prog-edit').classList.add('open');
+  _ouvrirProgEdit();
   // Le nom est le seul champ obligatoire : on y met le curseur, sauf sur mobile où le
   // clavier masquerait l'éditeur qu'on vient d'ouvrir (même raison qu'au sélecteur).
   const n=document.getElementById('prog-edit-name');
@@ -10940,14 +11541,16 @@ function _renderProgEdit(){
       </div>
     </div>
   </div>`;
-  const _INP='padding:5px 4px;font-size:13px;text-align:center;border:1px solid var(--sep);border-radius:6px;background:var(--bg2);color:var(--t1);font-family:var(--font);outline:none;';
   const _nbMaxi=(typeof _isNutriBeta==='function')&&_isNutriBeta(); // « maxi » reps réservé aux testeurs pour l'instant
+  // un texte venu du document (consigne de repos, nom de type…) entre dans un ATTRIBUT : les guillemets aussi sont échappés (avant : seuls & < >)
+  const _aq=x=>_escNote(String(x==null?'':x)).replace(/"/g,'&quot;');
   const exCard=(ex,di,ei)=>{
     const sets=ex.sets||[];
     const nextEx=_progEditEx(di,ei+1);
     const hasNext=!!nextEx;
     const linkedNext=hasNext&&ex.group&&ex.group===nextEx.group;
     const inSuper=!!ex.group;
+    const _noteOuverte=sets.some(x=>x&&x.note)||_peNotes.has(di+'-'+ei);   // D-171 : les commentaires PAR SÉRIE se déplient à la demande — et restent dépliés dès qu'une série en porte un (jamais cachés)
     const dayLen=(_progDayExs(di)||[]).length;
     return`<div class="prog-ex-card" data-di="${di}" data-ei="${ei}" style="padding:9px 11px;background:var(--bg3);border-radius:10px;margin-bottom:${linkedNext?'2px':'6px'};${inSuper?'box-shadow:inset 3px 0 0 var(--orange);':''}">
     <div style="display:flex;align-items:center;gap:9px;margin-bottom:8px;">
@@ -10959,24 +11562,32 @@ function _renderProgEdit(){
       </div>
       <button onclick="_removeExFromProgEdit(${di},${ei})" style="background:none;border:none;color:var(--t3);font-size:20px;line-height:1;cursor:pointer;padding:2px 4px;flex-shrink:0;">×</button>
     </div>
-    <div style="display:flex;gap:6px;font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.04em;padding:0 2px 3px;">
-      <span style="width:30px;">Série</span><span style="width:58px;text-align:center;">Reps</span>${_nbMaxi?'<span style="width:36px;"></span>':''}<span style="flex:1;text-align:right;">Repos</span><span style="width:22px;"></span>
+    <div class="pe-hdr${_nbMaxi?'':' pe-nomax'}">
+      <span data-h="num" title="Numéro de la série — touche le numéro d'une série (dès la 2ᵉ) pour la monter d'un cran">N°</span><span data-h="type" title="Type de série — touche la pastille d'une série pour le changer">Type</span><span data-h="kg" class="pe-h2">Charge kg</span><span data-h="reps"${_nbMaxi?' class="pe-h2"':''}>Reps</span><span data-h="rest" title="Repos en secondes">Repos s</span><span></span>
     </div>
     ${sets.some(s=>s&&s.reps===null)?`<div style="font-size:11px;line-height:1.35;color:var(--gold);padding:0 2px 5px;">${REPS_NON_RENSEIGNE} : le document n'écrit pas les répétitions — complète-les ici, ou à la séance.</div>`:''}
-    ${sets.map((s,si)=>`<div style="display:flex;align-items:center;gap:6px;padding:2px 2px;">
-      <span style="width:30px;font-size:12px;color:var(--t2);">${si+1}</span>
+    ${sets.map((s,si)=>{
+      /* ✏️ UNE LIGNE PAR SÉRIE, TOUTES SES PRESCRIPTIONS (mission « import PDF », 15/11/2026 — lot C) : N° · type · charge · « à vide » · reps · max · repos · ×.
+         Le type et la charge existaient dans les données (`sets[i] = {kg, reps, type, rest, restTxt?, maxi?, vide?}`) mais l'éditeur ne les montrait pas : on les lisait
+         à la séance, on ne pouvait ni les voir ni les corriger avant. ⭐ Le TYPE est la pastille de la séance (`.tbtn`, mêmes couleurs, mêmes modes daltoniens) ; la
+         bascule « vide » est le jumeau de « max » (même classe `.pe-tg`, même code, R13). ⛔ Le rendu n'écrit RIEN dans les données : une série sans `type` s'affiche
+         « N » sans se voir donner un type. */
+      const ty=String(s.type||'N'), tl=ty==='D'?'Palier de dropset':(SET_TYPE_LABELS[ty]||ty);
+      return `<div class="pe-row${_nbMaxi?'':' pe-nomax'}" data-si="${si}">
+      ${si>0?`<button type="button" data-ch="num" class="pe-num pe-up" onclick="_moveProgSet(${di},${ei},${si})" title="Touche pour monter la série ${si+1} d'un cran" aria-label="Monter la série ${si+1} d'un cran">${si+1}</button>`:`<span data-ch="num" class="pe-num">${si+1}</span>`}
+      <button type="button" data-ch="type" class="tbtn pe-ty ${/^[NÉXWEDM]$/.test(ty)?ty:''}" onclick="_setProgSetType(${di},${ei},${si})" title="${_aq(tl)} — touche pour changer le type" aria-label="Série ${si+1} : ${_aq(tl)} — touche pour changer le type">${_aq(ty.slice(0,2))}</button>
+      <input data-ch="kg" class="pe-in" type="text" inputmode="decimal" step="0.5" value="${s.kg>0?s.kg:''}" placeholder="${_pdcDe(s)!==null?_pdcTxt(s.pdc):(s.vide?'à vide':'kg')}"${s.vide?' data-vide="1"':''} title="${_pdcDe(s)!==null?'Charge au poids du corps (choisie à la séance) : taper des kilos la remplace':'Charge en kg (virgule ou point) — vide : charge non renseignée'}" aria-label="Série ${si+1} : charge en kilos" onfocus="this.select()" onchange="_setProgSetKg(${di},${ei},${si},this.value,this)">
+      <button type="button" data-ch="vide" class="pe-tg" aria-pressed="${s.vide?'true':'false'}" onclick="_toggleProgSetVide(${di},${ei},${si})" title="Charge « à vide » (barre à vide), comme le document l'écrit" aria-label="Série ${si+1} : à vide">vide</button>
       ${(_nbMaxi&&s.maxi)
-        ? `<div onclick="_toggleProgSetMaxi(${di},${ei},${si})" title="Répétitions au maximum — touche pour revenir à un nombre" style="width:58px;text-align:center;padding:6px 0;background:rgba(255,109,0,.14);border:1px solid var(--orange);border-radius:8px;color:var(--orange);font-size:12px;font-weight:800;cursor:pointer;box-sizing:border-box;">maxi</div>`
-        : `<input type="number" min="1" inputmode="numeric" value="${s.reps||''}"${s.reps===null?` class="reps-nr" placeholder="?" title="${REPS_NON_RENSEIGNE} — le document n'écrit pas les répétitions"`:''} onchange="_setProgSetReps(${di},${ei},${si},this.value)" style="width:58px;${_INP}">`}
-      ${_nbMaxi?`<button onclick="_toggleProgSetMaxi(${di},${ei},${si})" title="Nombre max de répétitions" style="width:36px;flex-shrink:0;background:${s.maxi?'rgba(255,109,0,.14)':'transparent'};border:1px ${s.maxi?'solid var(--orange)':'dashed var(--sep)'};border-radius:8px;color:${s.maxi?'var(--orange)':'var(--t3)'};font-size:10px;font-weight:800;cursor:pointer;padding:5px 0;">max</button>`:''}
-      <span style="flex:1;display:flex;align-items:center;justify-content:flex-end;gap:5px;">
-        <input type="number" min="0" step="5" inputmode="numeric" value="${s.rest||''}" placeholder="${s.restTxt&&!s.rest?_escNote(s.restTxt).replace(/&quot;/g,''):_defRestForType(s.type)}" title="${s.restTxt?'Consigne écrite : '+_escNote(s.restTxt).replace(/&quot;/g,''):''}" onchange="_setProgSetRest(${di},${ei},${si},this.value)" style="width:56px;${_INP}">
-        <span style="font-size:11px;color:var(--t3);white-space:nowrap;min-width:44px;">s${s.rest>0?' '+_fmtRest(s.rest):''}</span>
-      </span>
-      <button onclick="_removeProgSet(${di},${ei},${si})" title="Retirer la série" style="width:22px;background:none;border:none;color:var(--t3);font-size:16px;line-height:1;cursor:pointer;padding:0;">×</button>
-    </div>${_hintReposEcrit(sets,si)}`).join('')}
+        ? `<div data-ch="reps" class="pe-maxi" onclick="_toggleProgSetMaxi(${di},${ei},${si})" title="Répétitions au maximum — touche pour revenir à un nombre">maxi</div>`
+        : `<input data-ch="reps" type="number" min="1" inputmode="numeric" value="${s.reps||''}" class="pe-in${s.reps===null?' reps-nr':''}"${s.reps===null?` placeholder="?" title="${REPS_NON_RENSEIGNE} — le document n'écrit pas les répétitions"`:''} aria-label="Série ${si+1} : répétitions" onchange="_setProgSetReps(${di},${ei},${si},this.value)">`}
+      ${_nbMaxi?`<button type="button" data-ch="max" class="pe-tg" aria-pressed="${s.maxi?'true':'false'}" onclick="_toggleProgSetMaxi(${di},${ei},${si})" title="Nombre max de répétitions" aria-label="Série ${si+1} : maximum de répétitions">max</button>`:''}
+      <input data-ch="rest" class="pe-in" type="number" min="0" step="5" inputmode="numeric" value="${s.rest||''}" placeholder="${s.restTxt&&!s.rest?_aq(s.restTxt):_defRestForType(s.type)}" title="Repos en secondes${s.rest>0?' ('+_fmtRest(s.rest)+')':''}${s.restTxt?' — consigne écrite : '+_aq(s.restTxt):''}" aria-label="Série ${si+1} : repos en secondes" onchange="_setProgSetRest(${di},${ei},${si},this.value)">
+      <button type="button" data-ch="supprimer" class="pe-x" onclick="_removeProgSet(${di},${ei},${si})" title="Retirer la série" aria-label="Retirer la série ${si+1}">×</button>
+    </div>${_hintReposEcrit(sets,si)}${_noteOuverte?`<div class="pe-snote" data-si="${si}"><span aria-hidden="true">💬</span><textarea id="prog-snote-${di}-${ei}-${si}" data-ch="note" rows="1" placeholder="Commentaire de la série ${si+1} (réglage, sensation, consigne…)" aria-label="Série ${si+1} : commentaire" oninput="_setProgSetNote(${di},${ei},${si},this.value);this.style.height='auto';this.style.height=this.scrollHeight+'px'">${_escNote(s.note||'')}</textarea></div>`:''}`;}).join('')}
     <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:5px;">
       <button onclick="_addProgSet(${di},${ei})" style="padding:5px 12px;background:transparent;border:1px dashed var(--sep);border-radius:8px;color:var(--t2);font-size:12px;cursor:pointer;">+ série</button>
+      ${sets.some(x=>x&&x.note)?'':`<button type="button" data-ch="notes-serie" aria-pressed="${_noteOuverte?'true':'false'}" onclick="_togglePeNotes(${di},${ei})" style="padding:5px 12px;border-radius:8px;font-size:12px;cursor:pointer;background:${_noteOuverte?'var(--bg2)':'transparent'};border:1px ${_noteOuverte?'solid var(--sep)':'dashed var(--sep)'};color:var(--t2);">💬 ${_noteOuverte?'Masquer les commentaires de série':'Commentaire par série'}</button>`}
       ${hasNext?`<button onclick="_toggleProgSuperset(${di},${ei})" style="padding:5px 12px;border-radius:8px;font-size:12px;cursor:pointer;background:${linkedNext?'rgba(255,109,0,.14)':'transparent'};border:1px ${linkedNext?'solid var(--orange)':'dashed var(--sep)'};color:${linkedNext?'var(--orange)':'var(--t2)'};">⚡ ${linkedNext?'En superset ✓':'Superset avec le suivant'}</button>`:''}
     </div>
     <div style="display:flex;align-items:flex-start;gap:6px;margin-top:6px;padding-top:4px;border-top:1px dashed var(--sep);">
@@ -10996,8 +11607,8 @@ function _renderProgEdit(){
   }else{
     el.innerHTML=cleanupBtn+cycleSection+(d.exs||[]).map((ex,ei)=>exCard(ex,0,ei)).join('')+addBtn(0);
   }
-  // Un commentaire existant peut faire plusieurs lignes : ajuste la hauteur des champs 💬 au rendu
-  el.querySelectorAll('textarea[id^="prog-note-"]').forEach(ta=>{ta.style.height='auto';ta.style.height=ta.scrollHeight+'px';});
+  // Un commentaire existant peut faire plusieurs lignes : ajuste la hauteur des champs 💬 au rendu — et à l'OUVERTURE de la fenêtre (`_ouvrirProgEdit`) : fermée, elle ne mesure rien
+  _ajusterNotesProg();
 }
 // VM sur un programme DÉJÀ enregistré (dans l'éditeur) : rattache les exos aux références EXLIB
 // (palier auto ≥90 uniquement → sûr). N'écrit que dans la copie d'édition → validé par « Enregistrer ».
@@ -11043,19 +11654,112 @@ function _progEditEx(di,ei){
 // Édite le repos (secondes) d'une série — pas de re-render (garde le focus)
 function _setProgSetRest(di,ei,si,val){
   const ex=_progEditEx(di,ei);if(!ex||!ex.sets||!ex.sets[si])return;
-  ex.sets[si].rest=parseInt(val)||0;
+  const v=parseInt(val)||0;
+  if(v!==(ex.sets[si].rest||0))_marquerEdition(ex.sets[si],'rest');   // D-168 : le repos retouché est prioritaire sur l'historique, pour cette série seulement (voir `_marquerEdition`)
+  ex.sets[si].rest=v;
+}
+/* ✏️ LA CHARGE, LE TYPE ET « À VIDE » D'UNE SÉRIE (mission « import PDF », 15/11/2026 — lot C : « consulter et modifier réellement les prescriptions »).
+   Trois setters sur le modèle des existants : ils écrivent dans la copie d'édition (`_editProgData`, validée par « Enregistrer »), sans redessiner quand c'est
+   une SAISIE (le focus reste) et en redessinant quand c'est une TOUCHE (le type, la bascule : comme « max »).
+   ⛔ Une valeur saisie n'est JAMAIS corrigée en silence : refusée → la valeur enregistrée ne bouge pas, le champ la redit, et un message le dit. */
+/* ✍️ D-168 (16/11/2026, décision de Michel) — UNE MODIFICATION MANUELLE VOLONTAIRE D'UNE PRESCRIPTION EST PRIORITAIRE SUR L'HISTORIQUE, POUR LES SEULS CHAMPS TOUCHÉS.
+   Quand la personne change dans l'éditeur la CHARGE ou les RÉPÉTITIONS d'une série, la série garde l'instant de la retouche (`ed.kg` / `ed.reps`, des nombres : rien d'autre) ; `_exsDeProgramme` compare cet instant à celui de la
+   séance qui reprendrait la valeur : retouche PLUS RÉCENTE → la valeur du programme ; séance plus récente → la progression habituelle reprend (ce que la personne a vraiment fait la dernière fois). Les autres séries et les autres
+   champs ne sont pas touchés. ⛔ Posé SEULEMENT quand la valeur CHANGE (retaper la même charge n'est pas une retouche) et SEULEMENT par un geste de l'éditeur : un import, une copie de série ou le regroupement n'en posent jamais.
+   ⚠️ MIS À JOUR LE 16/11 (lot 1, sonde H09) : le REPOS a le sien (`ed.rest`) — il n'est plus lu « toujours du programme » : sans retouche, la série reprend le repos de la séance d'avant (la progression), comme la charge et les répétitions ; une retouche du repos
+   (plus récente que cette séance) garde le repos du programme, pour CETTE série seulement. */
+function _marquerEdition(s,champ){ s.ed=Object.assign(s.ed||{},{[champ]:Date.now()}); }
+function _setProgSetKg(di,ei,si,val,el){
+  const ex=_progEditEx(di,ei);if(!ex||!ex.sets||!ex.sets[si])return;
+  const s=ex.sets[si], txt=String(val==null?'':val).replace(/\s/g,'');   // `\s` couvre déjà les espaces insécables d'un « 1 500 » copié d'un tableur
+  /* ⚖️ D-164 (16/11) — sur une série prescrite « PDC / lest / assistance » (`pdc`), le champ de kilos est VIDE par construction (l'indice dit « PDC+12 ») : le laisser vide n'efface PAS la prescription ; taper des kilos EST un autre choix
+     (le PDC s'efface : jamais les deux — même règle que le détail d'une séance passée). Et vider une charge en kilos la rend INCONNUE (`null`), plus « zéro » : un zéro, lui, s'écrit « 0 ». */
+  if(txt===''){ if(_pdcDe(s)!==null){ if(el)el.value=''; return true; } if(s.kg!==null)_marquerEdition(s,'kg'); s.kg=null; if(el)el.value=''; return true; }      // champ vidé : « charge non renseignée » (`vide` n'est pas touché : un champ « à vide » est déjà vide)
+  const n=numFR(txt);                                           // la virgule comme le point (`numFR`, state.js) — la même lecture que le champ de la séance
+  /* Un nombre, et lui seul : « 12abc » serait lu 12 par `parseFloat` — c'est une correction silencieuse. La borne physique d'une charge a UN propriétaire (`_serieValide`,
+     ft-v1095 : 0 < charge ≤ 500 kg) ; 0 reste permis (« non renseignée »). */
+  if(!/^(?:\d+[.,]?\d*|[.,]\d+)$/.test(txt)||!(n===0||_serieValide(n,1))){
+    toast('Charge invalide : un nombre de 0 à 500 kg','error');
+    if(el)el.value=s.kg>0?String(s.kg):'';                      // l'écran redit ce qui est ENREGISTRÉ
+    return false;
+  }
+  if(n!==s.kg)_marquerEdition(s,'kg');                           // D-168 : la valeur CHANGE → retouche volontaire
+  s.kg=n;
+  if(n>0){ delete s.vide; delete s.pdc; }                        // saisir une charge efface « à vide » (jamais `vide:false` : la clé disparaît) ET le PDC (D-164 : deux choix contradictoires, jamais les deux)
+  if(el){ el.value=n>0?String(n):''; _syncVideProg(el,s); }
+  return true;
+}
+// Reflète « à vide » sur la ligne SANS la redessiner (le focus reste dans le champ que la personne vient de toucher) : indice, bordure et bascule.
+function _syncVideProg(el,s){
+  const row=el&&el.parentNode;if(!row)return;
+  el.placeholder=s.vide?'à vide':'kg';
+  if(s.vide)el.setAttribute('data-vide','1');else el.removeAttribute('data-vide');
+  const b=row.querySelector('[data-ch="vide"]');
+  if(b)b.setAttribute('aria-pressed',s.vide?'true':'false');
+}
+/* « À vide » : une série que le document écrit « barre à vide » est `{kg:0, vide:true}` — distincte d'une charge non renseignée (`{kg:0}`). Jumelle de « max » (R13).
+   ⛔ Sur une série qui a une CHARGE, la bascule est REFUSÉE et dite : elle effacerait le 77,5 kg d'un faux appui à côté du champ. */
+function _toggleProgSetVide(di,ei,si){
+  const ex=_progEditEx(di,ei);if(!ex||!ex.sets||!ex.sets[si])return;
+  const s=ex.sets[si];
+  if(s.vide){ delete s.vide; s.kg=null; }                        // D-164 : « à vide » retiré = plus de charge écrite = INCONNUE (pas un zéro inventé)
+  else{
+    if(s.kg>0){ toast('Efface d\'abord la charge pour la mettre « à vide »','info'); return false; }
+    delete s.pdc;                                                // D-164 : « à vide » et « PDC » sont deux choix contradictoires — le dernier geste gagne
+    s.kg=0; s.vide=true;
+    _marquerEdition(s,'kg');                                     // D-168 : « à vide » est une valeur ÉCRITE de la charge (la barre seule) : la poser est une retouche ; la retirer ne prescrit rien
+  }
+  _renderProgEdit();
+  return true;
+}
+/* Le TYPE d'une série : la touche PARCOURT les types existants, comme à la séance (`cycleType` : N → É → X → N, la table `SET_TYPES`, R2). Un palier de DROPSET est de type « D », qui
+   n'est pas dans cette table : sans lui, un palier touché devenait « N » et ne revenait JAMAIS à « D » (le dropset se défaisait en silence). Pour un exercice qui est déjà un dropset
+   (`dropChaine`, ou une série « D »), « D » rejoint donc le cycle — N → É → X → D → N : on peut toujours revenir. ⛔ Ne touche ni `dropChaine`, ni `group`, ni les autres séries. */
+function _typesProgEx(ex){
+  const drop=!!ex&&(ex.dropChaine===true||(ex.sets||[]).some(x=>x&&x.type==='D'));
+  return drop?SET_TYPES.concat(['D']):SET_TYPES.slice();
+}
+function _setProgSetType(di,ei,si,t){
+  const ex=_progEditEx(di,ei);if(!ex||!ex.sets||!ex.sets[si])return;
+  const liste=_typesProgEx(ex), s=ex.sets[si];
+  if(t===undefined){ const cur=liste.indexOf(s.type||'N'); t=liste[(cur===-1?0:cur+1)%liste.length]; }   // un type d'avant sans lettre vaut « N » (c'est ce que l'écran affiche)
+  else if(liste.indexOf(t)===-1){ toast('Type de série inconnu','error'); return false; }
+  s.type=t;
+  toast(t==='D'?'Palier de dropset':(SET_TYPE_LABELS[t]||t),'info');   // comme `cycleType` : la touche dit ce qu'elle vient de choisir
+  _renderProgEdit();
+  return true;
 }
 // Édite le commentaire/consigne d'un exercice du programme (retour Christophe + Michel, 01/08).
-// Pas de re-render (garde le focus). Même plafond de 300 caractères que l'import de programme.
-// Le commentaire suit l'exercice quand le programme est chargé en séance (recopié dans wkt.exs[].note).
+// Pas de re-render (garde le focus). Le commentaire suit l'exercice quand le programme est chargé en séance (recopié dans wkt.exs[].note).
+const _NOTE_PROG_MAX=4000;
 function _setProgExNote(di,ei,val){
   const ex=_progEditEx(di,ei);if(!ex)return;
+  _noteBornee(ex,val,document.getElementById('prog-note-'+di+'-'+ei));
+}
+/* 💬 D-171 — LE COMMENTAIRE D'UNE SÉRIE (`set.note`, le champ que la séance connaît déjà : « Note — série 3 », affiché sous la série) s'écrit AUSSI dans l'éditeur du programme, avec la MÊME règle que le commentaire d'exercice (un seul propriétaire, R2) :
+   aucune troncature silencieuse, plafond de sûreté dit, un texte déjà plus long jamais coupé. Facultatif : une série sans commentaire n'a pas la clé. Il voyage avec la série (déplacer, copier, enregistrer, charger, sauvegarder / restaurer). */
+function _noteBornee(o,val,ta){
   const v=(val||'').trim();
-  /* ⛔ IMPORT PDF (08/11/2026, « préserver les commentaires ») : le plafond de 300 caractères vaut pour un commentaire TAPÉ. Une note IMPORTÉE plus longue
-     (les commentaires de plusieurs lignes regroupées, « Échauffement : … | RIR … ») était COUPÉE à la première frappe, en silence. On ne coupe jamais un texte
-     qui existait déjà plus long que le plafond. */
-  const cap=String(ex.note||'').length>300?2000:300;
-  if(v)ex.note=v.slice(0,cap);else delete ex.note;
+  /* ⛔⛔ AUCUNE TRONCATURE SILENCIEUSE (mission « import PDF », 15/11/2026 : « les commentaires doivent être entièrement consultables et éditables sans troncature »).
+     AVANT : 300 caractères pour un commentaire TAPÉ (2 000 si l'ancien était plus long) — la première frappe sur un commentaire importé de 509 caractères le ramenait à 300 en silence (ft-v1266,
+     mesuré), et un commentaire tapé de 450 caractères perdait ses 150 derniers sans un mot. Le plafond qui reste est de SÛRETÉ, très au-delà d'un commentaire de coach (≈ 500 caractères
+     mesurés) : 4 000 — il protège le stockage et la synchro d'un collage énorme par mégarde, pas la longueur d'un commentaire. Il se DIT (un message) et ce que l'écran montre est exactement
+     ce qui est gardé : ⛔ pas de `maxlength` sur le champ — le navigateur couperait un collage SANS rien dire, et c'est exactement le défaut qu'on retire. ⛔ Un texte qui existait DÉJÀ plus
+     long que le plafond n'est jamais coupé par une retouche (décision du 08/11 : on ne coupe jamais un texte plus long que son plafond). */
+  const cap=Math.max(_NOTE_PROG_MAX,String(o.note||'').length);
+  if(v.length>cap){
+    toast('Commentaire limité à '+_NOTE_PROG_MAX+' caractères','info');
+    o.note=v.slice(0,cap);
+    if(ta&&ta.value!==o.note)ta.value=o.note;                  // l'écran redit ce qui est GARDÉ
+    return;
+  }
+  if(v)o.note=v;else delete o.note;
+}
+const _peNotes=new Set();   // éditeur : les exercices dont les commentaires PAR SÉRIE sont dépliés (mémoire seulement : aucune clé, aucune donnée)
+function _togglePeNotes(di,ei){ const k=di+'-'+ei; if(_peNotes.has(k))_peNotes.delete(k); else _peNotes.add(k); _renderProgEdit(); }
+function _setProgSetNote(di,ei,si,val){
+  const ex=_progEditEx(di,ei);if(!ex||!ex.sets||!ex.sets[si])return;
+  _noteBornee(ex.sets[si],val,document.getElementById('prog-snote-'+di+'-'+ei+'-'+si));
 }
 // Édite les reps d'une série — pas de re-render (garde le focus)
 /* 🔢 IMPORT-IA-FIDELITE-01 (correction D) : un champ VIDÉ (ou illisible) dans l'éditeur dit « Non renseigné » (`null`) — plus « 0 », que la séance
@@ -11063,8 +11767,9 @@ function _setProgExNote(di,ei,val){
    déjà des 0, ne sont pas réécrits : seule une série que la personne édite change. */
 function _setProgSetReps(di,ei,si,val){
   const ex=_progEditEx(di,ei);if(!ex||!ex.sets||!ex.sets[si])return;
-  const n=parseInt(val);
-  ex.sets[si].reps=n>0?n:(ex.sets[si].maxi?0:null);
+  const n=parseInt(val), v=n>0?n:(ex.sets[si].maxi?0:null);
+  if(v!==ex.sets[si].reps)_marquerEdition(ex.sets[si],'reps');   // D-168 : la valeur CHANGE → retouche volontaire
+  ex.sets[si].reps=v;
   if(ex.sets[si].reps>0)ex.sets[si].maxi=false; // saisir un nombre annule le mode « maxi »
 }
 // Bascule une série en « maxi » (nombre max de répétitions) ou revient à un nombre — re-render
@@ -11081,8 +11786,17 @@ function _addProgSet(di,ei){
   const ex=_progEditEx(di,ei);if(!ex)return;
   if(!ex.sets)ex.sets=[];
   const l=ex.sets[ex.sets.length-1];
-  ex.sets.push({kg:l?l.kg||0:0,reps:l?(l.reps===null?null:(l.reps||10)):10,type:l?l.type||'N':'N',rest:l?l.rest||0:0});   // copier une série « Non renseigné » reste « Non renseigné » (correction D)
+  ex.sets.push({kg:(l&&_kgConnu(l.kg))?l.kg:null,reps:l?(l.reps===null?null:(l.reps||10)):10,type:l?l.type||'N':'N',rest:l?l.rest||0:0,..._pdcRepris(l)});   // copier une série « Non renseigné » reste « Non renseigné » (correction D) ; D-164 : une charge inconnue le reste, un PDC prescrit se copie aussi
   _renderProgEdit();
+}
+/* ↕️ D-171 (16/11/2026) — DÉPLACER UNE SÉRIE : le numéro d'une série (dès la 2ᵉ) la MONTE d'un cran (elle échange sa place avec la précédente) ; remonter la suivante équivaut à descendre celle-ci.
+   La série voyage ENTIÈRE (type, charge, « à vide », reps, repos et consigne écrite, retouches D-168) : aucune valeur n'est recopiée d'une série à l'autre ; rien n'est écrit tant qu'on n'a pas « Enregistré »
+   (copie d'édition) ; l'historique n'est pas touché. */
+function _moveProgSet(di,ei,si){
+  const ex=_progEditEx(di,ei);if(!ex||!ex.sets||si<1||si>=ex.sets.length)return false;
+  const t=ex.sets[si-1]; ex.sets[si-1]=ex.sets[si]; ex.sets[si]=t;
+  _renderProgEdit();
+  return true;
 }
 // Retire une série (garde au moins 1) puis re-render
 function _removeProgSet(di,ei,si){
@@ -11202,7 +11916,7 @@ function _removeExFromProgEdit(dayIdx,exIdx){
 }
 function _addExToProgEdit(name){
   const d=_editProgData;if(!d)return;
-  const newEx={name,sets:[{kg:0,reps:10,type:'N'},{kg:0,reps:10,type:'N'},{kg:0,reps:10,type:'N'}]};
+  const newEx={name,sets:[{kg:null,reps:10,type:'N'},{kg:null,reps:10,type:'N'},{kg:null,reps:10,type:'N'}]};   // D-164 : aucune charge écrite = INCONNUE (null), jamais un zéro inventé
   if(d.days&&d.days.length){
     if(!d.days[_editDayIdx])return;
     if(!d.days[_editDayIdx].exs)d.days[_editDayIdx].exs=[];
@@ -11212,7 +11926,7 @@ function _addExToProgEdit(name){
     d.exs.push(newEx);
   }
   _renderProgEdit();
-  document.getElementById('ov-prog-edit').classList.add('open');
+  _ouvrirProgEdit();
   toast(name+' ajouté !','info');
 }
 function saveProgEdit(){

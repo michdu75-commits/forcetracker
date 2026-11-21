@@ -15,6 +15,7 @@
    Safari iOS. ⛔ 0 appel réel (Worker et Apps Script simulés).
    Banc : tools/banc_import_map.js · contrôle négatif : tools/mut_import_map.py ·
    grille avant/après : tools/grille_import_map.js
+      ⚠️ IMPORT PDF 15/11/2026 : la charge « récupérée » se lit désormais comme ce que ✓ VALIDERAIT — la valeur ÉCRITE par le document, sinon la SUGGESTION grise de l'historique de l'exercice (un programme importé ne remplace plus ses prescriptions par l'historique ; la suggestion reste la preuve du rattachement).
    ═══════════════════════════════════════════════════════════════════════════════════════ */
 
 /* ⚙️ CLASSEMENT DU MATÉRIEL PROPRE AU TÉMOIN — écrit ici, indépendamment de l'app, pour que la mesure
@@ -116,7 +117,7 @@ module.exports.ecran = async function (t, b, PORT) {
     const iP = S.programmes.length - 1, prog = S.programmes[iP], jours = [];
     for (let d = 0; d < prog.days.length; d++) {
       S.wkt = null; try { _loadProgDayVraiment(iP, d); } catch (e) { jours.push({ err: e.message }); continue; }
-      jours.push((S.wkt && S.wkt.exs || []).map(e => ({ name: e.name, kg: (e.sets || []).map(s => s.kg), prev: getPrev(e.name).map(s => s.kg), pr: !!(S.prs && S.prs[e.name]) })));
+      jours.push((S.wkt && S.wkt.exs || []).map(e => ({ name: e.name, kg: (() => { const pa = _prevAligne(getPrev(e.name), e.sets || []); return (e.sets || []).map((s, i) => s.kg || (pa[i] ? pa[i].kg : 0)); })(), prev: getPrev(e.name).map(s => s.kg), pr: !!(S.prs && S.prs[e.name]) })));
     }
     return { prog: prog.days.map(d => d.exs.map(e => e.name)), jours, custom: (S.customExercises || []).map(e => e.n) };
   });

@@ -129,7 +129,11 @@ module.exports.ecran = async function (t, b, PORT) {
     const iP = S.programmes.length - 1, prog = S.programmes[iP], jours = [];
     for (let d = 0; d < prog.days.length; d++) {
       S.wkt = null; try { _loadProgDayVraiment(iP, d); } catch (e) { jours.push({ err: e.message }); continue; }
-      jours.push((S.wkt && S.wkt.exs || []).map(e => ({ name: e.name, kg: (e.sets || []).map(s => s.kg), prev: getPrev(e.name).map(s => s.kg), pr: S.prs && S.prs[e.name] ? S.prs[e.name].rm1 : null })));
+      /* ⚠️ INSTRUMENT ADAPTÉ LE 15/11/2026 (mission « import PDF », correction B : un programme importé se joue, à son 1ᵉʳ usage, comme le document l'écrit). Ce témoin mesure l'IDENTITÉ de la carte
+         (« la carte reprend SON historique, jamais celui de l'extension haltère ») en lisant `kg`. Avant, l'historique REMPLAÇAIT la charge du programme : `kg` portait donc l'historique. Maintenant
+         une charge non prescrite reste 0 et l'historique se propose en grisé (reprise par ✓) : `kg` = ce que ✓ VALIDERAIT (la valeur de la série, sinon la suggestion alignée — la même que le champ affiche).
+         ⛔ Ce n'est pas un affaiblissement : le défaut surveillé (l'historique de la MAUVAISE carte proposé) rougit toujours — voir `mut_p02_triceps.py`. */
+      jours.push((S.wkt && S.wkt.exs || []).map(e => ({ name: e.name, kg: (() => { const pa = _prevAligne(getPrev(e.name), e.sets || []); return (e.sets || []).map((s, i) => s.kg || (pa[i] ? pa[i].kg : 0)); })(), prev: getPrev(e.name).map(s => s.kg), pr: S.prs && S.prs[e.name] ? S.prs[e.name].rm1 : null })));
     }
     return { prog: prog.days.map(d => d.exs.map(e => e.name)), jours };
   });

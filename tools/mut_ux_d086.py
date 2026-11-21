@@ -39,7 +39,7 @@ MUT = [
      [(CS, "@media (max-width:374px){ #s-log .sprev{font-size:14px;letter-spacing:-.02em;} }", "")], 'GARDE', 'B-D086-③e'),
     ('M7 [deguisee] le marqueur ne peut plus passer a la ligne (il deborde de la case)',
      # D-093 : la case affiche `pv` (la série EXACTE d'avant) — même mutation, nouvelle ancre.
-     [(LO, '<span class="sprev-n">${pv.reps}×${pv.kg}</span><wbr>${_prevTypeBadge(pv)}<wbr>${_prevRirBadge(pv)}', '<span class="sprev-n">${pv.reps}×${pv.kg}${_prevTypeBadge(pv)}${_prevRirBadge(pv)}</span>')], 'GARDE', 'B-D086-③e'),
+     [(LO, '(_kgConnu(pv.kg)?pv.kg:\'?\')}</span><wbr>${_prevTypeBadge(pv)}<wbr>${_prevRirBadge(pv)}', '(_kgConnu(pv.kg)?pv.kg:\'?\')}${_prevTypeBadge(pv)}${_prevRirBadge(pv)}</span>')], 'GARDE', 'B-D086-③e'),   # ré-ancré (nuit n°2) : la charge inconnue s'écrit « ? » (D4)
     ('M8 les marqueurs E / X retombent a 9 px',
      [(LO, 'return `<sup style="font-size:11px;font-weight:800;color:${col};margin-left:2px;line-height:0;">${t}</sup>`;', 'return `<sup style="font-size:9px;font-weight:800;color:${col};margin-left:2px;line-height:0;">${t}</sup>`;')], 'GARDE', 'B-D086-③c'),
     # ── ⑩ · le commentaire de la derniere fois
@@ -59,7 +59,7 @@ MUT = [
       (IX, '<span class="vh">Régler le repos</span></button>\n      <button class="rbtn" id="rest-btn-plus" onclick="addRT(_restStep)">+15&nbsp;s</button>\n',
            '<span class="vh">Régler le repos</span></button>\n')], 'GARDE', 'B-D086-⑤a'),
     ('M14 le temps du dock redevient petit (22 px)',
-     [(CS, '#rest-bar #rest-time{font-size:32px;line-height:1;}', '#rest-bar #rest-time{font-size:22px;line-height:1;}'),
+     [(CS, '#rest-bar #rest-time{font-size:28px;line-height:1;}', '#rest-bar #rest-time{font-size:22px;line-height:1;}'),
       (CS, '  #rest-bar #rest-time{font-size:28px;}', '  #rest-bar #rest-time{font-size:20px;}')], 'GARDE', 'B-D086-⑤b'),
     ('M15 30 s et 45 s ne sont pas proposes',
      [(IX, '      <button class="rbtn" id="rp-30" onclick="setRestPreset(30);closeRestEdit()">30&nbsp;s</button>\n      <button class="rbtn" id="rp-45" onclick="setRestPreset(45);closeRestEdit()">45&nbsp;s</button>\n', '')], 'GARDE', 'B-D086-⑥a'),

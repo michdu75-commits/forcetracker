@@ -86,18 +86,32 @@ function _buildSyncRows(sess){
    ⛔ Il est posé sur l'ENVELOPPE, pas sur chaque ligne (R2) : une séance de 20 séries n'a pas
    à répéter 20 fois la même information. C'est le serveur qui l'étale sur les lignes, parce
    qu'un tableur en a besoin colonne par colonne — et il le fait à UN seul endroit. */
+/* 🔒 D-170 (CE lot M, 16/11/2026) — UNE REQUÊTE BORNÉE DE BOUT EN BOUT : les EN-TÊTES ET le CORPS de la réponse.
+   Mesuré par la contre-expertise (sonde U07) : `clearTimeout` partait dès que les en-têtes arrivaient, puis `await resp.text()` attendait le CORPS sans aucun délai — une
+   réponse qui s'arrête en route laissait la fin de séance suspendue POUR TOUJOURS (verrou posé, récapitulatif jamais ouvert), et c'est le simple écoulement d'un délai de
+   120 s qui rendait ensuite la main à la mise à jour. ⛔ Un verrou ne se lève QUE quand l'opération se termine : celle-ci DOIT donc se terminer.
+   Le délai couvre tout, et il TERMINE vraiment : la requête est annulée (`AbortController`) ET l'attente est abandonnée même si le corps ne réagit pas au signal
+   (une course avec l'annulation : un navigateur qui ne coupe pas la lecture n'empêche plus la fin). Passé le délai : une erreur `AbortError` (la jumelle du délai d'avant),
+   le temps de lecture du corps est compté dans le même délai. `lire(resp)` rend le corps (texte, JSON…). Le minuteur est TOUJOURS levé en sortie. */
+async function _fetchBorne(url,init,delaiMs,lire){
+  const ctl=(typeof AbortController!=='undefined')?new AbortController():null;
+  let tId=null, abandon=null;
+  const delai=new Promise((_,rej)=>{ abandon=()=>{ const e=new Error('délai dépassé'); e.name='AbortError'; rej(e); try{ if(ctl) ctl.abort(); }catch(_e){} }; });
+  delai.catch(()=>{});                                                   // jamais de rejet non traité si l'opération a fini avant
+  tId=setTimeout(abandon,delaiMs);
+  try{
+    const resp=await Promise.race([fetch(url,Object.assign({},init,ctl?{signal:ctl.signal}:{})),delai]);
+    const corps=lire?await Promise.race([lire(resp),delai]):undefined;
+    return {resp,corps};
+  }finally{ clearTimeout(tId); }
+}
 async function syncSheets(sess){
   if(window._demoMode)return{ok:true}; // mode démo : rien n'est envoyé aux Sheets
   if(!S.url)return{ok:false,error:'URL manquante'};
   if(typeof _restauAttendue==='function'&&_restauAttendue())return{ok:false,error:'compte pas encore récupéré'};   // COOKIE-PROFILE-01 : la séance reste en file
   try{
     const rows=_buildSyncRows(sess);
-    const ctrl=new AbortController();
-    const tId=setTimeout(()=>ctrl.abort(),8000);
-    const resp=await fetch(S.url,{method:'POST',redirect:'follow',signal:ctrl.signal,headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'logSession',rows,bw:S.bw,date:sess.date,gender:S.gender,age:S.age,email:S.email||''})});
-    clearTimeout(tId);
-    let rawText='';
-    try{rawText=await resp.text();}catch(_){rawText='(body illisible)';}
+    const {resp,corps:rawText}=await _fetchBorne(S.url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'logSession',rows,bw:S.bw,date:sess.date,gender:S.gender,age:S.age,email:S.email||''})},8000,r=>r.text().catch(()=>'(body illisible)'));
     console.log('[FT syncSheets]',sess.date,'HTTP',resp.status,rawText.substring(0,300));
     let data;
     try{data=JSON.parse(rawText);}catch(_){return{ok:false,error:'Réponse non-JSON (HTTP '+resp.status+'): '+rawText.substring(0,80)};}

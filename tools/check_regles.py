@@ -997,6 +997,39 @@ except Exception as _e17:
     print("⚠️ contrôle « entête de version » NON EXÉCUTÉ (%s: %s)" % (type(_e17).__name__, _e17))
     print("   → ce n'est pas un feu vert : la garantie n'a pas été vérifiée du tout.")
 
+# ── CONTRÔLE 17b — LE NUMÉRO DU CODE QUI TOURNE (APP_BUILD, app.js) DIT LA MÊME CHOSE QUE sw.js ──────────
+#
+# Né du lot MAJV (15/11/2026). Le libellé « À propos » lisait la CLÉ DU CACHE du service worker : après une
+# mise à jour reçue ailleurs que sur l'Accueil, il annonçait le code NEUF pendant que l'ANCIEN tournait encore
+# en mémoire (démontré par rejeu le 14/11 : import non regroupé, éditeur sans « Aujourd'hui »). La seule chose
+# qui sait quel code est en mémoire, c'est le code lui-même : `const APP_BUILD` (app.js). C'est donc un 2ᵉ
+# endroit qui porte le MÊME nombre que `const CACHE` (sw.js) — R2 : deux endroits, donc un garde. Le même
+# garde vit dans le banc `tests/parcours/maj_version.js` (MAJV-D2) ; celui-ci donne la réponse en une seconde,
+# sans attendre la passe.
+# ⛔ Oublier de poser ce numéro-là ne casse rien de visible pour celui qui publie : l'étiquette de TOUT le monde
+#    dirait une version fausse. C'est pour ça que ce n'est pas un avertissement : une constante qui DISPARAÎT ou
+#    qui DIVERGE refuse la livraison (contrairement au contrôle 17, un motif introuvable ICI est un échec).
+try:
+    import re as _re17b
+    _sw17b = (racine / 'sw.js').read_text(encoding='utf-8', errors='replace')
+    _app17b = (racine / 'app.js').read_text(encoding='utf-8', errors='replace')
+    _mc17b = _re17b.search(r"const CACHE\s*=\s*'ft-v(\d+)'", _sw17b)
+    _mb17b = _re17b.findall(r"(?:^|\n)const APP_BUILD\s*=\s*'ft-v(\d+)'", _app17b)
+    if not _mc17b or len(_mb17b) != 1:
+        print("❌ version du code : `const CACHE` (sw.js) introuvable, ou `const APP_BUILD` (app.js) introuvable / déclarée %d fois (il en faut UNE)" % len(_mb17b))
+        sys.exit(1)
+    if int(_mb17b[0]) != int(_mc17b.group(1)):
+        print("❌ version du code : app.js dit APP_BUILD = ft-v%s, sw.js dit CACHE = ft-v%s." % (_mb17b[0], _mc17b.group(1)))
+        print("   → un nouveau numéro se pose aux DEUX endroits, dans le même mouvement (règle d'or #5) :")
+        print("     sinon l'étiquette « À propos » annonce une version qui n'est pas celle du code, ou la bannière « mise à jour prête » s'affiche à tort.")
+        sys.exit(1)
+    print("✅ version du code : APP_BUILD (app.js) = const CACHE (sw.js) = ft-v%s" % _mb17b[0])
+except SystemExit:
+    raise
+except Exception as _e17b:
+    print("⚠️ contrôle « version du code » NON EXÉCUTÉ (%s: %s)" % (type(_e17b).__name__, _e17b))
+    print("   → ce n'est pas un feu vert : la garantie n'a pas été vérifiée du tout.")
+
 # ══════════════════════════════════════════════════════════════════════════════════════════
 #  CONTRÔLE — LE REGISTRE DES DÉCISIONS (19/09/2026)
 #  Demande de Michel : « il faut trouver une solution pour éviter que la direction de Force

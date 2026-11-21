@@ -88,7 +88,7 @@ MUT = [
            "      (sess.exs||[]).forEach(e=>(e.sets||[]).forEach(x=>{ if(x && x.done!==false && +x.kg>0 && +x.reps>0) v[m]+= (+x.kg)*(+x.reps); }));")],
      'GARDE', 'C-NUM-D3'),
     ('M18 l\'export oublie le facteur unilateral',
-     [(SE, "volume:Math.round(kg*reps*_facteurUni(s, ex.name))", "volume:Math.round(kg*reps)")],
+     [(SE, "volume:Math.round(_chargeTonnage(st)*reps*_facteurUni(s, ex.name))", "volume:Math.round(_chargeTonnage(st)*reps)")],
      'GARDE', 'C-NUM-D4'),
     ('M19 Milo relit la copie rangee dans la liste des seances',
      [(CO, "${exStr} — ${(typeof _volTravail==='function'?_volTravail(s):(+s.volume||+s.vol||0))}kg vol total", "${exStr} — ${s.volume}kg vol total")],
