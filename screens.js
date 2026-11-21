@@ -136,6 +136,7 @@ function _applyScreen(id,btn){
   document.getElementById('root').classList.toggle('on-home',id==='home');
   document.getElementById('root').classList.toggle('on-log',id==='log');
   document.getElementById('root').classList.toggle('on-setup',id==='setup');
+  _syncAideEcran(id);   // le « ? » d'écran (lot A de la finale, 17/11/2026) : un seul bouton, l'aide de l'écran affiché
   /* 🔆 On ne relâche plus le verrou d'écran en quittant l'écran Séance : pendant une séance on
      va justement parler à Milo ou regarder ses records (18/08). `_syncWakeLock` (log.js) tient
      l'écran tant qu'une séance TOURNE, et le rend dès qu'elle est finie ou en pause. */
@@ -154,8 +155,8 @@ function _applyScreen(id,btn){
   _updateScreenDots(id);
   // Pill chrono flottante : show hors log, hide sur log
   if(typeof _updPill==='function')_updPill();
-  // Retour à l'accueil = le moment neutre où une mise à jour en attente peut s'appliquer.
-  if(id==='home'){ try{ if(typeof _appliquerMaj==='function')_appliquerMaj(); }catch(e){} }
+  // Retour à l'accueil depuis un autre écran = le moment neutre où une mise à jour en attente se RE-PROPOSE (bandeau, « Plus tard » levé). D-170 : jamais de rechargement automatique.
+  if(id==='home'&&_prevScreen!=='home'){ try{ if(typeof _majRepropose==='function')_majRepropose(); }catch(e){} }
 }
 function goScreen(id,btn){
   _closeAllPanels();
@@ -192,6 +193,8 @@ const _HELP_DATA={
       {i:'🕰️',t:'<b>Ton histoire sportive</b> : si tu notes une douleur que tu avais déjà eue il y a plus de deux semaines, une carte te rappelle <b>quand</b> et <b>combien de temps</b> elle avait duré. Elle décrit ce que tu avais noté — <b>elle ne prédit rien</b>. Elle ne s\'affiche que quand il y a quelque chose à relier.'},
       {i:'📅',t:'Le calendrier de ton mois, qui se lit d\'un coup d\'œil : <b>plus une case est foncée, plus tu as soulevé lourd ce jour-là</b>. Le petit trait sous le chiffre dit ce que tu as travaillé (rouge = haut, bleu = dos, violet = bas, orange = tronc, vert = full body), et l\'étoile ⭐ marque un RECORD. À gauche, le n° de semaine avec ton tonnage — tape-le pour voir la semaine entière. <b>Tape un jour</b> et son détail s\'ouvre dessous : tonnage, séries, exercices, et comment tu te sentais (sommeil, énergie, humeur, douleur) si tu l\'as noté. Le calendrier devient ta mémoire.'},
       {i:'💚',t:'Ta carte récup existe en <b>deux styles</b> — Menu → Apparence → Carte récup : l\'anneau (par défaut) ou le moniteur, avec ton score en gros et un tracé cardiaque. Mêmes données, mise en forme différente.'},
+      /* 🧭 D-176 (CE lot M, 16/11/2026, Michel) — règle d'or #11 : ce qu'on ne devine pas, c'est OÙ sont passés le « ? », « Partager » et la pastille Sheets. L'aide dit la porte ET la limite (R25 : la pop-up annonce, l'aide explique). */
+      {i:'🧭',t:'<b>L\'en-tête « Force Tracker » (logo, partage, Sheets) n\'est plus que sur l\'Accueil.</b> Les autres écrans commencent tout en haut, avec leur propre titre : plus de place pour ton contenu, et rien ne bouge en bas — la barre et le « + » sont exactement où ils étaient. ❓ <b>L\'aide de chaque écran a gardé sa porte</b> : un petit « ? » rond, en haut à droite de Progrès, Nutrition, Coach et Profil (ici, sur l\'Accueil, c\'est celui de l\'en-tête). <b>Pendant une séance</b>, sur l\'écran Séance, l\'aide est dans <b>⋯ → « Aide de l\'écran Séance »</b> et « Terminer » reste en haut ; sur les autres écrans le « ? » est toujours là. <b>Partager</b> et l\'<b>Aide détaillée</b> restent dans le <b>Menu</b>, l\'état Sheets dans <b>Menu → Profil</b>. 🔄 Une <b>mise à jour</b> prête s\'annonce par un bandeau discret en haut — « Mettre à jour » ou « Plus tard » ; elle ne s\'installe jamais toute seule, et jamais pendant ta séance, son enregistrement, ni la lecture du bilan de Milo.'},
       /* ⚠️⚠️ TEXTE PÉRIMÉ CORRIGÉ LE 05/09/2026 (ft-v1138) — il annonçait « les 4 stats du mois
          (volume, Big3, séances, poids) » alors que Volume et Force viennent d'être retirés.
          ⛔ Il avait échappé à ma première recherche parce qu'il écrit « volume » et « Big3 », pas
@@ -488,7 +491,9 @@ const _HELP_DATA={
       {i:'🔁',t:'« maxi » : dans l\'éditeur de programme, touche le bouton « max » à côté des reps d\'une série pour viser le maximum de répétitions (au lieu d\'un chiffre exact). En séance, la case affiche « max » et tu notes ce que tu as vraiment fait.'},
       {i:'✋',t:'Superset au doigt : sur un exercice pas encore en superset, attrape la petite poignée (6 points, à côté du ⋯) et glisse-le sur un autre exercice → le superset se crée tout seul. Plus rapide que « Grouper des exercices » (menu ⋯). Pour défaire : "↩ Retirer". Marche aussi dans l\'éditeur de programme (✏️) : glisse une carte exercice sur une autre.'},
       /* 🎯 DEBRIEF-ON-DEMAND-01 — règle d'or #11, point 3 (Séance) : la fin de séance a changé. */
-      {i:'✨',t:'<b>Fin de séance</b> : tes chiffres (volume, records, ce que tu as travaillé) s\'affichent <b>tout de suite</b>, sans réseau. L\'avis de Milo, lui, se <b>demande</b> : <b>« ✨ Analyser cette séance avec Milo »</b>. Sans ce geste, aucun appel à l\'IA. Pas de réseau ou Milo indisponible ? Rien n\'est enregistré, et <b>Réessayer</b> reste là — tu peux aussi le faire plus tard depuis Progrès.'},
+      {i:'✨',t:'<b>Fin de séance</b> : tes chiffres (volume, records, ce que tu as travaillé) s\'affichent <b>tout de suite</b>, sans réseau. L\'avis de Milo, lui, se <b>demande</b> : <b>« ✨ Analyser cette séance avec Milo »</b>. Sans ce geste, aucun appel à l\'IA. Pas de réseau, Milo indisponible ou réponse trop longue (plus d\'une minute et demie) ? <b>Ta séance, elle, est bien enregistrée</b> — c\'est l\'avis qui manque, et <b>Réessayer</b> reste là ; tu peux aussi le faire plus tard depuis Progrès. Si le <b>réseau est trop lent</b> à l\'enregistrement, la séance est gardée sur ton téléphone et repartira toute seule.'},
+      /* 🧹 D-173 (CE lot M) — règle d'or #11 : l'aide dit la porte et la LIMITE (les paliers d'un dropset). */
+      {i:'🧹',t:'<b>Supprimer une série précise</b> : ⋯ de l\'exercice → <b>« Supprimer une série… »</b> → touche la ligne voulue (« − » en appui maintenu retire toujours la dernière). Une série déjà validée demande confirmation. Dans un <b>dropset ou une pyramide</b>, chaque <b>palier</b> se supprime comme une série (confirmation s\'il est déjà validé) et le réglage « paliers » suit tout seul. ⛔ Le <b>dernier palier</b> reste (🔒) : sans lui le dropset n\'aurait plus de sens — <b>⚙️ Modifier paliers</b> ou <b>✕ Retirer dropset</b> règlent la structure. La dernière série restante ne se supprime pas : on supprime l\'exercice.'},
       /* 🛡️ SESSION-INTEGRITY-01 — règle d'or #11, point 3 (Séance) : le comportement du remplacement a changé. */
       {i:'🔄',t:'<b>Remplacer un exercice</b> (⋯ → Remplacer) change d\'<b>exercice</b> : le nouveau arrive avec <b>ses propres</b> charges (celles de ta dernière fois), jamais celles de l\'ancien. Et les séries que tu as <b>déjà cochées</b> restent à l\'exercice que tu as réellement fait : seul le reste passe au nouveau. Tu t\'étais juste trompé de nom après coup ? Corrige-le dans Progrès → la séance → 🔄.'},
       {i:'🔀',t:'Exercices « un côté à la fois » : 48 exercices portent une pastille <b>🔀 par bras</b> ou <b>par jambe</b> (rowing haltère, curl haltères, fentes, squat bulgare…). <b>Tu notes le poids qui BOUGE</b> : un seul haltère monte → note son poids à lui (28), pas le double ; les deux bougent → note le total. Tu saisis toujours <b>3 séries, pas 6</b> — l\'app sait qu\'elles se refont de l\'autre côté et double ton tonnage. Ton record reste calculé sur la charge d\'un côté. Tape la pastille pour le détail.'},
@@ -597,8 +602,27 @@ function openBmrHelp(){
 }
 function closeBmrHelp(){document.getElementById('ov-bmr-help').classList.remove('open');}
 
+/* ❓ « ? » D'ÉCRAN — lot A de la finale Séance (17/11/2026, arbitrage de Michel : l'aide contextuelle ne doit pas disparaître, sans rouvrir D-176).
+   POURQUOI : D-176 a retiré l'en-tête global (donc son « ? ») de tous les écrans sauf l'Accueil ; Progrès, Nutrition, Coach, Profil et l'écran Séance n'avaient plus aucune porte vers leur aide.
+   QUOI : UN bouton rond `#ctx-help` (style.css), créé ici au premier besoin, qui appelle `showHelp()` — mêmes textes qu'avant, mêmes fonctions. `#root.aide-ecran` dit s'il doit se montrer : l'écran affiché a une aide
+   et ce n'est pas l'Accueil (qui a le sien dans son en-tête). Les écrans SANS aide (un écran futur, par exemple) n'ont rien : la règle ne tient aucune liste d'écrans, elle lit `_HELP_DATA`.
+   ⛔ Aucune donnée, aucune clé de stockage : c'est de l'affichage. La clef d'aide d'un écran est écrite UNE fois (`_aideClef`) : le Cycle de force n'a pas d'aide propre, il montre celle de l'Accueil (R2). */
+function _aideClef(id){ return id==='cycle'?'home':(id||'home'); }
+function _syncAideEcran(id){
+  const root=document.getElementById('root'),box=document.querySelector('.screens');
+  if(!root||!box)return;
+  const a=id!=='home'&&!!_HELP_DATA[_aideClef(id)];
+  let b=document.getElementById('ctx-help');
+  if(a&&!b){
+    b=document.createElement('button');b.id='ctx-help';b.type='button';
+    b.title='Aide de cet écran';b.setAttribute('aria-label','Aide de cet écran');b.setAttribute('onclick','showHelp()');
+    b.innerHTML='<span aria-hidden="true">?</span>';
+    box.appendChild(b);
+  }
+  root.classList.toggle('aide-ecran',a);
+}
 function showHelp(){
-  const screen=window._curScreen==='cycle'?'home':(window._curScreen||'home');
+  const screen=_aideClef(window._curScreen);
   const data=_HELP_DATA[screen];
   if(!data)return;
   const isFemale=S&&S.gender==='F';

@@ -15,9 +15,12 @@
    ═════════════════════════════════════════════════════════════════════════════════════════════ */
 'use strict';
 
+/* ⚠️ CALENDRIER (15/11/2026, BUGS §143 + §148) : `ft4_lms` (« dernier bilan mensuel annoncé ») doit valoir le mois PRÉCÉDENT d'AUJOURD'HUI. « 2026-09 » en dur n'était juste qu'en octobre : depuis le
+   1ᵉʳ novembre `checkMonthlySummary()` ouvrait le bilan d'octobre 2,2 s après le démarrage, PAR-DESSUS la page, et interceptait les clics — B-UXI-G2/G3/G5/G7 rouges sans qu'aucun commit y soit pour rien. */
+const moisPrec = (() => { const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - 1); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); })();
 const BASE = { ft4_bw: '80', ft4_age: '40', ft4_ht: '178', ft4_gender: 'H', ft4_goal: 'force', ft4_ob2: '1', ft4_name: 'Test',
   ft4_email: 't@t.t', ft4_devtoken: 'f'.repeat(64), ft4_tester_eq_v1: '1', ft4_ok: '1', ft4_stmig1: '1',
-  ft4_guide_shown: '1', ft4_wn_seen: '999', ft4_lms: '2026-09' };
+  ft4_guide_shown: '1', ft4_wn_seen: '999', ft4_lms: moisPrec };
 const _det = o => JSON.stringify(o);
 const DC = 'Développé Couché', DM = 'Développé Militaire';
 // Deux exercices dans l'historique : le Développé Couché MONTE (90 → 100 kg), le Militaire DESCEND (60 → 50 kg).

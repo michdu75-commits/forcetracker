@@ -49,8 +49,8 @@ MUT = [
      [(CS, "#rest-rir:empty{display:none;}", "#rest-rir:empty{display:none;}\n#rest-rir .rir-row ~ .rir-lbl,#rest-rir .rir-row ~ .rir-row{display:none;}")],
      'GARDE', ('B-RSS-①c',)),
     ('M7 [deguisee] la zone des questions est coupee a 96 px : la 2e rangee de boutons ne se touche plus',
-     [(CS, "#rest-rir{margin-top:12px;padding-top:10px;border-top:1px solid var(--sep);}",
-           "#rest-rir{margin-top:12px;padding-top:10px;border-top:1px solid var(--sep);max-height:96px;overflow:hidden;}")], 'GARDE', ('B-RSS-①c',)),
+     [(CS, "#rest-rir{margin-top:5px;}",
+           "#rest-rir{margin-top:5px;max-height:96px;overflow:hidden;}")], 'GARDE', ('B-RSS-①c',)),
     # ── le superset et le chrono ne changent pas
     ('M11 [deguisee] un repos s\'intercale entre les deux mouvements (le superset n\'enchaine plus)',
      [(LG, "_expandedEx=_ssNext;renderExBlocks();_scrollTo(_ssNext);return;", "startRest(sec);_expandedEx=_ssNext;renderExBlocks();_scrollTo(_ssNext);return;")],
@@ -70,7 +70,7 @@ MUT = [
      [(LG, 'return `<span class="prev-rir">·${_reserveBadgeTxt(n)}</span>`;', "return '';")], 'GARDE', ('B-RSS-③f',)),
     # ── equivalente
     ('M16 [equivalente] boutons de reponse de 44 px au lieu de 42',
-     [(CS, "#rest-bar .rir-b{flex:1;min-width:0;height:42px;}", "#rest-bar .rir-b{flex:1;min-width:0;height:44px;}")], 'OK'),
+     [(CS, "#rest-bar .rir-b{flex:1;min-width:0;height:40px;}", "#rest-bar .rir-b{flex:1;min-width:0;height:42px;}")], 'OK'),
 ]
 
 

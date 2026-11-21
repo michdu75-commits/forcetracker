@@ -25,7 +25,7 @@ AVANT_D092 = 'f7c4537b'     # le code D-091 avant le comptage D-092 : deux figur
 SE, TR, CS, LG = 'setup.js', 'tracking.js', 'style.css', 'log.js'
 FICHIERS = (SE, TR, CS, LG)
 DONT_S = "(nTot!==b.faites?' · dont '+b.faites+' de travail':'')"
-WVOL = "if(s.done&&(avecEchauffements||(s.type!=='É'&&s.type!=='W'))&&(s.kg||0)>0&&(s.reps||0)>0)v+=s.kg*s.reps*k;"
+WVOL = "if(s.done&&(avecEchauffements||(s.type!=='É'&&s.type!=='W'))&&c>0&&(s.reps||0)>0)v+=c*s.reps*k;"
 CARTE = "${figF}<div class=\"lf-t\">${kv}${cardioTxt?`<div class=\"lf-cardio\">${cardioTxt}</div>`:''}</div>${figD}</div>"
 KV = ".lf-2fig .lf-kv{flex-direction:column;flex-wrap:nowrap;align-items:center;gap:6px;}"
 

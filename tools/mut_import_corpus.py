@@ -33,7 +33,7 @@ MUT = [
     ('C07 une SUGGESTION (zone grise) est appliquée d\'office comme un rattachement sûr',
      [(LO, "ex.name=r.match; }\n  else if(r.tier==='confirm'){ ex._vmSuggest=r.match; ex._vmConf=r.confidence; }", "ex.name=r.match; }\n  else if(r.tier==='confirm'){ ex._vmFrom=ex.name; ex._vmConf=r.confidence; ex.name=r.match; }")], 'GARDE'),
     ('C08 le type « É » du programme à colonne ECH/TRAV n\'est plus traduit (les échauffements deviennent des séries normales)',
-     [(LO, "  return v==='W' ? 'É' : (ex.setType||'N');          // 'W' est le mot du backend", "  return (ex.setType||'N');          // 'W' est le mot du backend")], 'GARDE'),
+     [(LO, "  return (v==='W'||String(ex.setType||'').toUpperCase()==='W') ? 'É' : (ex.setType||'N');          // 'W' est le mot du backend", "  return (ex.setType||'N');          // 'W' est le mot du backend")], 'GARDE'),   # ré-ancré (nuit n°2) : la ligne traduit aussi `setType:'W'`
     ('C09 le regroupement échauffement + travail n\'est plus appelé (l\'ancien format du Worker : une ligne = un exercice)',
      [(LO, "    _mergeImportBlocsEch();      // ⛔ UN SEUL filet (IMPORT-IA-FIDELITE-01)", "    /*mut*/;      // ⛔ UN SEUL filet (IMPORT-IA-FIDELITE-01)")], 'GARDE'),
     ('C10 le texte d\'une plage de repos n\'est plus conservé dans le programme (restTxt perdu sur les plages du corpus)',

@@ -22,7 +22,7 @@ A_TP = "'triceps pushdown':'Triceps Poulie',"
 A_CTP = "'cable triceps pushdown':'Triceps Poulie',"
 A_ETP = "'extension triceps poulie':'Triceps Poulie',"
 CORDE = "'push down':'Triceps Poulie','tri rope':'Triceps Corde Poulie',"
-PREV = "function getPrev(name){\n"
+PREV = "function getPrev(name){ "   # ⚠️ ré-ancrée le 15/11/2026 : la fonction tient sur UNE ligne depuis master `ft-v1267` (l'ancre « …{\n » n'y existait plus : M6a était INVALIDE, donc jamais jouée)
 VMH = ("  (_histExtracted.sessions||[]).forEach(sess=>(sess.exercises||[]).forEach(ex=>{\n"
        "    if(!ex||!ex.name)return;\n"
        "    delete ex._vmFrom; delete ex._vmSuggest; delete ex._vmConf;\n"
@@ -41,7 +41,7 @@ MUT = [
     ('M4 « triceps pushdown » envoye vers Triceps Corde Poulie', [(A_TP, "'triceps pushdown':'Triceps Corde Poulie',")], 'GARDE'),
     ('M5 « triceps corde » envoye vers Triceps Poulie (alias ajoute)', [(CORDE, "'triceps corde':'Triceps Poulie'," + CORDE)], 'GARDE'),
     ("M6a la pre-saisie de Triceps Poulie lit l'historique d'Extension Triceps (getPrev)",
-     [(PREV, PREV + "  if(name==='Triceps Poulie')name='Extension Triceps';\n")], 'GARDE'),
+     [(PREV, PREV + "if(name==='Triceps Poulie')name='Extension Triceps'; ")], 'GARDE'),
     ("M6b l'import d'historique ecrit un pushdown sous Extension Triceps (_vmMatchHist)",
      [(VMH, VMH.replace("ex.name=r.match; }", "ex.name=(r.match==='Triceps Poulie'&&/push ?down|poulie/i.test(ex._vmFrom))?'Extension Triceps':r.match; }"))], 'GARDE'),
     ("M6c le record importe d'un pushdown monte sur Extension Triceps (finalImportHist)",

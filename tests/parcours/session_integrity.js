@@ -191,14 +191,16 @@ module.exports.ecran = async function (t, b, PORT) {
     const r1 = w1.exs[1];
     t('R1 ⛔⛔ Presse → Rowing Hammer : aucune charge de la Presse ne survit (200 / 240 absents)',
       r1.name === 'Rowing Hammer Strength' && nKg(r1, [200, 240]) === 0 && w1.exs.length === 2, js(r1));
-    t('R1b … les séries viennent de l\'historique du Rowing (É vide, puis 40×8 · 40×8 · 50×8), aucune n\'est faite',
-      r1.sets.map(s => s.type + s.kg + 'x' + s.reps).join(',') === 'É0x5,N40x8,N40x8,N50x8' && r1.sets.every(s => !s.done), r1.sets.map(s => s.type + s.kg + 'x' + s.reps).join(','));
+    // ↪️ ORACLE ADAPTÉ le 18/11/2026 (correction ciblée V3, lot Z) — INVARIANT GARDÉ : les séries viennent de l'historique de CET exercice. Ce qui change : la série d'échauffement SANS source est INCONNUE (`null`, écrit « null » ci-dessous),
+    // plus un « 0 » fabriqué (jamais de zéro inventé sans source, D-164) ; elle s'affichait déjà vide.
+    t('R1b … les séries viennent de l\'historique du Rowing (É inconnue, puis 40×8 · 40×8 · 50×8), aucune n\'est faite',
+      r1.sets.map(s => s.type + s.kg + 'x' + s.reps).join(',') === 'Énullx5,N40x8,N40x8,N50x8' && r1.sets.every(s => !s.done), r1.sets.map(s => s.type + s.kg + 'x' + s.reps).join(','));
     t('R1c … ni repos prescrit, ni consigne, ni marqueur d\'auteur `_milo` : rien de propre à l\'ancien',
       cles(r1) === 'name,sets' && r1.sets.every(s => cles(s) === 'done,kg,reps,rm1,type'), cles(r1) + ' | ' + cles(r1.sets[0]));
     const w2 = await remplacer(X.pg, 1, 'Shoulder Press');
     const r2 = w2.exs[1];
     t('R2 ⛔⛔ Rowing → Shoulder Press : même invariant, les séries sont celles du Shoulder Press',
-      r2.name === 'Shoulder Press' && nKg(r2, [200, 240, 40, 50]) === 0 && r2.sets.map(s => s.kg).join(',') === '0,60,80,90', js(r2));
+      r2.name === 'Shoulder Press' && nKg(r2, [200, 240, 40, 50]) === 0 && r2.sets.map(s => s.kg).join(',') === ',60,80,90', js(r2));   // ↪️ 18/11/2026 : l'échauffement sans source est inconnu (`null`, vide dans le `join`), plus « 0 » — même invariant
     const prev = await X.pg.evaluate(() => getPrev('Shoulder Press').map(s => s.kg).join(','));
     t('R3 l\'historique « précédent » du nouvel exercice est le sien (60 · 80 · 90)', prev === '60,80,90', prev);
     const disque = await X.pg.evaluate(() => JSON.parse(localStorage.getItem('ft4_wkt')).exs[1]);
@@ -269,7 +271,7 @@ module.exports.ecran = async function (t, b, PORT) {
     const n = await X.pg.evaluate(() => { addExercise('Shoulder Press'); const a = S.wkt.exs.length; moveExBlock(2, -1); const ordre = S.wkt.exs.map(e => e.name);
       S.wkt.exs.splice(0, 1); persist(); return { a, ordre, apres: S.wkt.exs.map(e => e.name), sp: S.wkt.exs.find(e => e.name === 'Shoulder Press').sets.map(s => s.kg).join(',') }; });
     t('R6b ajout · déplacement · suppression intacts, et l\'ajout pré-remplit toujours depuis l\'historique',
-      n.a === 3 && n.ordre[1] === 'Shoulder Press' && n.apres.length === 2 && n.sp === '0,60,80', js(n));   // `addExercise` inchangé : É + 2 séries de travail
+      n.a === 3 && n.ordre[1] === 'Shoulder Press' && n.apres.length === 2 && n.sp === ',60,80', js(n));   // `addExercise` : É (sans source : inconnue, vide dans le `join`, plus « 0 » — 18/11/2026) + 2 séries de travail depuis l'historique
     await X.cx.close();
   }
 

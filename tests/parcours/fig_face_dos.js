@@ -19,16 +19,25 @@
    ══════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
 'use strict';
 
+const { jourParis } = require('../_jour.js');
+/* ⚠️ CALENDRIER (15/11/2026, BUGS §143 + §148) : `ft4_lms` (« dernier bilan mensuel annoncé ») = le mois PRÉCÉDENT d'AUJOURD'HUI (« 2026-10 » en dur n'était juste qu'en novembre). */
+const moisPrec = (() => { const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - 1); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); })();
 const BASE = { ft4_bw: '82', ft4_age: '41', ft4_ht: '178', ft4_gender: 'H', ft4_goal: 'force', ft4_ob2: '1', ft4_name: 'Test',
   ft4_email: 't@t.t', ft4_devtoken: 'f'.repeat(64), ft4_tester_eq_v1: '1', ft4_ok: '1', ft4_stmig1: '1',
-  ft4_guide_shown: '1', ft4_wn_seen: '999', ft4_lms: '2026-10' };
+  ft4_guide_shown: '1', ft4_wn_seen: '999', ft4_lms: moisPrec };
 const _det = o => JSON.stringify(o);
 const SDT = 'Soulevé de Terre', DC = 'Développé Couché', SQ = 'Squat à la Barre', TR = 'Tractions (Pull-up)', DM = 'Développé Militaire',
   CB = 'Curl Barre', RB = 'Rowing Barre (Tirage Horizontal)', HT = 'Hip Thrust Barre (Poussée de Hanche)', LC = 'Leg Curl Couché Machine', CR = 'Crunch';
 const S_ = (kg, reps, done, type) => ({ kg, reps, done: !!done, type: type || 'N' });
 const HISTO = () => {
-  const s = (date, exs) => { const ts = Date.parse(date + 'T18:00:00'); return { id: ts, ts, date, synced: true, volume: 3000, exs }; };
-  return [s('2026-10-14', [{ name: SQ, sets: [S_(100, 5, 1), S_(100, 5, 1)] }]), s('2026-10-10', [{ name: CB, sets: [S_(30, 10, 1)] }])];
+  /* ⚠️ CALENDRIER (15/11/2026, BUGS §143 + §148) : l'historique était daté EN DUR au 14 et au 10 octobre — des cartes d'un mois REPLIÉ depuis le 1ᵉʳ novembre : `cartes0: []` avant la fin de séance
+     et B-FFD-⑧e rouge sans qu'aucun commit y soit pour rien. Les deux séances passées tombent maintenant dans le MOIS COURANT (hier et il y a 5 jours ; ramenées au début du mois quand il est trop jeune,
+     à une heure différente pour garder deux identifiants distincts). */
+  const dom = +jourParis(0).slice(8, 10), jr = n => jourParis(-Math.min(n, dom - 1));
+  /* ⚠️ CALENDRIER (T2, 15/11/2026) : le 1ᵉʳ de chaque mois (dom = 1) les deux séances sont datées AUJOURD'HUI à 17 h / 18 h — dans le FUTUR avant cette heure : la séance qu'on termine se rangeait APRÈS elles,
+     S.sessions[0] était l'historique (volume 3000) et B-FFD-⑧e / ⑩e rougissaient. On plafonne l'horodatage à « maintenant − 1 min / − 2 min » (deux identifiants distincts, jamais dans le futur). Aucun effet les autres jours. */
+  const s = (date, exs, h) => { const ts = Math.min(Date.parse(date + 'T' + (h || 18) + ':00:00'), Date.now() - (h ? 120e3 : 60e3)); return { id: ts, ts, date, synced: true, volume: 3000, exs }; };
+  return [s(jr(1), [{ name: SQ, sets: [S_(100, 5, 1), S_(100, 5, 1)] }]), s(jr(5), [{ name: CB, sets: [S_(30, 10, 1)] }], 17)];
 };
 /* La séance EN COURS : le soulevé de terre a son échauffement et 2 séries de travail faites ; le développé couché n'a AUCUNE série
    faite (même pas l'échauffement : la question « un échauffement SEUL colore-t-il ? » n'est pas celle-ci). */

@@ -46,11 +46,16 @@ module.exports.source = function (t, ROOT, fs, path) {
   t('S5 la branche `debriefSess` de `sendToCoach` est retirée (plus aucun appelant)', !/debriefSess/.test(tout), '');
   t('S6 UN seul chemin appelle Milo pour un débrief : `_runSeDebrief`, appelé seulement par le clic (`analyserSeanceMilo`)',
     (tout.match(/_runSeDebrief\(/g) || []).length === 3 && /_runSeDebrief\(/.test(an), (tout.match(/_runSeDebrief\(/g) || []).length + ' occurrences');
+  /* RÉÉCRIT le 16/11/2026 (CE lot M, D-170) : AVANT, l'appel se lisait `fetch(` ; il passe maintenant par `_fetchBorne(` (le même `fetch`, borné de bout en bout : en-têtes ET corps, annulation réelle). L'INVARIANT GARDÉ, mot pour mot : les gardes
+     sont dans l'ordre débrief rangé → en vol → poser « en vol » → APPEL RÉSEAU. Le témoin cherche l'appel réseau sous son nouveau nom (un appel `fetch(` direct, lui, fait rougir S7b ci-dessous). */
   t('S7 les gardes du moteur sont dans l\'ordre : débrief rangé → en vol → hors ligne → poser « en vol » → appel',
-    run.indexOf('_dbfTexteDe(sid)') < run.indexOf('_dbfEnVol(sid)') && run.indexOf('_dbfEnVol(sid)') < run.indexOf('_dbfVolPoser(sid)') && run.indexOf('_dbfVolPoser(sid)') < run.indexOf('fetch('), '');
+    run.indexOf('_dbfTexteDe(sid)') < run.indexOf('_dbfEnVol(sid)') && run.indexOf('_dbfEnVol(sid)') < run.indexOf('_dbfVolPoser(sid)') && run.indexOf('_dbfVolPoser(sid)') < run.indexOf('_fetchBorne('), '');
+  t('S7b l\'appel réseau du débrief passe par l\'attente BORNÉE (`_fetchBorne`) : aucun `fetch(` nu (une requête suspendue laisserait « Milo analyse… » à l\'écran pour toujours et retiendrait la mise à jour)', run.indexOf('_fetchBorne(') > 0 && !/[^_A-Za-z]fetch\(/.test(run), '');
   t('S8 la mémoire de débrief n\'est écrite qu\'APRÈS validation de la réponse',
     run.indexOf('_dbfReponseValide') > 0 && run.indexOf('_dbfReponseValide') < run.indexOf('_recordDebriefMemory') && run.indexOf('_dbfReponseValide') < run.indexOf('_dbfEnregistrer('), '');
-  t('S9 la fin libère SEULEMENT la séance analysée (`_dbfVolRetirer(sid)` dans un `finally`)', /finally\{(?:\s*if\([^)]*\)\s*return;(?:\s*\/\/[^\n]*)?)?\s*_dbfVolRetirer\(sid\)/.test(run), '');
+  /* RÉÉCRIT (CE lot M, D-170) : le `finally` commence maintenant par retirer l'opération de la mémoire de la page (`_dbfActifs.delete(String(sid))` — c'est la FIN de l'opération qui rend la main à la mise à jour, plus un délai). L'INVARIANT GARDÉ : la fin libère
+     SEULEMENT la séance analysée (`_dbfVolRetirer(sid)` dans un `finally`, jamais « toutes les séances »), après l'éventuel garde « la page s'en va ». Le motif accepte la ligne `_dbfActifs.delete(String(sid))` — et seulement celle-là — avant le garde. */
+  t('S9 la fin libère SEULEMENT la séance analysée (`_dbfVolRetirer(sid)` dans un `finally`)', /finally\{(?:\s*_dbfActifs\.delete\(String\(sid\)\);(?:\s*\/\/[^\n]*)?)?(?:\s*if\([^)]*\)\s*return;(?:\s*\/\/[^\n]*)?)?\s*_dbfVolRetirer\(sid\)/.test(run), '');
 };
 
 module.exports.ecran = async function (t, b, PORT) {

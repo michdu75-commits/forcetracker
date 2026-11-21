@@ -1,0 +1,32 @@
+#!/usr/bin/env node
+require('../tests/_garde_reseau.js');   // ⛔ GARDE RÉSEAU EN 1ʳᵉ INSTRUCTION (D-031-SÉCURITÉ-01 : un nouveau banc se garde lui-même)
+/* BANC — ÉCRAN SÉANCE EN COURS : supprimer la série choisie (D-173) · le RIR reste atteignable après un zoom (D-174) · le bloc chrono + RIR moins haut (D-175)
+   (Claude N°2, GO limité du 16/11/2026) : blocs B-SCUI-*.
+   Destiné à la passe complète (tests/parcours/runner.js) ET au contrôle négatif : `python3 tools/mut_seance_ui.py`.
+   Usage : node tools/banc_seance_ui.js            (depuis la racine du dépôt ou d'un arbre copié)
+   Lancer sous le garde réseau : tools/sous_garde.sh node tools/banc_seance_ui.js */
+const { chromium } = require('/opt/node22/lib/node_modules/playwright');
+const http = require('http'), fs = require('fs'), path = require('path');
+const ROOT = path.dirname(__dirname);
+const M = {'.html':'text/html','.js':'text/javascript','.css':'text/css','.json':'application/json',
+           '.png':'image/png','.jpg':'image/jpeg','.svg':'image/svg+xml','.woff2':'font/woff2',
+           '.webp':'image/webp','.ico':'image/x-icon','.wasm':'application/wasm'};
+const srv = http.createServer((q, r) => {
+  let p = decodeURIComponent(q.url.split('?')[0]); if (p === '/') p = '/index.html';
+  const f = path.join(ROOT, p);
+  if (!f.startsWith(ROOT) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) { r.writeHead(404); return r.end('404'); }
+  r.writeHead(200, {'Content-Type': M[path.extname(f)] || 'application/octet-stream'});
+  fs.createReadStream(f).pipe(r);
+});
+let ok = 0, ko = 0;
+const t = (nom, cond, det) => { if (cond) { ok++; console.log('   OK  ' + nom); } else { ko++; console.log('❌ ROUGE ' + nom + (det ? '  >> ' + det : '')); } };
+(async () => {
+  const T = require(path.join(ROOT, 'tests', 'parcours', 'seance_ui.js'));
+  T.source(t, ROOT, fs, path);
+  await new Promise(r => srv.listen(0, r));
+  const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' });
+  await T.ecran(t, b, srv.address().port);
+  await b.close(); srv.close();
+  console.log('\n──── ' + ok + ' OK / ' + ko + ' rouge ────');
+  process.exit(ko ? 1 : 0);
+})().catch(e => { console.error('PLANTAGE : ' + (e && e.message || e)); process.exit(2); });

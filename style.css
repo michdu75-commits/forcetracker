@@ -127,6 +127,29 @@ html.no-halo #root{ background:var(--bg); } /* Apparence \00ab Fond uni \00bb */
 .tb-title{font-family:var(--font-cond);font-size:21px;font-weight:700;letter-spacing:-.02em;color:#FF5A64;}
 .tb-sub{font-size:13.5px;color:#F2F3F5;margin-top:1px;font-weight:500;opacity:.75;}
 .topbar button{color:#F2F3F5;}
+/* 🧭 D-176 (CE lot M, 16/11/2026, décision de Michel) — L'EN-TÊTE GLOBAL (logo, « Force Tracker », date, « ? », partage, Sheets) N'EXISTE QUE SUR L'ACCUEIL.
+   ⭐ UNE SEULE RÈGLE, GÉNÉRIQUE : `#root` porte `.on-home` quand l'écran affiché est l'Accueil (`_applyScreen`, screens.js) — l'en-tête n'est visible que dans ce cas ; tout autre écran,
+   y compris un écran FUTUR, ne le montre pas : AUCUNE liste d'écrans à tenir à jour (une liste oubliée = un en-tête qui revient sans bruit). `display:none` : il ne laisse AUCUNE bande vide,
+   et rendre l'espace à l'écran ne déplace pas la barre du bas (ancrée en bas, `.nav{position:absolute;bottom:0}` — règle d'or #9, mesuré).
+   ⛔ L'exception n'en est pas une : l'en-tête de la SÉANCE (état, chrono, ⋯, « Terminer ») vit dans le même bloc HTML mais c'est un en-tête MÉTIER — il reste sur l'écran Séance tant qu'une séance est
+   ouverte (`#root.on-log.seance-on`). ⚠️ Zone sûre iPhone : sans en-tête, `.screens` descend de `env(safe-area-inset-top)` (0 aujourd'hui — iOS réserve lui-même la barre d'état, voir plus haut —, et le
+   jour où l'app repasse en `black-translucent` le contenu ne passe pas sous l'encoche) ; le bandeau de mise à jour et le mode démo gèrent déjà l'encoche seuls (pas de double marge).
+   Conséquence à dire : le « ? » d'aide de l'EN-TÊTE, le partage et la pastille Sheets ne sont plus que sur l'Accueil (le partage et l'aide détaillée restent dans le Menu). ⭐ L'aide de CHAQUE écran, elle, a gardé sa porte : le petit « ? » `#ctx-help` plus bas (lot A de la finale, 17/11) — un bouton, pas une barre. */
+#root:not(.on-home) .topbar{display:none;}
+#root.on-log.seance-on .topbar{display:flex;}
+#root:not(.on-home):not(.maj-on):not(.demo-on) .screens{margin-top:env(safe-area-inset-top,0px);}
+html #root.on-log.seance-on:not(.on-home) .screens{margin-top:0;}   /* ⚠️ `:not(.on-home)` n'est pas décoratif : il porte la SPÉCIFICITÉ (1,4,1) au-dessus de la règle de la ligne précédente (1,4,0) — sans lui la marge de zone sûre gagnait sous l'en-tête de séance (mesuré avec une encoche émulée de 47 px : B-SCCM-H15) */
+/* ❓ « ? » D'ÉCRAN (lot A de la finale Séance, 17/11/2026, arbitrage de Michel : « l'aide contextuelle est importante et ne doit pas disparaître » — sans rouvrir D-176).
+   ⭐ CE N'EST PAS UNE BARRE : un SEUL bouton rond (`#ctx-help`, créé par `_syncAideEcran`, screens.js) posé dans `.screens`, en haut à droite, DANS la hauteur de la première rangée de l'écran — aucune bande,
+   aucune hauteur prise, le bouton central « + » et la barre du bas ne bougent pas (mesuré, règle d'or #9). Il ouvre l'aide de l'écran (`showHelp`, mêmes textes qu'avant D-176).
+   ⛔ Pour ne RIEN recouvrir, la première rangée de l'écran (onglets de Progrès / Nutrition, en-tête du Coach, titre de Séance…) cède 40 px à droite : UNE règle générique, aucune liste d'écrans à tenir à jour.
+   Zone tactile 44 × 44 (le disque visible fait 32). Pendant une séance, sur l'écran Séance, il s'efface : l'en-tête de séance porte déjà ⋯ → « Aide de l'écran Séance » et « Terminer » ne doit jamais être gêné ;
+   sur tous les AUTRES écrans il reste atteignable pendant la séance. Sur l'Accueil il n'existe pas (l'en-tête global y garde son « ? »). z-index 27 : au-dessus de l'en-tête collant de la Séance (26), sous les fenêtres (200). */
+#ctx-help{display:none;position:absolute;top:8px;right:6px;width:44px;height:44px;padding:0;border:0;background:transparent;z-index:27;align-items:center;justify-content:center;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
+#ctx-help span{display:block;width:32px;height:32px;border-radius:50%;border:1px solid var(--sep);background:var(--bg3);color:var(--t2);font:800 15px/30px var(--font);text-align:center;}
+#root.aide-ecran #ctx-help{display:flex;}
+#root.on-log.seance-on #ctx-help{display:none;}
+#root.aide-ecran .screen.active>:first-child{margin-right:40px;}
 /* ✅ HEADER COMPACTÉ — PROMU EN PROD LE 23/08/2026 (ft-v977). Michel : « le header compacté oui,
    promeus-le ». Essayé en ft-v610, il attendait sa validation derrière `html.is-clone` ; le clone
    ayant été retiré (ft-v976), il n'avait plus AUCUN moyen d'être essayé — un essai parqué sans
@@ -178,11 +201,18 @@ html.no-halo #root{ background:var(--bg); } /* Apparence \00ab Fond uni \00bb */
    la série suivante si elle tombe dessous. ⛔ Le moteur ne change pas (`startRest`/`updRest`/`restIv`/`restStartTs`).
    ⚠️ La largeur suit `#root` (430 px max, centré) : `left:50%` + `translateX(-50%)`, pas `left/right` — sur un écran
    plus large que le téléphone, le dock déborderait de l'app. Le bas tient compte de l'encoche (safe-area). */
+/* 📏 D-175 (Michel, 16/11/2026) — LE BLOC CHRONO + RIR FAIT ~114 px AU LIEU DE 170 (−33 %) (mesuré, même état, 390×844) : rembourrage 12 → 4, rangée du haut
+   52 → 44 (−15 s / temps / +15 s / Passer : la cible de 44 px de D-086 ⑤c est GARDÉE), plus de filet ni de marge sous la rangée, la question en 12 px, les six réponses à 40 px.
+   ⛔ Rien n'est retiré : temps, durée du repos, réglage, anneau, Passer, −15, +15, Échec · 0 · 1 · 2 · 3 · 4+. Affichage seul : le moteur du repos et celui du RIR
+   ne changent pas. ⚠️ Pas −50 % : à ce prix, les cibles tomberaient sous 32 px ; passer la rangée du haut de 44 à 40 px (−4) contredirait le témoin B-D086-⑤c — décision de Michel. */
 #rest-bar{position:fixed;left:50%;transform:translateX(-50%);width:calc(min(100vw,430px) - 24px);
   bottom:calc(max(env(safe-area-inset-bottom),8px) + 76px);z-index:25;display:none;flex-direction:column;
-  padding:12px 12px 12px 14px;border-radius:22px;background:var(--bg2);border:1px solid var(--sea-a2);
+  padding:4px 10px;border-radius:20px;background:var(--bg2);border:1px solid var(--sea-a2);
   box-shadow:0 24px 54px -12px rgba(0,0,0,.95);box-sizing:border-box;transition:border-color .4s;}
 #rest-bar.show{display:flex;}
+/* 🔎 D-174 — pinch-zoom : le dock suit la fenêtre VISIBLE (`_dockSuivreZoom`, log.js, pose la translation + le contre-zoom en style en ligne).
+   Sans cette classe (zoom ×1), le dock garde exactement la place ci-dessus. */
+#rest-bar.vv-zoom{left:0;top:0;bottom:auto;transform-origin:0 0;}
 #rest-bar.show ~ .scroll-spacer{height:calc(max(env(safe-area-inset-bottom,0px),8px) + 110px + 200px);}
 .rd-top{display:flex;align-items:center;gap:12px;}
 .rd-ring{width:52px;height:52px;flex:none;}
@@ -199,7 +229,7 @@ html.no-halo #root{ background:var(--bg); } /* Apparence \00ab Fond uni \00bb */
 #rest-over{font-size:11px;color:var(--gold);line-height:1.3;}
 #rest-over:empty{display:none;}
 #rest-consigne{font-size:11px;color:var(--gold);line-height:1.3;display:none;}   /* IMPORT-IA-FIDELITE-01 : consigne de repos écrite (plage) */
-#rest-bar #rest-consigne{margin-top:4px;text-align:center;}
+#rest-bar #rest-consigne{margin-top:2px;text-align:center;}
 #ov-rest-edit .re-cons-txt{text-align:center;font-size:15px;font-weight:800;color:var(--gold);margin:-2px 0 8px;}
 /* Écran GO : après 5 s sans tap, cycle de couleurs (attrape-l'œil) */
 #ov-rest-countdown.go-cycle{animation:goCycle 3.2s linear infinite;}
@@ -210,11 +240,12 @@ html.no-halo #root{ background:var(--bg); } /* Apparence \00ab Fond uni \00bb */
 #rest-bar .rd-skip{color:#fff;background:var(--sea-fill);box-shadow:none;}
 #rest-fill{height:100%;background:var(--sea);border-radius:3px;transition:width .5s linear,background .4s;}
 #rest-btns{display:flex;gap:6px;align-items:center;flex:none;}
-#rest-rir{margin-top:12px;padding-top:10px;border-top:1px solid var(--sep);}
+#rest-rir{margin-top:5px;}
 #rest-rir:empty{display:none;}
-#rest-bar .rir-lbl{font-size:13.5px;font-weight:700;color:var(--t1);text-align:left;margin-top:0;}
-#rest-bar .rir-row{justify-content:stretch;flex-wrap:nowrap;margin-top:9px;}
-#rest-bar .rir-b{flex:1;min-width:0;height:42px;}
+#rest-bar .rir-lbl{font-size:12px;line-height:1.1;font-weight:700;color:var(--t1);text-align:left;margin-top:0;}
+#rest-bar .rir-row+.rir-lbl{margin-top:6px;}   /* superset : une question par exercice */
+#rest-bar .rir-row{justify-content:stretch;flex-wrap:nowrap;margin-top:2px;}
+#rest-bar .rir-b{flex:1;min-width:0;height:40px;}
 /* 💪 D-093 — SIX RÉPONSES (Échec | 0 | 1 | 2 | 3 | 4+) + « ✕ » sur UNE ligne, aucune sous 36 px à 360 px (mesuré). « Échec » est
    un mot : un peu plus de place et une police resserrée ; « ✕ » garde une largeur fixe. L'ancien 0 se signale en petit. */
 #rest-bar .rir-row{gap:5px;}
@@ -232,15 +263,15 @@ html.no-halo #root{ background:var(--bg); } /* Apparence \00ab Fond uni \00bb */
    « Passer » au bout, en Cobalt. Toucher le temps ouvre « Régler ». Les libellés de repos (`#rest-label`, `#rest-over`)
    passent sous la rangée. ⛔ Affichage seul : `startRest` / `updRest` / `addRT` / `skipRest` ne changent pas. */
 #rest-bar .rd-top{gap:6px;}
-#rest-bar .rbtn{height:48px;min-width:52px;padding:0 9px;white-space:nowrap;}
+#rest-bar .rbtn{height:44px;min-width:52px;padding:0 9px;white-space:nowrap;}
 #rest-bar .rd-skip{padding:0 12px;}
-#rest-bar .rd-time{flex:1;min-width:0;height:52px;justify-content:center;gap:8px;margin:0;padding:0 8px;border-radius:16px;background:var(--sea-a);box-shadow:inset 0 0 0 1px var(--sea-a2);}
-#rest-bar .rd-ring{width:34px;height:34px;}
+#rest-bar .rd-time{flex:1;min-width:0;height:44px;justify-content:center;gap:8px;margin:0;padding:0 8px;border-radius:16px;background:var(--sea-a);box-shadow:inset 0 0 0 1px var(--sea-a2);}
+#rest-bar .rd-ring{width:30px;height:30px;}
 #rest-bar .rd-tt{display:flex;flex-direction:column;align-items:flex-start;flex:none;min-width:0;}
-#rest-bar .rd-l{font-size:9.5px;letter-spacing:.1em;line-height:1.1;}
-#rest-bar #rest-time{font-size:32px;line-height:1;}
+#rest-bar .rd-l{font-size:9px;letter-spacing:.1em;line-height:1.1;}
+#rest-bar #rest-time{font-size:28px;line-height:1;}
 #rest-bar .rd-pen{width:13px;height:13px;}
-#rest-bar #rest-label,#rest-bar #rest-over{margin-top:6px;text-align:center;}
+#rest-bar #rest-label,#rest-bar #rest-over{margin-top:3px;text-align:center;}
 /* Gaucher : « Passer » passe à gauche, mais −15 s / temps / +15 s gardent leur ordre (se lisent toujours de gauche à droite). */
 #root.lh #rest-bar .rd-top{flex-direction:row;}
 #root.lh #rest-bar .rd-skip{order:-1;}
@@ -671,6 +702,16 @@ details.jr-sec[open]>summary::after{transform:rotate(45deg);}
    Affichage seul : ni taille ni position ne changent (règle d'or n°9 : le bouton central « + » ne bouge pas). */
 .sinp.sinp-nr{border-style:dashed;border-color:var(--gold);}
 .sinp.sinp-nr::placeholder{color:var(--t3);font-weight:700;}
+/* ⚖️ D-164 (16/11/2026) — LE PAVÉ DE CHARGE : trois choix manuels (« PDC » · « PDC + lest » · « PDC − assistance ») qui n'apparaissent QUE pendant que le champ de charge a le doigt.
+   Ils sont POSÉS PAR-DESSUS la ligne d'AU-DESSUS (`position:absolute`, aucune hauteur ajoutée à la page) : ni la liste des séries ni le bouton central « + » ne bougent (règle d'or n°9), quand
+   le champ est quitté ils disparaissent sans déplacer ce que le doigt vise, et — au-dessus du champ, pas en dessous — ils restent HORS du clavier (D-085 ramène la ligne en cours juste au-dessus
+   de lui). Un champ au poids du corps est cerné en pointillé, texte réduit pour tenir « PDC+10 ». */
+#s-log [id^="sr-wrap-"]{position:relative;}
+.kgm{display:none;position:absolute;left:8px;right:4px;bottom:100%;z-index:6;gap:6px;padding:6px;margin-bottom:-3px;border-radius:12px;background:var(--bg2);border:1px solid var(--sep);box-shadow:0 -6px 18px rgba(0,0,0,.35);}
+.set-row:has(input[inputmode="decimal"]:focus)+.kgm{display:flex;}
+.kgm-b{flex:1;min-width:0;height:36px;padding:0 4px;border:1px solid var(--sep);border-radius:9px;background:var(--bg3);color:var(--t2);font-size:12px;font-weight:700;font-family:var(--font);cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.kgm-b.on{border-color:var(--sea);color:var(--t1);background:var(--sea-a);}
+.sinp.sinp-pdc{border-style:dashed;border-color:var(--sea);font-size:12px;padding-left:1px;padding-right:1px;}
 .reps-nr-hint{font-size:11px;line-height:1.35;color:var(--gold);padding:4px 12px 2px;}
 input.reps-nr{border-style:dashed !important;border-color:var(--gold) !important;}
 input.reps-nr::placeholder{color:var(--t3);}
@@ -907,12 +948,12 @@ input.reps-nr::placeholder{color:var(--t3);}
   .la-cta-t b{font-size:17px;}
   .rd-ring{width:44px;height:44px;}
   #rest-time{font-size:26px;}
-  #rest-bar .rd-ring{width:30px;height:30px;}                 /* D-086 */
+  #rest-bar .rd-ring{width:26px;height:26px;}                 /* D-086 */
   #rest-bar #rest-time{font-size:28px;}
   #rest-bar .rbtn{min-width:48px;padding:0 7px;}
   #rest-bar .rd-time{gap:6px;padding:0 6px;}
   #rest-bar .rbtn{min-width:42px;padding:0 8px;}
-  #rest-bar{padding:12px 10px 12px 12px;}
+  #rest-bar{padding:4px 8px;}
   .rd-top{gap:10px;}
   .lf-kv{gap:14px;}
 }
@@ -1833,6 +1874,22 @@ html.ob-done #onboarding{display:none;}
 /* le bandeau a déjà géré l'encoche → on réduit le padding haut de la topbar en mode démo */
 #root.demo-on .topbar{ padding-top:14px; }
 
+/* ─── Bandeau MISE À JOUR (MAJV, 15/11/2026) ─────────────────── */
+/* ⛔ EN FLUX, COMME LE MODE DÉMO : il pousse le contenu vers le bas au lieu de le recouvrir (un avis qui cache l'en-tête d'un écran se met en travers de ce que la personne
+   fait — R24). La barre du bas est ancrée en bas (`.nav{position:absolute;bottom:0}`) : le bouton central ne bouge pas (règle d'or #9, mesuré par le banc MAJV-F).
+   « Redémarrer maintenant » ET « Plus tard » font 40 px de haut au moins : une sortie qu'on ne peut pas viser du pouce n'est pas une sortie. `.maj-on` pose le droit
+   de s'afficher (app.js `_majRefresh`) : une mise à jour disponible ET sûre (jamais pendant une séance, son enregistrement, la génération ou la consultation du briefing…) se PROPOSE sur TOUS les écrans,
+   l'Accueil compris (CE lot M, D-170 : l'exception « pas sur l'Accueil » est retirée — une seule règle, R2). ⚠️ L'Accueil applique toujours la mise à jour tout seul quand rien ne l'interdit (décision
+   ft-v1184, inchangée) : le bandeau n'y reste donc visible que si l'application automatique n'a pas lieu ; supprimer ce rechargement automatique est une décision de Michel, non prise ici. */
+#maj-banner{ display:none; flex-direction:column; gap:6px; background:var(--bg2); border-bottom:1px solid var(--sep); color:var(--t1); font-size:12.5px; font-weight:700; padding:max(env(safe-area-inset-top),8px) 12px 8px; flex-shrink:0; }
+#maj-banner .maj-act{ display:flex; gap:8px; }
+#maj-banner button{ flex:1 1 0; min-height:40px; padding:0 12px; border-radius:10px; border:1px solid var(--sep); background:var(--bg3); color:var(--t1); font-family:var(--font); font-size:12.5px; font-weight:800; cursor:pointer; touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
+#maj-banner #maj-restart{ background:var(--red); border-color:transparent; color:#fff; }
+#root.maj-on #maj-banner{ display:flex; }
+/* le bandeau a déjà géré l'encoche → on réduit le padding haut de la topbar (même geste que le mode démo) */
+#root.maj-on .topbar{ padding-top:10px; }
+.app-maj:empty{ display:none; }
+
 /* ─── Guide de l'application (diaporama) ─────────────────────── */
 .ag-dot{ width:7px; height:7px; border-radius:50%; background:var(--sep); transition:all .25s; }
 .ag-dot.on{ background:var(--red); width:22px; border-radius:4px; }
@@ -2316,3 +2373,37 @@ html.ob-done #onboarding{display:none;}
 .imp-rpe-c .imp-rpe-b{border-color:var(--gold);color:var(--gold);}
 .imp-rpe-a{display:flex;gap:6px;margin-top:8px;}
 .imp-rpe-a input{flex:1;min-width:0;min-height:36px;border-radius:9px;border:1px solid var(--sep);background:var(--bg2);color:var(--t1);padding:0 10px;font-size:16px;font-family:var(--font);}
+/* ✏️ ÉDITEUR DE PROGRAMME — UNE LIGNE PAR SÉRIE : N° · type · charge · vide · reps · max · repos · × (mission « import PDF », 15/11/2026 — lot C).
+   Une grille, la MÊME pour l'en-tête et les lignes : l'en-tête reste aligné de 375 à 430 px de large. Champs et boutons de 34 px de haut (cible du pouce), police de 16 px dans
+   les champs (iPhone zoome la page à la mise au point d'un champ plus petit). Sans la colonne « max » (`.pe-nomax`) la grille perd sa 6ᵉ colonne.
+   ⛔ Le TYPE réutilise la pastille de la séance (`.tbtn` : mêmes couleurs, mêmes modes daltoniens) ; « vide » et « max » partagent `.pe-tg` (même bascule, R13). */
+.pe-hdr,.pe-row{display:grid;grid-template-columns:30px 34px minmax(52px,1fr) 30px 46px 34px minmax(58px,.8fr) 24px;column-gap:3px;align-items:center;}
+.pe-hdr.pe-nomax,.pe-row.pe-nomax{grid-template-columns:30px 34px minmax(52px,1fr) 30px 46px minmax(58px,.8fr) 24px;}
+.pe-hdr{font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.04em;padding:0 0 3px;}
+.pe-hdr span{min-width:0;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pe-hdr .pe-h2{grid-column:span 2;}
+.pe-row{padding:2px 0;}
+.pe-num{font-size:12px;color:var(--t2);text-align:center;}
+.pe-up{height:34px;width:100%;padding:0;border:none;background:none;font-family:var(--font);cursor:pointer;text-decoration:underline dotted;text-underline-offset:3px;}   /* D-171 : le numéro d'une série (dès la 2ᵉ) la monte d'un cran */
+/* D-171 (cible tactile, lot 1 du 16/11) : mesuré 24 × 34 px (390 et 375) — étroit pour un doigt. La colonne passe à 30 px (la grille garde ses minima) ET la zone TOUCHABLE déborde de 10 px à gauche (la marge de la carte, rien n'y est posé) et de 4 px en haut et en bas (les lignes sont espacées de 4 px) :
+   ≈ 41 px de large, toute la hauteur de la ligne — sans toucher à la mise en page ni à la pastille de type voisine (à droite, la zone s'arrête au bord du numéro). */
+.pe-up{position:relative;overflow:visible;}   /* `overflow:visible` : la règle générale des boutons rogne (hidden), donc la zone élargie ci-dessous ne répondait pas au doigt (mesuré par balayage au pixel) */
+.pe-up::before{content:'';position:absolute;left:-10px;right:0;top:-4px;bottom:-4px;}
+.pe-in{width:100%;min-width:0;height:34px;padding:0 3px;font-size:16px;font-weight:700;text-align:center;border:1px solid var(--sep);border-radius:8px;background:var(--bg2);color:var(--t1);font-family:var(--font);outline:none;text-overflow:ellipsis;}
+.pe-in[type=number]{-moz-appearance:textfield;appearance:textfield;}
+.pe-in[type=number]::-webkit-inner-spin-button,.pe-in[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
+.pe-in::placeholder{color:var(--t3);font-weight:600;opacity:.8;}
+.pe-in[data-vide]{border-color:var(--orange);}
+.pe-in[data-vide]::placeholder{color:var(--orange);font-size:12px;font-weight:800;opacity:1;}
+.pe-in:focus{border-color:var(--red);}
+.pe-ty{height:34px;width:100%;padding:0;border-radius:8px;justify-content:center;font-size:15px;font-family:var(--font-cond);cursor:pointer;}
+.pe-ty.N{color:var(--t2);border-color:var(--sep);background:var(--bg2);}
+.pe-tg{height:34px;width:100%;padding:0;border:1px dashed var(--sep);border-radius:8px;background:transparent;color:var(--t3);font-size:10px;font-weight:800;font-family:var(--font);cursor:pointer;}
+.pe-tg[aria-pressed="true"]{border:1px solid var(--orange);background:rgba(255,109,0,.14);color:var(--orange);}
+.pe-maxi{height:34px;display:flex;align-items:center;justify-content:center;border:1px solid var(--orange);border-radius:8px;background:rgba(255,109,0,.14);color:var(--orange);font-size:13px;font-weight:800;cursor:pointer;}
+.pe-x{height:34px;width:100%;padding:0;border:none;background:none;color:var(--t3);font-size:18px;line-height:1;cursor:pointer;}
+/* D-171 : le commentaire PAR SÉRIE (ligne sous la série, dépliée à la demande) — 16 px dans le champ (iPhone ne zoome pas), hauteur qui suit le texte. */
+.pe-snote{display:flex;align-items:flex-start;gap:6px;padding:0 0 4px 27px;}
+.pe-snote>span{font-size:12px;color:var(--t3);padding-top:6px;flex-shrink:0;}
+.pe-snote>textarea{flex:1;min-width:0;resize:none;overflow:hidden;border:1px solid var(--sep);border-radius:8px;background:var(--bg2);color:var(--t2);font-size:16px;font-family:inherit;padding:5px 8px;line-height:1.35;min-height:34px;outline:none;caret-color:var(--red);box-sizing:border-box;}
+.pe-snote>textarea:focus{border-color:var(--red);}

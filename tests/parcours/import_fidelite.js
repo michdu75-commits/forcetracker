@@ -341,7 +341,7 @@ module.exports.ecran = async function (t, b, PORT) {
     const ok = await pg.evaluate(() => { impGrouperEch(0, _impExtracted.days[0].exercises.findIndex(e => e._propRole === 'travail')); return JSON.parse(JSON.stringify(_impExtracted.days[0].exercises)); });
     const fus = ok[0];
     t('IIF-E03 ⭐⭐ GUIDÉ — ' + forme + ' : après « Regrouper » = UN exercice de 5 séries ÉÉNNN, nom fidèle au document (« … / haltères »), ordre 10-5-8-8-8',
-      ok.length === 2 && fus.name === 'Presse épaules guidée / haltères' && (fus.setTypePerSet || []).join('') === 'WW' + '' && fus.repsPerSet.join() === '10,5,8,8,8' && fus.kgPerSet.join() === '0,0,50,50,50', js({ n: ok.length, name: fus.name, types: fus.setTypePerSet, reps: fus.repsPerSet, kg: fus.kgPerSet }));
+      ok.length === 2 && fus.name === 'Presse épaules guidée / haltères' && (fus.setTypePerSet || []).join('') === 'WW' + '' && fus.repsPerSet.join() === '10,5,8,8,8' && fus.kgPerSet.map(k => k || 0).join() === '0,0,50,50,50', js({ n: ok.length, name: fus.name, types: fus.setTypePerSet, reps: fus.repsPerSet, kg: fus.kgPerSet }));
     const pr = await enregistrer();
     const e5 = pr.days[0].exs[0];
     t('IIF-E04 GUIDÉ — ' + forme + ' : enregistré, types ÉÉNNN, repos [60 s, plage « 60-90 s » → 60 s, 2 min ×3] sans décalage, notes de l\'échauffement conservées',
@@ -493,7 +493,7 @@ module.exports.ecran = async function (t, b, PORT) {
     S.customExercises = []; persist();
     _impExtracted.name = 'Force 5x5';
     _setImpMode('replace');
-    const sel = document.getElementById('imp-replace-sel'); const opts = [...sel.options].map(o => o.textContent);
+    const sel = document.getElementById('imp-replace-sel'); const opts = [...sel.options].filter(o => o.value !== '').map(o => o.textContent);   // IMPORT PDF 15/11 : la 1ʳᵉ option est « Choisir le programme à remplacer » (aucune présélection)
     sel.value = '1';
     finalImportProg();                                                // AVANT la confirmation : rien ne doit bouger
     const dlg = document.getElementById('ov-confirm'), msg = document.getElementById('confirm-msg').textContent;
@@ -590,7 +590,10 @@ module.exports.ecran = async function (t, b, PORT) {
     chrono(jB) === '130|130|130' && jB.every(x => x.enCours), js(jB.map(x => x.appel)));
   await poser([ancien('A', 180)]);
   const intact = await pg.evaluate(() => {
-    const snap = () => JSON.stringify(S.programmes) + '§' + localStorage.getItem('ft4_progs');
+    /* ⚠️ RÉÉCRIT LE 16/11/2026 (lot 1 « contre-expertise », D-163) : le chargement POSE désormais, paresseusement, les IDENTITÉS (programme, jour, exercice `exId`, série `sid` — jamais deux fois la même) : c'est la seule écriture. L'invariant est gardé ENTIER —
+       aucune valeur, aucun type, aucun repos, aucun libellé n'est réécrit : la comparaison ignore ces quatre identités et rien d'autre. */
+    const IDENT = (k, v) => (k === 'exId' || k === 'sid' || (k === 'id' && /^[jp][0-9a-z]{12}$/.test(String(v)))) ? undefined : v;
+    const snap = () => JSON.stringify(S.programmes, IDENT) + '§' + JSON.stringify(JSON.parse(localStorage.getItem('ft4_progs')), IDENT);
     const av = snap();
     S.wkt = null; _loadProgDayVraiment(0, 0); toggleSet(0, 0); toggleSet(0, 1); stopRest();
     return { egal: av === snap(), plein: av.length > 50, marque: S.wkt.exs.map(e => Object.prototype.hasOwnProperty.call(e, 'dropChaine')) };
@@ -783,7 +786,8 @@ module.exports.ecran = async function (t, b, PORT) {
       { name: 'Tractions', note: '', sets: [{ kg: 0, reps: 0, maxi: true, type: 'N', rest: 90 }] }] }] },
       { id: 'pH2', name: 'Ancien 1 jour', weeks: 0, startDate: '', exs: [{ name: 'Curl barre EZ', note: '', sets: [{ kg: 20, reps: 0, type: 'N', rest: 90 }, { kg: 20, reps: 8, type: 'N', rest: 90 }] }] }];
     S.sessions = []; S.wkt = null;
-    const avant = JSON.stringify(S.programmes);
+    const IDENT = (k, v) => (k === 'exId' || k === 'sid' || (k === 'id' && /^[jp][0-9a-z]{12}$/.test(String(v)))) ? undefined : v;   // RÉÉCRIT 16/11 (D-163) : seules les identités (programme, jour, exercice, série) se posent au chargement
+    const avant = JSON.stringify(S.programmes, IDENT);
     _loadProgDayVraiment(0, 0);
     const a = S.wkt.exs.map(e => e.sets.map(s => [s.reps, !!s.maxi]));
     S.wkt = null; loadProg(1);
@@ -791,7 +795,7 @@ module.exports.ecran = async function (t, b, PORT) {
     S.wkt = null; _loadProgDayVraiment(0, 0);
     toggleSet(1, 0);                                            // la série « maxi » se valide comme avant (sans nombre exigé)
     const maxiValide = S.wkt.exs[1].sets[0].done; stopRest();
-    return { a, b, maxiValide, intacte: avant === JSON.stringify(S.programmes) };
+    return { a, b, maxiValide, intacte: avant === JSON.stringify(S.programmes, IDENT) };
   });
   t('IIF-K16 ⭐⭐ DONNÉES D\'AVANT — un programme enregistré avec `reps: 0` (ou sans reps) charge toujours 10 (jour) / 5 (programme simple), `12` reste 12, une série « maxi » reste 0 et se valide comme avant ; rien n\'est réécrit',
     JSON.stringify(hist.a) === '[[[10,false],[12,false],[10,false]],[[0,true]]]' && JSON.stringify(hist.b) === '[[[5,false],[8,false]]]' && hist.maxiValide === true && hist.intacte, js(hist));
@@ -923,11 +927,11 @@ module.exports.ecran = async function (t, b, PORT) {
     editProg(0);
     const ex = _editProgData.days[0].exs[0]; const longue = 'RIR 2 | ' + 'consigne du coach '.repeat(25);      // ≈ 450 caractères
     ex.note = longue; _setProgExNote(0, 0, longue + ' +ajout'); const apres = ex.note;
-    ex.note = 'courte'; _setProgExNote(0, 0, 'x'.repeat(400)); const plafond = ex.note.length;                     // un commentaire TAPÉ reste plafonné à 300
-    closeProgEdit(); return { avant: longue.length, apres: apres.length, plafond };
+    ex.note = 'courte'; _setProgExNote(0, 0, 'x'.repeat(400)); const tape = ex.note.length;                        // ⚠️ MIS À JOUR LE 15/11/2026 (mission « import PDF », lot C : « sans troncature ») : un commentaire TAPÉ de 400 caractères est gardé EN ENTIER — le plafond de 300 est supprimé (il ne reste qu'un plafond de sûreté de 4 000, éprouvé par B-EDP-C)
+    closeProgEdit(); return { avant: longue.length, apres: apres.length, tape };
   });
-  t('IPDF-E01 ⭐ un commentaire IMPORTÉ de ≈450 caractères survit à la première frappe (aucune coupure silencieuse) ; un commentaire TAPÉ reste plafonné à 300',
-    note.apres === note.avant + ' +ajout'.length && note.plafond === 300, js(note));
+  t('IPDF-E01 ⭐ un commentaire IMPORTÉ de ≈450 caractères survit à la première frappe (aucune coupure silencieuse) ; un commentaire TAPÉ de 400 caractères est gardé EN ENTIER (plus de plafond de 300 — mission du 15/11/2026)',
+    note.apres === note.avant + ' +ajout'.length && note.tape === 400, js(note));
 
   // ── les FORMES du marqueur (à la fin, après un séparateur) et les CONTRE-EXEMPLES (R29 : sans preuve, rien ne bouge) ──
   const mini = (nomEch, nomTrav, extraEch, extraTrav) => [

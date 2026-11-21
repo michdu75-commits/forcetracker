@@ -834,9 +834,9 @@ const N=await p.evaluate(()=>{
   _setProgExNote(0,0,'Dos calé, cran 4, prise serrée');
   _renderProgEdit();
   out.reRender=(document.getElementById('prog-note-0-0')||{}).value==='Dos calé, cran 4, prise serrée';
-  // 3. Plafond 300 caractères (le même que l'import de programme) + champ vidé = note retirée
+  // 3. ⚠️ MIS À JOUR LE 15/11/2026 (mission « import PDF », lot C : « sans troncature ») — plus de plafond de 300 : un commentaire de 400 caractères est gardé EN ENTIER (plafond de sûreté de 4 000, éprouvé par B-EDP-C) ; champ vidé = note retirée
   _setProgExNote(0,1,'x'.repeat(400));
-  out.cap=(_progEditEx(0,1).note||'').length===300;
+  out.cap=(_progEditEx(0,1).note||'').length===400;
   _setProgExNote(0,1,'   ');
   out.vide=_progEditEx(0,1).note===undefined;
   // 4. « Enregistrer » écrit la consigne dans le programme
@@ -855,7 +855,7 @@ const N=await p.evaluate(()=>{
 });
 t('l\'éditeur montre un champ 💬 par exercice', N.champ0&&N.champ1);
 t('la consigne survit à un re-render de l\'éditeur', N.reRender);
-t('plafond 300 caractères (comme l\'import)', N.cap);
+t('un commentaire de 400 caractères est gardé EN ENTIER (plus de plafond de 300 — mission du 15/11/2026)', N.cap);
 t('champ vidé = note retirée du programme', N.vide);
 t('« Enregistrer » écrit la consigne dans le programme (et pas ailleurs)', N.sauve&&N.sansNote);
 t('programme 1 jour chargé en séance : la consigne suit (bug jumeau loadProg corrigé)', N.enSeance);
@@ -4867,8 +4867,12 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   else{
     t('⚠️ non-régression : pendant une séance, aucune mise à jour', U.pendantSeance===false);
     t('⭐⭐ le récapitulatif de fin de séance n\'est plus coupé par la mise à jour', U.pendantRecap===false);
-    t('⭐ on ne recharge pas non plus pendant qu\'on lit le Coach', U.surCoach===false);
-    t('⭐ de retour à l\'accueil, rien en cours : la mise à jour s\'applique', U.surAccueil===true);
+    /* ⭐ RÉÉCRIT le 17/11/2026 (lot M, D-170 : plus de rechargement automatique, même sur l'Accueil). AVANT : « on ne recharge pas non plus pendant qu'on lit le Coach » (la décision disait NON hors de l'Accueil) et « de retour à l'accueil :
+       la mise à jour s'applique » (toute seule). L'INVARIANT GARDÉ : on ne recharge JAMAIS pendant qu'on lit le Coach — il est désormais tenu pour TOUS les écrans par SCMAJ-P6 (aucun déclencheur n'appelle `_appliquerMaj`) et SCMAJ-A7 / MAJV-A9
+       (la page reste, l'écran ne change rien). CHANGÉ : l'écran n'est plus une raison d'attendre — la décision « peut-on appliquer ? » ne dit plus que si une OPÉRATION est en cours ; sur le Coach comme sur l'Accueil elle dit OUI, parce que
+       c'est la personne qui choisit (« Mettre à jour »), jamais l'application. Ce qui rougirait : un retour de la condition d'écran (décision qui redit NON sur le Coach) OU d'un rechargement automatique (P6 / A7). */
+    t('⭐ lire le Coach n\'empêche plus la DÉCISION (l\'écran n\'est plus une raison d\'attendre : la personne choisit) — et plus rien ne recharge tout seul (SCMAJ-P6, SCMAJ-A7)', U.surCoach===true);
+    t('⭐ de retour à l\'accueil, rien en cours : la mise à jour PEUT s\'appliquer quand la personne la demande (elle ne part plus toute seule — SCMAJ-A7)', U.surAccueil===true);
     t('⚠️ sans mise à jour en attente, il ne se passe rien', U.sansMaj===false);
   }
   try{ await p.evaluate(()=>{ S.wkt=null; window._swReloadPending=false; }); }catch(e){}
@@ -32928,6 +32932,13 @@ console.log('\n-- CCLXXIX. Les résultats de recherche sont VISIBLES (ft-v1182) 
       if(ok){ T.push({ecran:window._curScreen}); window._swReloadPending=false; }
       return ok;
     };
+    /* 🔒 RÉÉCRIT le 17/11/2026 (lot M, D-170 : plus AUCUN rechargement automatique, même sur l'Accueil — Michel). AVANT, ce bloc comptait les appels de `_appliquerMaj` faits par `persist()`, par la sortie du récapitulatif et par le retour à
+       l'Accueil, et exigeait « ≥ 1 » dès qu'on sort vers l'Accueil (« elle repart ») : il APPROUVAIT le rechargement automatique que Michel a retiré. L'INVARIANT GARDÉ, tel quel : PENDANT la fin de séance, la lecture du débrief et sur les
+       refus de `finishWorkout`, la décision dit NON (aucun rechargement, aucune proposition) et le verrou se lève ; dès qu'on SORT, elle dit OUI. CE QUI CHANGE : « OUI » ne veut plus dire « la page se recharge » mais « la mise à jour se
+       PROPOSE » (`_majRefresh`, comptée dans P) ; T (les rechargements réels, via `_appliquerMaj`) doit rester à ZÉRO partout : seul le choix explicite de la personne l'appelle (la non-régression ci-dessous l'appelle à la main, comme le bouton).
+       Ce qui rougirait : un déclencheur qui rappelle `_appliquerMaj` (T > 0) ou une décision qui se tait au lieu de se proposer (P = 0). */
+    const P=[]; const vraiRef=window._majRefresh;
+    window._majRefresh=function(){ if(window._swReloadPending&&_majPeutSAppliquer()) P.push({ecran:window._curScreen}); return vraiRef.apply(this,arguments); };
     const of=window.fetch;
     window.fetch=function(u){ if(/script\.google|workers\.dev/.test(String(u)))
       return Promise.resolve(new Response(JSON.stringify({reply:'ok'}),{status:200,headers:{'Content-Type':'application/json'}}));
@@ -32938,10 +32949,11 @@ console.log('\n-- CCLXXIX. Les résultats de recherche sont VISIBLES (ft-v1182) 
       return !!(ov&&ov.classList.contains('open')); };
 
     /* ⭐⭐ LE TÉMOIN QUI PORTE LA VERSION — on rejoue SA séance, avec une mise à jour EN ATTENTE. */
-    S.sessions=[];S.prs={};persist(); T.length=0;
+    S.sessions=[];S.prs={};persist(); T.length=0; P.length=0;
     seance(); window._swReloadPending=true;
     await finishWorkout(); await new Promise(r=>setTimeout(r,600));
     o.rechargePendant = T.length;              // 0 attendu (1 avant le correctif)
+    o.proposePendant = P.length;               // 0 attendu : on ne PROPOSE pas non plus pendant la fenêtre de fin de séance
     o.ecranDeFinVisible = ouvert();
     o.majEncoreEnAttente = !!window._swReloadPending;
     /* ⛔⛔ ET PENDANT QU'ON LIT LE DÉBRIEF — c'est le contrôle négatif qui a exigé ce témoin :
@@ -32957,23 +32969,28 @@ console.log('\n-- CCLXXIX. Les résultats de recherche sont VISIBLES (ft-v1182) 
     else persist();
     await new Promise(r=>setTimeout(r,200));
     o.rechargePendantLecture = T.length;      // 0 attendu
+    o.proposePendantLecture = P.length;       // 0 attendu
     o.ecranTientPendantLecture = ouvert();
-    /* ⭐ LA MOITIÉ QUE MICHEL A DEMANDÉE : elle repart dès qu'on SORT. */
+    /* ⭐ LA MOITIÉ QUE MICHEL A DEMANDÉE : dès qu'on SORT, la mise à jour devient possible — elle se PROPOSE (lot M : plus de rechargement tout seul). */
     closeSessionEnd('home');
     await new Promise(r=>setTimeout(r,300));
-    o.rechargeApresSortie = T.length;          // ≥1 attendu
+    o.rechargeApresSortie = T.length;          // 0 attendu : jamais toute seule
+    o.proposeApresSortie = P.length;           // ≥1 attendu
     o.ecranApres = window._curScreen;
+    /* même débloquée, la décision ne fait rien partir seule : un enregistrement (`persist()`) rappelé rien en cours ne recharge toujours pas (le chemin que le lot M a retiré) */
+    persist(); await new Promise(r=>setTimeout(r,200));
+    o.rechargeApresPersist = T.length;         // 0 attendu
 
-    /* ⛔ SORTIE VERS LE COACH : elle attend, exprès — on ne recharge pas quelqu'un au milieu
-       d'une conversation avec Milo. C'est la règle « on n'applique que sur l'Accueil », et ce
-       témoin la FIGE pour qu'on ne l'élargisse pas par mégarde. */
-    S.sessions=[];S.prs={};persist(); T.length=0;
+    /* ⛔ SORTIE VERS LE COACH : on ne recharge pas quelqu'un au milieu d'une conversation avec Milo. Avant le lot M c'était « on n'applique que sur l'Accueil » ; maintenant plus RIEN ne se recharge tout seul, nulle part —
+       la mise à jour se propose seulement (bandeau non bloquant) et reste en attente jusqu'au choix de la personne. Ce témoin FIGE les deux. */
+    S.sessions=[];S.prs={};persist(); T.length=0; P.length=0;
     seance(); window._swReloadPending=true;
     await finishWorkout(); await new Promise(r=>setTimeout(r,600));
     closeSessionEnd('coach');
     await new Promise(r=>setTimeout(r,300));
     o.rechargeVersCoach = T.length;            // 0 attendu
     o.majApresCoach = !!window._swReloadPending;
+    o.proposeVersCoach = P.length;             // ≥1 : proposée, jamais appliquée
 
     /* ⛔⛔ LE VERROU DOIT SE LEVER SUR LES SORTIES EN ÉCHEC — sinon plus AUCUNE mise à jour ne
        s'applique jamais, et on aurait échangé un bug visible contre un bug muet. Les trois refus
@@ -32991,10 +33008,10 @@ console.log('\n-- CCLXXIX. Les résultats de recherche sont VISIBLES (ft-v1182) 
     const ovf=document.getElementById('ov-session-end'); if(ovf)ovf.classList.remove('open');
     goScreen('home',document.getElementById('nb-home'));
     T.length=0; window._swReloadPending=true;
-    window._appliquerMaj();
+    window._appliquerMaj();          // le choix explicite (le bouton « Mettre à jour » appelle exactement ceci, après `persist()`)
     o.majNormalePasse = T.length>0;
 
-    window.fetch=of; window._appliquerMaj=vrai; window._swReloadPending=false;
+    window.fetch=of; window._appliquerMaj=vrai; window._majRefresh=vraiRef; window._swReloadPending=false;
     return o;
    }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,180)};}
   });
@@ -33005,25 +33022,25 @@ console.log('\n-- CCLXXIX. Les résultats de recherche sont VISIBLES (ft-v1182) 
   else{
     t('CCLXXXI ⛔ CONTRÔLE — les 3 fonctions existent', R.existe===true, '');
     t('CCLXXXI ⭐⭐ AUCUN rechargement pendant la fin de séance (le défaut réparé)',
-      R.rechargePendant===0, 'rechargements : '+R.rechargePendant);
+      R.rechargePendant===0 && R.proposePendant===0, 'rechargements : '+R.rechargePendant+' · propositions : '+R.proposePendant);
     t('CCLXXXI ⭐⭐ ... et l\'écran de débrief est bien là, la mise à jour toujours en attente',
       R.ecranDeFinVisible===true && R.majEncoreEnAttente===true,
       'écran : '+R.ecranDeFinVisible+' · en attente : '+R.majEncoreEnAttente);
-    t('CCLXXXI ⛔⛔ PENDANT la lecture du débrief : noter son ressenti ne déclenche RIEN',
-      R.rechargePendantLecture===0 && R.ecranTientPendantLecture===true,
-      'rechargements : '+R.rechargePendantLecture+' · écran tient : '+R.ecranTientPendantLecture);
-    t('CCLXXXI ⭐ LA RÈGLE DE MICHEL — dès qu\'on SORT du débrief, la mise à jour repart',
-      R.rechargeApresSortie>R.rechargePendant && R.ecranApres==='home',
-      'après sortie : '+R.rechargeApresSortie+' · écran : '+R.ecranApres);
-    t('CCLXXXI ⛔ sortir vers le COACH ne recharge PAS (on n\'interrompt pas une conversation)',
-      R.rechargeVersCoach===0 && R.majApresCoach===true,
-      'rechargements : '+R.rechargeVersCoach+' · en attente : '+R.majApresCoach);
+    t('CCLXXXI ⛔⛔ PENDANT la lecture du débrief : noter son ressenti ne déclenche RIEN (ni rechargement, ni proposition)',
+      R.rechargePendantLecture===0 && R.proposePendantLecture===0 && R.ecranTientPendantLecture===true,
+      'rechargements : '+R.rechargePendantLecture+' · propositions : '+R.proposePendantLecture+' · écran tient : '+R.ecranTientPendantLecture);
+    t('CCLXXXI ⭐ LA RÈGLE DE MICHEL (lot M, D-170) — dès qu\'on SORT du débrief, la mise à jour devient possible : elle se PROPOSE, elle ne se recharge JAMAIS toute seule',
+      R.proposeApresSortie>R.proposePendant && R.rechargeApresSortie===0 && R.rechargeApresPersist===0 && R.ecranApres==='home',
+      'propositions après sortie : '+R.proposeApresSortie+' · rechargements : '+R.rechargeApresSortie+' · après un enregistrement : '+R.rechargeApresPersist+' · écran : '+R.ecranApres);
+    t('CCLXXXI ⛔ sortir vers le COACH ne recharge PAS (on n\'interrompt pas une conversation) : proposée, jamais appliquée, toujours en attente',
+      R.rechargeVersCoach===0 && R.majApresCoach===true && R.proposeVersCoach>0,
+      'rechargements : '+R.rechargeVersCoach+' · en attente : '+R.majApresCoach+' · propositions : '+R.proposeVersCoach);
     /* ⛔⛔ LES TÉMOINS LES PLUS IMPORTANTS DU BLOC : un verrou qui ne se lève pas est PIRE que
        pas de verrou — il éteindrait toutes les mises à jour, en silence. */
     t('CCLXXXI ⛔⛔ le verrou se LÈVE sur les 3 refus de finishWorkout (sinon plus jamais de maj)',
       R.refusSansSeance===false && R.refusSansExo===false && R.refusSansSerie===false,
       'sans séance : '+R.refusSansSeance+' · sans exo : '+R.refusSansExo+' · sans série : '+R.refusSansSerie);
-    t('CCLXXXI ⛔ NON-RÉGRESSION — hors fin de séance, une mise à jour en attente s\'applique',
+    t('CCLXXXI ⛔ NON-RÉGRESSION — hors fin de séance, une mise à jour en attente s\'applique quand la personne la demande (le choix explicite appelle `_appliquerMaj`)',
       R.majNormalePasse===true, 'appliquée : '+R.majNormalePasse);
     /* ⛔ Le lecteur est DÉFENSIF : `_finishing` vit dans log.js, chargé APRÈS app.js. Sans
        `typeof`, `_majPeutSAppliquer` lèverait une ReferenceError au premier appel. */
@@ -39298,10 +39315,75 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
      chrono réellement déclenché, aperçu fidèle, semaine sans date, programmes homonymes. Banc : tools/banc_import_fidelite.js ·
      contrôle négatif : tools/mut_import_fidelite.py. */
   await require('./import_fidelite.js').ecran(t, b, PORT);
+  /* ✏️ ÉDITEUR DE PROGRAMME (lot C de la mission « import PDF », 15/11/2026, GO de Michel) — l'éditeur permet de CONSULTER et de MODIFIER réellement
+     les prescriptions : n° · type (N → É → X, + « D » d'un dropset) · charge (virgule ou point, bornes) · « à vide » · reps · max · repos · commentaires
+     entiers (900 caractères, sans troncature), sur iPhone 375-430 px. Programme FICTIF ; supersets, dropsets, cardio, date de début préservés ; un ancien
+     programme ouvert puis enregistré reste IDENTIQUE. Blocs B-EDP-*. Banc : tools/banc_editeur_prescriptions.js · contrôle négatif : tools/mut_editeur_prescriptions.py. */
+  await require('./editeur_prescriptions.js').ecran(t, b, PORT);
   /* 📚 IMPORT-IA-FIDELITE-01 · CORPUS (session-C, 02/11/2026) — 16 programmes ENTIÈREMENT INVENTÉS (12 méthodes + 4 formats
      d'écriture) passés par la vraie chaîne : programme enregistré série par série, reconnaissance (aucun rattachement faux), chrono
      réellement déclenché pour chaque série. Banc : tools/banc_import_corpus.js · contrôle négatif : tools/mut_import_corpus.py. */
   await require('./import_corpus.js').ecran(t, b, PORT);
+  /* 📥 IMPORT PDF · LA CHAÎNE FIDÈLE (Claude N°2, 15/11/2026, mission prioritaire de Michel après la recette iPhone) — du document à la séance chargée :
+     charges jamais comblées ni décalées (« barre à vide » ≠ non renseignée, fourchettes, décimales), l'historique ne remplace plus les prescriptions d'un
+     programme importé à son 1ᵉʳ usage, « Remplacer » sans présélection avec début de cycle dit et conservé. Banc : tools/banc_import_chaine.js ·
+     contrôle négatif : tools/mut_import_chaine.py. */
+  await require('./import_chaine.js').ecran(t, b, PORT);
+  /* 🔁 SCHIS (Claude N°2, 16/11/2026, décisions de Michel D-163 · D-168 · D-171 · D-165 · D-167) — la séance d'un jour de programme : l'identité stable d'un jour (`id` du jour, `progDayId` de la séance),
+     1ᵉʳ usage = les prescriptions puis la dernière séance terminée de CE jour de CE programme (six familles dont un exercice personnalisé et un exercice fictif inédit, jours homonymes, renommage et
+     réorganisation, structures particulières, programmes manuels), une retouche manuelle de charge / de répétitions prioritaire pour ses seuls champs, l'éditeur par série (ajout · suppression ·
+     déplacement), rien de précoché à l'import, numéros des séries « en couleur » après un regroupement ; le vrai Code.js rend les nouvelles données telles quelles. Banc : tools/banc_seance_historique.js ·
+     contrôle négatif : tools/mut_seance_historique.py. */
+  await require('./seance_historique.js').ecran(t, b, PORT);
+  /* 🔁 SCCH (Claude N°2, lot 1 « contre-expertise », 16/11/2026, décisions de Michel D-163 · D-168 · D-171) — la règle du jour de programme vaut pour TOUS les programmes (anciens, non marqués, générés, de Milo ;
+     chronologie réelle ; identités de jour · d'exercice · de série : deux blocs de même nom réorganisés, série déplacée), le REPOS reprend l'historique sauf retouche, le commentaire PAR SÉRIE (éditeur, séance,
+     rechargement, enregistrement, sauvegarde / restauration), la cible tactile du numéro de série. Banc : tools/banc_seance_ce_h.js · contrôle négatif : tools/mut_seance_ce_h.py. */
+  await require('./seance_ce_h.js').ecran(t, b, PORT);
+  /* ⚖️ SCPDC · D-164 / D-166 (Claude N°2, 16/11/2026, GO limité de Michel) — la charge « au poids du corps » (PDC) est un CHOIX manuel de la personne (trois boutons sur le pavé de charge :
+     « PDC » · « PDC + lest » · « PDC − assistance »), jamais déduit d'un nom ou d'un type d'exercice, jamais converti en kilos : tonnage, records, calories, CSV inchangés, passé jamais recalculé ;
+     la dernière fois est reprise telle quelle ; l'import ne lit plus « 10 kg lest » ni « 2 haltères de 15 » comme des kilos. D-166 (haltères) : l'existant FIGÉ — un bras = la charge de chaque haltère,
+     deux bras = le total, jamais de double multiplication ni de nom. Cinq familles dont un exercice PERSONNALISÉ et un FICTIF. Banc : tools/banc_seance_pdc.js · contrôle négatif : tools/mut_seance_pdc.py. */
+  await require('./seance_pdc.js').ecran(t, b, PORT);
+  /* 🔄 MAJV (lot E · mission « import PDF fidèle », 15/11/2026) — la version affichée est celle du code qui TOURNE (plus la clé du cache) ; une mise à jour
+     en attente se VOIT (bandeau en flux, sortie « Plus tard ») sans jamais s'imposer ; jamais de séance interrompue, jamais de perte. VRAI service worker,
+     publications SIMULÉES, oracle indépendant de ce que l'app affiche. Banc : tools/banc_maj_version.js · contrôle négatif : tools/mut_maj_version.py. */
+  await require('./maj_version.js').ecran(t, b, PORT);
+  /* 🏋️ SCUI (Claude N°2, 16/11/2026, GO limité de Michel) — écran Séance en cours : D-173 supprimer PRÉCISÉMENT la série choisie (confirmation si pointée, les autres
+     séries intactes, la question du RIR suit sa série) · D-174 le dock de repos (donc le RIR) reste dans la fenêtre visible après un zoom, le zoom n'est jamais
+     désactivé · D-175 le bloc chrono + RIR est moins haut, cibles ≥ 40 px, rien ne chevauche. Vrai Chromium mobile ; le pan tactile n'est PAS rejouable (iPhone obligatoire).
+     Banc : tools/banc_seance_ui.js · contrôle négatif : tools/mut_seance_ui.py. */
+  await require('./seance_ui.js').ecran(t, b, PORT);
+  /* 🔒 SCMAJ (Claude N°2, 16/11/2026, D-170 : GO limité de Michel) — aucune mise à jour pendant la séance, son enregistrement, la GÉNÉRATION du briefing de Milo
+     (lente, rapide, en erreur, sans réponse) ni sa CONSULTATION ; les bilans de semaine / de mois ouverts la retiennent aussi ; un échec de génération se DIT (message +
+     « Réessayer », séance enregistrée) ; chaque verrou se lève (fin normale, échec, exception, délai de sécurité). VRAI service worker, publications SIMULÉES.
+     Banc : tools/banc_seance_maj.js · contrôle négatif : tools/mut_seance_maj.py. */
+  await require('./seance_maj.js').ecran(t, b, PORT);
+  /* ⚖️ SCCP (Claude N°2, mission corrective Séance du 16/11/2026, LOT 2 — D-164 · D-167) — les CINQ ÉTATS DE CHARGE (inconnue `null` · zéro · « à vide » · PDC / lest / assistance · kilos) gardent leur sens sur toute la chaîne
+     (import · programme · 1ᵉʳ chargement · séance · historique · « enregistrer en programme » · CSV / PDF · Milo · dégressifs) sans jamais PDC ET « à vide » ; un lest compte au tonnage et a son record dérivé (aucune règle d'assistance) ;
+     un échauffement d'un mouvement INCONNU n'est jamais rangé au cardio sans un oui de l'aperçu d'import. Cinq familles + un exercice perso + un fictif. Banc : tools/banc_seance_ce_p.js · contrôle négatif : tools/mut_seance_ce_p.py. */
+  await require('./seance_ce_p.js').ecran(t, b, PORT);
+  /* 🧭 SCCM (Claude N°2, CE lot M, 16/11/2026 : contre-expertise + D-176, GO limité de Michel) — D-170 : l'attente réseau SE TERMINE (corps de la réponse compris, requête annulée) et aucun verrou ne se lève par un
+     délai · le bandeau de mise à jour sur l'Accueil ; D-173 : supprimer la série choisie dans les structures dégressives, le sens PDC en attente suit sa série ; D-176 : l'en-tête global n'existe que sur l'Accueil
+     (écrans futurs compris, bouton central immobile). Vrai Chromium mobile ; `maj` = vrai service worker + serveur local fictif qui fige le corps de la réponse.
+     Banc : tools/banc_seance_ce_m.js · contrôle négatif : tools/mut_seance_ce_m.py. */
+  await require('./seance_ce_m.js').ecran(t, b, PORT);
+  await require('./seance_ce_m.js').maj(t, b);
+  /* 🔔 SCFM (Claude N°2, mission de fermeture, lot M, 17/11/2026) — D-170 : AUCUN rechargement automatique de mise à jour, même sur l'Accueil ; la version se propose (bandeau « Mettre à jour » / « Plus tard »), ne part que du choix
+     de la personne, jamais pendant une opération, aucune relance après « Plus tard » ; D-176 : accès au Menu. Vrai service worker, publications simulées. Banc : tools/banc_seance_cf_m.js · contrôle négatif : tools/mut_seance_cf_m.py. */
+  await require('./seance_cf_m.js').ecran(t, b);
+  /* 🧵 SCCX (Claude N°2, assemblage des trois lots, 16/11/2026) — l'INTERACTION des lots 1 (D-163 / D-168 / D-171), 2 (D-164 / D-167) et 3 (D-170 / D-173 / D-176) sur UN SEUL fil conducteur, aux vrais gestes :
+     deux jours de même libellé · états de charge (PDC + lest · assistance · « à vide » · zéro · inconnue) · commentaires par série · deux blocs homonymes · un dropset · la feuille « Quelle série supprimer ? » ·
+     l'éditeur (retouche, série déplacée) · séances A et B · suppression d'une série · « Sauvegarder comme programme » · tonnage et record de lest · export · contexte de Milo · en-tête global (D-176, règle d'or #9) ·
+     `maj` : « Terminer » pendant une mise à jour reçue, le corps de la réponse figé (D-170). Banc : tools/banc_seance_ce_x.js · contrôle négatif : tools/mut_seance_ce_x.py. */
+  await require('./seance_ce_x.js').ecran(t, b, PORT);
+  await require('./seance_ce_x.js').maj(t, b);
+  /* 🔒 SCFH (Claude N°2, lot H de la mission de fermeture, 17/11/2026, arbitrages de Michel) — deux exercices HOMONYMES ne se départagent jamais par le rang (« y compris si leurs commentaires coïncident ») ; quand la
+     dernière séance terminée du jour ne contient pas l'exercice, le chargement reprend la PRESCRIPTION (jamais une séance plus ancienne) ; valider une charge vide ne reprend JAMAIS la suggestion d'un AUTRE programme
+     (ni d'un autre jour, ni d'une séance libre) — inconnu ≠ zéro. Banc : tools/banc_seance_cf_h.js · contrôle négatif : tools/mut_seance_cf_h.py. */
+  await require('./seance_cf_h.js').ecran(t, b, PORT);
+  /* 🧹 SCFD (Claude N°2, lot D de fermeture, 17/11/2026) — D-173 : le PALIER ISOLÉ d'un dropset se supprime (premier / milieu / dernier, pointé ou non, PDC / lest, RIR, superset, déplacement, reprise) et le réglage
+     « nombre de paliers » SUIT ; le DERNIER palier restant est refusé et la feuille le dit (sémantique non décidée). Banc : tools/banc_seance_cf_d.js · contrôle négatif : tools/mut_seance_cf_d.py. */
+  await require('./seance_cf_d.js').ecran(t, b, PORT);
   /* 🔒 SEC-ADMIN-01 (session-B, 09/10/2026) — la route de diagnostic premium (S-01) et `testGardeFou` exigent le jeton admin
      côté serveur (refus sans rien lire ni écrire) ; le mode admin ne change plus l'identité locale ; la carte « Statut
      Premium » présente le jeton ; la carte des comptes dit qu'elle affiche des adresses. Vrai Code.js en local (doGet /
@@ -40184,7 +40266,15 @@ require('./progres_seances.js').source(t, ROOT, fs, path);
 require('./seance_date.js').source(t, ROOT, fs, path);
 require('./seance_repos.js').source(t, ROOT, fs, path);
 require('./import_fidelite.js').pur(t, ROOT, fs, path);   // IMPORT-IA-FIDELITE-01 : la lecture d'un repos écrit par un coach (constants.js exécuté)
+require('./editeur_prescriptions.js').pur(t, ROOT, fs, path);   // ÉDITEUR DE PROGRAMME (lot C, 15/11/2026) : le style retire les flèches des champs numériques (B-EDP-F)
 require('./import_corpus.js').source(t, ROOT, fs, path);  // IMPORT-IA-FIDELITE-01 : le corpus est sain (inventé, cohérent, au catalogue)
+require('./maj_version.js').pur(t, ROOT, fs, path);       // MAJV : APP_BUILD (le code) = const CACHE (sw.js) — le garde du 2ᵉ endroit qui porte le numéro
+require('./seance_ui.js').source(t, ROOT, fs, path);      // SCUI : le zoom n'est jamais désactivé ; le dock suit la fenêtre visible sans toucher au moteur du repos (D-174)
+require('./seance_cf_m.js').pur(t, ROOT, fs, path);       // SCFM (D-170, lot M de la fermeture) : un seul appelant du rechargement (le bouton), aucun minuteur de relance, rien côté service worker
+require('./seance_maj.js').pur(t, ROOT, fs, path);        // SCMAJ (D-170) : aucun verrou de mise à jour n'expire au bout d'un délai (réécrit au lot M), un seul entonnoir de rechargement, la décision lit toutes les raisons d'attendre
+require('./seance_ce_m.js').pur(t, ROOT, fs, path);       // SCCM (CE lot M) : l'attente réseau bornée de bout en bout (D-170), les paliers d'un dropset (D-173), l'en-tête global hors Accueil (D-176)
+require('./seance_ce_x.js').pur(t, ROOT, fs, path);       // SCCX (assemblage) : la feuille « Quelle série supprimer ? » dit la charge par le propriétaire de D-164 ; le banc d'interaction est enregistré
+require('./seance_cf_d.js').pur(t, ROOT, fs, path);       // SCFD (lot D de fermeture) : un palier isolé se supprime et le réglage suit (D-173), le dernier palier restant est refusé et dit
 require('./picker_vignettes.js').source(t, ROOT, fs, path);
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');

@@ -67,7 +67,10 @@ function fixture() {
   return out;
 }
 const cleDe = s => s.ts || s.id || 0;                  // la clé de la carte et de openSessDetail
-const OFF_DBF = -305;                                   // la séance au débrief rangé (année précédente)
+/* ⚠️ CALENDRIER (15/11/2026, BUGS §143 + §148) : la séance « au débrief rangé » doit tomber dans l'ANNÉE PRÉCÉDENTE (année REPLIÉE dans une app fraîche — PS-E29). −305 jours n'y tombait que
+   jusqu'au 01/11 ; depuis le 02/11 c'est janvier de l'année COURANTE, déjà dépliée : le témoin rougissait sur le code publié sans qu'un commit y soit pour rien. On prend la 1ʳᵉ séance ANCIENNE de la
+   fixture (J-35 − 15 k, k < 26 : la k = 26 est la séance volontairement légère de PS-E07) dont l'année est strictement antérieure à celle d'aujourd'hui. */
+const OFF_DBF = (() => { const an = jourParis(0).slice(0, 4); for (let k = 0; k < 26; k++) { const off = -35 - 15 * k; if (jourParis(off).slice(0, 4) < an) return off; } return -35 - 15 * 25; })();   // la séance au débrief rangé (année précédente)
 const TXT_DBF = 'DEBRIEF-PS01 rangé pour une vieille séance.';
 
 module.exports.fixture = fixture;
@@ -295,7 +298,9 @@ module.exports.ecran = async function (t, b, PORT) {
 
   /* ── 6. Le débrief d'une vieille séance reste atteignable, sans appel (invariant 6) ─────────── */
   const cDbf = tout.find(c => c.cle === cleDe(sDbf)) || {};
-  const autreVieille = tout.find(c => c.cle === cleDe(FIX[25])) || {};
+  /* ⚠️ CALENDRIER (T2, 15/11/2026) : « une vieille séance SANS débrief » est la 26ᵉ de la fixture (FIX[25]) — SAUF quand OFF_DBF tombe justement sur elle (du 17/11 au 01/12 de chaque année : la séance au
+     débrief rangé EST alors FIX[25] et PS-E15 lisait « Voir le débrief Milo »). Dans ce cas on prend sa voisine : toujours une vieille séance, jamais celle du débrief. Même choix qu'avant le reste de l'année. */
+  const autreVieille = tout.find(c => c.cle === cleDe(FIX.filter(s => s !== sDbf)[24])) || {};
   t('PS-E14 la séance du ' + sDbf.date + ' (hors des 20 dernières, autre année) montre « 💬 Voir le débrief Milo »',
     (cDbf.dbf || []).length === 1 && /Voir le débrief Milo/.test(cDbf.dbf[0]), JSON.stringify(cDbf));
   t('PS-E15 une vieille séance sans débrief propose « ✨ Analyser avec Milo » (jamais les deux)',

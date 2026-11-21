@@ -17,9 +17,13 @@
    ═════════════════════════════════════════════════════════════════════════════════════════════ */
 'use strict';
 
+/* ⚠️ CALENDRIER (15/11/2026, BUGS §143 + §148) : `ft4_lms` (« dernier bilan mensuel annoncé ») doit valoir le mois PRÉCÉDENT d'AUJOURD'HUI. « 2026-09 » en dur n'était juste qu'en octobre : depuis le
+   1ᵉʳ novembre `checkMonthlySummary()` ouvrait le bilan d'octobre 2,2 s après le démarrage, PAR-DESSUS la page, et interceptait les clics — le module PLANTAIT après 27 témoins (« #ov-month-summary
+   intercepts pointer events ») et SA SUITE (l'écran Séance, 42 témoins) n'était JAMAIS jouée par la passe complète. */
+const moisPrec = (() => { const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - 1); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); })();
 const BASE = { ft4_bw: '80', ft4_age: '40', ft4_ht: '178', ft4_gender: 'H', ft4_goal: 'force', ft4_ob2: '1', ft4_name: 'Test',
   ft4_email: 't@t.t', ft4_devtoken: 'f'.repeat(64), ft4_tester_eq_v1: '1', ft4_ok: '1', ft4_stmig1: '1',
-  ft4_guide_shown: '1', ft4_wn_seen: '999', ft4_lms: '2026-09' };
+  ft4_guide_shown: '1', ft4_wn_seen: '999', ft4_lms: moisPrec };
 const _det = o => JSON.stringify(o);
 const DC = 'Développé Couché', DM = 'Développé Militaire';
 // Une séance passée (pour « Dernière séance » et la colonne Précédent) et trois programmes.
@@ -97,7 +101,12 @@ async function ecran(t, b, PORT) {
       cta.lib !== null && cta.pro !== null && cta.proTop >= cta.lib - 2 && /openProgModal\(/.test(cta.proOnclick || '') && (cta.types === null || cta.pro <= cta.types) && (cta.cardio === null || cta.pro <= cta.cardio), _det(cta));
     t('B-UXS-A3 avant séance : aucun « Ajouter un exercice » (le geste d\'une séance déjà ouverte)', (await parTexte(X, 'Ajouter un exercice')) === 0, '');
     t('B-UXS-A4 ⭐ le cardio n\'est pas dominant : il vient APRÈS Séance libre, Programme et les types de séance', cta.cardio !== null && cta.cardio > cta.pro && (cta.types === null || cta.cardio > cta.types), _det(cta));
-    t('B-UXS-A5 avant séance, la barre de marque reste (logo visible) et l\'en-tête de séance est absent', (await rect(X, '#tb-logo')) !== null && (await parTexte(X, 'Séance en cours', '.topbar *')) === 0, '');
+    /* RÉÉCRIT le 16/11/2026 (CE lot M, D-176 de Michel : l'en-tête GLOBAL n'existe que sur l'Accueil). AVANT : « avant séance, la barre de marque reste (logo visible) et l'en-tête de séance est absent » — la 1ʳᵉ moitié approuvait
+       l'ancien comportement (logo sur l'écran Séance), que la décision retire. L'INVARIANT GARDÉ : avant séance, l'en-tête de SÉANCE est absent (aucun « Séance en cours », aucune commande « Terminer » dans la barre haute) — et la marque
+       ne le remplace pas non plus. AJOUTÉ : le logo n'est plus visible sur l'écran Séance (l'écran porte son propre titre « Séance »), et il l'est toujours sur l'Accueil (le test rougit si l'en-tête disparaît partout). */
+    t('B-UXS-A5 avant séance : l\'en-tête GLOBAL (logo) n\'est plus sur l\'écran Séance (D-176) mais le titre « Séance » est là, l\'en-tête de séance est absent, et le logo est bien sur l\'Accueil',
+      (await rect(X, '#tb-logo')) === null && (await parTexte(X, 'Séance en cours', '.topbar *')) === 0 && (await rect(X, '#log-hdr .log-h1')) !== null
+      && await (async () => { await X.pg.evaluate(() => goScreen('home', document.getElementById('nb-home'))); await X.pg.waitForTimeout(250); const r = await rect(X, '#tb-logo'); await X.pg.evaluate(() => goScreen('log', document.getElementById('nb-log'))); await X.pg.waitForTimeout(250); return r !== null; })(), '');
     t('B-UXS-A6 aucun « + Créer ma séance » à l\'écran (libellé remplacé par la décision du 16/10)', (await parTexte(X, 'Créer ma séance')) === 0, '');
     t('B-UXS-A7 la date de la séance reste réglable (étiquette liée au champ date) et dit « Aujourd\'hui » le jour même',
       await X.pg.evaluate(([VIS]) => { const vis = eval(VIS); const l = [...document.querySelectorAll('label[for="s-date"]')].filter(vis); return l.length >= 1 && /Aujourd/.test(l[0].textContent); }, [VIS]), '');

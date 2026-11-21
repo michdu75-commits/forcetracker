@@ -36,13 +36,17 @@ module.exports.source = function (t, ROOT, fs, path) {
   const nu = f => fs.readFileSync(path.join(ROOT, f), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '');
   const lo = nu('log.js'), co = nu('coach.js');
   const corps = (src, nom) => { const i = src.indexOf('function ' + nom + '('); if (i < 0) return ''; const j = src.indexOf('\nfunction ', i + 10); return src.slice(i, j < 0 ? undefined : j); };
-  const aide = corps(lo, '_recopierDropset'), sav = corps(lo, 'saveAsProg'), l1 = corps(lo, '_loadProgVraiment'), l2 = corps(lo, '_loadProgDayVraiment');
-  t('① les fonctions sont trouvées (sinon les témoins suivants ne mesurent rien)', aide && sav && l1 && l2, [aide, sav, l1, l2].map(x => x.length).join('/'));
+  const aide = corps(lo, '_recopierDropset'), sav = corps(lo, 'saveAsProg'), l1 = corps(lo, '_loadProgVraiment'), l2 = corps(lo, '_loadProgDayVraiment'), cons = corps(lo, '_exsDeProgramme');
+  t('① les fonctions sont trouvées (sinon les témoins suivants ne mesurent rien)', aide && sav && l1 && l2 && cons, [aide, sav, l1, l2, cons].map(x => x.length).join('/'));
   const autres = ['state.js', 'coach.js', 'setup.js', 'app.js', 'tracking.js', 'screens.js'].map(nu).join('\n');
   t('② UN seul propriétaire : `_recopierDropset` est déclarée une fois, dans log.js seulement',
     (lo.match(/function _recopierDropset\(/g) || []).length === 1 && !/function _recopierDropset\(/.test(autres), '');
-  t('③ les TROIS sites l\'appellent, une fois chacun (saveAsProg · _loadProgVraiment · _loadProgDayVraiment)',
-    [sav, l1, l2].every(c => (c.match(/_recopierDropset\(/g) || []).length === 1), [sav, l1, l2].map(c => (c.match(/_recopierDropset\(/g) || []).length).join('/'));
+  /* ⚠️ RÉÉCRIT LE 16/11/2026 (D-163) : les DEUX chargeurs partagent désormais UNE construction (`_exsDeProgramme`, un seul propriétaire de « programme → séance » : avant, deux copies, dont l'une perdait aussi « à vide »).
+     Le témoin garde son invariant — chacun des trois sites fait voyager le dropset, une fois — mais le lit à son nouvel endroit : `saveAsProg` l'appelle une fois ; chaque chargeur passe par `_exsDeProgramme` (une fois),
+     qui l'appelle une fois. Les témoins de comportement de ce banc (séance → programme → séance) sont inchangés. */
+  t('③ les TROIS sites l\'appellent, une fois chacun (saveAsProg · _loadProgVraiment · _loadProgDayVraiment — ces deux-là par `_exsDeProgramme`, appelée une fois par chacun, qui l\'appelle une fois)',
+    (sav.match(/_recopierDropset\(/g) || []).length === 1 && [l1, l2].every(c => (c.match(/_exsDeProgramme\(/g) || []).length === 1 && !/_recopierDropset\(/.test(c)) && (cons.match(/_recopierDropset\(/g) || []).length === 1,
+    [(sav.match(/_recopierDropset\(/g) || []).length, (l1.match(/_exsDeProgramme\(/g) || []).length, (l2.match(/_exsDeProgramme\(/g) || []).length, (cons.match(/_recopierDropset\(/g) || []).length].join('/'));
   t('④ absent → rien n\'est créé ; présent → copie PROFONDE entière (aucun sous-champ trié, aucun alias)',
     /src\.dropset===undefined\)return dst;/.test(aide) && /dst\.dropset=JSON\.parse\(JSON\.stringify\(src\.dropset\)\);/.test(aide)
     && !/paliers|pct|direction/.test(aide), aide.slice(0, 200));
@@ -117,9 +121,11 @@ module.exports.ecran = async function (t, b, PORT) {
   };
   // Les champs qu'une version sans ML-A produisait déjà — la liste EXACTE (non-destruction).
   const CLES_EX_PROG = ['name', 'sets', 'note', 'group', 'groupType'];
-  const CLES_SET_PROG = ['kg', 'reps', 'maxi', 'type', 'rest'];
-  const CLES_EX_WKT = ['name', 'note', 'sets', 'group', 'groupType', 'seanceWarn'];
-  const CLES_SET_WKT = ['kg', 'reps', 'maxi', 'type', 'done', 'rm1', 'rest'];
+  /* ⚠️ RÉÉCRIT LE 16/11/2026 (lot 1 « contre-expertise », D-163 · D-171) : l'invariant est inchangé — le dropset est AJOUTÉ et AUCUN champ inconnu n'apparaît (listes blanches). Ce qui s'y inscrit : le commentaire PAR SÉRIE (`note`, facultatif : « Sauvegarder comme programme »
+     le recopie — un copieur qui ne le nomme pas le supprimerait, R4) dans un programme ; l'identité de l'exercice (`exId`) et de la série (`sid`) dans la séance chargée, avec la note de série. */
+  const CLES_SET_PROG = ['kg', 'reps', 'maxi', 'type', 'rest', 'note'];
+  const CLES_EX_WKT = ['name', 'note', 'sets', 'group', 'groupType', 'seanceWarn', 'exId'];
+  const CLES_SET_WKT = ['kg', 'reps', 'maxi', 'type', 'done', 'rm1', 'rest', 'sid', 'note'];
   const clesOk = (o, permises, extra) => Object.keys(o).every(k => permises.includes(k) || k === extra);
 
   const WKT = () => ({ date: '2026-09-28', startHour: 10, exs: [
@@ -243,7 +249,7 @@ module.exports.ecran = async function (t, b, PORT) {
     const x0 = p && p.exs[0];
     t('T7a programme : le dropset est AJOUTÉ, rien d\'autre ne change (note, superset, repos, maxi, reps « maxi » → 5 comme avant)',
       x0 && egal(x0, { name: 'Écarté poulie', note: 'étirement', group: 'ssD', groupType: 'super', dropset: DS7,
-        sets: [ { kg: 20, reps: 12, maxi: false, type: 'N', rest: 45 }, { kg: 25, reps: 5, maxi: true, type: 'N', rest: 45 } ] }), js(x0));
+        sets: [ { kg: 20, reps: 12, maxi: false, type: 'N', rest: 45, note: 'série notée' }, { kg: 25, reps: 5, maxi: true, type: 'N', rest: 45 } ] }), js(x0));
     t('T7b programme : liste EXACTE des champs (exercices et séries), ordre des exercices et des séries inchangé',
       p && p.exs.length === 2 && p.exs[0].name === 'Écarté poulie' && p.exs[1].name === 'Extension triceps poulie'
       && p.exs.every(ex => clesOk(ex, CLES_EX_PROG, 'dropset') && ex.sets.every(s => clesOk(s, CLES_SET_PROG))), js(p && p.exs.map(Object.keys)));

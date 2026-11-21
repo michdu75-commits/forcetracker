@@ -13,14 +13,16 @@ AP, SE = 'app.js', 'setup.js'
 FICHIERS = ('app.js', 'setup.js', 'index.html', 'state.js', 'tracking.js', 'log.js')
 LO = 'log.js'
 
+# ⚠️ RÉ-ANCRÉ le 15/11/2026 (mission « import PDF — chaîne fidèle ») : les trois ancres d'ORIGINE (le commentaire « // IMPORT-ECH-01 », `if(!travail||j-i<2){`,
+# `function _noteEch(note){ return /^`) n'existaient plus dans `log.js` de master `ft-v1267` — le refactor IMPORT-IA-FIDELITE-01 les avait réécrites : les trois mutations étaient
+# INVALIDES (« 0/3 conformes »), donc JAMAIS jouées, et personne ne le voyait puisque ce contrôle n'est pas dans la passe. Les mutations visent la même chose, sur le code d'AUJOURD'HUI.
 MUT = [
     ('M1 la passe IMPORT-ECH-01 n\'est plus appelee (retour au filet « (ECH) » seul)',
-     [(LO, "    _mergeImportBlocsEch();      // IMPORT-ECH-01", "    //_mergeImportBlocsEch();    // IMPORT-ECH-01")], 'GARDE'),
+     [(LO, "    _mergeImportBlocsEch();      // ⛔ UN SEUL filet", "    //_mergeImportBlocsEch();    // ⛔ UN SEUL filet")], 'GARDE'),
     ('M2 fusion aveugle : plus besoin d\'une preuve d\'echauffement, tout bloc de meme nom fusionne',
-     [(LO, "if(!ta.length||ta[0]!=='W'||!_wPuisTravail(ta)){out.push(a);i++;continue;}", "if(!ta.length){out.push(a);i++;continue;}"),
-      (LO, "      if(!travail||j-i<2){", "      if(j-i<2){")], 'GARDE'),
+     [(LO, "if(!ta.length||ta[0]!=='W'||!_wPuisTravail(ta)){out.push(a);i++;continue;}", "if(!ta.length){out.push(a);i++;continue;}")], 'GARDE'),
     ('M3 l\'echauffement ecrit en NOTE n\'est plus reconnu',
-     [(LO, "function _noteEch(note){ return /^", "function _noteEch(note){ return false&&/^")], 'GARDE'),
+     [(LO, "  return /^(ech\\b|echauff|warm[\\s-]?up|", "  return false&&/^(ech\\b|echauff|warm[\\s-]?up|")], 'GARDE'),
 ]
 
 def banc(arbre):

@@ -17,8 +17,9 @@ LO = 'log.js'
 FICHIERS = (LO,)
 
 APPEL_SAV = "      _recopierDropset(ex,o);                                           // LOT 6 / ML-A\n"
-APPEL_L1 = "\n      _recopierDropset(e,obj);                                              // LOT 6 / ML-A"
+# D-163 (16/11/2026) : les deux chargeurs (un jour d'un programme / un programme a un seul jour) partagent UNE construction (`_exsDeProgramme`, un seul appel) ; le chargeur a un seul jour la rappelle avec repsDef=5, l'autre avec 10.
 APPEL_L2 = "\n    _recopierDropset(e,obj);                                              // LOT 6 / ML-A"
+APPEL_L1 = APPEL_L2
 GARDE = "  if(!src||!dst||src.dropset===undefined)return dst;\n"
 COPIE = "  dst.dropset=JSON.parse(JSON.stringify(src.dropset));\n"
 O_SAV = "      const o={name:ex.name,sets:ex.sets.map(s=>({kg:s.kg||0,reps:s.reps||5,maxi:!!s.maxi,type:s.type||'N',rest:_secRepos(s.rest)}))};\n"
@@ -27,8 +28,8 @@ O_SAV = "      const o={name:ex.name,sets:ex.sets.map(s=>({kg:s.kg||0,reps:s.rep
 MUT = [
     ("M00 code d'AVANT ML-A remis mot pour mot (log.js de dcc2ff43)", 'AVANT', 'GARDE'),
     ('M1 dropset omis dans saveAsProg', [(LO, APPEL_SAV, '')], 'GARDE'),
-    ('M2 dropset omis dans _loadProgVraiment', [(LO, APPEL_L1, '')], 'GARDE'),
-    ('M3 dropset omis dans _loadProgDayVraiment', [(LO, APPEL_L2, '')], 'GARDE'),
+    ('M2 dropset omis dans _loadProgVraiment (programme a un seul jour : repsDef=5)', [(LO, APPEL_L1, "\n    if(repsDef!==5)_recopierDropset(e,obj);")], 'GARDE'),
+    ('M3 dropset omis dans _loadProgDayVraiment (un jour d\'un programme : repsDef=10)', [(LO, APPEL_L2, "\n    if(repsDef===5)_recopierDropset(e,obj);")], 'GARDE'),
     ('M4 dropset remplace par une valeur par defaut', [(LO, COPIE, "  dst.dropset={paliers:3,pct:20,direction:'down'};\n")], 'GARDE'),
     ('M5 dropset cree artificiellement quand absent',
      [(LO, GARDE + COPIE, "  if(!src||!dst)return dst;\n  dst.dropset=src.dropset===undefined?{paliers:3,pct:20,direction:'down'}:JSON.parse(JSON.stringify(src.dropset));\n")], 'GARDE'),
@@ -40,7 +41,7 @@ MUT = [
     ('M9 [deguisee] copie GENERIQUE de l\'exercice dans saveAsProg (champs realises embarques)',
      [(LO, O_SAV, "      const o=Object.assign(JSON.parse(JSON.stringify(ex)),{sets:ex.sets.map(s=>({kg:s.kg||0,reps:s.reps||5,maxi:!!s.maxi,type:s.type||'N',rest:_secRepos(s.rest)}))});\n")], 'GARDE'),
     ('M9b [deguisee] copie GENERIQUE de l\'exercice dans _loadProgVraiment (champs inconnus embarques)',
-     [(LO, APPEL_L1, "\n      Object.keys(e).forEach(k=>{if(!(k in obj))obj[k]=JSON.parse(JSON.stringify(e[k]));});" + APPEL_L1)], 'GARDE'),
+     [(LO, APPEL_L1, "\n    if(repsDef===5)Object.keys(e).forEach(k=>{if(!(k in obj))obj[k]=JSON.parse(JSON.stringify(e[k]));});" + APPEL_L1)], 'GARDE'),
     ('M10 [deguisee] copie SUPERFICIELLE (sous-objets partages)',
      [(LO, COPIE, "  dst.dropset=(src.dropset&&typeof src.dropset==='object')?Object.assign({},src.dropset):src.dropset;\n")], 'GARDE'),
     ('[negatif] commentaire citant tous les motifs cherches',
