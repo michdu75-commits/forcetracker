@@ -528,7 +528,7 @@ module.exports.ecran = async function (t, b, PORT) {
   {
     const N = 260, t0 = Date.UTC(2025, 11, 1, 9, 0);
     const ids = Array.from({ length: N }, (_, i) => String(t0 + i * 86400000));
-    const sess = ids.map(id => ({ id: +id, ts: +id, date: new Date(+id).toISOString().slice(0, 10), volume: 500,
+    const sess = ids.map(id => ({ id: +id, ts: +id, date: new Date(+id).toLocaleDateString('sv-SE', { timeZone: 'Europe/Paris' }), volume: 500,   /* 21/11/2026 : jour de PARIS, pas de Greenwich */
       exs: [{ name: 'Squat', sets: [{ kg: 100, reps: 5, type: 'N', done: true }] }] }));
     const mag0 = { v: 1, autre: 'garde', seances: { [ids[0]]: { texte: 'ANCIEN', ts: 1, src: 'fin', extra: 'garde' } } };
     const X = await ouvrir({ sessions: sess, prs: {}, fil: null, stock: { ft4_debriefs: JSON.stringify(mag0) } });

@@ -13,8 +13,9 @@ A lancer sous le garde reseau : sh tools/sous_garde.sh python3 tools/mut_seance_
 import os, re, shutil, subprocess, sys, tempfile
 
 SRC = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-FICHIERS = ('log.js', 'setup.js', 'coach.js', 'style.css')
+FICHIERS = ('log.js', 'setup.js', 'coach.js', 'style.css', 'tracking.js')
 LO, SE, CO, CS = 'log.js', 'setup.js', 'coach.js', 'style.css'
+TR = 'tracking.js'   # 21/11/2026 : l'export Sheets (`_buildSyncRows`) préserve « inconnu ≠ zéro »
 
 MUT = [
     # ── la LECTURE des cinq états (P01 / P02 / P09) ──
@@ -127,6 +128,13 @@ MUT = [
      [(LO, "    if(_RE_CRENEAU_CARDIO.test(nb)||_CARDIO_TYPES.some(([re])=>re.test(nb))||/\\d\\s*(?:min|minutes?|')/.test(nb))return false;", "")], 'GARDE'),
     ('M49 la création des exercices perso à l\'import ignore la réponse (la sonde d\'avant : « cardio » confirmé crée quand même un exercice perso)',
      [(LO, "&& _estCreneauCardio(_impSondeCardio(ex)))return;", "&& _estCreneauCardio({name:ex.name,note:ex.note,sets:[{kg:ex.kg||0}]}))return;")], 'GARDE'),
+    # ── intégration V4 (21/11/2026) : l'export Sheets garde la distinction inconnu / zéro ──
+    ('M50 ⛔⛔ l\'export Sheets écrit de nouveau un ZÉRO pour une charge INCONNUE (la cellule n\'est plus vide)',
+     [(TR, "const kgInconnu=!pdcPose&&(s.kg===null||s.kg===undefined||s.kg===''||!isFinite(kgNum));", "const kgInconnu=false;")], 'GARDE'),
+    ('M51 ⛔ l\'export Sheets laisse la charge vide mais écrit un VOLUME 0 pour la série sans charge (0 × reps)',
+     [(TR, "volume:kgInconnu?'':kg*reps", "volume:kg*reps")], 'GARDE'),
+    ('M52 ⛔ l\'export Sheets prend un « poids du corps » (PDC, kg 0 écrit) pour une charge inconnue (le garde `pdcPose` retiré)',
+     [(TR, "const kgInconnu=!pdcPose&&(", "const kgInconnu=(")], 'GARDE'),
 ]
 
 BANC = os.path.join('tools', 'banc_seance_ce_p.js')

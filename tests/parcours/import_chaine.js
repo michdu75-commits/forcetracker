@@ -297,7 +297,8 @@ module.exports.ecran = async function (t, b, PORT) {
 
   // ═══ F. LE REMPLACEMENT : aucune présélection, cible choisie EXPLICITEMENT, début de cycle dit et conservé ═══
   await section('F', async () => {
-    const jour = (d) => new Date(Date.now() - d * 86400000).toISOString().slice(0, 10);
+    const { jourParis } = require('../_jour.js');   // 21/11/2026 : le jour de PARIS (le contexte tourne en Europe/Paris), pas celui de Greenwich — entre 00 h et 02 h les deux diffèrent
+    const jour = (d) => jourParis(-d);
     const ancien = (id, nom, debut) => ({ id, name: nom, weeks: 8, startDate: debut, days: [{ label: 'SÉANCE 1', exs: [{ name: 'Squat à la Barre', note: 'ancienne note', sets: [{ kg: 60, reps: 5, type: 'N', rest: 0 }] }] }] });
     const DOC = (debut) => Object.assign(prog([EX('Squat à la Barre', [5, 5, 5], [100, 100, 100], 'RIR 2')]), { startDate: debut || '' });
     /** Importe `p` puis ouvre le mode « Remplacer » sur un compte à deux programmes HOMONYMES. */

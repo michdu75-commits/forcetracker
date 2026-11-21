@@ -67,12 +67,18 @@ function _buildSyncRows(sess){
     const name=(typeof ex.name==='string'&&ex.name.trim()?ex.name.trim():'Exercice').substring(0,150);
     (ex.sets||[]).forEach((s,i)=>{
       if(!s.done)return;
-      const kg=isFinite(Number(s.kg))&&Number(s.kg)>=0?Math.round(Number(s.kg)*10)/10:0;
+      /* ⛔ UNE CHARGE INCONNUE RESTE INCONNUE JUSQU'AU CLASSEUR (D-164 « inconnu ≠ zéro », décision de Michel du 20/11/2026 : l'export Sheets préserve la distinction).
+         Avant : `Number(null)` = 0 → une série cochée sans charge partait en `kg:0`, volume 0 — un ZÉRO que personne n'avait écrit, indiscernable d'un vrai zéro (barre à vide, PDC) dans le classeur.
+         Maintenant : charge absente (`null` · `undefined` · vide · non numérique) → cellule VIDE pour `kg` ET pour `volume` (Code.js recopie `null`/vide en cellule vide, `_safeCell_`) ; un ZÉRO ÉCRIT reste 0. */
+      const kgNum=Number(s.kg);
+      const pdcPose=(s.pdc!==undefined&&s.pdc!==null&&s.pdc!=='');          // « poids du corps » choisi : la barre porte 0 kg ÉCRIT (D-164), pas une charge inconnue
+      const kgInconnu=!pdcPose&&(s.kg===null||s.kg===undefined||s.kg===''||!isFinite(kgNum));
+      const kg=kgInconnu?'':(kgNum>=0?Math.round(kgNum*10)/10:0);
       const reps=isFinite(Number(s.reps))&&Number(s.reps)>=0?Math.round(Number(s.reps)):0;
       const type=['N','W','E','D'].includes(String(s.type||'').toUpperCase())?String(s.type).toUpperCase():'N';
       const rm1Raw=Number(s.rm1);
       const rm1=isFinite(rm1Raw)&&rm1Raw>0?String(fmt(rm1Raw)):'';
-      rows.push({date,exercise:name,set_num:i+1,type,kg,reps,volume:kg*reps,rm1,bw,gender,age});
+      rows.push({date,exercise:name,set_num:i+1,type,kg,reps,volume:kgInconnu?'':kg*reps,rm1,bw,gender,age});
     });
   });
   return rows;

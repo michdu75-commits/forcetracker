@@ -17,9 +17,12 @@
    ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
 'use strict';
 
+/* ⚠️ CALENDRIER (21/11/2026, intégration V4 ; même motif que `moisPrec` des autres modules) : `ft4_lms` (« dernier bilan mensuel annoncé ») = le mois PRÉCÉDENT d'AUJOURD'HUI. Un mois écrit en dur (« 2026-10 ») ne tient que
+   quelques semaines : ensuite `checkMonthlySummary()` ouvre le bilan du mois écoulé 2,2 s après le démarrage, PAR-DESSUS la page, et intercepte les clics (BUGS §143). */
+const moisPrec = (() => { const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - 1); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); })();
 const BASE = { ft4_bw: '82', ft4_age: '41', ft4_ht: '178', ft4_gender: 'H', ft4_goal: 'force', ft4_ob2: '1', ft4_name: 'Test',
   ft4_email: 't@t.t', ft4_devtoken: 'f'.repeat(64), ft4_tester_eq_v1: '1', ft4_ok: '1', ft4_stmig1: '1',
-  ft4_guide_shown: '1', ft4_wn_seen: '999', ft4_lms: '2026-10' };
+  ft4_guide_shown: '1', ft4_wn_seen: '999', ft4_lms: moisPrec };
 const _det = o => JSON.stringify(o);
 const DC = 'Développé Couché', DM = 'Développé Militaire';
 const S_ = (kg, reps, done, type, extra) => Object.assign({ kg, reps, done: !!done, type: type || 'N' }, extra || {});
