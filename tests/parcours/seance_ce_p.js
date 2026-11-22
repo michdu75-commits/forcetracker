@@ -453,6 +453,37 @@ async function ecran(t, b, PORT) {
       await Z.cx.close();
     }
   });
+
+  /* ══ Q · ARCH-04 (Séance V4, 22/11/2026) — STOCKAGE PLEIN : LE DRAPEAU « HISTORIQUE TRONQUÉ » S'ÉCRIT D'ABORD, ET SANS LUI LES SÉANCES NE SONT PAS RÉDUITES ═════════════
+     Le défaut : le repli quota écrivait les 50 séances PUIS le drapeau ; si c'était le drapeau que le navigateur refusait, le disque portait 50 séances sans que rien ne le dise —
+     au démarrage suivant l'app renvoyait ces 50 au serveur et écrasait le cloud (le défaut du 02/08, par une autre porte). Le quota est SIMULÉ sur `ft4_sessions` (au-delà de `lim` caractères) et,
+     pour le cas c, sur la petite clé du drapeau aussi. Aucune donnée réelle : 60 séances FICTIVES. ══════════════════════════════════════════════════════════════════════════════════ */
+  await section('Q', 'stockage plein : le drapeau « historique tronqué » d\'abord, sans lui pas de réduction', async () => {
+    const Z = await ouvrir();
+    const essai = async (bloqueDrapeau) => Z.pg.evaluate(async (bloque) => {
+      const orig = Storage.prototype.setItem; Storage.prototype.setItem = orig;
+      const vieilles = Array.from({ length: 60 }, (_, i) => ({ id: 880000 + i, ts: Date.now() - (i + 2) * 864e5, date: new Date(Date.now() - (i + 2) * 864e5).toLocaleDateString('sv-SE', { timeZone: 'Europe/Paris' }), volume: 500,
+        exs: [{ name: 'Squat à la Barre', sets: [{ kg: 100, reps: 5, done: true, type: 'N' }] }] }));
+      const lim = Math.round((JSON.stringify(vieilles.slice(0, 50)).length + JSON.stringify(vieilles).length) / 2);      // 50 séances tiennent, 60 non
+      localStorage.removeItem('ft4_hist_tronque'); S.histTronque = false;
+      S.sessions = JSON.parse(JSON.stringify(vieilles)); S.prs = {}; S.wkt = null; persist();                                // les 60 sont d'abord écrites normalement
+      const avant = JSON.parse(localStorage.getItem('ft4_sessions') || '[]').length;
+      window.__T = [];
+      Storage.prototype.setItem = function (k, v) {
+        if (this === localStorage && ((k === 'ft4_sessions' && String(v).length > lim) || (bloque && k === 'ft4_hist_tronque'))) throw new DOMException('quota', 'QuotaExceededError');
+        return orig.apply(this, arguments); };
+      let err = null; try { persist(); } catch (e) { err = String(e.message); }
+      Storage.prototype.setItem = orig;
+      return { err, avant, apres: JSON.parse(localStorage.getItem('ft4_sessions') || '[]').length, enMemoire: S.sessions.length, drapeau: localStorage.getItem('ft4_hist_tronque'), histTronque: !!S.histTronque,
+        toastRepli: window.__T.some(x => /50 dernières séances/.test(x)) };
+    }, bloqueDrapeau);
+    const a = await essai(false), c = await essai(true);
+    t('SCCP-Q01 ⭐ (témoin) stockage plein, drapeau enregistrable : les séances locales sont réduites à 50, le drapeau est levé (mémoire ET disque), la personne est prévenue, rien n\'est perdu en mémoire',
+      a.avant === 60 && a.apres === 50 && a.drapeau === '1' && a.histTronque === true && a.toastRepli === true && a.enMemoire === 60 && !a.err, J(a));
+    t('SCCP-Q02 ⛔⛔ stockage plein ET drapeau refusé : les séances ne sont PAS réduites (60 sur le disque comme avant), le drapeau n\'est levé nulle part, aucun message « 50 séances » mensonger — sans drapeau, 50 séances sur le disque seraient renvoyées au serveur au démarrage suivant',
+      c.avant === 60 && c.apres === 60 && c.drapeau === null && c.histTronque === false && c.toastRepli === false && c.enMemoire === 60 && !c.err, J(c));
+    await Z.cx.close();
+  });
 }
 
 module.exports.ecran = ecran;

@@ -1619,11 +1619,20 @@ function _persistRepli(e, rep){
       // plus que 50 séances, les renvoyait au serveur, et le cloud était écrasé par la version
       // tronquée — alors que le message ci-dessous promet l'inverse. Tant que ce drapeau est
       // levé, `_cloudSync` n'envoie PLUS les séances (règle d'or n°1 : zéro perte).
-      localStorage.setItem('ft4_sessions',JSON.stringify((S.sessions||[]).slice(0,50)));
-      localStorage.setItem('ft4_hist_tronque','1'); S.histTronque=true;
+      /* ⛔ ARCH-04 (Séance V4, 22/11/2026) — LE DRAPEAU D'ABORD, ET SANS LUI ON NE TRONQUE PAS.
+         L'ordre d'avant écrivait les 50 séances PUIS le drapeau. Or le stockage est plein : si c'est le drapeau (une toute petite clé) que le navigateur refuse, le
+         disque porte 50 séances et RIEN ne le dit → au démarrage suivant l'app n'en connaît que 50, les renvoie au serveur, et le cloud est écrasé par la version
+         tronquée (le défaut du 02/08, par une autre porte). Désormais : le drapeau s'écrit en premier ; s'il ne peut pas être enregistré, `ft4_sessions` n'est PAS
+         touché (les séances restent entières sur le disque), la réduction n'a pas lieu et le drapeau mémoire n'est pas levé. Si c'est l'écriture des 50 séances qui échoue
+         ensuite, le drapeau est resté levé alors que le disque est complet : c'est le côté sûr — `_cloudSync` n'envoie plus les séances (rien n'est écrasé), et seule une
+         restauration (`setup.js`, « historique complet retrouvé ») le baisse. Pas de message de plus : « 50 dernières séances » ne se dit que quand c'est vrai. */
+      let drapeau=false;
+      try{ localStorage.setItem('ft4_hist_tronque','1'); S.histTronque=true; drapeau=true; }
+      catch(eD){ try{console.warn('[FT persist] drapeau ft4_hist_tronque refusé : les séances ne sont PAS réduites',eD);}catch(_){} }
+      if(drapeau) localStorage.setItem('ft4_sessions',JSON.stringify((S.sessions||[]).slice(0,50)));
       localStorage.setItem('ft4_prs',JSON.stringify(S.prs));
       localStorage.setItem('ft4_wkt',JSON.stringify(S.wkt));
-      if(typeof toast==='function')toast('⚠️ Stockage du téléphone plein — seules tes 50 dernières séances restent SUR LE TÉLÉPHONE. Ta sauvegarde en ligne est intacte et protégée : fais « Restaurer » dans Profil pour tout récupérer.','error');
+      if(drapeau&&typeof toast==='function')toast('⚠️ Stockage du téléphone plein — seules tes 50 dernières séances restent SUR LE TÉLÉPHONE. Ta sauvegarde en ligne est intacte et protégée : fais « Restaurer » dans Profil pour tout récupérer.','error');
     }catch(e2){}
   }else{
     // 🛡️ Audit 27/07 : une erreur NON-quota était 100 % silencieuse → au moins une trace console

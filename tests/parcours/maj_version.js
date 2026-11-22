@@ -3,7 +3,8 @@
    ON N'INTERROMPT JAMAIS UNE SÉANCE ET ON NE PERD RIEN (lot E, mission « import PDF fidèle », 15/11/2026)
    Blocs : B-MAJV-O (l'oracle sait dire non) · B-MAJV-W (W1-W3 × Séance / Profil / Accueil) · B-MAJV-A (séance ouverte) ·
            B-MAJV-B (aucune perte) · B-MAJV-C (le libellé ne ment jamais) · B-MAJV-D (le garde numéro ↔ cache, SOURCE) ·
-           B-MAJV-E (l'avis se ferme et se rouvre) · B-MAJV-F (R24 : une sortie visible ; le bouton central ne bouge pas).
+           B-MAJV-E (l'avis se ferme et se rouvre) · B-MAJV-F (R24 : une sortie visible ; le bouton central ne bouge pas) ·
+           B-MAJV-G (ARCH-08 : l'installation n'aboutit pas si le code essentiel est incomplet ; une image qui manque ne bloque rien).
 
    LE DÉFAUT (démontré le 14/11 par rejeu) : le libellé « À propos » lisait la CLÉ DU CACHE du service worker. Après une
    publication, une app restée ouverte sur un autre écran que l'Accueil affichait la version NEUVE (ft-v1267) alors que
@@ -65,6 +66,9 @@ function serveur(etat) {
     const f = path0.join(RACINE, p);
     if (!f.startsWith(RACINE) || !fs0.existsSync(f) || fs0.statSync(f).isDirectory()) { r.writeHead(404); return r.end('404'); }
     const rel = p.slice(1); let corps;
+    /* ARCH-08 (22/11/2026) : un fichier peut MANQUER à la publication i ≥ 1 (`etat.manque`) ou ne manquer qu'UNE fois (`etat.unefois`) — le réseau qui coupe en plein milieu d'une mise à jour */
+    if (etat.i >= 1 && etat.manque && etat.manque.indexOf(p) >= 0) { r.writeHead(404); return r.end('404'); }
+    if (etat.i >= 1 && etat.unefois && etat.unefois.indexOf(p) >= 0) { etat.unefois.splice(etat.unefois.indexOf(p), 1); r.writeHead(404); return r.end('404'); }
     try { corps = (['sw.js', 'app.js', 'index.html', 'log.js'].indexOf(rel) >= 0) ? corpsDe(rel, etat.i, memo) : lire(rel); }
     catch (e) { r.writeHead(500); return r.end(String(e.message)); }
     r.writeHead(200, { 'Content-Type': TYPES[path0.extname(f)] || 'application/octet-stream', 'Cache-Control': 'no-cache' });
@@ -489,5 +493,70 @@ module.exports.ecran = async function (t, b, PORT) {
       T('MAJV-B3 la séance (`S.wkt`) est identique avant / après', ok && rech && wkt1 === wkt0, 'avant ' + wkt0.slice(0, 100) + ' · après ' + wkt1.slice(0, 100));
       T('MAJV-B4 aucune séance ni aucun programme perdu (2 séances, 1 programme avant ; autant après)', ok && rech && nSess0 === 2 && nSess1 === nSess0 && nProg0 === 1 && nProg1 === nProg0, nSess0 + '/' + nProg0 + ' → ' + nSess1 + '/' + nProg1);
     } finally { sansErreurJs('B', sc); await sc.fermer(); }
+  });
+
+  /* ── B-MAJV-G · ARCH-08 (22/11/2026) — L'INSTALLATION NE S'ACHÈVE PAS SI LE CODE EST INCOMPLET (et une image qui manque ne bloque rien)
+     Le défaut : `precacheCore` avalait chaque échec, puis `skipWaiting()` s'exécutait quand même → un code à moitié mis en cache devenait la version ACTIVE et l'ancienne, complète, était purgée.
+     Le réseau qui coupe en plein milieu d'une mise à jour = app cassée sans un mot. Ici le serveur « perd » un fichier à la publication 1 (`etat.manque` / `etat.unefois`). ── */
+  const suivreInstall = (pg) => pg.evaluate(async () => { const r = await navigator.serviceWorker.getRegistration(); window.__nouv = []; r.addEventListener('updatefound', () => { const w = r.installing; window.__nouv.push('trouve'); w.addEventListener('statechange', () => window.__nouv.push(w.state)); }); });
+  const etatsInstall = (pg) => pg.evaluate(() => window.__nouv || []).catch(() => []);
+  const a_ = (pg, k, u) => pg.evaluate(async ({ k, u }) => { try { const c = await caches.open(k); return !!(await c.match(u)); } catch (e) { return false; } }, { k, u });
+  /* le code que le service worker SERT maintenant (cache d'abord) : le numéro d'oracle de l'index qu'il rend — indépendant de ce que la page a déjà chargé */
+  const servi = (pg) => pg.evaluate(async () => { try { const m = /__FT_ORACLE=(\d+)/.exec(await (await fetch('./index.html')).text()); return m ? +m[1] : -1; } catch (e) { return -2; } });
+
+  await garde('G1', async () => {                      // un fichier ESSENTIEL manque : l'installation est abandonnée, l'ANCIENNE version reste, complète et utilisable
+    const sc = await ouvrir(b);
+    try {
+      const { pg, ctx } = sc;
+      await suivreInstall(pg); await marquer(pg);
+      sc.etat.manque = ['/tracking.js'];
+      await publier(sc);
+      const fini = await attendre(async () => { const e = await etatsInstall(pg); return e.indexOf('redundant') >= 0 || e.indexOf('activated') >= 0; }, 30000, 300);
+      await dormir(1500);
+      const e = await etatsInstall(pg);
+      T('MAJV-G1 ⛔⛔ un fichier ESSENTIEL (tracking.js) manque : la nouvelle installation est ABANDONNÉE (jamais « installed », jamais « activated »)',
+        fini && e.indexOf('redundant') >= 0 && e.indexOf('installed') < 0 && e.indexOf('activated') < 0, js(e));
+      const st = await pg.evaluate(async () => { const r = await navigator.serviceWorker.getRegistration(); return { attente: !!r.waiting, actif: r.active ? r.active.state : null, ctrl: !!navigator.serviceWorker.controller, cles: (await caches.keys()).filter(x => x.indexOf('ft-v') === 0) }; });
+      T('MAJV-G2 ⛔⛔ l\'ANCIENNE version reste active, sans version en attente, et son cache est INTACT (clé ' + cle(0) + ', code complet dedans)',
+        !st.attente && st.actif === 'activated' && st.ctrl && st.cles.indexOf(cle(0)) >= 0 && await a_(pg, cle(0), './tracking.js') && await a_(pg, cle(0), './index.html'), js(st));
+      /* ⚠️ `_swReloadPending` n'est PAS le bon signal : la 1ʳᵉ installation (controllerchange de la prise de contrôle) le pose déjà, voulu — c'est `_majVersion` (la version PLUS RÉCENTE qui attend) qui dit « une mise à jour est prête » */
+      const vu = await pg.evaluate(() => ({ marq: window.__marqueur, version: window._majVersion || null })), bn = await lireBandeau(pg);
+      T('MAJV-G3 la page n\'a pas rechargé et n\'annonce AUCUNE mise à jour (aucune version en attente, bandeau absent) : rien n\'est dit d\'une version qui n\'existe pas', vu.marq === 'avant' && vu.version === null && !voit(bn), js(vu) + ' · bandeau ' + voit(bn));
+      /* le vrai test de « fonctionnelle » : hors ligne, l'app s'ouvre encore, sur l'ANCIEN code */
+      let hors = null;
+      try {
+        await ctx.setOffline(true);
+        await pg.reload({ waitUntil: 'load', timeout: 20000 }).catch(() => {});
+        await attendre(() => pg.evaluate(() => typeof S !== 'undefined' && typeof goScreen === 'function'), 20000);
+        hors = await pg.evaluate(() => ({ oracle: window.__FT_ORACLE, s: typeof S !== 'undefined' }));
+      } catch (er) { hors = { erreur: String(er.message || er).slice(0, 120) }; } finally { try { await ctx.setOffline(false); } catch (er) {} }
+      T('MAJV-G4 ⛔ hors ligne, l\'app s\'ouvre encore depuis l\'ancien cache, sur l\'ANCIEN code (release 0) : la version qui marchait n\'a pas été sacrifiée', !!hors && hors.s === true && hors.oracle === 0, js(hors));
+    } finally { sansErreurJs('G1', sc); await sc.fermer(); }
+  });
+
+  await garde('G2', async () => {                      // une IMAGE qui manque ne bloque JAMAIS : la mise à jour s'installe et s'active (règle d'or #4 : l'install n'attend pas les images)
+    const sc = await ouvrir(b);
+    try {
+      const { pg } = sc;
+      sc.etat.manque = ['/logo.png', '/force-tracker-logo-final.png'];
+      await publier(sc);
+      const ok = await calme(sc, 1); await recue(sc); await poser(pg, 1);
+      const st = await pg.evaluate(async () => ({ cles: (await caches.keys()).filter(x => x.indexOf('ft-v') === 0) })); st.oracle = await servi(pg);
+      T('MAJV-G5 ⛔ deux IMAGES manquent : la nouvelle version S\'INSTALLE et s\'ACTIVE quand même (la seule clé est ' + cle(1) + ', l\'ancienne est purgée)', ok && st.cles.length === 1 && st.cles[0] === cle(1) && st.oracle === 1, js(st));
+      T('MAJV-G6 le témoin n\'est pas vide : l\'image est bien absente du nouveau cache pendant que le code y est', !(await a_(pg, cle(1), './logo.png')) && await a_(pg, cle(1), './tracking.js'), 'logo ' + await a_(pg, cle(1), './logo.png') + ' · tracking ' + await a_(pg, cle(1), './tracking.js'));
+    } finally { sansErreurJs('G2', sc); await sc.fermer(); }
+  });
+
+  await garde('G3', async () => {                      // un essentiel qui ne manque qu'UNE fois est rattrapé par la nouvelle tentative : pas d'abandon pour un raté passager
+    const sc = await ouvrir(b);
+    try {
+      const { pg } = sc;
+      sc.etat.unefois = ['/tracking.js'];
+      await publier(sc);
+      const ok = await calme(sc, 1); await recue(sc); await poser(pg, 1);
+      const st = await pg.evaluate(async () => ({ cles: (await caches.keys()).filter(x => x.indexOf('ft-v') === 0) })); st.oracle = await servi(pg);
+      T('MAJV-G7 ⛔ un essentiel qui échoue UNE fois est rattrapé (une nouvelle tentative) : la version s\'installe, le code est complet', ok && st.oracle === 1 && st.cles.length === 1 && await a_(pg, cle(1), './tracking.js'), js(st) + ' · reste à échouer : ' + js(sc.etat.unefois));
+      T('MAJV-G8 le témoin n\'est pas vide : le fichier a réellement échoué une fois (le serveur l\'avait « perdu », il ne l\'est plus)', sc.etat.unefois.length === 0, js(sc.etat.unefois));
+    } finally { sansErreurJs('G3', sc); await sc.fermer(); }
   });
 };

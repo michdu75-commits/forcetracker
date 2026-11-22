@@ -13,8 +13,9 @@ A lancer sous le garde reseau : sh tools/sous_garde.sh python3 tools/mut_seance_
 import os, re, shutil, subprocess, sys, tempfile
 
 SRC = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-FICHIERS = ('log.js', 'setup.js', 'coach.js', 'style.css', 'tracking.js')
+FICHIERS = ('log.js', 'setup.js', 'coach.js', 'style.css', 'tracking.js', 'state.js')
 LO, SE, CO, CS = 'log.js', 'setup.js', 'coach.js', 'style.css'
+ST = 'state.js'     # 22/11/2026 (ARCH-04) : le repli quota des séances écrit le drapeau « historique tronqué » AVANT de réduire
 TR = 'tracking.js'   # 21/11/2026 : l'export Sheets (`_buildSyncRows`) préserve « inconnu ≠ zéro »
 
 MUT = [
@@ -135,6 +136,12 @@ MUT = [
      [(TR, "volume:kgInconnu?'':kg*reps", "volume:kg*reps")], 'GARDE'),
     ('M52 ⛔ l\'export Sheets prend un « poids du corps » (PDC, kg 0 écrit) pour une charge inconnue (le garde `pdcPose` retiré)',
      [(TR, "const kgInconnu=!pdcPose&&(", "const kgInconnu=(")], 'GARDE'),
+    # ── ARCH-04 (22/11/2026) : stockage plein, le drapeau « historique tronqué » d'abord ──
+    ('M53 ⛔⛔ ARCH-04 : l\'ORDRE D\'AVANT (les 50 séances écrites PUIS le drapeau) : si le drapeau est refusé, le disque porte 50 séances sans que rien ne le dise',
+     [(ST, "      let drapeau=false;\n      try{ localStorage.setItem('ft4_hist_tronque','1'); S.histTronque=true; drapeau=true; }\n      catch(eD){ try{console.warn('[FT persist] drapeau ft4_hist_tronque refusé : les séances ne sont PAS réduites',eD);}catch(_){} }\n      if(drapeau) localStorage.setItem('ft4_sessions',JSON.stringify((S.sessions||[]).slice(0,50)));\n",
+           "      localStorage.setItem('ft4_sessions',JSON.stringify((S.sessions||[]).slice(0,50)));\n      localStorage.setItem('ft4_hist_tronque','1'); S.histTronque=true; let drapeau=true;\n")], 'GARDE'),
+    ('M54 ⛔ ARCH-04 : le drapeau est écrit d\'abord mais son échec n\'empêche plus la réduction (les 50 séances sont écrites quand même)',
+     [(ST, "      if(drapeau) localStorage.setItem('ft4_sessions'", "      localStorage.setItem('ft4_sessions'")], 'GARDE'),
 ]
 
 BANC = os.path.join('tools', 'banc_seance_ce_p.js')

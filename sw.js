@@ -4,7 +4,7 @@
  * totale ou partielle, est INTERDITE sans autorisation écrite de l'auteur.
  * All Rights Reserved — unauthorized copying or reuse is prohibited.
  */
-const CACHE = 'ft-v1268'; // (!) ft-v1268 = SEANCE V4 : un seul selecteur de la derniere fois (jour de programme par identite de bloc, seance libre, Milo selon sa destination), jamais de zero invente (charge inconnue = vide, y compris dans l'export Sheets), suppression d'une serie precise (palier de dropset compris), la mise a jour se PROPOSE (jamais toute seule), edition des prescriptions du programme ; annonce (points rouges, pop-up v81, aide ?, aide detaillee, diapo du Guide) - log.js tracking.js constants.js coach.js screens.js app.js index.html style.css state.js setup.js ; Code.js et worker.js INCHANGES (Apps Script reste @196) - nouvelle cle de cache : l'ancienne version est purgee a l'activation (skipWaiting + controllerchange)
+const CACHE = 'ft-v1268'; // (!) ft-v1268 = SEANCE V4 : un seul selecteur de la derniere fois (jour de programme par identite de bloc, seance libre, Milo selon sa destination), jamais de zero invente (charge inconnue = vide, y compris dans l'export Sheets), suppression d'une serie precise (palier de dropset compris), la mise a jour se PROPOSE (jamais toute seule), edition des prescriptions du programme ; annonce (points rouges, pop-up v81, aide ?, aide detaillee, diapo du Guide) - log.js tracking.js constants.js coach.js screens.js app.js index.html style.css state.js setup.js ; Code.js et worker.js INCHANGES (Apps Script reste @196) - ARCH-08 : l'installation est ABANDONNEE si un fichier de code essentiel manque du nouveau cache (l'ancienne version reste active) ; ARCH-04 (state.js) : le drapeau d'historique tronque s'ecrit avant toute reduction - nouvelle cle de cache : l'ancienne version est purgee a l'activation (skipWaiting + controllerchange)
 // (!) ft-v1266 = SEANCE : AUTRE ACTIVITE + CALORIES PERSONNALISABLES (marche, randonnee, velo, course... : une tuile sous Programme, sans serie ni volume, rangee dans S.sessions ; la valeur de la montre Garmin (calories actives) REMPLACE l estimation, jamais additionnee, modifiable apres enregistrement, retour a l estimation, 0 kcal est une valeur ; plus de forfait d echauffement fictif sur un NOUVEAU cardio seul, anciens historiques inchanges ; bilans separes musculation / cardio / autres ; une activite n est jamais comptee comme une seance) - app.js coach.js constants.js dashboard.js index.html log.js screens.js setup.js state.js tracking.js ; Code.js, worker.js, style.css INCHANGES (Apps Script reste @195) ; l ecran Nutrition ne lit pas les activites (reserve a TDEE V2) - nouvelle cle de cache : l ancienne version est purgee a l activation (skipWaiting + controllerchange)
 // (!) ft-v1265 = NUTRITION : la synchronisation fiable du journal (NUT-SYNC-01/02/03, D-141 minimal, NUT-MIROIR-01, 3B - candidat prepare sous le nom ft-v1264, jamais publie sous ce numero) + les conseils et les noms (NUT-CA-FAA'C) : le nom d'un aliment ne casse plus le bouton d'un repas habituel (F), une fiche refusee par Ajouter ne nourrit plus Ce qu'il te reste (A/A'), la portion observee ne melange plus les unites ni les produits (C) ; app.js screens.js state.js setup.js supabase.js + textes d'annonce (constants.js coach.js) ; Code.js : contenu IDENTIQUE a la production (Apps Script @194, redeploye a l'identique par le push) ; Worker et Supabase inchanges - nouvelle cle de cache : l'ancienne version est purgee a l'activation (skipWaiting + controllerchange)
 // (!) ft-v1264 = NUTRITION : synchronisation fiable du journal (NUT-SYNC-01/02, D-141 minimal, NUT-MIROIR-01, 3B) - chaque repas garde son identite, une suppression voulue est notee et suit les appareils (un repas supprime ne revient plus par un autre telephone), les envois Nutrition sont accuses (en attente / confirme / refuse, reessais), la sauvegarde locale du journal ne se tait plus (bandeau Reessayer) et n'abime plus les seances, favoris et masquages suivent le meme accuse (aussi vers le miroir) ; serveur : un seul verrou pour tous les ecrivains du compte, porte de version par compte (un ancien telephone n'envoie plus son Nutrition sur un compte a jour ; seances, records et pesees toujours enregistres), suspension manuelle NUT_SUSPENDU ; app.js state.js setup.js supabase.js screens.js + textes d'annonce (constants.js coach.js) ; Code.js MODIFIE (Apps Script @193 -> a deployer A PART, serveur d'abord) ; Worker et Supabase inchanges - nouvelle cle de cache : l'ancienne version est purgee a l'activation (skipWaiting + controllerchange)
@@ -316,9 +316,36 @@ async function precacheImages(){
   }
   await notify('PRECACHE_DONE');
 }
+/* ⛔ ARCH-08 (Séance V4, 22/11/2026) — L'INSTALLATION NE S'ACHÈVE PAS SI LE CODE EST INCOMPLET.
+   `precacheCore` avale chaque échec (voulu : un logo qui manque ne doit jamais bloquer l'app). Mais
+   `skipWaiting()` suivait quand même → un code à moitié mis en cache devenait la version ACTIVE, et
+   l'ancienne version (complète, fonctionnelle) était purgée à l'activation. Réseau coupé en
+   plein milieu d'une mise à jour = app en ligne cassée, sans un mot.
+   ➜ Le « code essentiel » = ce sans quoi l'app ne démarre pas : la page, les scripts, la feuille de
+     style, le manifeste, les polices. Les IMAGES et logos (png, gif, jpg, svg) ne bloquent JAMAIS
+     (règle d'or #4 : l'install ne dépend pas de ~15 Mo d'images ; bug 2026-07-13).
+   ➜ Un essentiel manque : UNE nouvelle tentative, puis on LÈVE → l'installation échoue, le nouveau
+     service worker est écarté, l'ANCIEN reste actif avec son cache intact (le navigateur
+     réessaiera à la prochaine vérification). Ce cache partiel n'est pas supprimé ici : l'activation
+     d'une version suivante supprime « tout sauf le sien ».
+   ➜ La stratégie de cache (cache d'abord, deux tiroirs) est INCHANGÉE. */
+const CORE_ESSENTIEL = CORE.filter(u => u === './' || /\.(?:html|js|css|json|woff2?)$/i.test(u.split('?')[0]));
+async function essentielsManquants(){
+  const cache = await caches.open(CACHE);
+  const manque = [];
+  for (const url of CORE_ESSENTIEL){ if (!(await cache.match(url))) manque.push(url); }
+  return manque;
+}
 self.addEventListener('install', e => {
   e.waitUntil((async () => {
     await precacheCore();      // rapide : uniquement le code (+ polices, libs, logos)
+    let manque = await essentielsManquants();
+    if (manque.length){        // une seule nouvelle tentative, sur les seuls fichiers manquants
+      const cache = await caches.open(CACHE);
+      for (const url of manque){ try { await cache.add(url); } catch (err) {} }
+      manque = await essentielsManquants();
+    }
+    if (manque.length) throw new Error('install abandonnée : fichiers essentiels absents du nouveau cache : ' + manque.join(', '));
     await self.skipWaiting();  // → la nouvelle version s'active immédiatement, sans attendre les images
   })());
 });

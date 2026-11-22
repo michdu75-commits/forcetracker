@@ -139,6 +139,21 @@ MUT += [
      [(LO, "function _echNomQueue(name){", "function _echNomQueue(name){return null;")], 'GARDE', 'O,W-home'),
 ]
 
+# ── ARCH-08 (22/11/2026) : l'installation du service worker ne s'acheve pas si le code essentiel est incomplet ──
+ESSENTIEL_DEF = "const CORE_ESSENTIEL = CORE.filter(u => u === './' || /\\.(?:html|js|css|json|woff2?)$/i.test(u.split('?')[0]));"
+LEVER = "    if (manque.length) throw new Error('install abandonnée : fichiers essentiels absents du nouveau cache : ' + manque.join(', '));\n"
+REESSAI = "      for (const url of manque){ try { await cache.add(url); } catch (err) {} }\n"
+MUT += [
+    ('M38 ⛔⛔ ARCH-08 : `skipWaiting()` s\'exécute MÊME si un fichier essentiel manque (le `throw` retiré : le code à moitié installé devient la version active, l\'ancienne est purgée)',
+     [(SW, LEVER, "")], 'GARDE', 'G1'),
+    ('M39 ⛔ ARCH-08 : le « code essentiel » n\'est plus vérifié du tout (liste vide : aucun fichier ne peut faire abandonner l\'installation)',
+     [(SW, ESSENTIEL_DEF, "const CORE_ESSENTIEL = [];")], 'GARDE', 'G1'),
+    ('M40 ⛔ ARCH-08 : les IMAGES deviennent essentielles (tout le CORE est exigé : une image qui manque bloque la mise à jour — la règle d\'or #4 et le bug du 13/07 reviennent)',
+     [(SW, ESSENTIEL_DEF, "const CORE_ESSENTIEL = CORE.slice();")], 'GARDE', 'G2'),
+    ('M41 ARCH-08 : plus de nouvelle tentative (un essentiel qui échoue UNE fois fait abandonner la mise à jour pour un raté passager)',
+     [(SW, REESSAI, "")], 'GARDE', 'G3'),
+]
+
 BANC = os.path.join('tools', 'banc_maj_version.js')
 
 
