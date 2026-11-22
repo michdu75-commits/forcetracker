@@ -1,0 +1,591 @@
+# ═══════════════════════════════════════════════════════════════════════════════════════════════
+#  PASSE D-031 — QUALIFICATION SUR GITHUB ACTIONS (Séance V4 · candidat cd604923)
+#  Autorisation ciblée de Michel (22/11/2026) : UNE exécution, sur UNE branche de qualification.
+#  ⛔ Ce fichier n'est ajouté que sur la branche `qualif/seance-v4-d031-cd604923` — JAMAIS sur master.
+#
+#  CE QUE FAIT CE FLUX
+#    ① job « repartie »  : passe D-031 RÉPARTIE (K=3) sur le commit EXACT du candidat (tools/passe_repartie.py)
+#    ② job « classique » : passe D-031 CLASSIQUE complète, avec `--calibrer --croiser <répartie> --accepter-retraits`
+#                          (tools/passe_valide.sh) : le manifeste n'est réécrit QUE si toutes ses conditions sont vertes,
+#                          puis une garde exige que les retraits soient EXACTEMENT les 11 documentés.
+#    ③ job « verification » : SECONDE passe classique obligatoire (sans --calibrer) sur le candidat + le SEUL manifeste proposé
+#                          et validé par le job 2, posé dans un commit LOCAL temporaire du runner (jamais poussé) : elle VÉRIFIE
+#                          les identités du manifeste calibré. La répartie n'est pas rejouée.
+#    Résultats, journaux, manifeste PROPOSÉ et empreinte de l'arbre testé : conservés en artefacts. Rien n'est poussé.
+#
+#  CE QU'IL NE FAIT PAS
+#    · aucun secret, aucun environnement, aucun service de production (les tests ont leur garde réseau, D031S) ;
+#    · permissions GitHub : lecture du contenu seulement ;
+#    · aucun relancement automatique : un seul essai par job, et un « Re-run » manuel est refusé (run_attempt = 1) ;
+#    · aucune modification des tests, du manifeste ni des critères de validation (R1 à R4, D-113 : inchangés) —
+#      la classique reste obligatoire (R1/R4) et la répartie sert de SOURCE CROISÉE du même commit.
+# ═══════════════════════════════════════════════════════════════════════════════════════════════
+name: Passe D-031 — qualification (branche dédiée)
+
+on:
+  push:
+    branches:
+      - 'qualif/seance-v4-d031-cd604923'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: passe-d031-qualification
+  cancel-in-progress: false
+
+env:
+  CANDIDAT: cd6049231cdbef8ef3d5649bccc1e0217eec154b      # le commit à qualifier, en toutes lettres
+  BASE_MASTER: 401b9560424aca6e08cbe4525543d2399112a01f    # master publié : doit rester le même pendant TOUTE la passe (④b)
+  FICHIER_FLUX: .github/workflows/passe-d031.yml           # le SEUL fichier que la branche ajoute au candidat
+  TZ: Europe/Paris                                          # fuseau de la passe locale (les identités portent des dates)
+  PYTHONDONTWRITEBYTECODE: '1'                              # ⛔ un __pycache__ rendrait l'arbre « non propre » (condition ⓪)
+
+jobs:
+  # ───────────────────────────────────────────────────────────────────────────────────────────
+  repartie:
+    name: ① Passe répartie K=3 (source croisée)
+    if: github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 150
+    steps:
+      - name: Garde de l'heure — la passe ne doit pas franchir minuit (heure de Paris)
+        # Les identités portent des jetons de DATE calculés sur le jour de la passe : une passe à cheval sur deux jours
+        # serait refusée au calibrage (jour de la répartie ≠ jour de la classique), et fausserait la lecture des dates.
+        # Les TROIS jobs durent ≈ 6 à 8 h au total : départ interdit après 14 h (Paris) — fin attendue avant 22 h 30.
+        shell: bash
+        run: |
+          H=$(date +%H%M)
+          echo "Heure de Paris au départ : $H · jour : $(date +%F)"
+          if [ "$((10#$H))" -ge 1400 ]; then
+            echo "⛔ Départ après 14 h (Paris) : les trois passes (≈ 6 à 8 h) franchiraient minuit. Refus — rien n'est lancé. Pousser de nouveau le matin, avec un nouvel accord."
+            exit 1
+          fi
+
+      - name: Récupérer le dépôt (historique complet, jeton en lecture seule)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Le commit de la branche n'ajoute QUE ce fichier au candidat
+        shell: bash
+        run: |
+          test "$(git rev-parse "$GITHUB_SHA^")" = "$CANDIDAT" || { echo "⛔ le parent du commit de la branche n'est pas le candidat $CANDIDAT"; exit 1; }
+          AJOUTS=$(git diff --name-status "$CANDIDAT" "$GITHUB_SHA")
+          echo "$AJOUTS"
+          test "$AJOUTS" = "$(printf 'A\t%s' "$FICHIER_FLUX")" || { echo "⛔ la branche modifie autre chose que $FICHIER_FLUX"; exit 1; }
+          git merge-base --is-ancestor "$BASE_MASTER" "$CANDIDAT" || { echo "⛔ le candidat ne contient pas master publié $BASE_MASTER"; exit 1; }
+          test "$(git ls-remote origin refs/heads/master | cut -f1)" = "$BASE_MASTER" || { echo "⛔ master a bougé depuis le candidat : passe périmée (④)"; exit 1; }
+
+      - name: "Se placer sur le commit EXACT du candidat (le fichier de flux n'y existe pas, l'arbre est celui qui a été qualifié)"
+        shell: bash
+        run: |
+          git checkout --detach "$CANDIDAT"
+          test "$(git rev-parse HEAD)" = "$CANDIDAT"
+          test -z "$(git status --porcelain --untracked-files=all)"
+          echo "HEAD = $(git rev-parse HEAD) · arbre propre"
+
+      - name: Installer Node, Python et les dépendances DÉCLARÉES du dépôt
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Dépendances (package-lock.json = Playwright 1.56.1 ; openpyxl pour tools/marques.py)
+        shell: bash
+        run: |
+          npm ci --no-audit --no-fund
+          python3 -m pip install --quiet openpyxl
+          # ⚠️ Le runner écrit en dur `require('/opt/node22/lib/node_modules/playwright')` (tests/parcours/runner.js:29, et 170 autres endroits) :
+          #    on fournit CE chemin par un lien vers le Playwright du dépôt, au lieu de toucher aux tests.
+          sudo mkdir -p /opt/node22/lib/node_modules
+          sudo ln -sfn "$GITHUB_WORKSPACE/node_modules/playwright" /opt/node22/lib/node_modules/playwright
+          node -e "console.log('playwright', require('/opt/node22/lib/node_modules/playwright/package.json').version)"
+          test -z "$(git status --porcelain --untracked-files=all)" || { echo "⛔ l'installation a sali l'arbre"; git status --short | head; exit 1; }
+
+      - name: Navigateur — Chromium au chemin EXACT que les tests utilisent (chromium-1194)
+        shell: bash
+        run: |
+          npx playwright install --with-deps chromium
+          sudo mkdir -p /opt/pw-browsers
+          sudo ln -sfn "$HOME/.cache/ms-playwright/chromium-1194" /opt/pw-browsers/chromium-1194
+          if [ ! -x /opt/pw-browsers/chromium-1194/chrome-linux/chrome ] && [ -x /opt/pw-browsers/chromium-1194/chrome-linux64/chrome ]; then
+            sudo ln -sfn /opt/pw-browsers/chromium-1194/chrome-linux64 /opt/pw-browsers/chromium-1194/chrome-linux
+          fi
+          ls -la /opt/pw-browsers/ "$HOME/.cache/ms-playwright/" || true
+          test -x /opt/pw-browsers/chromium-1194/chrome-linux/chrome || { echo "⛔ chromium-1194 introuvable : le Playwright épinglé n'installe pas la révision attendue par les tests"; exit 1; }
+          /opt/pw-browsers/chromium-1194/chrome-linux/chrome --version
+
+      - name: Dépendances système et chemins attendus (poppler-utils pour pdftotext) — aucun test
+        # Ce que les tests utilisent SANS que le dépôt le déclare : `pdftotext` (tests/parcours/autre_activite.js), openpyxl (tools/marques.py),
+        # le chemin Playwright et le navigateur codés en dur, Node 22. Un manque se voit ICI, en quelques secondes, pas après 2 h de passe.
+        shell: bash
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends poppler-utils
+          pdftotext -v 2>&1 | head -1
+          node -v | grep -q '^v22\.' || { echo "⛔ Node n'est pas en version 22"; exit 1; }
+          python3 -c "import openpyxl; print('openpyxl', openpyxl.__version__)"
+          for c in git python3 node pdftotext sed grep cut sha256sum tar; do command -v "$c" >/dev/null || { echo "⛔ commande absente : $c"; exit 1; }; done
+          test -x /opt/pw-browsers/chromium-1194/chrome-linux/chrome || { echo "⛔ navigateur absent"; exit 1; }
+          test -f /opt/node22/lib/node_modules/playwright/package.json || { echo "⛔ chemin Playwright absent"; exit 1; }
+          ls /opt/pw-browsers | grep -q chromium || { echo "⛔ /opt/pw-browsers ne contient pas « chromium »"; exit 1; }
+          echo "polices emoji vues : $(fc-list 2>/dev/null | grep -ci emoji || true)"
+
+      - name: Contrôle GRATUIT — le navigateur démarre-t-il avant de lancer la passe ?
+        shell: bash
+        run: |
+          node -e "
+            const { chromium } = require('/opt/node22/lib/node_modules/playwright');
+            (async () => {
+              const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' });
+              const p = await b.newPage(); await p.goto('about:blank');
+              console.log('navigateur OK :', b.version()); await b.close();
+            })().catch(e => { console.error('⛔', e.message); process.exit(1); });"
+
+      - name: Acorn — version FIXÉE (8.18.0), au chemin EXACT qu'attendent les outils de découpe
+        # tools/decouper_passe.js, verifier_decoupe.js et passe_reduite.js écrivent en dur `/opt/node-tools/node_modules/acorn` (échec du run n° 2 :
+        # chemin absent du runner). On ne touche NI aux outils NI au dépôt : on fournit ce chemin. 8.18.0 = la version du conteneur où la passe a été
+        # qualifiée, et l'empreinte de `dist/acorn.js` est vérifiée octet pour octet (mesurée : identique à celle du paquet publié).
+        shell: bash
+        run: |
+          ACORN_VERSION=8.18.0
+          ACORN_SHA256=fc3ed7b81e58464715d0291402892f22c3d86ea75302645a330390f85d8015c9
+          sudo mkdir -p /opt/node-tools
+          sudo chown "$USER" /opt/node-tools
+          npm install --prefix /opt/node-tools --no-audit --no-fund --no-package-lock --no-save "acorn@$ACORN_VERSION"
+          test "$(node -p "require('/opt/node-tools/node_modules/acorn/package.json').version")" = "$ACORN_VERSION" || { echo "⛔ version d'Acorn inattendue"; exit 1; }
+          test "$(sha256sum /opt/node-tools/node_modules/acorn/dist/acorn.js | cut -d' ' -f1)" = "$ACORN_SHA256" || { echo "⛔ empreinte d'Acorn ≠ celle de la passe qualifiée"; exit 1; }
+          echo "✅ acorn $ACORN_VERSION installé et vérifié"
+
+      - name: Précontrôle RAPIDE du découpeur — aucune passe (copie jetable, l'arbre qualifié n'est jamais touché)
+        # Rejoue, sur une COPIE de l'arbre, exactement ce que fait passe_repartie.py avant de lancer quoi que ce soit : découpe en 3,
+        # contre-vérification, puis chargement d'Acorn par passe_reduite.js. Quelques secondes ; un échec ARRÊTE le flux AVANT la passe.
+        shell: bash
+        run: |
+          P="$RUNNER_TEMP/precontrole"; rm -rf "$P"; mkdir -p "$P"
+          tar --exclude=.git --exclude=node_modules -cf - . | tar -xf - -C "$P"
+          cd "$P"
+          node tools/decouper_passe.js tests/parcours/runner.js 3 tests/parcours/repartition-3.json --simuler | tail -5
+          node tools/decouper_passe.js tests/parcours/runner.js 3 tests/parcours/repartition-3.json
+          test "$(ls tests/parcours/runner.part-3-*.js | wc -l)" = "3" || { echo "⛔ la découpe n'a pas produit 3 copies"; exit 1; }
+          node tools/verifier_decoupe.js tests/parcours/runner.js 3 | tail -5
+          for f in tests/parcours/runner.part-3-*.js; do node --check "$f"; done
+          node tools/passe_reduite.js tests/parcours/runner.js "$P/reduite.js" "B-CCCXII." | tail -3
+          node --check "$P/reduite.js"
+          cd "$GITHUB_WORKSPACE"
+          test -z "$(git status --porcelain --untracked-files=all)" || { echo "⛔ le précontrôle a sali l'arbre qualifié"; git status --short | head; exit 1; }
+          echo "✅ découpeur, contre-vérification et passe_reduite.js : Acorn chargé, 3 copies conformes, arbre qualifié intact"
+
+      - name: Passe D-031 répartie (K=3) — UNE seule fois
+        shell: bash
+        run: |
+          J="$RUNNER_TEMP/repartie"; mkdir -p "$J"
+          set +e
+          python3 tools/passe_repartie.py 3 "$J" > "$RUNNER_TEMP/repartie.sortie" 2>&1
+          echo $? > "$RUNNER_TEMP/repartie.code"
+          set -e
+          tail -45 "$RUNNER_TEMP/repartie.sortie"
+          cp "$RUNNER_TEMP/repartie.sortie" "$RUNNER_TEMP/repartie.code" "$J/"
+
+      - name: La répartie est-elle exploitable ? (même commit, K=3, toutes conditions vertes SAUF les identités attendues)
+        # Les identités ne peuvent pas être vertes : le manifeste actuel attend encore les 11 témoins retirés. C'est le
+        # calibrage de la classique qui les accepte — et lui seul. Tout autre défaut (rouge, plantage, arbre sali…) arrête le flux.
+        shell: bash
+        run: |
+          python3 -I - <<'PY'
+          import json, os, sys
+          d = json.load(open(os.path.join(os.environ['RUNNER_TEMP'], 'repartie', 'PASSE.json')))
+          print({k: v for k, v in d.items() if k != 'journaux'})
+          ok = d.get('commit') == os.environ['CANDIDAT'] and d.get('K') == 3 and d.get('verdict_hors_identites') is True
+          if not ok:
+              print('⛔ répartie NON exploitable : commit/K/conditions (hors identités) non conformes — STOP, aucun relancement.'); sys.exit(1)
+          print('✅ répartie exploitable comme source croisée')
+          PY
+          test -z "$(git status --porcelain --untracked-files=all)" || { echo "⛔ arbre sali par la répartie"; exit 1; }
+          test "$(git ls-remote origin refs/heads/master | cut -f1)" = "$BASE_MASTER" || { echo "⛔ master a bougé pendant la répartie (④b) : passe périmée"; exit 1; }
+
+      - name: Conserver les journaux de la répartie
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: repartie-journaux
+          path: ${{ runner.temp }}/repartie
+          if-no-files-found: warn
+          retention-days: 30
+
+  # ───────────────────────────────────────────────────────────────────────────────────────────
+  classique:
+    name: ② Passe classique complète + calibrage (11 retraits)
+    needs: repartie
+    if: github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 345
+    steps:
+      - name: Récupérer le dépôt (historique complet, jeton en lecture seule)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Se placer sur le commit EXACT du candidat
+        shell: bash
+        run: |
+          test "$(git rev-parse "$GITHUB_SHA^")" = "$CANDIDAT" || { echo "⛔ parent inattendu"; exit 1; }
+          test "$(git diff --name-status "$CANDIDAT" "$GITHUB_SHA")" = "$(printf 'A\t%s' "$FICHIER_FLUX")" || { echo "⛔ la branche modifie autre chose que le flux"; exit 1; }
+          git checkout --detach "$CANDIDAT"
+          test "$(git rev-parse HEAD)" = "$CANDIDAT"
+          test -z "$(git status --porcelain --untracked-files=all)"
+          echo "HEAD = $(git rev-parse HEAD) · arbre propre"
+
+      - name: Master STRICTEMENT inchangé avant la passe classique (master == 401b9560)
+        shell: bash
+        run: |
+          M=$(git ls-remote origin refs/heads/master | cut -f1)
+          echo "master distant : ${M:-—} · attendu : $BASE_MASTER"
+          test "$M" = "$BASE_MASTER" || { echo "⛔ master ≠ $BASE_MASTER : une publication est intervenue entre les passes. PASSE PÉRIMÉE — STOP, aucun relancement."; exit 1; }
+
+      - name: Récupérer les journaux de la répartie (source croisée)
+        uses: actions/download-artifact@v4
+        with:
+          name: repartie-journaux
+          path: ${{ runner.temp }}/repartie
+
+      - name: Garde du jour — la classique doit tourner le MÊME jour que la répartie
+        shell: bash
+        run: |
+          JOUR_REP=$(python3 -I -c "import json,os;print(json.load(open(os.path.join(os.environ['RUNNER_TEMP'],'repartie','PASSE.json')))['jour'])")
+          echo "jour de la répartie : $JOUR_REP · jour maintenant (Paris) : $(date +%F)"
+          test "$JOUR_REP" = "$(date +%F)" || { echo "⛔ minuit franchi entre la répartie et la classique : le calibrage serait refusé. STOP, aucun relancement."; exit 1; }
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Dépendances déclarées du dépôt
+        shell: bash
+        run: |
+          npm ci --no-audit --no-fund
+          python3 -m pip install --quiet openpyxl
+          sudo mkdir -p /opt/node22/lib/node_modules
+          sudo ln -sfn "$GITHUB_WORKSPACE/node_modules/playwright" /opt/node22/lib/node_modules/playwright
+          node -e "console.log('playwright', require('/opt/node22/lib/node_modules/playwright/package.json').version)"
+          test -z "$(git status --porcelain --untracked-files=all)" || { echo "⛔ l'installation a sali l'arbre"; exit 1; }
+
+      - name: Navigateur — Chromium au chemin exact des tests (chromium-1194)
+        shell: bash
+        run: |
+          npx playwright install --with-deps chromium
+          sudo mkdir -p /opt/pw-browsers
+          sudo ln -sfn "$HOME/.cache/ms-playwright/chromium-1194" /opt/pw-browsers/chromium-1194
+          if [ ! -x /opt/pw-browsers/chromium-1194/chrome-linux/chrome ] && [ -x /opt/pw-browsers/chromium-1194/chrome-linux64/chrome ]; then
+            sudo ln -sfn /opt/pw-browsers/chromium-1194/chrome-linux64 /opt/pw-browsers/chromium-1194/chrome-linux
+          fi
+          test -x /opt/pw-browsers/chromium-1194/chrome-linux/chrome || { echo "⛔ chromium-1194 introuvable"; exit 1; }
+          /opt/pw-browsers/chromium-1194/chrome-linux/chrome --version
+
+      - name: Dépendances système et chemins attendus (poppler-utils pour pdftotext) — aucun test
+        # Ce que les tests utilisent SANS que le dépôt le déclare : `pdftotext` (tests/parcours/autre_activite.js), openpyxl (tools/marques.py),
+        # le chemin Playwright et le navigateur codés en dur, Node 22. Un manque se voit ICI, en quelques secondes, pas après 2 h de passe.
+        shell: bash
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends poppler-utils
+          pdftotext -v 2>&1 | head -1
+          node -v | grep -q '^v22\.' || { echo "⛔ Node n'est pas en version 22"; exit 1; }
+          python3 -c "import openpyxl; print('openpyxl', openpyxl.__version__)"
+          for c in git python3 node pdftotext sed grep cut sha256sum tar; do command -v "$c" >/dev/null || { echo "⛔ commande absente : $c"; exit 1; }; done
+          test -x /opt/pw-browsers/chromium-1194/chrome-linux/chrome || { echo "⛔ navigateur absent"; exit 1; }
+          test -f /opt/node22/lib/node_modules/playwright/package.json || { echo "⛔ chemin Playwright absent"; exit 1; }
+          ls /opt/pw-browsers | grep -q chromium || { echo "⛔ /opt/pw-browsers ne contient pas « chromium »"; exit 1; }
+          echo "polices emoji vues : $(fc-list 2>/dev/null | grep -ci emoji || true)"
+
+      - name: Passe D-031 CLASSIQUE complète, avec calibrage — UNE seule fois
+        # tools/passe_valide.sh exige lui-même --croiser (source indépendante) et ne calibre QUE si ses 4 conditions de validité
+        # (+ celles du journal) sont vertes : le runner a fini (code 0), le total est unique, l'arbre n'a pas changé, aucun
+        # commit concurrent sur master pendant la passe.
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/sortie"
+          set +e
+          tools/passe_valide.sh --calibrer --croiser "$RUNNER_TEMP/repartie" --accepter-retraits "$RUNNER_TEMP/sortie/passe-classique.log" > "$RUNNER_TEMP/sortie/verdict.txt" 2>&1
+          echo $? > "$RUNNER_TEMP/sortie/code-sortie.txt"
+          set -e
+          cat "$RUNNER_TEMP/sortie/verdict.txt"
+          echo "── code de sortie de passe_valide.sh : $(cat "$RUNNER_TEMP/sortie/code-sortie.txt")"
+
+      - name: Garde des retraits — EXACTEMENT les 11 documentés, rien d'autre
+        # Le calibrage a été lancé avec --accepter-retraits : cette garde compare le manifeste réécrit à celui du candidat
+        # et refuse tout retrait au-delà des 11 (11 identités, 11 occurrences — mesurés en local sur la répartie du 22/11).
+        shell: bash
+        run: |
+          CODE=$(cat "$RUNNER_TEMP/sortie/code-sortie.txt")
+          if [ "$CODE" != "0" ]; then
+            echo "⛔ passe_valide.sh a rendu $CODE : PASSE NON VALIDE — aucun calibrage, manifeste inchangé. STOP, aucun relancement."
+            git status --short | head -5
+            exit 1
+          fi
+          test "$(git status --porcelain --untracked-files=all)" = " M tests/recette/temoins-attendus.json" || { echo "⛔ autre chose que le manifeste a changé :"; git status --short | head; exit 1; }
+          git diff tests/recette/temoins-attendus.json > "$RUNNER_TEMP/sortie/manifeste.diff" || true
+          python3 -I - <<'PY'
+          import collections, hashlib, json, os, subprocess, sys
+          sys.dont_write_bytecode = True
+          sys.path.insert(0, 'tools')
+          import temoins
+          M = 'tests/recette/temoins-attendus.json'
+          TMP = os.environ['RUNNER_TEMP']
+          # ── ce que la garde EXIGE (mesuré en local le 22/11/2026 sur la répartie validée de cd604923 ; rien n'est déduit du journal certifié)
+          # Les 11 identités retirées = empreintes (sha-256 tronqué à 12) des libellés documentés, jetons de date exclus :
+          RETIRES_ATTENDUS = {
+              '1665ddfd12da': "runner.js · plafond 300 caractères (comme l'import)",
+              '330a4750d9a9': "session_integrity.js · R1b … les séries viennent de l'historique du Rowing",
+              '577150f0a092': "runner.js · CCLXXXI NON-RÉGRESSION — hors fin de séance, une mise à jour en attente s'applique",
+              '5c376a274527': "import_fidelite.js · IPDF-E01 un commentaire IMPORTÉ de ≈450 caractères survit à la première frappe",
+              '64b074b49f87': "runner.js · CCLXXXI sortir vers le COACH ne recharge PAS",
+              '9cb370d8e087': "dropset_programme.js · ③ les TROIS sites l'appellent, une fois chacun",
+              'c09b1d445336': "seance_ux.js · B-UXS-A5 avant séance, la barre de marque reste et l'en-tête de séance est absent",
+              'cc4fd433caf8': "runner.js · on ne recharge pas non plus pendant qu'on lit le Coach",
+              'd082d0df6f51': "runner.js · CCLXXXI LA RÈGLE DE MICHEL — dès qu'on SORT du débrief, la mise à jour repart",
+              'dc0ce18f7efb': "runner.js · CCLXXXI PENDANT la lecture du débrief : noter son ressenti ne déclenche RIEN",
+              'fe4d6e5dafba': "runner.js · de retour à l'accueil, rien en cours : la mise à jour s'applique",
+          }
+          OCC_RETIREES = 11            # une occurrence chacune
+          AJOUTS_SQUELETTES, AJOUTS_OCCURRENCES = 1100, 1111   # les nouveaux témoins (V4) : 1 100 empreintes, 1 111 occurrences
+          TOTAL_ATTENDU = 8600 - 11 + 1111                     # = 9 700 (ancien manifeste − retraits + ajouts) = total équivalent séquentiel
+          EMPREINTE_DELTA = '3b1c218b74532a2aee221e49e36ca7a44f8312bb5e8ed6923f391ef755504cfb'
+          # (sha-256 de toutes les lignes « empreinte<TAB>écart d'occurrences » entre l'ancien et le nouveau manifeste, triées :
+          #  tout écart de plus, de moins ou de nature différente — un témoin retiré en trop, un compteur modifié, une identité
+          #  inventée, un ajout échangé — la fait changer.)
+          erreurs = []
+          old = json.loads(subprocess.check_output(['git', 'show', 'HEAD:' + M]))
+          new = json.load(open(M, encoding='utf-8'))
+          # ① la structure du manifeste : rien d'autre que `calibre` et `passe` ne bouge
+          if sorted(new) != sorted(old): erreurs.append('clés de premier niveau différentes : %s → %s' % (sorted(old), sorted(new)))
+          for k in ('_lisez_moi', 'version'):
+              if new.get(k) != old.get(k): erreurs.append('« %s » modifié' % k)
+          if new.get('annexes') != (old.get('annexes') or {}): erreurs.append('« annexes » modifié')
+          # ② la provenance écrite par le calibrage correspond à CE qui a tourné
+          rep = json.load(open(os.path.join(TMP, 'repartie', 'PASSE.json')))
+          cal = new.get('calibre') or {}
+          if cal.get('commit') != os.environ['CANDIDAT']: erreurs.append('calibre.commit ≠ candidat')
+          if cal.get('jour') != rep.get('jour'): erreurs.append('calibre.jour ≠ jour de la répartie')
+          if cal.get('n') != TOTAL_ATTENDU: erreurs.append('calibre.n = %s (attendu %d)' % (cal.get('n'), TOTAL_ATTENDU))
+          if cal.get('mode') != 'croisé : séquentielle + répartie (K=3)': erreurs.append('calibre.mode inattendu : %r' % cal.get('mode'))
+          srcs = (cal.get('sources') or {}).get('repartie') or {}
+          for nom in ('p0.log', 'p1.log', 'p2.log'):
+              h = hashlib.sha256(open(os.path.join(TMP, 'repartie', nom), 'rb').read()).hexdigest()
+              if srcs.get(nom) != h: erreurs.append('empreinte de %s ≠ journal réellement lu par le calibrage' % nom)
+          if sorted(srcs) != ['p0.log', 'p1.log', 'p2.log']: erreurs.append('sources de la répartie inattendues : %s' % sorted(srcs))
+          # ③ LES RETRAITS : exactement les 11 identités documentées — pas seulement leur nombre
+          manq, _ = temoins.comparer(collections.Counter(new['passe']), collections.Counter(old['passe']))
+          if sorted(manq) != sorted(RETIRES_ATTENDUS):
+              erreurs.append('identités retirées ≠ les 11 documentées : en trop %s · en moins %s' % (sorted(set(manq) - set(RETIRES_ATTENDUS)), sorted(set(RETIRES_ATTENDUS) - set(manq))))
+          if any(v != (1, 0) for v in manq.values()): erreurs.append('retrait autre qu\'une occurrence complète : %s' % {k: v for k, v in manq.items() if v != (1, 0)})
+          if sum(c - v for c, v in manq.values()) != OCC_RETIREES: erreurs.append('occurrences retirées ≠ %d' % OCC_RETIREES)
+          # ④ L'ENSEMBLE du manifeste, empreinte par empreinte : retraits + ajouts + AUCUN autre écart
+          sq = lambda d: collections.Counter(h for k, n in d.items() for h in [temoins._decouper(k)[0]] * n)
+          o, n = sq(old['passe']), sq(new['passe'])
+          delta = {h: n.get(h, 0) - o.get(h, 0) for h in set(o) | set(n) if n.get(h, 0) != o.get(h, 0)}
+          neg = {h: d for h, d in delta.items() if d < 0}; pos = {h: d for h, d in delta.items() if d > 0}
+          if sorted(neg) != sorted(RETIRES_ATTENDUS) or any(d != -1 for d in neg.values()): erreurs.append('écarts négatifs ≠ les 11 retraits (−1 chacun)')
+          if (len(pos), sum(pos.values())) != (AJOUTS_SQUELETTES, AJOUTS_OCCURRENCES): erreurs.append('ajouts : %d empreinte(s), %d occurrence(s) (attendu %d et %d)' % (len(pos), sum(pos.values()), AJOUTS_SQUELETTES, AJOUTS_OCCURRENCES))
+          if sum(n.values()) != TOTAL_ATTENDU: erreurs.append('total des occurrences = %d (attendu %d)' % (sum(n.values()), TOTAL_ATTENDU))
+          dig = hashlib.sha256('\n'.join('%s\t%d' % (h, delta[h]) for h in sorted(delta)).encode()).hexdigest()
+          if dig != EMPREINTE_DELTA: erreurs.append('empreinte des écarts ≠ celle mesurée en local (%s)' % dig)
+          print('retraits : %d identité(s) · ajouts : %d empreinte(s) / %d occurrence(s) · total %d · empreinte des écarts %s' % (len(neg), len(pos), sum(pos.values()), sum(n.values()), dig))
+          out = os.path.join(TMP, 'sortie')
+          # on garde TOUJOURS le détail des écarts, pour examen
+          with open(os.path.join(out, 'ecarts-manifeste.txt'), 'w', encoding='utf-8') as f:
+              for h in sorted(delta): f.write('%s\t%+d\t%s\n' % (h, delta[h], RETIRES_ATTENDUS.get(h, '(ajout)' if delta[h] > 0 else '(INATTENDU)')))
+          if not erreurs:
+              open(os.path.join(out, 'manifeste-PROPOSE.json'), 'w', encoding='utf-8').write(open(M, encoding='utf-8').read())
+              print('✅ manifeste proposé : exactement les 11 retraits documentés, les 1 111 ajouts attendus, aucun autre écart')
+          else:
+              open(os.path.join(out, 'manifeste-REFUSE.json'), 'w', encoding='utf-8').write(open(M, encoding='utf-8').read())
+              print('⛔ MANIFESTE REFUSÉ (conservé pour examen, jamais à committer) :')
+              for e in erreurs: print('   · ' + e)
+              sys.exit(1)
+          PY
+
+      - name: Empreinte du manifeste proposé (le job 3 ne reprend QUE ce fichier-là)
+        shell: bash
+        run: |
+          cd "$RUNNER_TEMP/sortie"
+          test -f manifeste-PROPOSE.json && test ! -e manifeste-REFUSE.json
+          sha256sum manifeste-PROPOSE.json | tee manifeste-PROPOSE.sha256
+
+      - name: Conserver les résultats (journal, verdict, code de sortie, manifeste proposé ou refusé, diff)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: classique-resultats
+          path: ${{ runner.temp }}/sortie
+          if-no-files-found: warn
+          retention-days: 30
+
+  # ───────────────────────────────────────────────────────────────────────────────────────────
+  verification:
+    name: ③ Seconde passe classique (sans --calibrer) sur le candidat + manifeste proposé
+    needs: classique
+    if: github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 345
+    steps:
+      - name: Récupérer le dépôt (historique complet, jeton en lecture seule)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Se placer sur le commit EXACT du candidat
+        shell: bash
+        run: |
+          test "$(git rev-parse "$GITHUB_SHA^")" = "$CANDIDAT" || { echo "⛔ parent inattendu"; exit 1; }
+          test "$(git diff --name-status "$CANDIDAT" "$GITHUB_SHA")" = "$(printf 'A\t%s' "$FICHIER_FLUX")" || { echo "⛔ la branche modifie autre chose que le flux"; exit 1; }
+          git checkout --detach "$CANDIDAT"
+          test "$(git rev-parse HEAD)" = "$CANDIDAT"
+          test -z "$(git status --porcelain --untracked-files=all)"
+          echo "HEAD = $(git rev-parse HEAD) · arbre propre"
+
+      - name: Master STRICTEMENT inchangé avant la seconde passe (master == 401b9560)
+        shell: bash
+        run: |
+          M=$(git ls-remote origin refs/heads/master | cut -f1)
+          echo "master distant : ${M:-—} · attendu : $BASE_MASTER"
+          test "$M" = "$BASE_MASTER" || { echo "⛔ master ≠ $BASE_MASTER : une publication est intervenue entre les passes. PASSE PÉRIMÉE — STOP, aucun relancement."; exit 1; }
+
+      - name: Récupérer le manifeste proposé par le job 2 — et lui SEUL
+        uses: actions/download-artifact@v4
+        with:
+          name: classique-resultats
+          path: ${{ runner.temp }}/propose
+
+      - name: Le manifeste est celui que le job 2 a validé (jamais un refusé, empreinte identique, commit candidat)
+        shell: bash
+        run: |
+          cd "$RUNNER_TEMP/propose"
+          ls -la
+          test -f manifeste-PROPOSE.json || { echo "⛔ aucun manifeste proposé : le job 2 ne l'a pas validé"; exit 1; }
+          test ! -e manifeste-REFUSE.json || { echo "⛔ un manifeste REFUSÉ existe : STOP"; exit 1; }
+          test "$(cat code-sortie.txt)" = "0" || { echo "⛔ la passe classique n'avait pas rendu 0"; exit 1; }
+          sha256sum -c manifeste-PROPOSE.sha256
+          python3 -I -c "
+          import json, os, sys
+          m = json.load(open('manifeste-PROPOSE.json', encoding='utf-8'))
+          assert m['calibre']['commit'] == os.environ['CANDIDAT'], 'calibre.commit ≠ candidat'
+          print('manifeste proposé : calibré sur', m['calibre']['commit'][:8], '· n =', m['calibre']['n'])"
+
+      - name: Garde du jour — même jour que la répartie (le départ a été autorisé avant 14 h)
+        shell: bash
+        run: |
+          JOUR_PROPOSE=$(python3 -I -c "import json;print(json.load(open('$RUNNER_TEMP/propose/manifeste-PROPOSE.json',encoding='utf-8'))['calibre']['jour'])")
+          echo "jour du calibrage : $JOUR_PROPOSE · jour maintenant (Paris) : $(date +%F)"
+          test "$JOUR_PROPOSE" = "$(date +%F)" || { echo "⛔ minuit franchi avant la seconde passe : les dates des identités seraient lues sur un autre jour. STOP, aucun relancement."; exit 1; }
+          date +%F > "$RUNNER_TEMP/jour-depart.txt"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Dépendances déclarées du dépôt
+        shell: bash
+        run: |
+          npm ci --no-audit --no-fund
+          python3 -m pip install --quiet openpyxl
+          sudo mkdir -p /opt/node22/lib/node_modules
+          sudo ln -sfn "$GITHUB_WORKSPACE/node_modules/playwright" /opt/node22/lib/node_modules/playwright
+          node -e "console.log('playwright', require('/opt/node22/lib/node_modules/playwright/package.json').version)"
+          test -z "$(git status --porcelain --untracked-files=all)" || { echo "⛔ l'installation a sali l'arbre"; exit 1; }
+
+      - name: Navigateur — Chromium au chemin exact des tests (chromium-1194)
+        shell: bash
+        run: |
+          npx playwright install --with-deps chromium
+          sudo mkdir -p /opt/pw-browsers
+          sudo ln -sfn "$HOME/.cache/ms-playwright/chromium-1194" /opt/pw-browsers/chromium-1194
+          if [ ! -x /opt/pw-browsers/chromium-1194/chrome-linux/chrome ] && [ -x /opt/pw-browsers/chromium-1194/chrome-linux64/chrome ]; then
+            sudo ln -sfn /opt/pw-browsers/chromium-1194/chrome-linux64 /opt/pw-browsers/chromium-1194/chrome-linux
+          fi
+          test -x /opt/pw-browsers/chromium-1194/chrome-linux/chrome || { echo "⛔ chromium-1194 introuvable"; exit 1; }
+          /opt/pw-browsers/chromium-1194/chrome-linux/chrome --version
+
+      - name: Dépendances système et chemins attendus (poppler-utils pour pdftotext) — aucun test
+        # Ce que les tests utilisent SANS que le dépôt le déclare : `pdftotext` (tests/parcours/autre_activite.js), openpyxl (tools/marques.py),
+        # le chemin Playwright et le navigateur codés en dur, Node 22. Un manque se voit ICI, en quelques secondes, pas après 2 h de passe.
+        shell: bash
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends poppler-utils
+          pdftotext -v 2>&1 | head -1
+          node -v | grep -q '^v22\.' || { echo "⛔ Node n'est pas en version 22"; exit 1; }
+          python3 -c "import openpyxl; print('openpyxl', openpyxl.__version__)"
+          for c in git python3 node pdftotext sed grep cut sha256sum tar; do command -v "$c" >/dev/null || { echo "⛔ commande absente : $c"; exit 1; }; done
+          test -x /opt/pw-browsers/chromium-1194/chrome-linux/chrome || { echo "⛔ navigateur absent"; exit 1; }
+          test -f /opt/node22/lib/node_modules/playwright/package.json || { echo "⛔ chemin Playwright absent"; exit 1; }
+          ls /opt/pw-browsers | grep -q chromium || { echo "⛔ /opt/pw-browsers ne contient pas « chromium »"; exit 1; }
+          echo "polices emoji vues : $(fc-list 2>/dev/null | grep -ci emoji || true)"
+
+      - name: Commit LOCAL temporaire du manifeste proposé (jamais poussé) et empreinte de l'arbre testé
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/verif"
+          cp "$RUNNER_TEMP/propose/manifeste-PROPOSE.json" tests/recette/temoins-attendus.json
+          test "$(git status --porcelain --untracked-files=all)" = " M tests/recette/temoins-attendus.json" || { echo "⛔ autre chose que le manifeste a changé"; git status --short | head; exit 1; }
+          git -c user.name="qualif-d031" -c user.email="qualif-d031@users.noreply.invalid" commit -q -m "manifeste proposé (commit LOCAL temporaire du runner, jamais poussé)" tests/recette/temoins-attendus.json
+          test "$(git diff --name-only "$CANDIDAT" HEAD)" = "tests/recette/temoins-attendus.json" || { echo "⛔ le commit temporaire touche autre chose que le manifeste"; exit 1; }
+          test -z "$(git status --porcelain --untracked-files=all)"
+          {
+            echo "candidat         : $CANDIDAT"
+            echo "commit temporaire: $(git rev-parse HEAD)   (local au runner, jamais poussé)"
+            echo "ARBRE TESTÉ      : $(git rev-parse 'HEAD^{tree}')"
+            echo "manifeste sha256 : $(sha256sum tests/recette/temoins-attendus.json | cut -d' ' -f1)"
+          } | tee "$RUNNER_TEMP/verif/arbre-teste.txt"
+          # ce commit n'est JAMAIS poussé : aucune commande `git push` dans ce flux, et le jeton est en lecture seule (permissions: contents: read)
+
+      - name: Passe D-031 CLASSIQUE complète SANS --calibrer — UNE seule fois
+        # Vérifie les identités du manifeste calibré. Conditions : ⓪ arbre propre · ② runner terminé (code 0) · ① total unique, 0 rouge ·
+        # ③ HEAD inchangé · ④ master distant inchangé · ⑦ identités du manifeste (aucun témoin attendu manquant).
+        shell: bash
+        run: |
+          set +e
+          tools/passe_valide.sh "$RUNNER_TEMP/verif/passe-verification.log" > "$RUNNER_TEMP/verif/verdict.txt" 2>&1
+          echo $? > "$RUNNER_TEMP/verif/code-sortie.txt"
+          set -e
+          cat "$RUNNER_TEMP/verif/verdict.txt"
+          echo "── code de sortie de passe_valide.sh : $(cat "$RUNNER_TEMP/verif/code-sortie.txt")"
+
+      - name: Verdict — conditions, identités, arbre toujours le même
+        shell: bash
+        run: |
+          CODE=$(cat "$RUNNER_TEMP/verif/code-sortie.txt")
+          [ "$(date +%F)" = "$(cat "$RUNNER_TEMP/jour-depart.txt")" ] || echo "⚠️ la seconde passe a franchi minuit : lire les dates des identités avec prudence (le verdict de passe_valide.sh reste celui qui est publié)."
+          echo "arbre à l'arrivée : $(git rev-parse 'HEAD^{tree}')"
+          grep "ARBRE TESTÉ" "$RUNNER_TEMP/verif/arbre-teste.txt"
+          test "$(git rev-parse 'HEAD^{tree}')" = "$(grep 'ARBRE TESTÉ' "$RUNNER_TEMP/verif/arbre-teste.txt" | sed 's/.*: //')" || { echo "⛔ l'arbre a changé pendant la passe"; exit 1; }
+          grep -E "identités|⑦" "$RUNNER_TEMP/verif/verdict.txt" || true
+          if [ "$CODE" != "0" ]; then echo "⛔ SECONDE PASSE NON VALIDE (code $CODE) — STOP, aucun relancement."; exit 1; fi
+          grep -q "PASSE VALIDE" "$RUNNER_TEMP/verif/verdict.txt" || { echo "⛔ le verdict ne porte pas « PASSE VALIDE »"; exit 1; }
+          echo "✅ seconde passe valide sur l'arbre testé ci-dessus"
+
+      - name: Master STRICTEMENT inchangé à la fin du job 3 (master == 401b9560)
+        # `always()` : le contrôle est rendu même si la seconde passe a échoué — il dit si le verdict (valide ou non) est périmé.
+        if: always()
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/verif"
+          M=$(git ls-remote origin refs/heads/master | cut -f1)
+          echo "master distant : ${M:-—} · attendu : $BASE_MASTER" | tee -a "$RUNNER_TEMP/verif/master-fin.txt"
+          test "$M" = "$BASE_MASTER" || { echo "⛔ master ≠ $BASE_MASTER à la fin : une publication est intervenue pendant les passes. TOUS LES VERDICTS SONT PÉRIMÉS — STOP."; exit 1; }
+          echo "✅ master inchangé jusqu'à la fin"
+
+      - name: Conserver le verdict, les journaux et l'empreinte de l'arbre testé
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: verification-resultats
+          path: ${{ runner.temp }}/verif
+          if-no-files-found: warn
+          retention-days: 30
