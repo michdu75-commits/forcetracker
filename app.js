@@ -11444,7 +11444,7 @@ function _brouillonDejaEnregistre(draft){
    Safari de ft-v144 → v153 (docs/GALERES-ET-LECONS.md).
    Ce que dit le CACHE, lui, se dit À PART : la version plus récente qu'un service worker neuf a installée (`.app-maj`, voir `_majRefresh`).
    `.app-ver` ne porte JAMAIS que le numéro du code qui tourne : l'export (`_ecrireExport`) et le banc de Milo le recopient tel quel. */
-const APP_BUILD='ft-v1267';
+const APP_BUILD='ft-v1268';
 // Remplit les libellés de version : `.app-ver` = le code qui TOURNE (APP_BUILD) ; `.app-maj` = « mise à jour ft-vNNNN prête » quand un service worker neuf l'attend (vide sinon).
 // `data-pre` : le séparateur propre à chaque endroit (le pied du Menu écrit « ft-v1266 · mise à jour ft-v1267 prête », le badge d'« À propos » l'écrit seul sur sa ligne).
 function _setAppVersionEls(){

@@ -1,7 +1,7 @@
 # 📒 Inventaire — ce qui existe dans Force Tracker
 
 > ⚙️ **FICHIER GÉNÉRÉ — ne pas éditer à la main.** Régénérer avec `python3 tools/inventaire.py`.
-> Généré depuis **le code** (version `ft-v1267`, dernier commit 2026-11-15).
+> Généré depuis **le code** (version `ft-v1268`, dernier commit 2026-11-22).
 >
 > **À quoi il sert** : répondre à *« est-ce que c'est déjà construit ? »*. Le journal des versions
 > (`CLAUDE.md`, `docs/JOURNAL-ARCHIVE.md`) répond à *« que s'est-il passé, quand, pourquoi ? »* —
@@ -19,9 +19,9 @@
 | Écrans | 7 | 0 |
 | Lignes de menu | 17 | 3 |
 | Fenêtres (modales) | 67 | 16 |
-| Actions du serveur | 56 | 3 |
-| Fonctions JS | 673 | — |
-| Nouveautés annoncées | 74 | — |
+| Actions du serveur | 57 | 4 |
+| Fonctions JS | 678 | — |
+| Nouveautés annoncées | 75 | — |
 
 ## 🖥️ Écrans
 
@@ -63,6 +63,7 @@ Chaque action = une capacité côté serveur (IA, sauvegarde, import, premium…
 
 | Action | doc |
 |---|---|
+| `adminReadAccount` | ❓ |
 | `adminRestore` | ✅ |
 | `adminUnlockAuth` | ✅ |
 | `aiCount` | ✅ |
@@ -198,6 +199,7 @@ Ce qui a été **annoncé dans la pop-up « Quoi de neuf »** — donc censé ex
 
 | # | | Nouveauté |
 |---|---|---|
+| 81 | 🔄 | Les mises à jour te sont proposées |
 | 80 | ⚖️ | Nutrition : les grammes d’abord |
 | 79 | 💪 | « Échec » et « 0 », enfin séparés |
 | 78 | 🏋️ | L'écran Séance s'allège |
