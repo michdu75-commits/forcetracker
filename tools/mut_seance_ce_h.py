@@ -106,14 +106,14 @@ MUT = [
      [(LO, "function _togglePeNotes(di,ei){ const k=di+'-'+ei;", "function _togglePeNotes(di,ei){ const k=di+'-'+ei; _progEditEx(di,ei).sets.forEach(s=>{s.note=s.note||'';});")], 'GARDE'),
     # ── la cible tactile ──
     ('M38 la zone touchable du numero ne depasse plus du bouton (la regle generale des boutons rogne : `overflow:hidden`)',
-     [(CS, ".pe-up{position:relative;overflow:visible;}", ".pe-up{position:relative;overflow:hidden;}")], 'GARDE'),
+     [(CS, "text-underline-offset:3px;position:relative;overflow:visible;}", "text-underline-offset:3px;position:relative;overflow:hidden;}")], 'GARDE'),   # ancre re-posee le 22/11/2026 : les deux regles `.pe-up` sont fusionnees
     ('M39 la zone touchable du numero n\'est plus elargie (24 → 30 px de large, 34 de haut)',
      [(CS, ".pe-up::before{content:'';position:absolute;left:-10px;right:0;top:-4px;bottom:-4px;}", ".pe-up::before{content:none;}")], 'GARDE'),
     ('M40 la zone elargie du numero deborde sur la pastille de type voisine (le bord du type n\'est plus le type)',
      [(CS, ".pe-up::before{content:'';position:absolute;left:-10px;right:0;top:-4px;bottom:-4px;}", ".pe-up::before{content:'';position:absolute;left:-10px;right:-14px;top:-4px;bottom:-4px;z-index:2;}")], 'GARDE'),
     # ── la regle d'or #9 ──
     ('M41 le bouton central « + » bouge sur l\'ecran Seance (decale de 3 px des que la seance est ouverte)',
-     [(CS, ".pe-up{position:relative;overflow:visible;}", ".pe-up{position:relative;overflow:visible;}\n#root.seance-on #nb-log{position:relative;top:3px;}")], 'GARDE'),
+     [(CS, "text-underline-offset:3px;position:relative;overflow:visible;}", "text-underline-offset:3px;position:relative;overflow:visible;}\n#root.seance-on #nb-log{position:relative;top:3px;}")], 'GARDE'),   # ancre re-posee le 22/11/2026 (fusion des deux regles `.pe-up`)
     # ── les nouvelles donnees voyagent ──
     ('M42 la synchronisation n\'envoie plus l\'identite des series (`sid`) : un copieur qui ne la recopie pas la supprime',
      [(SJ, "programmes:S.programmes||[],", "programmes:JSON.parse(JSON.stringify(S.programmes||[],function(k,v){return k==='sid'?undefined:v;})),")], 'GARDE'),

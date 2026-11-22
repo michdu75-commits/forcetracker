@@ -11462,7 +11462,10 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   t('⛔⛔ ... ET LE HEADER DE MILO AUSSI — les 3 regles redefinies plus bas GAGNENT bien',
     R.coachHeaderHaut==='2px' && R.coachHeaderBas==='6px' && R.sousTitre==='11px' && R.quotaPad==='4px 10px',
     'haut='+R.coachHeaderHaut+' bas='+R.coachHeaderBas+' sous-titre='+R.sousTitre+' badge='+R.quotaPad);
-  t('⭐ le header de Milo mesure moins de 60 px (83 avant)', R.headerH<60, R.headerH+' px');
+  /* ↪️ SEUIL RE-VISÉ le 22/11/2026 (Séance V4, décision de Michel, R30) : 60 → 70 px. Cause MESURÉE : le « ? » d'écran `#ctx-help` (lot A, 17/11) réserve 40 px à droite de la 1ʳᵉ rangée ; à 390 px de large le
+     sous-titre de Milo passe sur DEUX lignes → 64 px (50 sur le master publié ; à 375 px il faisait déjà 64). Michel accepte les 64 px. Le seuil reste SOUS les 83 px d'avant la compaction : une régression y rougit.
+     Le libellé est gardé tel quel (une identité de témoin = son libellé). */
+  t('⭐ le header de Milo mesure moins de 60 px (83 avant)', R.headerH<70, R.headerH+' px');
   t('🔴 REGLE D\'OR #9 : le bouton central « + » ne bouge PAS (mesure, pas regarde)',
     R.fabTop===792 && R.fabH===44 && R.fabTopApres===792,
     'haut='+R.fabTop+' hauteur='+R.fabH+' apres navigation='+R.fabTopApres);
@@ -37966,8 +37969,9 @@ console.log('\n== BLOC CCCVI — la capture iPhone, de bout en bout ==');
   t('CCCVI ⑭ ⛔ HORS PÉRIMÈTRE — le garde qui retient le rechargement N\'A PAS ÉTÉ TOUCHÉ : '+
     'c\'est une décision de ft-v1184 (*ne pas arracher l\'écran*), pas un oubli (**R30**). '+
     '*C\'est elle qui explique la capture, et ce n\'était pas à moi de la renverser.*',
-    /_curScreen\s*&&\s*window\._curScreen!=='home'|window\._curScreen&&window\._curScreen!=='home'/
-      .test(corpsB('_majPeutSAppliquer'))
+    /* ↪️ RE-VISÉ le 22/11/2026 (Séance V4, GO de Michel, R30) : il exigeait `_curScreen!=='home'` — D-170 (17/11, Michel) l'a RETIRÉ exprès : l'écran affiché n'est plus une raison d'attendre
+       (la mise à jour ne part que du bouton « Mettre à jour »). La garantie « le garde n'a pas bougé » reste : séance ouverte, fin de séance en cours (`_finishing`), passe payante (`_evRunning`). */
+    /_seanceOuverte|S\.wkt/.test(corpsB('_majPeutSAppliquer'))
     && /_finishing/.test(corpsB('_majPeutSAppliquer'))
     && /_evRunning/.test(corpsB('_majPeutSAppliquer')),
     'le garde de mise à jour a bougé');
@@ -39485,7 +39489,9 @@ console.log('\n-- CXIV. Le bouton rouge de showConfirm dit ce qu\'il FAIT (ft-v1
       const titre=args[0].trim();
       if(args.length>=4 && args[3].trim()){ _avecLabel++; continue; }
       // Pas de libelle → le bouton rouge dira « Supprimer ». Le titre doit le dire aussi.
-      if(!/^'Supprimer/.test(titre)){
+      /* ↪️ RE-VISÉ le 22/11/2026 (Séance V4, GO de Michel, R30) : un titre peut être un TERNAIRE — « Supprimer le palier / la série N ? » (log.js, suppression d'une série précise) — À CONDITION que
+         les DEUX branches commencent par « Supprimer » : le bouton rouge dit alors vrai dans les deux cas. Une branche qui ne commence pas par « Supprimer » reste une menteuse. */
+      if(!/^'Supprimer/.test(titre) && !/^\(\s*[^?'"]+\?\s*'Supprimer[^']*'\s*:\s*'Supprimer[^']*'\s*\)/.test(titre)){
         _menteurs.push(f+':'+(src.slice(0,k).split('\n').length)+' '+titre.replace(/\s+/g,' ').slice(0,40));
       }
     }
@@ -39602,8 +39608,10 @@ console.log('\n-- CXCI. Une mise à jour ne tue plus un banc d\'essai en cours (
   const corps=f.slice(0, f.indexOf('\n}'));
   t('⭐⭐ une passe de banc d\'essai en cours DIFFÈRE la mise à jour (elle coûte des appels réels)',
     /_evRunning/.test(corps), corps.replace(/\s+/g,' ').slice(0,160));
+  /* ↪️ RE-VISÉ le 22/11/2026 (Séance V4, GO de Michel, R30) : « écran non-accueil » n'est plus une garde depuis D-170 (17/11 : l'écran n'est plus une raison d'attendre — la mise à jour ne part que du bouton « Mettre à jour »).
+     Le libellé est GARDÉ tel quel (un libellé réécrit change l'identité du témoin) ; la garantie, elle, reste : les gardes qui subsistent (séance en cours, fin de séance) sont toujours lues. */
   t('⛔ … sans desserrer les gardes existantes (séance en cours, écran non-accueil)',
-    /_wkt|_curScreen/.test(corps), '');
+    /_seanceOuverte|S\.wkt/.test(corps) && /_finishing/.test(corps), '');
   /* ⛔ Le drapeau existe vraiment, sinon la garde serait toujours fausse — et verte pour rien. */
   t('⛔ le drapeau `_evRunning` existe et est bien posé par le banc d\'essai (sinon garde morte)',
     /_evRunning\s*=\s*true/.test(fs.readFileSync(path.join(ROOT,'coach.js'),'utf8')), '');
@@ -40016,7 +40024,9 @@ console.log('\n═══ B-CCCXII. LE DÉBRIEF NE SE PAIE PLUS DEUX FOIS, ET IL 
   t('B-CCCXII ④′ ⭐⭐ la réponse VALIDE est rangée dans le magasin AVANT tout traitement (une réponse payée n\'est jamais perdue)',
     /_dbfReponseValide\(data\)\)throw[\s\S]{0,120}_dbfEnregistrer\(sid, reply[\s\S]{0,200}_stripCoachTech/.test(nu(corps('_runSeDebrief',srcL))), '');
   t('B-CCCXII ③′ ⛔ la fin de l\'appel ne libère QUE cette séance (E5) — jamais tout l\'emplacement',
-    /finally\{(?:\s*if\([^)]*\)\s*return;(?:\s*\/\/[^\n]*)?)?\s*_dbfVolRetirer\(sid\);/.test(nu(corps('_runSeDebrief',srcL)))
+    /* ↪️ RE-VISÉ le 22/11/2026 (Séance V4, GO de Michel, R30) : D-170 pose `_dbfActifs.delete(…)` en TÊTE du `finally` (l'opération est terminée → la mise à jour peut paraître). Cette ligne seule est tolérée ;
+       la garantie ne bouge pas : `_dbfVolRetirer(sid)` retire CETTE séance, et il n'y a jamais de `removeItem(_DBF_ENCOURS)`. */
+    /finally\{(?:\s*_dbfActifs\.delete\([^;]*\);)?(?:\s*if\([^)]*\)\s*return;(?:\s*\/\/[^\n]*)?)?\s*_dbfVolRetirer\(sid\);/.test(nu(corps('_runSeDebrief',srcL)))
     && !/removeItem\(_DBF_ENCOURS\)/.test(nu(corps('_runSeDebrief',srcL))), '');
   t('B-CCCXII ⑨ ⛔ poser le débrief dans le fil ne crée AUCUN appel de résumé (pas de summarizeCoach en plus)',
     !/_saveCoachMemory/.test(nu(corps('_dbfPoserDansHistorique',srcC))), '');

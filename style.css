@@ -2384,10 +2384,10 @@ html.ob-done #onboarding{display:none;}
 .pe-hdr .pe-h2{grid-column:span 2;}
 .pe-row{padding:2px 0;}
 .pe-num{font-size:12px;color:var(--t2);text-align:center;}
-.pe-up{height:34px;width:100%;padding:0;border:none;background:none;font-family:var(--font);cursor:pointer;text-decoration:underline dotted;text-underline-offset:3px;}   /* D-171 : le numéro d'une série (dès la 2ᵉ) la monte d'un cran */
+.pe-up{height:34px;width:100%;padding:0;border:none;background:none;font-family:var(--font);cursor:pointer;text-decoration:underline dotted;text-underline-offset:3px;position:relative;overflow:visible;}   /* D-171 : le numéro d'une série (dès la 2ᵉ) la monte d'un cran. `position:relative;overflow:visible` fusionnés ici le 22/11/2026 (une seule règle `.pe-up`, rendu inchangé) : voir plus bas */
 /* D-171 (cible tactile, lot 1 du 16/11) : mesuré 24 × 34 px (390 et 375) — étroit pour un doigt. La colonne passe à 30 px (la grille garde ses minima) ET la zone TOUCHABLE déborde de 10 px à gauche (la marge de la carte, rien n'y est posé) et de 4 px en haut et en bas (les lignes sont espacées de 4 px) :
    ≈ 41 px de large, toute la hauteur de la ligne — sans toucher à la mise en page ni à la pastille de type voisine (à droite, la zone s'arrête au bord du numéro). */
-.pe-up{position:relative;overflow:visible;}   /* `overflow:visible` : la règle générale des boutons rogne (hidden), donc la zone élargie ci-dessous ne répondait pas au doigt (mesuré par balayage au pixel) */
+/* `.pe-up{position:relative;overflow:visible}` (déclarés dans la règle `.pe-up` plus haut, UNE seule règle) : `overflow:visible` parce que la règle générale des boutons rogne (hidden), donc la zone élargie ci-dessous ne répondait pas au doigt (mesuré par balayage au pixel) */
 .pe-up::before{content:'';position:absolute;left:-10px;right:0;top:-4px;bottom:-4px;}
 .pe-in{width:100%;min-width:0;height:34px;padding:0 3px;font-size:16px;font-weight:700;text-align:center;border:1px solid var(--sep);border-radius:8px;background:var(--bg2);color:var(--t1);font-family:var(--font);outline:none;text-overflow:ellipsis;}
 .pe-in[type=number]{-moz-appearance:textfield;appearance:textfield;}
