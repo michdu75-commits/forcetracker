@@ -546,14 +546,16 @@ const FEAT_SI = {
 };
 const NEW_FEATURES=[
   /* 📋 POINT ROUGE sur SÉANCE (mission corrective Séance, 16/11/2026, D-163 / D-168 / D-171) — ce que la séance reprend d'un jour de programme, et le commentaire par série.
-     ⛔ Sans `spot`, comme les entrées voisines de cet écran. ⛔ PAS DE POP-UP (R25) : rien n'est à faire, aucun repère n'a bougé. La décision WHATS_NEW se confirme à la
-     PUBLICATION (elle exige un numéro de version, interdit pendant le travail). */
-  {id:'seance-historique-ce', screen:'log', desc:'Nouveau : en chargeant un jour de programme, la séance reprend <b>la dernière séance terminée de CE jour</b> — jamais celle d\'un autre jour ni d\'un autre programme. Ce que tu retouches à la main dans l\'éditeur (charge, repos) est respecté, <b>série par série</b>. Et chaque série peut avoir son <b>💬 commentaire</b>.'},
+     ⛔ Sans `spot`, comme les entrées voisines de cet écran. ⛔ PAS DE POP-UP pour cette carte (R25) : rien n'est à faire, aucun repère n'a bougé. La pop-up v81 (arbitrage de Michel du 22/11/2026) ne porte que la mise à jour proposée et le bandeau du haut. */
+  {id:'seance-historique-ce', screen:'log', desc:'Nouveau : en chargeant un jour de programme, la séance reprend <b>la dernière séance terminée de CE jour</b> — jamais celle d\'un autre jour ni d\'un autre programme. <b>Si cette séance ne contient pas l\'exercice</b>, tu retrouves ta <b>prescription</b> (jamais une séance plus ancienne). Deux exercices <b>du même nom</b> ne s\'échangent plus jamais leurs valeurs : chaque bloc reprend <b>sa</b> série. Les <b>charges et les répétitions</b> proposées suivent la même règle. Ce que tu retouches à la main dans l\'éditeur est respecté, <b>série par série</b>. Chaque série a son <b>💬 commentaire</b>.'},
   /* 🏋️ POINT ROUGE sur SÉANCE (D-164 / D-167 / D-173) — poids du corps, lest, assistance, et « Supprimer une série… » dans ⋯. ⛔ Sans `spot` ; ⛔ PAS DE POP-UP (R25). */
-  {id:'seance-charges-ce', screen:'log', desc:'Nouveau : une charge <b>non renseignée</b> n\'est plus prise pour un zéro. Au poids du corps tu choisis <b>PDC</b>, <b>PDC + lest</b> (il compte dans ton volume, avec son record) ou <b>PDC − assistance</b>. Et <b>⋯ → Supprimer une série…</b> retire exactement la série choisie, sans toucher aux autres.'},
-  /* 🏠 POINT ROUGE sur ACCUEIL (D-176) — l'en-tête global (logo, ?, partage, Sheets) n'est plus que sur l'Accueil : les autres écrans gagnent la place. ⛔ PAS DE POP-UP (R25) :
-     un repère a bougé mais « Partager » et l'aide détaillée restent dans le Menu. */
-  {id:'accueil-entete-ce', screen:'home', desc:'Nouveau : le bandeau du haut (logo, <b>?</b>, partage, Sheets) n\'apparaît plus que sur l\'<b>Accueil</b> — les autres écrans gagnent de la place. <b>Partager</b> et l\'aide restent dans le <b>Menu</b>.'},
+  {id:'seance-charges-ce', screen:'log', desc:'Nouveau : une charge <b>non renseignée</b> n\'est plus prise pour un zéro — nulle part : ajouter un exercice ou une série, remplacer un exercice, un <b>dropset</b>, une séance lancée par <b>Milo</b>. Rien n\'est repris d\'un <b>autre programme</b> (en séance libre : seulement ta dernière séance libre, et un programme ne prend jamais une séance libre). Au poids du corps tu choisis <b>PDC</b>, <b>PDC + lest</b> (il compte dans ton volume, avec son record) ou <b>PDC − assistance</b>. <b>⋯ → Supprimer une série…</b> retire exactement la ligne choisie — <b>un palier de dropset</b> aussi (sauf le dernier, qui reste).'},
+  /* 🏠 POINT ROUGE sur ACCUEIL (D-176) — l'en-tête global (logo, partage, Sheets) n'est plus que sur l'Accueil : les autres écrans gagnent la place ; l'aide de chaque écran reste à portée (le petit « ? » en haut à droite).
+     La pop-up v81 l'ANNONCE (un repère a bougé), cette carte dit OÙ (R25). */
+  {id:'accueil-entete-ce', screen:'home', desc:'Nouveau : le bandeau du haut (logo, partage, Sheets) n\'apparaît plus que sur l\'<b>Accueil</b> — les autres écrans gagnent de la place. L\'aide de chaque écran reste à portée : un petit <b>?</b> en haut à droite. <b>Partager</b> et l\'aide détaillée restent dans le <b>Menu</b>.'},
+  /* 🔄 POINT ROUGE sur ACCUEIL (D-170, règle d'or #11, point 2 — SÉANCE V4, 22/11/2026) : les mises à jour ne s'installent plus toutes seules ; elles se PROPOSENT sur l'Accueil. ⛔ Sans `spot`, comme les entrées voisines de cet écran.
+     La pop-up v81 l'ANNONCE ; cette carte dit OÙ et QUAND (R25). */
+  {id:'maj-proposee', screen:'home', desc:'Nouveau : les <b>mises à jour ne s\'installent plus toutes seules</b>. Quand une nouvelle version est prête, l\'Accueil te la <b>propose</b> (« Mettre à jour » / « Plus tard ») — jamais pendant une séance, un enregistrement ou un briefing.'},
   /* 📋 POINT ROUGE sur SÉANCE (IMPORT-IA-FIDELITE-01, « GO PUBLICATION » de Michel, 14/11/2026 — règle d'or #11, point 2 ; docs/IMPORT-IA-FIDELITE-01.md § 24) : c'est de là qu'on ouvre
      « Mes Programmes » et l'import, donc là que la pastille doit ramener. ⛔ Sans `spot`, comme les entrées voisines de cet écran (ft-v1153 : un ancrage absent est une annonce qui n'a
      jamais lieu, en silence). ⛔ PAS DE POP-UP (R25), et c'est argumenté : rien n'est à faire, aucun repère n'a bougé (même porte, mêmes boutons) — l'aperçu range mieux ce qu'il lit et
@@ -928,6 +930,10 @@ const NEW_FEATURES=[
 // ✅ v46/47/48 = les 3 features ex-testeurs (« maxi » · calories manuelles · objectif recomposition)
 //    OUVERTES À TOUT LE MONDE (ft-v623, décision Michel) + red dots reps-maxi/manual-kcal/goal-recomp réactivés.
 const WHATS_NEW=[
+  /* 🔄 v81 — SÉANCE V4 (arbitrage de Michel du 22/11/2026 : pop-up OUI, courte). ⚖️ ELLE SE MÉRITE : un REPÈRE A BOUGÉ — la mise à jour ne se recharge plus toute seule (elle se PROPOSE sur l'Accueil) et le bandeau du haut
+     (logo, partage, Sheets) ne reste que sur l'Accueil. Les autres changements (reprise d'un jour de programme, charge vide ≠ 0, « Supprimer une série… ») ne demandent rien à la personne : points rouges + aide seulement.
+     La pop-up ANNONCE, l'aide EXPLIQUE (R25) : 4 lignes. */
+  {v:81, ic:'🔄', t:'Les mises à jour te sont proposées', d:'① Quand une nouvelle version est prête, l\'<b>Accueil te la propose</b> (« Mettre à jour » / « Plus tard ») : <b>tu choisis quand</b>. ② Rien ne se recharge pendant ta <b>séance</b>, un enregistrement ou un briefing. ③ Le bandeau du haut (logo, partage, Sheets) ne reste que sur l\'<b>Accueil</b> ; ailleurs, l\'aide est le petit <b>?</b> en haut à droite.'},
   /* 💪 ELLE SE MÉRITE (règle d'or #11) : UN REPÈRE A BOUGÉ SOUS LE DOIGT. Le bouton « échec » de la barre de repos enregistrait
      un 0 ; il pose maintenant le tag X, et un vrai « 0 » apparaît à côté. Qui tapait « échec » pour dire « j'étais à fond »
      doit maintenant taper 0 — sans le dire, il noterait des échecs qu'il n'a pas faits. Et le volume de fin de séance change
