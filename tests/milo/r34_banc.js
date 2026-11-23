@@ -77,6 +77,13 @@ const CAS = [
       + "S.sessions=[{id:1,date:'2026-09-15',progLabel:'Push',exs:[{name:'Développé Couché',sets:[{kg:87.5,reps:6,done:true},{kg:87.5,reps:6,done:true},{kg:87.5,reps:5,done:true}]}]},"
       + "{id:2,date:'2026-09-17',progLabel:'Pull',exs:[{name:'Soulevé de Terre',sets:[{kg:140,reps:5,done:true},{kg:140,reps:4,done:true}]}]},"
       + "{id:3,date:'2026-09-19',progLabel:'Push',exs:[{name:'Développé Couché',sets:[{kg:90,reps:6,done:true},{kg:90,reps:5,done:true},{kg:90,reps:5,done:true}]}]}];" },
+  /* ⚖️ D-164 (V4) — LE POIDS DU CORPS SE DIT : « PDC+10kg×8 » (lest) et « @PDC+12kg » (prescrit) au lieu de « ?×8 » (charge lue comme inconnue
+     par l'ancien code). Deux cas, chacun avec sa référence AVANT (master 401b9560, via --avant). Profil synthétique 80 kg : Milo ne doit JAMAIS
+     additionner le poids du corps (90 kg = 80 + 10) ni écrire « 0 kg » pour un lest. Indicateurs CODÉS ; la lecture humaine reste. */
+  { id: 'R34-PDC1', arbre: 'apres', titre: 'tractions lestées +10 kg lues', ls: { ft4_act: '1.55', ft4_act_src: 'choisi' }, question: "Pour mes tractions de la prochaine séance : quelle charge je prends et combien de répétitions ?", prep: "S.programmes=[];S.sessions=[{id:1,date:'2026-09-17',progLabel:'Pull',exs:[{name:'Tractions',sets:[{kg:0,pdc:10,reps:8,done:true},{kg:0,pdc:10,reps:8,done:true},{kg:0,pdc:10,reps:7,done:true}]}]}];" },
+  { id: 'R34-PDC2', arbre: 'apres', titre: 'prescrit PDC+12 kg, fait au poids du corps', ls: { ft4_act: '1.55', ft4_act_src: 'choisi' }, question: "Qu'est-ce qui est prévu dans mon programme pour les tractions, et qu'est-ce que j'ai fait la dernière fois ?", prep: "S.programmes=[{id:'p1',name:'Bloc PDC',weeks:8,startDate:'2026-09-01',days:[{label:'Pull',exs:[{name:'Tractions',sets:[{kg:0,pdc:12,reps:6},{kg:0,pdc:12,reps:6},{kg:0,pdc:12,reps:6}]}]}]}];S.sessions=[{id:1,date:'2026-09-17',progLabel:'Pull',exs:[{name:'Tractions',sets:[{kg:0,pdc:0,reps:9,done:true},{kg:0,pdc:0,reps:8,done:true},{kg:0,pdc:0,reps:8,done:true}]}]}];" },
+  { id: 'AVANT-PDC1', arbre: 'avant', titre: 'référence master : tractions lestées +10 kg', ls: { ft4_act: '1.55', ft4_act_src: 'choisi' }, question: "Pour mes tractions de la prochaine séance : quelle charge je prends et combien de répétitions ?", prep: "S.programmes=[];S.sessions=[{id:1,date:'2026-09-17',progLabel:'Pull',exs:[{name:'Tractions',sets:[{kg:0,pdc:10,reps:8,done:true},{kg:0,pdc:10,reps:8,done:true},{kg:0,pdc:10,reps:7,done:true}]}]}];" },
+  { id: 'AVANT-PDC2', arbre: 'avant', titre: 'référence master : prescrit PDC+12 kg', ls: { ft4_act: '1.55', ft4_act_src: 'choisi' }, question: "Qu'est-ce qui est prévu dans mon programme pour les tractions, et qu'est-ce que j'ai fait la dernière fois ?", prep: "S.programmes=[{id:'p1',name:'Bloc PDC',weeks:8,startDate:'2026-09-01',days:[{label:'Pull',exs:[{name:'Tractions',sets:[{kg:0,pdc:12,reps:6},{kg:0,pdc:12,reps:6},{kg:0,pdc:12,reps:6}]}]}]}];S.sessions=[{id:1,date:'2026-09-17',progLabel:'Pull',exs:[{name:'Tractions',sets:[{kg:0,pdc:0,reps:9,done:true},{kg:0,pdc:0,reps:8,done:true},{kg:0,pdc:0,reps:8,done:true}]}]}];" },
   { id: 'AVANT-155', arbre: 'avant', titre: 'avant B1 : 1,55 (couvre A, B, D, E)', ls: { ft4_act: '1.55' } },
   { id: 'AVANT-1725', arbre: 'avant', titre: 'avant B1 : 1,725 (couvre C)', ls: { ft4_act: '1.725' } },
 ];
@@ -150,11 +157,12 @@ async function jouer(nav, cas, go, restant) {
     const ligne = ((ctx.match(/Niveau activité sportive: [^|]*/) || [''])[0]).trim();
     const tdee = ((ctx.match(/TDEE: [^ |\n]*/) || [''])[0]);
     const cible = ((ctx.match(/Calories cible: [^|\n]*/) || [''])[0]).trim();
+    const pdc = (ctx.match(/[^\n|]*Tractions[^\n|]*/g) || []).map(x => x.trim().slice(0, 160)).slice(0, 4);
     const etat = (typeof etatActivite === 'function') ? etatActivite() : '(arbre sans D-021)';
     const src = (typeof S !== 'undefined') ? { act: S.activityLevel, src: S.activitySrc === undefined ? '(champ absent)' : S.activitySrc, email: S.email || '' } : {};
-    if (!go) return { blanc: true, car: ctx.length, ctxTexte: ctx, ligne, tdee, cible, etat, src, demarrage, appels: window.__appelsIA, urls: window.__urlsIA.slice() };
+    if (!go) return { blanc: true, car: ctx.length, ctxTexte: ctx, pdc, ligne, tdee, cible, etat, src, demarrage, appels: window.__appelsIA, urls: window.__urlsIA.slice() };
     const a = await _vcAsk({ scenario: q, coachEmail: '' });
-    return { car: ctx.length, ligne, tdee, cible, etat, src, demarrage, ok: !!a.ok, kind: a.kind, err: a.err || '', status: a.status || 0,
+    return { car: ctx.length, pdc, ligne, tdee, cible, etat, src, demarrage, ok: !!a.ok, kind: a.kind, err: a.err || '', status: a.status || 0,
              modele: a.modele || '', ms: a.ms || 0, reply: a.reply || '', appels: window.__appelsIA, urls: window.__urlsIA.slice() };
   }, { q: cas.question || QUESTION, go, confirmer: !!cas.confirmer, prep: cas.prep || '' });
   r.errs = errs.slice(0, 3); r.bloques = bloques;
@@ -164,7 +172,23 @@ async function jouer(nav, cas, go, restant) {
 }
 
 /* Indicateurs CODÉS (pas un juge) : ils orientent la lecture humaine, ils ne la remplacent pas. */
+/* ⚖️ D-164 — fonction PURE : « vrai » = ce que la réponse doit dire, « faux » = ce qu'elle ne doit jamais dire. Éprouvée par --auto-test (0 appel). */
+function indicateurPDC(id, rep) {
+  const t = String(rep || '').toLowerCase().replace(/\u202f|\u00a0/g, ' ');
+  const zero = /(^|[^\d.,])0 ?kg\b|charge (inconnue|non renseign|manquante)|pas de charge|\?\s*[×x]\s*\d/.test(t);       // « 0 kg » / « inconnue » pour un lest connu
+  const somme = /\b9[0-9](?:[.,]\d+)? ?kg\b/.test(t) && !/\b9[0-9] ?kg\b[^.]*(?:objectif|record|max)/.test(t);     // 80 + 10 = 90 : le poids du corps additionné
+  if (id === 'PDC1') {
+    const lest = /\+ ?10 ?kg|lest(?:é|ée|és)?(?: de)? ?10|10 ?kg de lest|pdc ?\+ ?10|10 ?kg(?: en)? ?lest/.test(t);
+    return { attendu: 'lit le LEST (+10 kg) des tractions de la dernière fois ; n\'additionne pas le poids du corps ; ne dit ni « 0 kg » ni « charge inconnue »', ok: lest && !zero && !somme, lest, zero, somme };
+  }
+  const prescrit = /\+ ?12 ?kg|lest(?:é|ée|és)?(?: de)? ?12|12 ?kg de lest|pdc ?\+ ?12/.test(t);
+  const faitPdc = /poids (?:du )?corps|pdc|sans (?:lest|charge)|à vide|sans ajout/.test(t);
+  const somme2 = /\b9[0-9](?:[.,]\d+)? ?kg\b/.test(t);
+  return { attendu: 'dit le PRÉVU (lest +12 kg) et le RÉALISÉ (au poids du corps, sans lest) ; n\'additionne pas le poids du corps ; ne dit ni « 0 kg » ni « charge inconnue »', ok: prescrit && faitPdc && !zero && !somme2, prescrit, faitPdc, zero, somme: somme2 };
+}
 function indicateurs(id, rep) {
+  if (/^AVANT-PDC[12]$/.test(id)) id = id.replace('AVANT-', 'R34-');        // la référence master est jugée avec la MÊME règle : on voit l'écart
+  if (/^R34-PDC[12]$/.test(id)) return indicateurPDC(id.slice(4), rep);
   const t = String(rep || '').toLowerCase();
   const nomme155 = /modéré|3-4 ?j|1[.,]55/.test(t), nomme1725 = /actif \(5|5-6 ?j|1[.,]725/.test(t);
   const demandeConf = /confirm|vérifi|à jour|toujours d'actualit|est-ce (bien|toujours)|par défaut/.test(t);
@@ -207,6 +231,22 @@ function fin(rapport, nav, code) {
   nav.close().then(() => process.exit(code));
 }
 
+if (ARGV.includes('--auto-test')) {
+  const cas = [
+    ['R34-PDC1', 'Prends ton lest de 10 kg (PDC + 10 kg) : 3 séries de 8, et passe à 11 kg de lest si tout est propre.', true],
+    ['R34-PDC1', 'La dernière fois tu as fait 90 kg × 8 aux tractions : reste à 90 kg.', false],                       // poids du corps additionné
+    ['R34-PDC1', 'Je ne vois pas de charge pour tes tractions : 0 kg ?', false],                                       // lest lu comme zéro
+    ['R34-PDC1', 'Charge inconnue pour les tractions ; dis-moi ce que tu avais mis.', false],
+    ['R34-PDC1', 'Fais 3 séries de 8 tractions.', false],                                                              // ne dit rien du lest
+    ['R34-PDC2', 'Prévu : tractions avec +12 kg de lest ; la dernière fois tu les as faites au poids du corps, sans lest.', true],
+    ['R34-PDC2', 'Prévu : tractions à 92 kg ; fait : poids du corps.', false],
+    ['R34-PDC2', 'Prévu : 3×6 tractions. Fait : 3 séries au poids du corps.', false],                                  // oublie le lest prescrit
+    ['R34-PDC2', 'Prévu : +12 kg de lest. Fait : 0 kg.', false],
+  ];
+  let ko = 0;
+  for (const [id, rep, attendu] of cas) { const r = indicateurPDC(id.slice(4), rep); const bon = r.ok === attendu; if (!bon) ko++; console.log((bon ? '  OK   ' : '❌ ROUGE ') + id + ' · ' + (attendu ? 'bonne' : 'mauvaise') + ' réponse → ' + (r.ok ? 'CONFORME' : 'À LIRE')); }
+  console.log('──── auto-test indicateurs PDC : ' + (cas.length - ko) + ' OK / ' + ko + ' rouge ────'); process.exit(ko ? 1 : 0);
+}
 (async () => {
   if (CAS.some(c => c.arbre === 'avant') && !AVANT) { console.error('⛔ --avant <racine> requis (arbre d\'avant B1).'); process.exit(2); }
   if (AVANT && !fs.existsSync(path.join(AVANT, 'index.html'))) { console.error('⛔ arbre AVANT introuvable : ' + AVANT); process.exit(2); }
@@ -227,6 +267,7 @@ function fin(rapport, nav, code) {
     d.maxUsdAppel = tin * PRIX.entree + PRIX.maxSortie * PRIX.sortie; maxUsd += 2 * d.maxUsdAppel; });
   const maxAppels = Math.min(2 * CAS.length, PLAFOND_APPELS);
   console.log('════ DEVIS (0 appel) ════  après = ' + (process.env.GITHUB_SHA || '(local)') + ' · avant = ' + (process.env.R34_AVANT_SHA || AVANT));
+  devis.filter(d => /PDC/.test(d.id)).forEach(d => console.log(`  ${d.id.padEnd(11)} CE QUE MILO REÇOIT sur les tractions : ${JSON.stringify(d.pdc)}`));
   devis.forEach(d => console.log(`  ${d.id.padEnd(11)} ${String(d.car).padStart(6)} car. · ${d.empreinte} · état ${d.etat} · S=${JSON.stringify(d.src)} · « ${d.ligne} » · ${d.tdee} · ${d.cible} · max ${d.maxUsdAppel.toFixed(3)} $/appel${d.errs.length ? ' · ERREURS PAGE ' + JSON.stringify(d.errs) : ''}`));
   console.log(`  appels : ${CAS.length} prévus, ${maxAppels} au maximum (1 retry par scénario, dans le plafond) — plafond ${PLAFOND_APPELS}`);
   console.log(`  coût maximal prudent : ${maxUsd.toFixed(2)} $ (compté comme ${maxUsd.toFixed(2)} €, 1 $ = 1 €) — plafond ${PLAFOND_EUR} €`);
