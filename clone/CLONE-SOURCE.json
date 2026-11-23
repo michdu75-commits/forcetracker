@@ -1,7 +1,7 @@
 {
-  "ref": "claude/integration-autre-activite-2026-11-08",
-  "sha": "3bac5474ca1cbb48917c296637ce887fef83f330",
-  "genere_le": "2026-11-08 17:21 UTC",
+  "ref": "eed94b363199f57a09a0d1c1adb273c773a9a37d",
+  "sha": "eed94b363199f57a09a0d1c1adb273c773a9a37d",
+  "genere_le": "2026-11-23 15:30 UTC",
   "fichiers": [
     "index.html",
     "style.css",
@@ -21,5 +21,5 @@
     "app.js"
   ],
   "banc_isolation": "22 OK / 0 rouge",
-  "empreinte": "373eff25503bb93f0953b6fba2899668204655bfb21f54bc2c547b58c2b55f55"
+  "empreinte": "c857e73e026d3784602255a8f53b24a8334de27182b60d9dc57e41a927435d5c"
 }

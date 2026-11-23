@@ -138,6 +138,7 @@ function _applyScreen(id,btn){
   document.getElementById('root').classList.toggle('on-home',id==='home');
   document.getElementById('root').classList.toggle('on-log',id==='log');
   document.getElementById('root').classList.toggle('on-setup',id==='setup');
+  _syncAideEcran(id);   // le « ? » d'écran (lot A de la finale, 17/11/2026) : un seul bouton, l'aide de l'écran affiché
   /* 🔆 On ne relâche plus le verrou d'écran en quittant l'écran Séance : pendant une séance on
      va justement parler à Milo ou regarder ses records (18/08). `_syncWakeLock` (log.js) tient
      l'écran tant qu'une séance TOURNE, et le rend dès qu'elle est finie ou en pause. */
@@ -156,8 +157,8 @@ function _applyScreen(id,btn){
   _updateScreenDots(id);
   // Pill chrono flottante : show hors log, hide sur log
   if(typeof _updPill==='function')_updPill();
-  // Retour à l'accueil = le moment neutre où une mise à jour en attente peut s'appliquer.
-  if(id==='home'){ try{ if(typeof _appliquerMaj==='function')_appliquerMaj(); }catch(e){} }
+  // Retour à l'accueil depuis un autre écran = le moment neutre où une mise à jour en attente se RE-PROPOSE (bandeau, « Plus tard » levé). D-170 : jamais de rechargement automatique.
+  if(id==='home'&&_prevScreen!=='home'){ try{ if(typeof _majRepropose==='function')_majRepropose(); }catch(e){} }
 }
 function goScreen(id,btn){
   _closeAllPanels();
@@ -194,6 +195,8 @@ const _HELP_DATA={
       {i:'🕰️',t:'<b>Ton histoire sportive</b> : si tu notes une douleur que tu avais déjà eue il y a plus de deux semaines, une carte te rappelle <b>quand</b> et <b>combien de temps</b> elle avait duré. Elle décrit ce que tu avais noté — <b>elle ne prédit rien</b>. Elle ne s\'affiche que quand il y a quelque chose à relier.'},
       {i:'📅',t:'Le calendrier de ton mois, qui se lit d\'un coup d\'œil : <b>plus une case est foncée, plus tu as soulevé lourd ce jour-là</b>. Le petit trait sous le chiffre dit ce que tu as travaillé (rouge = haut, bleu = dos, violet = bas, orange = tronc, vert = full body), et l\'étoile ⭐ marque un RECORD. À gauche, le n° de semaine avec ton tonnage — tape-le pour voir la semaine entière. <b>Tape un jour</b> et son détail s\'ouvre dessous : tonnage, séries, exercices, et comment tu te sentais (sommeil, énergie, humeur, douleur) si tu l\'as noté. Le calendrier devient ta mémoire.'},
       {i:'💚',t:'Ta carte récup existe en <b>deux styles</b> — Menu → Apparence → Carte récup : l\'anneau (par défaut) ou le moniteur, avec ton score en gros et un tracé cardiaque. Mêmes données, mise en forme différente.'},
+      /* 🧭 D-176 (CE lot M, 16/11/2026, Michel) — règle d'or #11 : ce qu'on ne devine pas, c'est OÙ sont passés le « ? », « Partager » et la pastille Sheets. L'aide dit la porte ET la limite (R25 : la pop-up annonce, l'aide explique). */
+      {i:'🧭',t:'<b>L\'en-tête « Force Tracker » (logo, partage, Sheets) n\'est plus que sur l\'Accueil.</b> Les autres écrans commencent tout en haut, avec leur propre titre : plus de place pour ton contenu, et rien ne bouge en bas — la barre et le « + » sont exactement où ils étaient. ❓ <b>L\'aide de chaque écran a gardé sa porte</b> : un petit « ? » rond, en haut à droite de Progrès, Nutrition, Coach et Profil (ici, sur l\'Accueil, c\'est celui de l\'en-tête). <b>Pendant une séance</b>, sur l\'écran Séance, l\'aide est dans <b>⋯ → « Aide de l\'écran Séance »</b> et « Terminer » reste en haut ; sur les autres écrans le « ? » est toujours là. <b>Partager</b> et l\'<b>Aide détaillée</b> restent dans le <b>Menu</b>, l\'état Sheets dans <b>Menu → Profil</b>. 🔄 Une <b>mise à jour</b> prête s\'annonce par un bandeau discret en haut — « Mettre à jour » ou « Plus tard » ; elle ne s\'installe jamais toute seule, et jamais pendant ta séance, son enregistrement, ni la lecture du bilan de Milo.'},
       /* ⚠️⚠️ TEXTE PÉRIMÉ CORRIGÉ LE 05/09/2026 (ft-v1138) — il annonçait « les 4 stats du mois
          (volume, Big3, séances, poids) » alors que Volume et Force viennent d'être retirés.
          ⛔ Il avait échappé à ma première recherche parce qu'il écrit « volume » et « Big3 », pas
@@ -443,6 +446,9 @@ const _HELP_DATA={
   log:{
     title:'⚡ Séance',
     tips:[
+      /* 🧮 SÉANCE V4 (22/11/2026) — règle d'or #11, point 3 : ce qu'on ne devine pas, c'est qu'une charge laissée vide n'est PAS un zéro et que rien n'est copié d'un autre programme,
+         que « Précédent » compare sans rien reprendre, et que « Supprimer une série… » retire exactement la ligne choisie (palier de dropset compris, sauf le dernier). */
+      {i:'🧮',t:'<b>Charge vide</b> : si tu valides une série sans charge, elle reste « non renseignée » — rien n\'est copié d\'un autre programme. <b>Précédent</b> montre la dernière fois et ne copie rien : il sert à comparer. <b>⋯ → Supprimer une série…</b> retire la ligne choisie, un palier de dropset compris (le dernier palier reste : <b>⚙️ Modifier paliers</b>).'},
       /* 🚶 Mission « Autre activité » (05/11/2026) — règle d'or #11, point 3 : ce qu'on ne devine pas, c'est que la marche n'est PAS une séance (aucune série, aucun
          volume, pas de badge) et que les calories de la montre REMPLACENT l'estimation au lieu de s'y ajouter. */
       {i:'🚶',t:'<b>Autre activité</b> (juste sous « Programme ») : marche, randonnée, vélo, course… <b>sans série ni volume</b>. L\'app <b>estime</b> les calories ; tape celles de ta <b>montre</b> et elles <b>remplacent</b> l\'estimation — jamais additionnées (estimé 300, montre 255 → <b>255</b>). Tu la retrouves dans le calendrier de l\'Accueil et dans <b>Progrès → Séances</b>, où tu peux la <b>modifier</b> ou la <b>supprimer</b>.'},
@@ -451,7 +457,7 @@ const _HELP_DATA={
          « N / M séries » (les séries de TRAVAIL, décision ①). */
       /* 📋 D-093 — règle d'or #11, point 3 : ce qu'on ne devine pas, c'est que l'en-tête « Précédent » se touche (la case,
          elle, ouvre la note de la série) — et qu'il n'y a aucun verdict dans la comparaison. */
-      {i:'📋',t:'<b>Comparer tes 4 dernières séances</b> : touche <b>« Précédent ▾ »</b>, en haut de la colonne (ou <b>⋯ → 4 dernières séances</b>). Tes séries de <b>travail</b> s\'alignent par rang, de la plus ancienne séance à la plus récente, avec la réserve, les échecs (X) et tes notes ; « — » = pas de série à ce rang, rien n\'est répété. Les échauffements sont à part. ⛔ Aucun verdict : tu lis, tu décides. La <b>case</b> « Précédent » d\'une série ouvre toujours sa note ; la colonne ne montre plus que les séries <b>vraiment faites</b> la dernière fois.'},
+      {i:'📋',t:'<b>Comparer tes 4 dernières séances</b> : touche <b>« Précédent ▾ »</b>, en haut de la colonne (ou <b>⋯ → 4 dernières séances</b>). Tes séries de <b>travail</b> s\'alignent par rang, de la plus ancienne séance à la plus récente, avec la réserve, les échecs (X) et tes notes ; « — » = pas de série à ce rang, rien n\'est répété. Les échauffements sont à part. Après un déplacement ou une suppression de série, le rapprochement se fait par <b>série</b> (son identité), plus par position. ⛔ Aucun verdict : tu lis, tu décides. La <b>case</b> « Précédent » d\'une série ouvre toujours sa note ; la colonne ne montre plus que les séries <b>vraiment faites</b> la dernière fois.'},
       {i:'🏋️',t:'<b>L\'écran Séance a deux états</b> (depuis le 16/10/2026). <b>Avant</b> : « Séance libre » (tu ajoutes tes exercices un à un) ou « Programme ». <b>Pendant</b> : l\'en-tête « Séance en cours » remplace la barre du haut — chrono, <b>séries de travail faites / prévues</b> (les échauffements ne comptent pas), le bouton <b>⋯</b> (pause, date, <b>repos par défaut</b>, tout dérouler, grouper, programmes, importer un historique, aide, vider, abandonner) et <b>« Terminer »</b>. S\'il reste des séries de travail, « Terminer » te le dit avant d\'enregistrer — « Continuer la séance » ne change rien. Le repos s\'affiche <b>en bas</b> ; touche le temps (✎) pour <b>régler</b> : 30 s · 45 s · 1:00 · 1:30 · 2:00 ou une durée exacte. Une carte repliée ne porte plus de boutons : <b>« Monter » / « Descendre »</b> sont dans le ⋯ de l\'exercice.'},
       /* 📷 ft-v1155 — CE QU'ON NE DEVINE PAS, et Michel en est la preuve : il a cherché comment
          charger SON programme et n'a pas trouvé l'import. « Si moi je ne le vois pas, les
@@ -467,7 +473,7 @@ const _HELP_DATA={
          encore moins que la fonctionnalit\u00e9 elle-m\u00eame. */
       {i:'\ud83c\udfc3',t:'<b>Le cardio d\'un programme va dans le bloc Cardio</b>, plus dans la liste des exercices. Une ligne du genre \u00ab Cardio l\u00e9ger \u2014 8 minutes \u00bb n\'est pas un exercice : elle n\'a ni charge ni figurine, et elle faussait ton tonnage. \u2b50 \u00c7a marche AUSSI sur les programmes d\u00e9j\u00e0 import\u00e9s, au moment de les charger \u2014 rien \u00e0 r\u00e9importer. \u26d4 Deux limites : un cardio au MILIEU de la s\u00e9ance reste un exercice, et un exercice qui porte une CHARGE n\'est jamais d\u00e9plac\u00e9, m\u00eame si sa note parle de minutes.'},
       {i:'\u26a0\ufe0f',t:'L\'aper\u00e7u d\'import <b>marque en orange</b> les exercices qu\'il ne conna\u00eet pas et qui vont \u00eatre <b>cr\u00e9\u00e9s</b>. Un exercice cr\u00e9\u00e9 n\'a <b>ni photo, ni figurine, ni historique</b> \u2014 le bouton <b>\u00ab \ud83d\udd17 Rattacher \u00bb</b> le relie \u00e0 celui de ton catalogue et tout revient. <i>Exemple : \u00ab Presse 45 degr\u00e9s \u00bb \u2192 <b>Press Jambes 45\u00b0</b>.</i>'},
-      {i:'📷',t:'<b>Un programme sur papier ou en PDF ?</b> Tape <b>Programme</b> → <b>« 📷 Importer un programme »</b> : l\'IA lit ta photo ou ton PDF et <b>garde tes jours</b> (Push, Pull, Legs…). ⚠️ C\'est <b>la seule façon</b> d\'avoir un programme à plusieurs jours — celui qu\'on crée à la main est forcément une séance unique.'},
+      {i:'📷',t:'<b>Un programme sur papier ou en PDF ?</b> Tape <b>Programme</b> → <b>« 📷 Importer un programme »</b> : l\'IA lit ta photo ou ton PDF et <b>garde tes jours</b> (Push, Pull, Legs…). ⚠️ C\'est <b>la seule façon</b> d\'avoir un programme à plusieurs jours — celui qu\'on crée à la main est forcément une séance unique. ⭐ <b>Ce que montre l\'aperçu</b> : un échauffement écrit sur sa propre ligne (« Développé couché - échauffement ») est rangé <b>avec son exercice</b>, en séries <b>É</b> puis <b>N</b>, au lieu de deux cartes. Les charges et répétitions lues par l\'IA sont gardées <b>telles quelles</b> ; ce qu\'elle ne trouve pas reste « <b>Non renseigné</b> » — l\'app n\'invente jamais un chiffre. « <b>Voir / corriger</b> » ouvre les séries : relis-les avant d\'enregistrer. ⛔ <b>Plus de 8 pages ?</b> L\'import est <b>refusé</b> (avant, la fin était ignorée sans un mot) : coupe ton PDF en deux. Et <b>« 🔄 Remplacer »</b> un programme demande d\'abord de confirmer, en nommant celui qui sera remplacé ; <b>« ➕ Nouveau »</b> n\'en remplace jamais un.'},
       /* 🛡️ ft-v1153 — CE QU'ON NE DEVINE PAS : ces avertissements existaient DEPUIS UN MOIS,
          mais seulement sur les séances proposées par Milo. Quelqu'un qui travaille au programme
          ne les avait jamais vus — et n'avait aucune raison de savoir qu'ils existaient.
@@ -490,7 +496,9 @@ const _HELP_DATA={
       {i:'🔁',t:'« maxi » : dans l\'éditeur de programme, touche le bouton « max » à côté des reps d\'une série pour viser le maximum de répétitions (au lieu d\'un chiffre exact). En séance, la case affiche « max » et tu notes ce que tu as vraiment fait.'},
       {i:'✋',t:'Superset au doigt : sur un exercice pas encore en superset, attrape la petite poignée (6 points, à côté du ⋯) et glisse-le sur un autre exercice → le superset se crée tout seul. Plus rapide que « Grouper des exercices » (menu ⋯). Pour défaire : "↩ Retirer". Marche aussi dans l\'éditeur de programme (✏️) : glisse une carte exercice sur une autre.'},
       /* 🎯 DEBRIEF-ON-DEMAND-01 — règle d'or #11, point 3 (Séance) : la fin de séance a changé. */
-      {i:'✨',t:'<b>Fin de séance</b> : tes chiffres (volume, records, ce que tu as travaillé) s\'affichent <b>tout de suite</b>, sans réseau. L\'avis de Milo, lui, se <b>demande</b> : <b>« ✨ Analyser cette séance avec Milo »</b>. Sans ce geste, aucun appel à l\'IA. Pas de réseau ou Milo indisponible ? Rien n\'est enregistré, et <b>Réessayer</b> reste là — tu peux aussi le faire plus tard depuis Progrès.'},
+      {i:'✨',t:'<b>Fin de séance</b> : tes chiffres (volume, records, ce que tu as travaillé) s\'affichent <b>tout de suite</b>, sans réseau. L\'avis de Milo, lui, se <b>demande</b> : <b>« ✨ Analyser cette séance avec Milo »</b>. Sans ce geste, aucun appel à l\'IA. Pas de réseau, Milo indisponible ou réponse trop longue (plus d\'une minute et demie) ? <b>Ta séance, elle, est bien enregistrée</b> — c\'est l\'avis qui manque, et <b>Réessayer</b> reste là ; tu peux aussi le faire plus tard depuis Progrès. Si le <b>réseau est trop lent</b> à l\'enregistrement, la séance est gardée sur ton téléphone et repartira toute seule.'},
+      /* 🧹 D-173 (CE lot M) — règle d'or #11 : l'aide dit la porte et la LIMITE (les paliers d'un dropset). */
+      {i:'🧹',t:'<b>Supprimer une série précise</b> : ⋯ de l\'exercice → <b>« Supprimer une série… »</b> → touche la ligne voulue (« − » en appui maintenu retire toujours la dernière). Une série déjà validée demande confirmation. Dans un <b>dropset ou une pyramide</b>, chaque <b>palier</b> se supprime comme une série (confirmation s\'il est déjà validé) et le réglage « paliers » suit tout seul. ⛔ Le <b>dernier palier</b> reste (🔒) : sans lui le dropset n\'aurait plus de sens — <b>⚙️ Modifier paliers</b> ou <b>✕ Retirer dropset</b> règlent la structure. La dernière série restante ne se supprime pas : on supprime l\'exercice.'},
       /* 🛡️ SESSION-INTEGRITY-01 — règle d'or #11, point 3 (Séance) : le comportement du remplacement a changé. */
       {i:'🔄',t:'<b>Remplacer un exercice</b> (⋯ → Remplacer) change d\'<b>exercice</b> : le nouveau arrive avec <b>ses propres</b> charges (celles de ta dernière fois), jamais celles de l\'ancien. Et les séries que tu as <b>déjà cochées</b> restent à l\'exercice que tu as réellement fait : seul le reste passe au nouveau. Tu t\'étais juste trompé de nom après coup ? Corrige-le dans Progrès → la séance → 🔄.'},
       {i:'🔀',t:'Exercices « un côté à la fois » : 48 exercices portent une pastille <b>🔀 par bras</b> ou <b>par jambe</b> (rowing haltère, curl haltères, fentes, squat bulgare…). <b>Tu notes le poids qui BOUGE</b> : un seul haltère monte → note son poids à lui (28), pas le double ; les deux bougent → note le total. Tu saisis toujours <b>3 séries, pas 6</b> — l\'app sait qu\'elles se refont de l\'autre côté et double ton tonnage. Ton record reste calculé sur la charge d\'un côté. Tape la pastille pour le détail.'},
@@ -599,8 +607,27 @@ function openBmrHelp(){
 }
 function closeBmrHelp(){document.getElementById('ov-bmr-help').classList.remove('open');}
 
+/* ❓ « ? » D'ÉCRAN — lot A de la finale Séance (17/11/2026, arbitrage de Michel : l'aide contextuelle ne doit pas disparaître, sans rouvrir D-176).
+   POURQUOI : D-176 a retiré l'en-tête global (donc son « ? ») de tous les écrans sauf l'Accueil ; Progrès, Nutrition, Coach, Profil et l'écran Séance n'avaient plus aucune porte vers leur aide.
+   QUOI : UN bouton rond `#ctx-help` (style.css), créé ici au premier besoin, qui appelle `showHelp()` — mêmes textes qu'avant, mêmes fonctions. `#root.aide-ecran` dit s'il doit se montrer : l'écran affiché a une aide
+   et ce n'est pas l'Accueil (qui a le sien dans son en-tête). Les écrans SANS aide (un écran futur, par exemple) n'ont rien : la règle ne tient aucune liste d'écrans, elle lit `_HELP_DATA`.
+   ⛔ Aucune donnée, aucune clé de stockage : c'est de l'affichage. La clef d'aide d'un écran est écrite UNE fois (`_aideClef`) : le Cycle de force n'a pas d'aide propre, il montre celle de l'Accueil (R2). */
+function _aideClef(id){ return id==='cycle'?'home':(id||'home'); }
+function _syncAideEcran(id){
+  const root=document.getElementById('root'),box=document.querySelector('.screens');
+  if(!root||!box)return;
+  const a=id!=='home'&&!!_HELP_DATA[_aideClef(id)];
+  let b=document.getElementById('ctx-help');
+  if(a&&!b){
+    b=document.createElement('button');b.id='ctx-help';b.type='button';
+    b.title='Aide de cet écran';b.setAttribute('aria-label','Aide de cet écran');b.setAttribute('onclick','showHelp()');
+    b.innerHTML='<span aria-hidden="true">?</span>';
+    box.appendChild(b);
+  }
+  root.classList.toggle('aide-ecran',a);
+}
 function showHelp(){
-  const screen=window._curScreen==='cycle'?'home':(window._curScreen||'home');
+  const screen=_aideClef(window._curScreen);
   const data=_HELP_DATA[screen];
   if(!data)return;
   const isFemale=S&&S.gender==='F';
