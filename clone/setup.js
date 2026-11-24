@@ -353,9 +353,15 @@ function _histoLignes(avecDebriefs){
           /* 🧮 L'export suit la convention de la séance (mission Séance du 24/10/2026) : une série unilatérale notée par
              côté (`uniConv`) porte le volume des DEUX côtés, comme la séance enregistrée — la colonne kg, elle, reste ce qui
              a été noté (par côté). Sans ça, la somme des lignes ne refaisait pas le volume de la séance. */
-          out.push({date:s.date, seance:nom, exercise:ex.name, set_num:i+1,
-                    type:st.type||'N', kg:kg, reps:reps,
-                    rir:(r===null?'':r), volume:Math.round(kg*reps*_facteurUni(s, ex.name))});
+          /* ⚖️ D-164 — une série choisie « au poids du corps » garde `kg` et `volume` à 0 (aucun kilo inventé, aucun calcul qui bouge) et le DIT dans une colonne `charge`
+             (« PDC », « PDC+10 kg », « PDC−20 kg »). ⛔ Elle n'existe dans le fichier QUE s'il y a au moins une telle série : sans PDC, le fichier est exactement celui d'avant. */
+          /* D-164 (mission corrective, 16/11) — l'export garde les cinq états : une charge INCONNUE (`null`) se lit VIDE dans la colonne `kg` (jamais un « 0 » qui passerait pour une mesure) ; un lest compte dans `volume` comme dans la séance
+             (`_chargeTonnage`, la somme des lignes refait le volume) ; une barre « à vide » se dit dans `charge`. Sans PDC ni « à vide », le fichier est celui d'avant, colonne et valeurs. */
+          const _vide=!!(st.vide&&!(kg>0)&&_pdcDe(st)===null);
+          out.push(Object.assign({date:s.date, seance:nom, exercise:ex.name, set_num:i+1,
+                    type:st.type||'N', kg:(_kgConnu(st.kg)||_pdcDe(st)!==null?kg:''), reps:reps,
+                    rir:(r===null?'':r), volume:Math.round(_chargeTonnage(st)*reps*_facteurUni(s, ex.name))},
+                    _pdcDe(st)!==null?{charge:_pdcTxt(st.pdc,true)}:(_vide?{charge:'à vide'}:{})));
         });
       });
       for(let k=_n0;k<out.length;k++) out[k].seance_id=sid;     // lu seulement par l'export « avec »
@@ -442,7 +448,7 @@ async function exportHistoCsv(){
   const avec=_histoAvecDebriefs;
   const L=_histoLignes(avec);
   if(!L.length){ toast('Aucune séance à exporter','info'); return; }
-  const COLS=avec?HISTO_COLONNES_DEBRIEF:HISTO_COLONNES;
+  const COLS=(avec?HISTO_COLONNES_DEBRIEF:HISTO_COLONNES).concat(L.some(r=>r.charge)?['charge']:[]);   // D-164 : la colonne `charge` seulement s'il y a une série au poids du corps
   /* ⛔ ÉCHAPPEMENT CSV RÉEL : un nom d'exercice peut contenir une virgule (« Rowing Barre (Tirage
      Horizontal) », un exercice perso « Curl, prise marteau »). Sans guillemets, la ligne se
      décale d'une colonne dans le tableur — et rien ne le signale. */
@@ -633,7 +639,7 @@ async function exportHistoPdf(){
                 {content:'Reps',   styles:{halign:'right'}},
                 {content:'RIR',    styles:{halign:'center'}},
                 {content:'Volume', styles:{halign:'right'}} ]],
-        body:rows.map(r=>[r.exercise,r.set_num,r.type,r.kg,r.reps,r.rir,r.volume]),
+        body:rows.map(r=>[r.exercise,r.set_num,r.type,r.charge||r.kg,r.reps,r.rir,r.volume]),   // D-164 : « PDC+10 kg » à la place du 0 d'une série au poids du corps
         styles:{fontSize:8.5,cellPadding:3.5,overflow:'linebreak'},
         headStyles:{fillColor:[239,62,87],textColor:255,fontStyle:'bold',fontSize:8},
         alternateRowStyles:{fillColor:[247,247,250]},
@@ -1777,7 +1783,7 @@ function _renderSessDetailContent(){
                style="width:46px;padding:6px 4px;font-size:14px;text-align:center;border:1px solid var(--bg3);border-radius:6px;background:var(--bg2);color:var(--t1)"
                onchange="updateSessSet(${ei},${si},'reps',this.value)">
         <span style="color:var(--t2);font-size:12px">reps ×</span>
-        <input type="text" step="0.5" min="0" inputmode="decimal" value="${_champNum(s.kg)}"
+        <input type="text" step="0.5" min="0" inputmode="decimal" value="${_pdcDe(s)!==null?'':_champNum(s.kg)}"${_pdcDe(s)!==null?` placeholder="${_pdcTxt(s.pdc)}" title="Charge au poids du corps : taper des kilos la remplace"`:''}
                style="width:58px;padding:6px 4px;font-size:14px;text-align:center;border:1px solid var(--bg3);border-radius:6px;background:var(--bg2);color:var(--t1)"
                onchange="updateSessSet(${ei},${si},'kg',this.value)">
         <span style="color:var(--t2);font-size:12px">kg</span>
@@ -1830,7 +1836,7 @@ function addSessSet(ei){
   if(!_sessEdits||!_sessEdits.exs[ei])return;
   const sets=_sessEdits.exs[ei].sets;
   const last=sets.filter(s=>s.done).slice(-1)[0]||sets.slice(-1)[0];
-  sets.push({kg:last?last.kg:0,reps:last?last.reps:0,type:'N',done:true,rm1:0});
+  sets.push({kg:last?last.kg:0,reps:last?last.reps:0,type:'N',done:true,rm1:0,..._pdcRepris(last)});   // D-164 : une série ajoutée copie aussi le PDC de la précédente
   _renderSessDetailContent();
 }
 function openSessAddEx(){
@@ -1905,7 +1911,10 @@ function updateSessSet(ei,si,field,val){
   const t=String(val==null?'':val).trim();
   let n=null;
   if(t!==''){ n=(typeof numFR==='function')?numFR(t):parseFloat(t.replace(',','.')); if(!isFinite(n))n=null; }
-  _sessEdits.exs[ei].sets[si][field]=n;
+  const _st=_sessEdits.exs[ei].sets[si];
+  /* D-164 — une série au poids du corps (`pdc`) : un champ de kilos laissé vide ne l'efface pas (et `kg` reste 0) ; taper des kilos EST un choix : le PDC s'efface, jamais les deux. */
+  if(field==='kg'&&_pdcDe(_st)!==null){ if(!(n>0))return; delete _st.pdc; }
+  _st[field]=n;
 }
 function deleteSessSet(ei,si){
   if(!_sessEdits)return;
@@ -2419,7 +2428,7 @@ function analyserSeanceMilo(id, ev){
   const body=_dbfFenetre(id);
   if(body) _runSeDebrief(s,0,body);
 }
-function fermerDebriefMilo(){const ov=document.getElementById('ov-debrief-milo');if(ov)ov.classList.remove('open');}
+function fermerDebriefMilo(){const ov=document.getElementById('ov-debrief-milo');if(ov)ov.classList.remove('open');try{if(typeof _majRefresh==='function')_majRefresh();}catch(e){}}   /* D-170 : briefing refermé → l'avis de mise à jour peut paraître */
 // Déplie/replie la liste d'exos d'une carte d'historique sans ouvrir le détail (retour GPT, ft-v570)
 function toggleSessExs(i,ev){
   ev&&ev.stopPropagation();

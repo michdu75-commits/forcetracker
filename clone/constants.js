@@ -323,6 +323,9 @@ function _setFtToken(t){ try{ if(t){ localStorage.setItem(FT_TOKEN_KEY,String(t)
 
 const SET_TYPES=['N','É','X'];
 const SET_TYPE_LABELS={N:'Normal',É:'Échauffement',X:'Échec'};
+/* 🔢 IMPORT-IA-FIDELITE-01 (correction D, 02/11/2026) — le mot d'une répétition que le document n'écrit PAS : `reps: null` dans un programme.
+   Une seule source du libellé (R2) : aperçu d'import, éditeur de programme et séance (log.js) l'affichent, rien ne l'invente ailleurs. */
+const REPS_NON_RENSEIGNE='Non renseigné';
 
 // ─── NOUVELLES FONCTIONNALITÉS (indicateur pastille) ─────────
 // Ajouter ici chaque nouvelle feature avec un id unique + l'écran concerné.
@@ -544,6 +547,24 @@ const FEAT_SI = {
   testeur:       () => { try{ return typeof _isTester==='function' && _isTester(); }catch(e){ return false; } }
 };
 const NEW_FEATURES=[
+  /* 📋 POINT ROUGE sur SÉANCE (mission corrective Séance, 16/11/2026, D-163 / D-168 / D-171) — ce que la séance reprend d'un jour de programme, et le commentaire par série.
+     ⛔ Sans `spot`, comme les entrées voisines de cet écran. ⛔ PAS DE POP-UP pour cette carte (R25) : rien n'est à faire, aucun repère n'a bougé. La pop-up v81 (arbitrage de Michel du 22/11/2026) ne porte que la mise à jour proposée et le bandeau du haut. */
+  {id:'seance-historique-ce', screen:'log', desc:'Nouveau : en chargeant un jour de programme, la séance reprend <b>la dernière séance terminée de CE jour</b> — jamais celle d\'un autre jour ni d\'un autre programme. <b>Si cette séance ne contient pas l\'exercice</b>, tu retrouves ta <b>prescription</b> (jamais une séance plus ancienne). Deux exercices <b>du même nom</b> ne s\'échangent plus jamais leurs valeurs : chaque bloc reprend <b>sa</b> série. Les <b>charges et les répétitions</b> proposées suivent la même règle. Ce que tu retouches à la main dans l\'éditeur est respecté, <b>série par série</b>. Chaque série a son <b>💬 commentaire</b>.'},
+  /* 🏋️ POINT ROUGE sur SÉANCE (D-164 / D-167 / D-173) — poids du corps, lest, assistance, et « Supprimer une série… » dans ⋯. ⛔ Sans `spot` ; ⛔ PAS DE POP-UP (R25). */
+  {id:'seance-charges-ce', screen:'log', desc:'Nouveau : une charge <b>non renseignée</b> n\'est plus prise pour un zéro — nulle part : ajouter un exercice ou une série, remplacer un exercice, un <b>dropset</b>, une séance lancée par <b>Milo</b>. Rien n\'est repris d\'un <b>autre programme</b> (en séance libre : seulement ta dernière séance libre, et un programme ne prend jamais une séance libre). Au poids du corps tu choisis <b>PDC</b>, <b>PDC + lest</b> (il compte dans ton volume, avec son record) ou <b>PDC − assistance</b>. <b>⋯ → Supprimer une série…</b> retire exactement la ligne choisie — <b>un palier de dropset</b> aussi (sauf le dernier, qui reste).'},
+  /* 🏠 POINT ROUGE sur ACCUEIL (D-176) — l'en-tête global (logo, partage, Sheets) n'est plus que sur l'Accueil : les autres écrans gagnent la place ; l'aide de chaque écran reste à portée (le petit « ? » en haut à droite).
+     La pop-up v81 l'ANNONCE (un repère a bougé), cette carte dit OÙ (R25). */
+  {id:'accueil-entete-ce', screen:'home', desc:'Nouveau : le bandeau du haut (logo, partage, Sheets) n\'apparaît plus que sur l\'<b>Accueil</b> — les autres écrans gagnent de la place. L\'aide de chaque écran reste à portée : un petit <b>?</b> en haut à droite. <b>Partager</b> et l\'aide détaillée restent dans le <b>Menu</b>.'},
+  /* 🔄 POINT ROUGE sur ACCUEIL (D-170, règle d'or #11, point 2 — SÉANCE V4, 22/11/2026) : les mises à jour ne s'installent plus toutes seules ; elles se PROPOSENT sur l'Accueil. ⛔ Sans `spot`, comme les entrées voisines de cet écran.
+     La pop-up v81 l'ANNONCE ; cette carte dit OÙ et QUAND (R25). */
+  {id:'maj-proposee', screen:'home', desc:'Nouveau : les <b>mises à jour ne s\'installent plus toutes seules</b>. Quand une nouvelle version est prête, l\'Accueil te la <b>propose</b> (« Mettre à jour » / « Plus tard ») — jamais pendant une séance, un enregistrement ou un briefing.'},
+  /* 📋 POINT ROUGE sur SÉANCE (IMPORT-IA-FIDELITE-01, « GO PUBLICATION » de Michel, 14/11/2026 — règle d'or #11, point 2 ; docs/IMPORT-IA-FIDELITE-01.md § 24) : c'est de là qu'on ouvre
+     « Mes Programmes » et l'import, donc là que la pastille doit ramener. ⛔ Sans `spot`, comme les entrées voisines de cet écran (ft-v1153 : un ancrage absent est une annonce qui n'a
+     jamais lieu, en silence). ⛔ PAS DE POP-UP (R25), et c'est argumenté : rien n'est à faire, aucun repère n'a bougé (même porte, mêmes boutons) — l'aperçu range mieux ce qu'il lit et
+     « Remplacer » ajoute une QUESTION de sécurité, il n'en retire aucune. La pop-up ANNONCE, l'aide EXPLIQUE.
+     ⚠️ CE QUI N'EST PAS ANNONCÉ, EXPRÈS : les REPOS lus dans le document (« 3-4 min »). Le code les sait lire (D-153), mais l'IA publiée n'en renvoie aucun tant que le Worker n'est pas publié
+     (publication séparée) — annoncer une chose qui n'arrive pas est le défaut que cette règle empêche. À annoncer le jour où le Worker sort. */
+  {id:'import-fidele', screen:'log', desc:'Nouveau : l\'<b>import d\'un programme</b> garde ce qu\'il lit — un <b>échauffement</b> écrit à part est rangé <b>avec son exercice</b> (séries <b>É</b> puis <b>N</b>), et charges et répétitions ne sont plus inventées (« <b>Non renseigné</b> » si le document n\'en dit rien). Un PDF de <b>plus de 8 pages</b> est refusé, et « Remplacer » demande d\'abord de confirmer.'},
   /* 🚶 POINT ROUGE sur SÉANCE (mission « Autre activité » de Michel, 05/11/2026 — docs/AUTRE-ACTIVITE-CALORIES.md) — la tuile « Autre activité » est sous « Programme », donc
      là que la pastille doit ramener. ⛔ Sans `spot`, comme les entrées voisines de cet écran : la tuile n'existe que dans l'état « avant la séance » (ft-v1153 : un ancrage
      absent est une annonce qui n'a jamais lieu, en silence). ⛔ PAS DE POP-UP (R25) : une porte s'ajoute, rien n'est à faire et aucun repère n'a bougé (les bilans qui
@@ -911,6 +932,10 @@ const NEW_FEATURES=[
 // ✅ v46/47/48 = les 3 features ex-testeurs (« maxi » · calories manuelles · objectif recomposition)
 //    OUVERTES À TOUT LE MONDE (ft-v623, décision Michel) + red dots reps-maxi/manual-kcal/goal-recomp réactivés.
 const WHATS_NEW=[
+  /* 🔄 v81 — SÉANCE V4 (arbitrage de Michel du 22/11/2026 : pop-up OUI, courte). ⚖️ ELLE SE MÉRITE : un REPÈRE A BOUGÉ — la mise à jour ne se recharge plus toute seule (elle se PROPOSE sur l'Accueil) et le bandeau du haut
+     (logo, partage, Sheets) ne reste que sur l'Accueil. Les autres changements (reprise d'un jour de programme, charge vide ≠ 0, « Supprimer une série… ») ne demandent rien à la personne : points rouges + aide seulement.
+     La pop-up ANNONCE, l'aide EXPLIQUE (R25) : 4 lignes. */
+  {v:81, ic:'🔄', t:'Les mises à jour te sont proposées', d:'① Quand une nouvelle version est prête, l\'<b>Accueil te la propose</b> (« Mettre à jour » / « Plus tard ») : <b>tu choisis quand</b>. ② Rien ne se recharge pendant ta <b>séance</b>, un enregistrement ou un briefing. ③ Le bandeau du haut (logo, partage, Sheets) ne reste que sur l\'<b>Accueil</b> ; ailleurs, l\'aide est le petit <b>?</b> en haut à droite.'},
   /* 💪 ELLE SE MÉRITE (règle d'or #11) : UN REPÈRE A BOUGÉ SOUS LE DOIGT. Le bouton « échec » de la barre de repos enregistrait
      un 0 ; il pose maintenant le tag X, et un vrai « 0 » apparaît à côté. Qui tapait « échec » pour dire « j'étais à fond »
      doit maintenant taper 0 — sans le dire, il noterait des échecs qu'il n'a pas faits. Et le volume de fin de séance change
@@ -2608,32 +2633,104 @@ function exMuscles(nom){
  *
  * Rend des SECONDES, ou 0 si c'est illisible (l'app garde alors son réglage habituel).
  */
-function _secRepos(v){
-  if(v==null)return 0;
-  if(typeof v==='number')return v>0&&isFinite(v)?Math.round(v):0;
-  const s=String(v).trim().toLowerCase().replace(',','.');
-  if(!s)return 0;
+/* ═══ LIRE UN REPOS COMME LE COACH L'A ÉCRIT — IMPORT-IA-FIDELITE-01 (02/11/2026) ═══════════
+ * ⛔⛔ DÉFAUT MESURÉ avant de toucher à quoi que ce soit : le parseur
+ * ci-dessus rendait **0** pour « 3 mins », « 2 mins », « 1.30 mins », « 2.30 mins » — des écritures
+ * courantes chez les coachs (le « s » du pluriel faisait échouer le `\b`
+ * final). Le repos du PDF n'arrivait donc jamais au chrono : l'app retombait sur son réglage par
+ * défaut, sans un mot. Et « 1.30 » se lisait « 1,3 minute » (78 s) dès qu'on écrivait « min ».
+ * ⭐ Les PLAGES (« 60-90 s », « 3-4 min », « 2 à 3 mins ») rendaient 0 elles aussi — voulu (un repos
+ * variable n'est pas un repos : consigne de Michel, ft-v1176) — mais le TEXTE était alors PERDU.
+ * Or le document dit quelque chose : on ne le transforme pas en nombre, on le CONSERVE.
+ *
+ * `_reposLire(v)` rend { sec, min, max, txt } :
+ *   · valeur FERME  → sec > 0, txt ''                       (« 3 mins » → 180)
+ *   · PLAGE         → sec 0, min < max (secondes), txt = le texte écrit   (« 3-4 min » → 180–240)
+ *   · autre texte   → sec 0, txt = le texte écrit            (« selon ressenti »)
+ *   · vide / « - »  → tout à zéro
+ * ⛔ `sec` n'est JAMAIS tiré d'une plage ni d'un texte : le choix appartient à la personne.
+ * `_secRepos(v)` reste le point d'entrée historique (toutes ses valeurs d'avant sont inchangées).
+ *
+ * LES CONVENTIONS DE LECTURE, ÉCRITES POUR QUE PERSONNE NE LES DEVINE :
+ *   · « 1.30 », « 2.30 mins » (deux chiffres après le point) = MINUTES.SECONDES comme on l'écrit
+ *     en salle : 1 min 30, pas 1,3 minute. « 2.5 min » (un chiffre) = 2,5 minutes (150 s).
+ *   · un entier SEUL de 1 à 9 = des minutes (« 2 » dans une colonne Repos ; personne ne se repose
+ *     2 secondes) ; de 10 à 14 = ambigu → texte conservé, rien d'appliqué ; 15 et plus = secondes.
+ *   · dans une plage, un côté sans unité prend l'unité de l'autre (« 3-4 min », « 60-90 s »).
+ */
+function _reposQte(s, indice){
+  // → { sec, u } où u = 'm' (minutes), 's' (secondes) ou '' (aucune unité écrite) ; null si ce n'est pas UNE quantité
   let m;
-  // « 1:30 » ou « 1'30 » → minutes:secondes
-  if((m=s.match(/^(\d+)\s*[:'’]\s*(\d{1,2})$/)))return (+m[1])*60+(+m[2]);
-  /* « 1 min 30 », « 1 minute 30 s » — ET « 1min30 » COLLÉ (ft-v1176).
-     ⚠️ LE `\b` QUI ÉTAIT ICI INTERDISAIT LA FORME COLLÉE, et c'est celle que les gens écrivent :
-     entre le « n » de min et le « 3 », il n'y a **aucune** frontière de mot, donc `1min30`
-     rendait **0** — le chrono retombait sur le réglage par défaut, sans erreur, sans message.
-     ⭐ Trouvé en vérifiant ma PROPRE consigne : le prompt d'import (règle 9) annonce ce format
-     au modèle. *Promettre au modèle un format que l'app lit comme zéro, c'est fabriquer un
-     silence.* Et le correctif est celui que cette fonction prescrit dix lignes plus haut :
-     on rend l'app tolérante, on ne durcit pas la consigne. */
-  if((m=s.match(/^(\d+(?:\.\d+)?)\s*(?:minutes?|min|mn|m)\s*(\d{1,2})\s*(?:s|sec|secs?|secondes?)?$/)))
-    return Math.round((+m[1])*60)+(+m[2]);
-  // « 3 min », « 2.5 minutes », « 3mn »
-  if((m=s.match(/^(\d+(?:\.\d+)?)\s*(?:min|minutes?|mn|m)\b$/)))return Math.round((+m[1])*60);
-  // « 90 s », « 90 sec », « 90 secondes »
-  if((m=s.match(/^(\d+(?:\.\d+)?)\s*(?:s|sec|secs?|secondes?)\b$/)))return Math.round(+m[1]);
-  // « 180 » tout court → déjà des secondes
-  if((m=s.match(/^(\d+(?:\.\d+)?)$/)))return Math.round(+m[1]);
-  return 0;
+  s=String(s).trim();
+  if((m=s.match(/^(\d+)\s*[:'](\d{1,2})$/)))                                   // 1:30 · 1'30
+    return +m[2]<60?{sec:(+m[1])*60+(+m[2]),u:'m'}:null;
+  // 1 min 30 · 1 mins 30 s · 1min30 (collé) · 1m30
+  if((m=s.match(/^(\d+)\s*(?:minutes?|mins?|mns?|m)\.?\s*(\d{1,2})\s*(?:secondes?|secs?|s)?$/)))
+    return +m[2]<60?{sec:(+m[1])*60+(+m[2]),u:'m'}:null;
+  // 3 min · 3 mins · 2 minutes · 3mn · 2.5 min · 1.30 mins (minutes.secondes)
+  if((m=s.match(/^(\d+)[.,](\d+)\s*(?:minutes?|mins?|mns?|m)\.?$/))){
+    if(m[2].length===2&&+m[2]<60) return {sec:(+m[1])*60+(+m[2]),u:'m'};      // 1.30 = 1 min 30
+    return {sec:Math.round(parseFloat(m[1]+'.'+m[2])*60),u:'m'};               // 2.5 = 2,5 min
+  }
+  if((m=s.match(/^(\d+)\s*(?:minutes?|mins?|mns?|m)\.?$/))) return {sec:(+m[1])*60,u:'m'};
+  // 90 s · 90 sec · 90 secondes · 40"
+  if((m=s.match(/^(\d+(?:[.,]\d+)?)\s*(?:secondes?|secs?|s|")\.?$/))) return {sec:Math.round(parseFloat(m[1].replace(',','.'))),u:'s'};
+  // « 1.30 » tout seul : minutes.secondes (2,3 SECONDES n'aurait aucun sens)
+  if((m=s.match(/^(\d{1,2})[.,](\d{2})$/))&&+m[2]<60) return {sec:(+m[1])*60+(+m[2]),u:indice==='s'?'s':'m'};
+  // un entier seul
+  if((m=s.match(/^(\d+)$/))){
+    const n=+m[1];
+    if(indice==='m'&&n>=1&&n<=60) return {sec:n*60,u:'m'};
+    if(indice==='s'&&n>=1) return {sec:n,u:'s'};
+    if(n>=15) return {sec:n,u:''};                       // 90 · 120 · 180 → déjà des secondes
+    if(n>=1&&n<=9) return {sec:n*60,u:''};               // 2 · 3 → des minutes
+    return null;                                         // 0 et 10–14 : ambigu, on n'applique rien
+  }
+  return null;
 }
+/* ⏱️ `prop` — LA DURÉE QUE L'APP PROPOSE AU CHRONOMÈTRE (décision de Michel, 08/11/2026, « GO CORRECTIF IMPORT PDF » ; même esprit que la D-058
+   du Lot 1 Import, 07/10 : « plage conservée ; valeur utilisée = borne basse »). Une valeur FERME → elle-même ; une PLAGE (« 4-5 min ») → sa
+   BORNE BASSE (4 min), pendant que le TEXTE écrit reste conservé (`txt`) et que les deux bornes (`min`, `max`) restent proposées à la personne ;
+   un texte sans chiffre (« selon ressenti ») → 0. ⛔ `sec` NE CHANGE PAS (0 pour une plage) : `_secRepos` — qui sert aussi aux séances de Milo —
+   garde exactement son sens d'avant ; seul l'IMPORT (aperçu et programme enregistré) lit `prop`. Une seule fonction de lecture (R2). */
+function _reposLire(v){
+  const r=_reposLireBrut(v);
+  r.prop=r.sec>0?r.sec:(r.min>0?r.min:0);
+  return r;
+}
+function _reposLireBrut(v){
+  const vide={sec:0,min:0,max:0,txt:''};
+  if(v==null) return vide;
+  if(typeof v==='number') return (v>0&&isFinite(v)&&v<=3600)?{sec:Math.round(v),min:0,max:0,txt:''}:vide;
+  let s=String(v).replace(/[  ]/g,' ').replace(/[‘’]/g,"'").replace(/\s+/g,' ').trim();
+  if(!s||/^[-–—_.\/·•]+$/.test(s)||/^(n\/?a|aucun|aucune|none|nc|0)$/i.test(s)) return vide;
+  const txt=s.length>40?s.slice(0,40).trim():s;
+  let bas=s.toLowerCase().replace(/^(?:repos|r\u00e9cup(?:\u00e9ration)?|recup(?:eration)?|rest|pause)\s*:?\s*/,'');   // « repos 40 sec » → « 40 sec »
+  /* Ce que les coachs ÉCRIVENT autour du chiffre : « 2 min max », « repos 30 sec maxi »,
+     « 1.15 min max » = un PLAFOND, donc le chiffre écrit EST le repos ; « environ 90 s » ;
+     et le blanc d'extraction d'un PDF « 1 . 20 min ». Avant : tout cela restait du texte, 0 seconde, et la séance prenait le réglage
+     global (130 s) pour un coach qui écrivait 45 s. ⛔ On n'enlève QUE ces mots-là : « selon ressenti », « 1.10/20 min max » (format
+     que rien ne permet de lire sans deviner) restent du TEXTE conservé, sans repos appliqué. */
+  bas=bas.replace(/(\d)\s*\.\s*(\d)/g,'$1.$2').replace(/\s*\b(?:au\s+)?max(?:i|imum)?\b\.?$/,'').replace(/^(?:environ|env\.?|~|\u2248)\s*/,'').trim();
+  if(!bas) return vide;                                         // le mot « repos » seul n'est pas une valeur
+  const un=_reposQte(bas);
+  if(un&&un.sec>0&&un.sec<=3600) return {sec:un.sec,min:0,max:0,txt:''};
+  // une PLAGE : deux quantités séparées par - – — / à a to
+  const p=bas.replace(/^de\s+/,'').split(/\s*(?:[-–—\/]|à|\bto\b|\ba\b)\s*/);
+  if(p.length===2&&/\d/.test(p[0])&&/\d/.test(p[1])){
+    const d=_reposQte(p[1]);                                   // le côté droit porte l'unité s'il y en a une
+    const g=d&&_reposQte(p[0],d.u);
+    // ⛔ Une plage dont la borne haute vaut plus de 5 fois la basse n'est pas une plage de repos : « 1.10/20 min » (un coach qui écrit
+    //    1 min 10 à 1 min 20) se lisait 70 s → 20 MINUTES. On garde le texte, on n'applique rien (la personne lit et choisit).
+    if(d&&g&&g.sec>0&&d.sec>g.sec&&d.sec<=3600&&d.sec<=g.sec*5) return {sec:0,min:g.sec,max:d.sec,txt};
+    // « 3-4 » sans aucune unité : minutes si les deux sont petits, sinon secondes
+    const nb=bas.match(/^(\d+)\s*(?:[-–—\/]|à|to|a)\s*(\d+)$/);
+    if(nb){ const a=+nb[1],b=+nb[2];
+      if(a>0&&b>a){ if(b<=9) return {sec:0,min:a*60,max:b*60,txt}; if(a>=15&&b<=3600) return {sec:0,min:a,max:b,txt}; } }
+  }
+  return {sec:0,min:0,max:0,txt};
+}
+function _secRepos(v){ return _reposLire(v).sec; }
 
 /* ─── LIRE UNE DATE ANNONCÉE, EN CHIFFRES OU EN TOUTES LETTRES (05/08/2026) ────────────
  *
