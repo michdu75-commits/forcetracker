@@ -82,6 +82,7 @@
 "./seance_recette.js": 2,
 "./seance_ux.js": 2,
 "./sec_admin.js": 0,
+"./s2_nav.js": 0,
 "./session_integrity.js": 1,
 "./travail_existant.js": 2,
 "./ux_d086.js": 1,

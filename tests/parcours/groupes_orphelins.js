@@ -34,6 +34,8 @@ const canon = v => Array.isArray(v) ? '[' + v.map(canon).join(',') + ']'
   : (v && typeof v === 'object') ? '{' + Object.keys(v).sort().map(k => JSON.stringify(k) + ':' + canon(v[k])).join(',') + '}'
   : JSON.stringify(v);
 const egal = (a, b) => canon(a) === canon(b);
+/* ft-v1269 (S2) : `S.wkt.vue` (rang + nom de l'exercice OUVERT) est une VUE rangée dans la séance en cours pour la reprise, pas une donnée d'entraînement. */
+const sansVue = (o) => { if (!o || typeof o !== 'object') return o; const c = JSON.parse(JSON.stringify(o)); delete c.vue; return c; };
 const aCle = (o, k) => !!o && Object.prototype.hasOwnProperty.call(o, k);
 const sansGroupe = e => { const c = JSON.parse(JSON.stringify(e)); delete c.group; delete c.groupType; return c; };
 // Nombre de membres par identifiant de groupe.
@@ -391,7 +393,7 @@ module.exports.creation = async function (t, b, PORT) {
     const ferme = await X.pg.evaluate(() => !document.getElementById('mod-ex').classList.contains('open'));
     const ap = await etat(X);
     t('C1·retour le retour arrière ferme le sélecteur et ne laisse aucun groupe (Rowing barre intact)',
-      s && ferme && egal(ap.wkt, av.wkt) && egal(ap.disque, av.disque), 'ferme=' + ferme + ' ' + js(ap.wkt.exs[3]));
+      s && ferme && egal(sansVue(ap.wkt), sansVue(av.wkt)) && egal(sansVue(ap.disque), sansVue(av.disque)), 'ferme=' + ferme + ' ' + js(ap.wkt.exs[3]));   // ft-v1269 : choisir un exercice pour un superset l'OUVRE → `S.wkt.vue` ; une vue, jamais une donnée d'entraînement
     await recharger(X);
     const r = await etat(X);
     t('C6a abandon PUIS rechargement : aucun groupe à 1 membre ne réapparaît, la séance est identique', egal(r.wkt.exs, av.wkt.exs) && orph(r.disque.exs).length === 0, '');

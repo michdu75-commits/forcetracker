@@ -22,7 +22,7 @@ const t = (nom, cond, det) => { if (cond) { ok++; console.log('   OK  ' + nom); 
   await new Promise(r => srv.listen(0, r));
   const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' });
   const T = require(path.join(ROOT, 'tests', 'parcours', 's2_nav.js'));
-  await T.ecran(t, b, srv.address().port);
+  await T.tout(t, b, srv.address().port);
   await b.close(); srv.close();
   console.log('\n──── ' + ok + ' OK / ' + ko + ' rouge ────');
   process.exit(ko ? 1 : 0);

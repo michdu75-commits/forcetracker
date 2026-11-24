@@ -137,6 +137,39 @@ function _bilanTravailWkt(){
 // « Exercice terminé » : plus aucune série de travail à faire, et au moins une faite (sans travail validé, rien ne
 // dit qu'on en a fini — R29). Lu par `toggleSet` (avance au suivant) ET par la carte repliée (marque « terminé »).
 function _exTermine(ex){ const b=_bilanTravailEx(ex); return b.restantes===0 && b.faites>0; }
+/* 🧭 S2 (ft-v1269, 24/11/2026, arbitrages de Michel) — UN SEUL PROPRIÉTAIRE DE « OÙ VA-T-ON APRÈS CETTE SÉRIE ? », pour l'exercice ordinaire ET le superset.
+   Avant : deux logiques qui ne se parlaient pas — l'exercice ordinaire armait une avance EN DIFFÉRÉ (`_restDoneCb`, posée après `startRest`, jamais relue :
+   « + Série » ou une dévalidation pendant le repos ne l'annulait pas, mesuré le 24/11) et le superset choisissait son partenaire PAR POSITION, sans regarder ce qu'il
+   lui restait (3+2 : A3 renvoyait sur B terminé, sans chrono ; 2+3 : B2 renvoyait sur A terminé ; aucune sortie du groupe). Maintenant : la règle est relue à CHAQUE
+   validation, sur les séries RÉELLEMENT présentes, et le passage se fait AVANT le chronomètre — il n'y a donc plus de passage en différé à invalider.
+   ⛔ « À FAIRE » = la définition de l'en-tête « N / M séries » et de « Terminer » (`_bilanTravailEx`, décision ① de Michel du 16/10) : un échauffement non validé ne
+   bloque JAMAIS le passage, et en valider un n'en déclenche jamais (arbitrage du 24/11). Seules les séries de TRAVAIL — prévues ou ajoutées — décident.
+   ⚠️ Un exercice qui n'aurait QUE des paliers (aucune série de travail) : ses lignes comptent, sinon il serait sauté sans jamais être fait.
+   Rend { kind, idx } : 'meme' (on reste sur l'exercice : il reste du travail, ou il est seul à en avoir) · 'membre' (le partenaire à faire dans le superset, idx) ·
+   'sortie' (le groupe ou l'exercice est terminé, idx = le prochain exercice À FAIRE, jamais en arrière — R29) · 'fin' (plus rien à faire : on ne termine JAMAIS la
+   séance tout seule). Les groupes `drop` / `pyramid-*` restent EXACTEMENT comme avant (aucune sortie, voir le test B-S2NAV-NR-6/7/8). */
+function _resteAFaireEx(ex){
+  if(!ex||!Array.isArray(ex.sets)) return false;
+  const b=_bilanTravailEx(ex);
+  if(b.total>0) return b.restantes>0;
+  return ex.sets.some(s=>s&&!s.done);
+}
+function _prochainMouvement(ei){
+  const exs=(S.wkt&&S.wkt.exs)||[], ex=exs[ei];
+  if(!ex) return {kind:'meme',idx:null};
+  const apresCe=(debut)=>{ for(let k=debut;k<exs.length;k++) if(_resteAFaireEx(exs[k])) return {kind:'sortie',idx:k}; return {kind:'fin',idx:null}; };
+  if(ex.group){
+    if((ex.groupType||'super')!=='super') return {kind:'meme',idx:null};         // drop / pyramide : comportement d'avant, géré par l'ancien code
+    const m=_ssMembers(ex.group).map(x=>x.i), pos=m.indexOf(ei);
+    if(pos<0) return {kind:'meme',idx:null};
+    for(let d=1;d<=m.length;d++){                                                // ordre circulaire, soi-même en dernier
+      const k=m[(pos+d)%m.length];
+      if(_resteAFaireEx(exs[k])) return k===ei?{kind:'meme',idx:ei}:{kind:'membre',idx:k};
+    }
+    return apresCe(Math.max.apply(null,m)+1);                                    // le groupe est terminé : après son dernier membre
+  }
+  return _exTermine(ex)?apresCe(ei+1):{kind:'meme',idx:ei};
+}
 function _fmtElapsed(){
   if(!S.wkt||!S.wkt.startTs){
     const c=_cardioNoteMin();
@@ -1636,6 +1669,49 @@ function deleteSetNote(){
   toast('Note retirée','info');
 }
 
+/* 🧭 S2 — LA VUE : L'EXERCICE OUVERT SURVIT À LA FERMETURE (arbitrage de Michel, 24/11/2026 ; réserve « la reprise ne doit pas se baser uniquement sur la dernière série validée »).
+   Mesuré avant : à la réouverture l'exercice ouvert était TOUJOURS le dernier de la liste (`_expandedEx` n'était pas enregistré), même quand la personne était au milieu du 2ᵉ.
+   ⭐ UNE SEULE DONNÉE, `S.wkt.vue = { i, n }` (rang + nom de l'exercice ouvert), dans la clé `ft4_wkt` EXISTANTE : aucune clé de stockage neuve, jamais envoyée au cloud (l'état de
+   la séance en cours n'y part pas), absente de la séance enregistrée (`finishWorkout` choisit ses champs), disparue avec la séance. Un SEUL écrivain (`_vueMemoriser`, appelé par
+   `renderExBlocks`, le passage obligé de tout chemin qui change l'exercice ouvert) ; calqué sur `_reposMemoriser` (SEANCE-REPOS-01) : il n'écrit QUE ce champ dans la séance du disque,
+   seulement si c'est la MÊME séance (`runId`, sinon départ et date — un autre onglet qui a fini ou remplacé la séance n'est jamais écrasé), jamais `persist()` (qui relancerait la synchronisation
+   à chaque carte ouverte), jamais en mode démo, et seulement quand la valeur CHANGE — jamais au 1ᵉʳ rendu d'une séance (afficher n'est pas modifier : une séance qu'on ne fait que regarder reste octet pour octet ce qu'elle était).
+   Lecture (`_vueLire`, au 1ᵉʳ rendu seulement) : ① `vue` valide = le rang existe ET porte le même nom (un exercice supprimé ou déplacé invalide le pointeur plutôt que d'en viser un autre) →
+   on rouvre CET exercice, tel que laissé ; ② sinon (séance commencée avant ft-v1269, pointeur périmé) → REPLI DÉRIVÉ : l'exercice de la série validée la plus récente (`set.at`), puis, s'il est
+   terminé, le prochain à faire (jamais en arrière) ; ③ sinon le dernier exercice, comme avant. ⛔ AUCUN passage automatique à la reprise : on rouvre ce que la personne avait choisi. */
+let _vuePremiere=true;
+function _vueLire(){
+  try{
+    const w=S&&S.wkt, exs=w&&w.exs; if(!Array.isArray(exs)||!exs.length) return null;
+    const v=w.vue;
+    if(v&&typeof v==='object'&&Number.isInteger(v.i)&&exs[v.i]&&String(exs[v.i].name||'')===String(v.n||'')) return v.i;
+    let bi=-1, best=-1;
+    exs.forEach((e,i)=>(e&&e.sets||[]).forEach(s=>{ if(s&&s.done&&typeof s.at==='number'&&s.at>=best){ best=s.at; bi=i; } }));
+    if(bi<0) exs.forEach((e,i)=>{ if(e&&(e.sets||[]).some(s=>s&&s.done)) bi=i; });          // séries sans horodatage : la dernière qui en a une de faite
+    if(bi<0) return null;
+    if(_resteAFaireEx(exs[bi])) return bi;
+    for(let k=bi+1;k<exs.length;k++) if(_resteAFaireEx(exs[k])) return k;
+    return bi;
+  }catch(e){ return null; }
+}
+let _vueBase=null;   // la vue du PREMIER rendu de cette séance dans cette page : on l'AFFICHE, on ne l'écrit pas — afficher n'est pas modifier la séance (bancs « l'aide ne touche à RIEN », « abandon inchangé »)
+function _vueMemoriser(){
+  try{
+    const w=(typeof S!=='undefined')?S.wkt:null; if(!w||!Array.isArray(w.exs)||!w.exs.length) return;
+    const ex=w.exs[_expandedEx]; if(!ex) return;
+    const v={i:_expandedEx,n:String(ex.name||'')};
+    if(!_vueBase||_vueBase.w!==w){ _vueBase={w,i:v.i,n:v.n}; return; }   // 1ᵉʳ rendu de cette séance : rien n'est écrit
+    if(_vueBase.i===v.i&&_vueBase.n===v.n) return;                // la vue n'a pas bougé depuis le dernier rendu
+    _vueBase.i=v.i; _vueBase.n=v.n;
+    if(w.vue&&w.vue.i===v.i&&w.vue.n===v.n) return;               // déjà rangée : aucune écriture
+    w.vue=v;
+    if(window._demoMode) return;                                  // personas de test : « plus aucune écriture locale », comme `persist()`
+    const d=JSON.parse(localStorage.getItem('ft4_wkt')||'null');
+    const meme=!!(d&&typeof d==='object'&&(d.runId&&w.runId?d.runId===w.runId:(d.startTs===w.startTs&&d.date===w.date)));
+    if(!meme) return;                                             // une autre séance, ou plus de séance : on ne touche à rien
+    d.vue=v; localStorage.setItem('ft4_wkt',JSON.stringify(d));
+  }catch(e){}
+}
 function renderExBlocks(){
   const c=document.getElementById('wkt-exs');
   if(!S.wkt||!S.wkt.exs||!S.wkt.exs.length){
@@ -1658,7 +1734,12 @@ function renderExBlocks(){
     _renderEnteteSeance();return;
   }
   const exCount=S.wkt.exs.length;
+  /* 🧭 S2 — LA REPRISE ROUVRE L'ÉCRAN TEL QU'ON L'A LAISSÉ (voir `_vueLire`). Seulement au PREMIER rendu d'une page ; tous les autres chemins qui vident `_expandedEx`
+     (glisser-déposer, séance vidée…) gardent leur comportement d'avant (le dernier exercice). */
+  if(_expandedEx===null&&_vuePremiere){ const r=_vueLire(); if(r!==null)_expandedEx=r; }
+  _vuePremiere=false;
   if(_expandedEx===null||_expandedEx>=exCount)_expandedEx=exCount-1;
+  _vueMemoriser();
 
   // Construire l'ordre de rendu (groupes = un seul bloc)
   const seen=new Set();
@@ -2227,8 +2308,31 @@ function toggleSet(ei,si){
     }
     // Groupe (super set)
     const groupType=S.wkt.exs[ei].groupType||'super';
-    const _ssNext=_nextInGroup(ei);
     const _scrollTo=idx=>setTimeout(()=>{const el=document.getElementById('ex-block-'+idx);if(el)el.scrollIntoView({behavior:'smooth',block:'start'});},60);
+    /* 🧭 S2 — LE SUPERSET CHOISIT SON PARTENAIRE PAR CE QU'IL LUI RESTE À FAIRE, JAMAIS PAR POSITION (`_prochainMouvement`, plus haut).
+       Les groupes `drop` / `pyramid-*` gardent exactement leur code d'avant (`_ssNext` positionnel, ci-dessous) : aucune sortie, aucun libellé changé.
+       ⚠️ Valider un ÉCHAUFFEMENT ne déclenche jamais de SORTIE (arbitrage du 24/11) — mais l'alternance entre partenaires reste celle d'avant. */
+    const _grpSuper=!!(S.wkt.exs[ei].group&&groupType==='super');
+    let _mouv=_prochainMouvement(ei);
+    if((set.type==='É'||set.type==='W')&&(_mouv.kind==='sortie'||_mouv.kind==='fin'))_mouv={kind:'meme',idx:ei};
+    const _ssNext=_grpSuper?null:_nextInGroup(ei);
+    if(_grpSuper&&_mouv.kind==='membre'){
+      if(navigator.vibrate)navigator.vibrate([30]);
+      if(_mouv.idx>ei){
+        // Alternance A → B : avance immédiate SANS repos (la définition du superset, inchangée)
+        _expandedEx=_mouv.idx;renderExBlocks();_scrollTo(_mouv.idx);return;
+      }
+      // Retour à un partenaire d'avant (tour suivant) : AVEC repos, l'écran est déjà sur lui avant que le chrono démarre
+      const firstIdx=_mouv.idx;
+      _expandedEx=firstIdx;renderExBlocks();
+      setTimeout(()=>{const el=document.getElementById('ex-block-'+firstIdx);if(el)el.scrollIntoView({behavior:'smooth',block:'start'});},80);
+      startRest(sec);   // ⚠️ la consigne d'avance se pose APRÈS (startRest efface _restDoneCb)
+      _restDoneCb=()=>{const el=document.getElementById('ex-block-'+firstIdx);if(el)el.scrollIntoView({behavior:'smooth',block:'start'});};
+      if(lbl)lbl.textContent='⚡ Tour suivant';
+      if(!isAbdo&&_REPOS_PRESETS.includes(sec))_highlightRestPreset(sec);else _highlightRestPreset(-1);
+      if(navigator.vibrate)navigator.vibrate([50]);
+      return;
+    }
     if(_ssNext!==null){
       if(navigator.vibrate)navigator.vibrate([30]);
       // Pre-fill poids suivant pour drop/pyramide
@@ -2261,24 +2365,9 @@ function toggleSet(ei,si){
       // Dernier palier : repos complet
       const lbl=document.getElementById('rest-label');
       if(lbl)lbl.textContent='📉 Série dégressive terminée';
-    } else if(groupType==='super'&&S.wkt.exs[ei].group){
-      // Dernier exo du tour → retour au 1er exercice du groupe pour le tour suivant
-      const gMembers=_ssMembers(S.wkt.exs[ei].group);
-      const firstIdx=gMembers[0]?.i??null;
-      const hasMore=gMembers.some(({e})=>e.sets.some(s=>!s.done));
-      if(firstIdx!==null&&hasMore){
-        if(navigator.vibrate)navigator.vibrate([30]);
-        _expandedEx=firstIdx;renderExBlocks();
-        setTimeout(()=>{const el=document.getElementById('ex-block-'+firstIdx);if(el)el.scrollIntoView({behavior:'smooth',block:'start'});},80);
-        startRest(sec);   // ⚠️ la consigne d'avance se pose APRÈS (startRest efface _restDoneCb)
-        _restDoneCb=()=>{const el=document.getElementById('ex-block-'+firstIdx);if(el)el.scrollIntoView({behavior:'smooth',block:'start'});};
-        if(lbl)lbl.textContent='⚡ Tour suivant';
-        if(!isAbdo&&_REPOS_PRESETS.includes(sec))_highlightRestPreset(sec);else _highlightRestPreset(-1);
-        if(navigator.vibrate)navigator.vibrate([50]);
-        return;
-      }
-      // Tous les sets du groupe terminés → repos normal sans auto-avance
     }
+    /* 🧭 S2 : l'ancien bloc « dernier exo du tour → retour au 1er exercice du groupe » est parti dans le bloc `_grpSuper` ci-dessus (retour au partenaire QUI A DU TRAVAIL,
+       plus « le premier par position »). Groupe terminé ou un seul membre à faire : repos normal, puis la SORTIE ci-dessous. */
     // ⏭️ PASSAGE AUTOMATIQUE À L'EXERCICE SUIVANT (ft-v825) — retour de Michel, séance du 10/08 :
     // « quand on finit le premier exercice, ça ne bascule pas automatiquement sur le deuxième ;
     //   là par exemple j'ai fait des soulevés de terre et à la dernière série je suis obligé de
@@ -2287,8 +2376,8 @@ function toggleSet(ei,si){
     // pyramides. L'exercice ordinaire, le cas le plus fréquent de tous, était le seul oublié.
     // On réutilise `_restDoneCb`, le même chemin que la pyramide (R2/R13) plutôt que d'inventer
     // un second mécanisme d'avance qui finirait par diverger de celui-ci.
-    // 👉 On avance À LA FIN DU REPOS, pas tout de suite : entre deux exercices on se repose
-    //    vraiment, et replier sous ses yeux la série qu'on vient de valider est déroutant.
+    // 👉 [ft-v825 → RÉVISÉ le 24/11/2026, S2] On avançait À LA FIN DU REPOS (choix de construction : « replier sous ses yeux la série qu'on vient de valider est
+    //    déroutant »). Michel l'a retourné : le passage se fait AVANT le chronomètre (voir le bloc S2 plus bas) ; l'avance différée n'existe plus.
     /* ⚠️⚠️ « TERMINÉ » NE VEUT PAS DIRE « TOUTES LES LIGNES COCHÉES » (18/08/2026).
        Michel : *« quand je valide ma dernière série de couché, ça devrait se réduire et
        l'exercice d'épaules s'ouvrir en grand »* — et *« je n'ai pas vu le message »* non plus.
@@ -2305,15 +2394,14 @@ function toggleSet(ei,si){
        exercice qui n'aurait QUE des paliers n'avance pas non plus : sans série de travail
        validée, rien ne dit qu'on en a fini avec lui (R29 — le coût de l'erreur décide). */
     // UX SÉANCE (16/10) : la règle n'a pas changé, elle a quitté ce bloc pour son propriétaire (`_exTermine`, R2).
-    const _tousFaits = _exTermine(S.wkt.exs[ei]);
-    let _suiv=null;
-    if(_tousFaits && !S.wkt.exs[ei].group){
-      for(let k=ei+1;k<S.wkt.exs.length;k++){
-        if((S.wkt.exs[k].sets||[]).some(s=>!s.done)){ _suiv=k; break; }
-      }
-      // ⚠️ On n'enroule PAS vers le début : remonter tout seul à un exercice déjà dépassé
-      // serait plus déroutant que de ne rien faire (R29 — le coût de l'erreur décide).
-    }
+    /* 🧭 S2 (ft-v1269, 24/11/2026) — LE PASSAGE SE FAIT AVANT LE CHRONOMÈTRE, ET IL N'EST PLUS EN DIFFÉRÉ.
+       Avant : `_restDoneCb` armé APRÈS `startRest`, exécuté à la fin du repos — jamais relu : ajouter une série, dévalider ou « Passer » pendant le repos
+       déplaçait l'écran quand même (mesuré), et l'avance se perdait si iOS fermait l'app. Maintenant : `_prochainMouvement` relit les séries RÉELLEMENT présentes,
+       l'écran passe au mouvement suivant, PUIS le repos démarre (même tick, même durée : `sec` et les libellés ci-dessus viennent de la série validée).
+       ⛔ Le repos reste celui de l'exercice qu'on vient de TERMINER (`_restEx`, ses −15/+15 s) : le dock le DIT (« Repos · … ») et offre « ＋ Série sur … ».
+       ⚠️ On n'enroule PAS vers le début, et on ne termine JAMAIS la séance tout seule (R29). */
+    const _versSuite=(_mouv.kind==='sortie'&&_mouv.idx!=null)?_mouv.idx:null;
+    if(_versSuite!==null){ _expandedEx=_versSuite; renderExBlocks(); _scrollTo(_versSuite); }
     startRest(sec);
     /* 🗣️ ON DIT POURQUOI LE CHRONO A CHANGÉ, sinon 2 min au lieu de 45 s se lit comme un bug
        (R30 appliqué à l'écran).
@@ -2332,12 +2420,7 @@ function toggleSet(ei,si){
       const _lp=document.getElementById('rest-label');
       if(_lp) _lp.textContent=_palierLbl;
     }
-    if(_suiv!==null){
-      _restDoneCb=()=>{_expandedEx=_suiv;renderExBlocks();_scrollTo(_suiv);};
-      const _lb=document.getElementById('rest-label');
-      const _n=String(S.wkt.exs[_suiv].name||'');
-      if(_lb&&!_lb.textContent)_lb.textContent='⏭️ Ensuite : '+(_n.length>26?_n.slice(0,25).trim()+'…':_n);
-    }
+    if(_versSuite!==null) _restSuiteMontrer(S.wkt.exs[ei], S.wkt.exs[_versSuite]);   // « Repos · [exercice] », « ⏭️ Ensuite : … », « ＋ Série sur … »
     if(!isAbdo&&_REPOS_PRESETS.includes(sec))_highlightRestPreset(sec);else _highlightRestPreset(-1);
     if(navigator.vibrate)navigator.vibrate([50]);
   }
@@ -6298,7 +6381,29 @@ function updRest(){
 
 // Arrête chrono + barre + pastille SANS fermer l'overlay décompte (utilisé au GO,
 // où l'overlay doit rester affiché — GO + flash — jusqu'au tap/Passer)
+/* 🧭 S2 — LE DOCK DIT DE QUEL EXERCICE EST LE REPOS (arbitrage de Michel, 24/11/2026). Quand le passage automatique a déjà ouvert le mouvement suivant, le repos qui court
+   est celui de l'exercice qu'on vient de TERMINER (ses −15/+15 s et « Régler » s'écrivent dans SA préférence, `S.exRestPref[_restEx]`) : sans le dire, l'écran montrerait
+   un exercice et le chrono parlerait d'un autre. Trois lignes, UN SEUL AUTEUR (`#rest-suite`, comme `#rest-rir` pour la question du RIR) :
+   « Repos · [exercice] » · « ⏭️ Ensuite : [suivant] » · « ＋ Série sur [exercice] » (revenir ajouter une série sans perdre le passage automatique : l'ajout est une série de
+   TRAVAIL, sa validation relance `_prochainMouvement`). On garde l'OBJET de l'exercice, pas son rang : un exercice supprimé ou déplacé pendant le repos n'envoie pas l'ajout ailleurs. */
+let _restSuiteEx=null;
+function _restSuiteNom(n){ n=String(n||''); return _escNote(n.length>26?n.slice(0,25).trim()+'…':n); }
+function _restSuiteMontrer(exFini, exSuivant){
+  _restSuiteEx=exFini||null;
+  const z=document.getElementById('rest-suite'); if(!z||!exFini) return;
+  z.innerHTML='<div class="rs-l1">Repos · <b>'+_restSuiteNom(exFini.name)+'</b></div>'
+    +(exSuivant?'<div class="rs-l2">⏭️ Ensuite : '+_restSuiteNom(exSuivant.name)+'</div>':'')
+    +'<button type="button" class="rbtn rs-add" onclick="ajouterSerieDepuisDock()">＋ Série sur '+_restSuiteNom(exFini.name)+'</button>';
+}
+function _restSuiteEffacer(){ _restSuiteEx=null; const z=document.getElementById('rest-suite'); if(z) z.innerHTML=''; }
+function ajouterSerieDepuisDock(){
+  const ex=_restSuiteEx, ei=(ex&&S.wkt&&Array.isArray(S.wkt.exs))?S.wkt.exs.indexOf(ex):-1;
+  if(ei<0){ _restSuiteEffacer(); return; }
+  _expandedEx=ei; addSet(ei); _restSuiteEffacer();                         // `addSet` : le propriétaire de l'ajout, inchangé (reprise admissible, copie de la dernière série)
+  setTimeout(()=>{ const n=(S.wkt.exs[ei]&&S.wkt.exs[ei].sets.length)||0, l=document.getElementById('sr-'+ei+'-'+(n-1)); if(l) l.scrollIntoView({behavior:'smooth',block:'center'}); },90);
+}
 function _stopRestTimerOnly(){
+  _restSuiteEffacer();
   clearInterval(restIv);restIv=null;
   clearInterval(_pillIv);_pillIv=null;
   restStartTs=0;
@@ -6475,7 +6580,9 @@ function _renderRirRow(){
   if(!cibles.length){ z.innerHTML=''; return; }
   /* ⭐ PLUSIEURS SÉRIES (superset) → chaque question dit DE QUEL EXERCICE elle parle, sinon on ne
      saurait pas à qui appartient la réserve. ⛔ Une seule série → exactement l'affichage d'avant. */
-  const avecNom=cibles.length>1;
+  /* 🧭 S2 : la question nomme l'exercice AUSSI quand il n'est plus celui qui est ouvert — le passage automatique a déjà ouvert le suivant avant le repos, « Il t'en restait
+     combien ? » sous le mauvais exercice serait ambiguë. Les cibles sont des indices `{ei,si}` : le changement d'exercice ouvert ne les déplace pas, la réponse va à la bonne série. */
+  const avecNom=cibles.length>1||cibles.some(c=>c.ei!==_expandedEx);
   z.innerHTML=cibles.map(c=>_rirQuestionHtml(c,avecNom)).join('');
 }
 function _rirQuestionHtml(c,avecNom){

@@ -14,6 +14,8 @@
 'use strict';
 const js = (x) => JSON.stringify(x).slice(0, 420);
 const J = (o) => JSON.stringify(o);
+/* ft-v1269 (S2) : `S.wkt.vue` (rang + nom de l'exercice OUVERT) est une VUE rangée dans la séance en cours pour la reprise, pas une donnée d'entraînement : « séance et disque inchangés » compare tout le reste. */
+const sansVue = (o) => { if (!o || typeof o !== 'object') return o; const c = JSON.parse(JSON.stringify(o)); delete c.vue; return c; };
 const FIC = 'Zorglub inversé à la poulie', PERSO = 'Exo perso Zéta';              // FICTIF (absent du catalogue) · PERSONNALISÉ (S.customExercises)
 const moisPrec = (() => { const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - 1); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); })();
 const BASE = { ft4_bw: '80', ft4_age: '40', ft4_ht: '178', ft4_gender: 'H', ft4_goal: 'force', ft4_ob2: '1', ft4_devtoken: 'f'.repeat(64),
@@ -153,7 +155,7 @@ async function ecran(t, b, PORT) {
       await X.pg.evaluate(() => { closeExMenu(); supprimerSerie(0, 1); });
       const ap = await etat(X);
       t('B-SCFD-E3b ⭐⭐ la fonction REFUSE de retirer le dernier palier restant : aucune confirmation, séance, réglage et disque inchangés — les données sont conservées (aucune suppression implicite)',
-        !(await confirmOuvert(X)) && J(ap.wkt) === J(av.wkt) && J(ap.disque) === J(av.disque) && J(ap.wkt.exs[0].dropset) === J(DROP(1)), '');
+        !(await confirmOuvert(X)) && J(sansVue(ap.wkt)) === J(sansVue(av.wkt)) && J(sansVue(ap.disque)) === J(sansVue(av.disque)) && J(ap.wkt.exs[0].dropset) === J(DROP(1)), '');   // ft-v1269 : ouvrir la feuille de l'exercice change l'exercice OUVERT, donc `S.wkt.vue` — une vue, jamais une donnée d'entraînement
       t('B-SCFD-E3c ⭐ règle d\'or #9 : le bouton central « + » ne bouge pas (avant · feuille ouverte · après)', f0 === fm && f0 === await fab(X), f0 + ' | ' + fm + ' | ' + await fab(X));
       await X.cx.close();
     }

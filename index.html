@@ -613,6 +613,9 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
       <button class="rbtn rd-skip" onclick="skipRest()">Passer</button>
     </div>
     <div id="rest-label"></div>
+    <!-- 🧭 S2 (ft-v1269) : quand le passage automatique a déjà ouvert le mouvement suivant, le dock dit de QUEL exercice est ce repos (« Repos · … », « ⏭️ Ensuite : … ») et offre
+         « ＋ Série sur … ». Un seul auteur : `_restSuiteMontrer` / `_restSuiteEffacer` (log.js). Vide = masqué. -->
+    <div id="rest-suite"></div>
     <!-- 📝 IMPORT-IA-FIDELITE-01 : la consigne de repos ÉCRITE dans le programme (une plage « 3-4 min »). Un seul auteur : `_restConsigneMontrer`. Vide = masquée. -->
     <div id="rest-consigne"></div>
     <!-- ⏳ ft-v1030 : le repos est un MAXIMUM. Ce libellé n'apparaît qu'AU-DELÀ de zéro et n'a

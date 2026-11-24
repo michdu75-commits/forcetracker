@@ -2160,7 +2160,7 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
     const milieu={cb:!!_restDoneCb, exp:_expandedEx};      // série intermédiaire : rien
     toggleSet(0,1);
     const fin={cb:!!_restDoneCb, exp:_expandedEx,
-               lbl:(document.getElementById('rest-label')||{}).textContent||''};
+               lbl:(document.getElementById('rest-suite')||{}).textContent||''};   // S2 : le dock (`#rest-suite`) dit « ⏭️ Ensuite : … » (c'était `#rest-label`)
     skipRest();                                            // on écourte le repos
     const apresSkip=_expandedEx;
     const fabApres=box();
@@ -2173,11 +2173,11 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
   });
   t('une série INTERMÉDIAIRE ne déclenche aucune avance',
     r.milieu && r.milieu.cb===false && r.milieu.exp===0, JSON.stringify(r.milieu));
-  t('\u2B50\u2B50 la DERNIÈRE série d un exercice arme le passage au suivant',
-    r.fin && r.fin.cb===true, JSON.stringify(r.fin));
-  t('\u2B50 … et le repos ANNONCE ce qui vient ensuite',
+  t('\u2B50\u2B50 la DERNIÈRE série d un exercice ouvre le suivant AVANT le chronomètre (S2 : plus d avance différée à armer)',
+    r.fin && r.fin.exp===1 && r.fin.cb===false, JSON.stringify(r.fin));   // S2 (ft-v1269, arbitrage du 24/11) : le suivant est OUVERT avant le chronomètre, plus d'avance différée armée
+  t('\u2B50 … et le dock ANNONCE ce qui vient ensuite (« ⏭️ Ensuite : … »)',
     /Ensuite\s*:/.test((r.fin&&r.fin.lbl)||''), JSON.stringify(r.fin&&r.fin.lbl));
-  t('\u2B50\u2B50 « Skip » HONORE l avance au lieu de la jeter (startRest effaçait la consigne)',
+  t('\u2B50\u2B50 « Skip » ne déplace plus l écran : le suivant est DÉJÀ ouvert (rien à honorer, rien à jeter — S2)',
     r.apresSkip===1, 'exercice ouvert : '+r.apresSkip);
   t('\u2B50 au DERNIER exercice, on ne remonte pas au début',
     r.cbDernier===false, 'une avance a été armée alors qu il n y a plus rien après');
@@ -7006,7 +7006,8 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
       S.wkt=null; startWorkout(); S.wkt.exs=seance(); _expandedEx=0; persist(); renderExBlocks();
       for(const i of indices) toggleSet(0,i);
       await new Promise(r=>setTimeout(r,150));
-      const res={label:(document.getElementById('rest-label')||{}).textContent,
+      // S2 (ft-v1269, 24/11/2026) : « Ensuite : … » est écrit dans le dock `#rest-suite` (c'était `#rest-label`) et l'exercice suivant est déjà ouvert AVANT « Passer »
+      const res={label:(document.getElementById('rest-suite')||{}).textContent,
                  cb:(typeof _restDoneCb!=='undefined')&&!!_restDoneCb};
       if(typeof skipRest==='function') skipRest();     // on ecourte le repos, comme dans la vraie vie
       await new Promise(r=>setTimeout(r,150));
@@ -39211,6 +39212,9 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
      « ✕ Retirer dropset » ne touchent plus que la suite non faite (décisions de Michel du 16/10). Blocs B-CC01-*.
      Banc : tools/banc_cc01_dropset.js · contrôle négatif : tools/mut_cc01_dropset.py. */
   await require('./cc01_dropset.js').ecran(t, b, PORT);
+  /* 🧭 S2-NAV (session-C / Claude N°2, 24/11/2026, lot ft-v1269) — le passage automatique entre exercices, ordinaire ET superset : non-régression dropset / pyramide / groupes / durées de repos
+     (NR-*, écrite AVANT le code), nouvelle navigation (S2-*), vue `S.wkt.vue` et reprise (VUE-*). Blocs B-S2NAV-*. Banc : tools/banc_s2_nav.js · contrôle négatif : tools/mut_s2_nav.py. */
+  await require('./s2_nav.js').tout(t, b, PORT);
   /* 🏋️ UX SÉANCE (session-B, 16/10/2026, cadrage validé par Michel) — l'écran Séance en deux états : avant (« Séance libre »,
      « Programme », contexte, types, autres options), pendant (en-tête « Séance en cours » dans la barre haute : chrono,
      séries de TRAVAIL faites / prévues, ⋯, « Terminer » qui demande s'il reste des séries) ; menu ⋯ ; bouton central (même

@@ -480,17 +480,19 @@ async function ecran(t, b, PORT) {
     await fermer(X);
   }
   {
-    // la dernière série de travail d'un exercice : « ⏭️ Ensuite » puis « Passer » avance à l'exercice suivant (ft-v825)
+    // la dernière série de travail d'un exercice : le développé couché est OUVERT AVANT le chronomètre (S2, ft-v1269, arbitrage de Michel du 24/11 — c'était « à la fin du repos », ft-v825) ;
+    // le dock dit « ⏭️ Ensuite : Développé Couché » ; « Passer » n'a plus d'avance à honorer et ne déplace rien
     const w = { date: '2026-10-22', startHour: 14, startTs: T0 - 10 * 60000, exs: [
       { name: SQ, sets: [serie(1), serie(0)] }, { name: DC, sets: [serie(0), serie(0)] }] };
     const X = await ouvrir({ wkt: w });
     await cocher(X, 0, 1);
-    const lbl = await X.pg.evaluate(() => (document.getElementById('rest-label') || {}).textContent || '');
+    const lbl = await X.pg.evaluate(() => (document.getElementById('rest-suite') || {}).textContent || '');
+    const avant = await X.pg.evaluate(() => _expandedEx);
     await clic(X, '#rest-bar .rd-skip');
     await X.pg.waitForTimeout(300);
     const ouvert = await X.pg.evaluate(() => _expandedEx);
-    t('C-REP-H3 l\'avance à l\'exercice suivant tient : « ⏭️ Ensuite : Développé Couché », puis « Passer » ouvre le développé couché',
-      /Ensuite : Développé Couché/.test(lbl) && ouvert === 1, _det({ etiquette: lbl, ouvert }));
+    t('C-REP-H3 le passage à l\'exercice suivant se fait AVANT le chronomètre : « ⏭️ Ensuite : Développé Couché » dans le dock, le développé couché déjà ouvert, et « Passer » ne déplace plus rien',
+      /Ensuite : Développé Couché/.test(lbl) && avant === 1 && ouvert === 1, _det({ dock: lbl, avant, ouvert }));
     await fermer(X);
   }
 
