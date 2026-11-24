@@ -34521,6 +34521,7 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
       sets:[{kg:80,reps:8,done:true,type:'X',rest:150}]}]};
     persist();
     _rirCible={ei:0,si:0};
+    _expandedEx=0;   // ft-v1269 (S2) : la question NOMME l'exercice quand il n'est pas l'exercice OUVERT ; ici il l'est — le libellé d'échec s'affiche seul, comme avant
     if(typeof _renderRirRow==='function') _renderRirRow();
     const zone=document.getElementById('rest-rir');
     o.echecAffiche=((zone&&zone.querySelector('.rir-lbl'))||{}).textContent||'';

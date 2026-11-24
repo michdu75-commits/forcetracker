@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+require('../tests/_garde_reseau.js');   // ⛔ GARDE RÉSEAU EN 1ʳᵉ INSTRUCTION (D-031-SÉCURITÉ-01 : tout nouveau banc se garde lui-même ; D031S-VII ①)
 /* BANC — S2-NAV (session-C, 24/11/2026, ft-v1269) : le passage automatique entre exercices — non-régression dropset/pyramide (NR-*) puis navigation S2.
    Destiné à la passe complète (tests/parcours/runner.js).
    Sert aussi au contrôle négatif : `python3 tools/mut_s2_nav.py`.

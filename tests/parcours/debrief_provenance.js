@@ -178,7 +178,8 @@ module.exports.ecran = async function (t, b, PORT) {
         o.rirOiseau = S.wkt.exs[0].sets[0].rir; o.rirMarteau = S.wkt.exs[1].sets[0].rir;
         /* hors superset : la question reste la même, une seule série, sans nom ajouté */
         S.wkt.exs.push({ name: 'Marteau', sets: [{ kg: 40, reps: 8, done: false, type: 'N' }] });
-        stopRest(); toggleSet(2, 0); await __pause(150);
+        /* ft-v1269 (S2) : la question NOMME l'exercice dès qu'il n'est plus celui qui est OUVERT (le passage automatique a déjà ouvert le suivant). Ici l'exercice validé EST l'exercice ouvert — comme en vrai, où l'on ne valide que dans la carte ouverte — donc toujours « sans nom ajouté ». */
+        stopRest(); _expandedEx = 2; toggleSet(2, 0); await __pause(150);
         const z2 = (document.getElementById('rest-rir') || {}).innerHTML || '';
         o.seulUneCible = (z2.match(/setRir\(2,0,/g) || []).length >= 1 && !/setRir\([01],/.test(z2) && !/rir-nom/.test(z2);
         stopRest();
