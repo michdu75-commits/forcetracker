@@ -65,6 +65,8 @@ MUT = [
      [(LO, "    } else if(groupType==='drop'&&S.wkt.exs[ei].group){\n      // Dernier palier : repos complet", "    } else if(groupType==='drop'&&S.wkt.exs[ei].group){\n      _expandedEx=Math.min(S.wkt.exs.length-1,ei+1);\n      // Dernier palier : repos complet")], 'GARDE', 'B-S2NAV-NR-6b'),
     ('M23 [vue] la vue s\'ecrit des le PREMIER rendu (afficher modifie la seance : le defaut des bancs « aide » / « abandon »)',
      [(LO, "    if(!_vueBase||_vueBase.w!==w){ _vueBase={w,i:v.i,n:v.n}; return; }   // 1ᵉʳ rendu de cette séance : rien n'est écrit\n", "    if(!_vueBase||_vueBase.w!==w){ _vueBase={w,i:-1,n:''}; }\n")], 'GARDE', 'B-S2NAV-VUE-0'),
+    ('M24 [vue] l\'ecriture de la vue modifie AUSSI une valeur de serie sur le disque (« champ seul » viole sans changer une longueur)',
+     [(LO, "    d.vue=v; localStorage.setItem('ft4_wkt',JSON.stringify(d));", "    d.vue=v; try{ d.exs[0].sets[0].kg=(d.exs[0].sets[0].kg||0)+1; }catch(_){} localStorage.setItem('ft4_wkt',JSON.stringify(d));")], 'GARDE', 'B-S2NAV-VUE-7b'),
     ('M21 [equivalente] le rang du partenaire est converti en nombre (meme valeur)',
      [(LO, "      const firstIdx=_mouv.idx;", "      const firstIdx=+_mouv.idx;")], 'OK'),
     ('M22 [equivalente] `_vueMemoriser` relit le rang par un accesseur equivalent',

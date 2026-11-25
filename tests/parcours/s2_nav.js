@@ -252,9 +252,13 @@ async function ecranVue(t, b, PORT) {
     t('B-S2NAV-VUE-7 une autre séance sur le disque (autre onglet) n\'est jamais écrasée, et ouvrir une carte n\'appelle pas `persist()` (aucune synchronisation)', r.runId === 'autre-onglet' && r.vue === null && r.nbPersist === 0, _det(r)); }
   // VUE-7b : la MÊME séance sur le disque — la vue s'y écrit (champ seul), et toujours sans `persist()` (donc sans relancer la synchronisation)
   await seance();
-  { const r = await X.pg.evaluate(() => { let nbPersist = 0; const p = window.persist; window.persist = function () { nbPersist++; return p.apply(this, arguments); };
-      toggleExBlock(2); toggleExBlock(1); window.persist = p; const d = JSON.parse(localStorage.getItem('ft4_wkt')); return { vue: d.vue || null, nbPersist, exsIntactes: d.exs.length === 3 && d.exs[0].sets.length === 3 }; });
-    t('B-S2NAV-VUE-7b dans la même séance la vue s\'écrit dans `ft4_wkt` (champ seul, séries intactes) et ouvrir une carte n\'appelle JAMAIS `persist()`', r.vue && r.vue.i === 1 && r.vue.n === 'Développé Couché' && r.nbPersist === 0 && r.exsIntactes, _det(r)); }
+  // ⭐ « champ seul » se MESURE sur tout le contenu : `ft4_wkt` avant/après, SANS le champ `vue`, doit être identique octet pour octet (une valeur de série, un nom, un drapeau modifiés par l'écriture de la vue font rougir)
+  { const r = await X.pg.evaluate(() => { const sansVue = (txt) => { const o = JSON.parse(txt); delete o.vue; return JSON.stringify(o); };
+      const brutAvant = localStorage.getItem('ft4_wkt'); const avant = brutAvant ? sansVue(brutAvant) : null;
+      let nbPersist = 0; const p = window.persist; window.persist = function () { nbPersist++; return p.apply(this, arguments); };
+      toggleExBlock(2); toggleExBlock(1); window.persist = p; const brutApres = localStorage.getItem('ft4_wkt'); const d = JSON.parse(brutApres); const apres = sansVue(brutApres);
+      return { vue: d.vue || null, nbPersist, exsIntactes: d.exs.length === 3 && d.exs[0].sets.length === 3, identiqueHorsVue: avant !== null && avant === apres, octets: avant ? avant.length : 0 }; });
+    t('B-S2NAV-VUE-7b dans la même séance la vue s\'écrit dans `ft4_wkt` (champ seul, séries intactes) et ouvrir une carte n\'appelle JAMAIS `persist()`', r.vue && r.vue.i === 1 && r.vue.n === 'Développé Couché' && r.nbPersist === 0 && r.exsIntactes && r.identiqueHorsVue === true, _det(r)); }
   await seance();
   { const r = await X.pg.evaluate(() => { toggleExBlock(1); const avant = S.wkt.vue; S.wkt.exs.forEach(e => e.sets.forEach(s => { s.done = true; })); S.wkt.cardio = null; return { avant, avecVue: JSON.stringify(S.wkt).includes('"vue"') }; });
     t('B-S2NAV-VUE-8 la vue est un champ de la séance EN COURS seulement : elle n\'est pas copiée dans la séance enregistrée', r.avant && r.avecVue === true, _det(r)); }
