@@ -2179,7 +2179,8 @@ function upSet(ei,si,f,v){
    (`#sr-ei-si`). Un appel sans événement (tests, code interne), un événement d'un autre type ou d'une autre ligne n'est JAMAIS refusé : une identification manquée laisse
    passer, elle ne bloque jamais. `isTrusted` n'est PAS exigé (décision de Michel, 27/11 : les témoins envoient des événements synthétiques). Le gabarit du bouton
    (`onclick="toggleSet(ei,si)"`) n'a pas changé.
-   📴 L'armement est levé quand la page passe en arrière-plan (`visibilitychange` masqué, `pagehide`) : l'horloge d'un appareil endormi n'est pas fiable.
+   📴 L'armement est levé quand la page passe en arrière-plan (`visibilitychange` masqué) : l'horloge d'un appareil endormi n'est pas fiable.
+   ⛔ AUCUN écouteur `pagehide` ici (retiré le 27/11, mesuré) : enregistré avant celui de `coach.js`, il faisait effacer « en vol » d'une analyse de débrief au rechargement (`OD-07`, `T4`) ; `visibilitychange` couvre déjà le départ de la page.
    ⚠️ LIMITE ÉCRITE : un second appui si rapide qu'il part AVANT le redessin vise encore l'ancienne case (la même) et la dévalide (double appui sur une même
    case = comportement d'avant, décision produit séparée). Durée initiale 300 ms, à ajuster après la recette iPhone. */
 const GARDE_PASSAGE_MS=300;
@@ -2208,7 +2209,6 @@ function _gardeRefuse(ex,ev){
 }
 try{
   document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='hidden') _gardeDesarmer(); });   // en arrière-plan : on ne se fie plus à l'horloge
-  window.addEventListener('pagehide',_gardeDesarmer);
 }catch(e){}
 function toggleSet(ei,si){
   const set=S.wkt.exs[ei].sets[si];

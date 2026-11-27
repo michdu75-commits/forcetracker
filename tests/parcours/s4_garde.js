@@ -4,6 +4,7 @@
    partenaire de superset, aux tours suivants et aux sorties, limitée à la VALIDATION de l'exercice nouvellement ouvert ; préserver la dévalidation, les
    validations volontaires et la navigation ; aucun verrou global ; aucune donnée persistée ; préserver le RIR précédent, le chrono, les charges et les
    compteurs ; référence temporelle monotone, armée au moment effectif du changement d'exercice. »
+   ⚠️ 28 témoins depuis le retrait de G19b (R30, 27/11, « option A » : voir plus bas) ; les chiffres qui suivent sont ceux du commit 3899e4f0, avant ce retrait.
    ✅ Qualifié en ciblé le 27/11/2026 (commit 3899e4f0) : `node tools/banc_s4_garde.js` → 29 OK / 0 rouge ; `python3 tools/mut_s4_garde.py` → 25/25 conformes (chaque mutation rougit
    son témoin). Branché dans `tests/parcours/runner.js` le même jour. Un témoin qui ne rougit pas n'a pas sa place ici (R35).
    Ce que les témoins CONDUISENT : la vraie page dans Chromium, réseau coupé, avec de VRAIS événements `click` / `keydown` envoyés aux vrais boutons ✓ et champs kg
@@ -177,14 +178,17 @@ async function ecran(t, b, PORT) {
     const ok = await run(`(() => { __g.ordinaire(); const e = __g.entree(1, 2, 5400, 5400); return { e, f: __g.snap().faits }; })()`);
     t('B-S4GARDE-G17 Entrée dans le champ kg du squat : ignorée à +167 ms, acceptée à +400 ms (même protection que le toucher)', !r.e.absent && r.f[1] === 0 && !ok.e.absent && ok.f[1] === 1, _det({ r, ok })); }
 
-  // G-19 : EN ARRIÈRE-PLAN la protection est levée (l'horloge d'un appareil endormi n'est pas fiable) — `visibilitychange` masqué, `pagehide` ; « visible » ne lève rien.
+  // G-19 : EN ARRIÈRE-PLAN la protection est levée (l'horloge d'un appareil endormi n'est pas fiable) — `visibilitychange` masqué ; « visible » ne lève rien. (Pas de `pagehide` : voir G19b retiré ci-dessous.)
   { const r = await run(`(() => { const etat = v => Object.defineProperty(document, 'visibilityState', { get: () => v, configurable: true });
       __g.ordinaire(); etat('visible'); document.dispatchEvent(new Event('visibilitychange')); const encore = __g.snap().garde;
       etat('hidden'); document.dispatchEvent(new Event('visibilitychange')); const apres = __g.snap().garde; const a = __g.second(100, 100);
       delete document.visibilityState; return { encore, apres, f: a.s.faits[1] }; })()`);
     t('B-S4GARDE-G19 `visibilitychange` : « visible » ne lève pas la protection ; « hidden » la lève (un appui à +100 ms est alors accepté)', r.encore === true && r.apres === false && r.f === 1, _det(r)); }
-  { const r = await run(`(() => { __g.ordinaire(); window.dispatchEvent(new Event('pagehide')); const apres = __g.snap().garde; const a = __g.second(100, 100); return { apres, f: a.s.faits[1] }; })()`);
-    t('B-S4GARDE-G19b `pagehide` lève la protection (un appui à +100 ms est alors accepté)', r.apres === false && r.f === 1, _det(r)); }
+  /* ⛔ B-S4GARDE-G19b RETIRÉ (R30, 27/11/2026, GO de Michel « option A ») — il vérifiait que `pagehide` lève la protection. Raison MESURÉE : l'écouteur `pagehide` de S4, enregistré avant celui de
+     `coach.js` (qui pose `_dbfQuitte`), faisait rougir deux témoins du débrief au VRAI rechargement (`OD-07`, `T4` : la carte disait « Analyser » au lieu de « Analyse interrompue ») ; sans cette
+     seule ligne le banc débrief repasse à 63 OK / 0 rouge. Le comportement décidé (levée en arrière-plan) reste couvert par G19 (`visibilitychange`) et ses mutations M22 / M23. G19b n'a jamais été
+     qualifié par une D-031 ni calibré au manifeste des identités ; la mutation M24 qui l'accompagnait est retirée avec lui. Le garde-fou permanent contre la rechute est OD-07 / T4 (vrai rechargement) :
+     un événement `pagehide` envoyé par script, comme ici, ne peut PAS voir un conflit d'ordre entre écouteurs. ⛔ Ne pas le réintroduire sans relire `BUGS.md` §168 Q et R. */
 
   // G-20 : IDENTIFICATION DU GESTE — seul un clic, ou Entrée, dont la cible est dans la ligne de la série visée peut être refusé ; tout le reste passe (jamais de blocage sur doute).
   { const r = await run(`(() => {

@@ -3,7 +3,7 @@
 """CONTROLE NEGATIF — S4-GARDE (Claude N°2 Seance, 27/11/2026, ft-v1269) : les temoins B-S4GARDE-* savent-ils ROUGIR ?
 (la protection contre le double appui : P1, 300 ms, ciblee, silencieuse, armee aux changements d'exercice par passage automatique)
 
-[!!] PREPARE, NON EXECUTE : aucun lancement sans GO distinct de Michel. Mis a jour avec le code de la protection (ancres relues a la main).
+[!!] Qualifie en cible le 27/11/2026 (25/25 sur 3899e4f0), puis M24 RETIREE le meme jour (R30, option A) : 24 mutations = 22 detectees + 2 equivalentes (M18, M25). Ancres relues a la main.
 [!!] DANS LA COPIE MUTEE : chaque mutation est appliquee a un ARBRE COPIE, jamais au depot (BUGS.md §60).
 Point de depart : 0 rouge sur l'arbre sain, mesure d'abord (et REJOUE a la fin : un banc instable pourrait « attraper » par hasard).
 Les mutations [equivalente] ne doivent PAS faire rougir (sinon le temoin mord sur la forme, pas sur le sens).
@@ -69,8 +69,9 @@ MUT = [
      [(LO, "if(document.visibilityState==='hidden') _gardeDesarmer();", "_gardeDesarmer();")], 'GARDE', 'B-S4GARDE-G19'),
     ('M23 [arriere-plan] `visibilitychange` ne desarme plus',
      [(LO, "document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='hidden') _gardeDesarmer(); });", "")], 'GARDE', 'B-S4GARDE-G19'),
-    ('M24 [arriere-plan] `pagehide` ne desarme plus',
-     [(LO, "window.addEventListener('pagehide',_gardeDesarmer);", "")], 'GARDE', 'B-S4GARDE-G19b'),
+    # M24 RETIREE (R30, 27/11/2026, GO de Michel « option A », avec le temoin B-S4GARDE-G19b) : elle supprimait l'ecouteur `pagehide` de S4, lui-meme retire du code parce qu'il faisait rougir OD-07 et T4
+    # du debrief au vrai rechargement (mesure : sans cette ligne, banc debrief 63 OK / 0 rouge). Son ancre n'existe plus : le script la refuserait comme INVALIDE. Le comportement decide (levee en
+    # arriere-plan) reste couvert par M22 / M23 (temoin G19). Numeros non reutilises : M25 garde son nom. Ne pas la reintroduire sans relire BUGS.md §168 Q et R.
     ('M25 [equivalente] le test `Number.isFinite(ts)` est retire (`ts>0` rejette deja NaN et `ts<=maintenant+1` rejette deja l\'infini)',
      [(LO, "(Number.isFinite(ts)&&ts>0&&ts<=maintenant+1", "(ts>0&&ts<=maintenant+1")], 'OK'),
 ]
