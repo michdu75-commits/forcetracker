@@ -2159,8 +2159,43 @@ function upSet(ei,si,f,v){
   s[f]=(f==='reps'&&s.reps===null&&!(n>0))?null:n;      // « Non renseigné » le reste tant qu'aucun nombre n'est saisi (effacer un champ vide ne l'invente pas à 0)
   if(s.kg&&s.reps)s.rm1=bz(s.kg,s.reps);persist();
 }
+/* 🛡️ S4 (ft-v1269, GO de Michel du 28/11/2026) — UN SECOND APPUI TROP RAPIDE NE VALIDE PAS L'EXERCICE QUE LE PASSAGE VIENT D'OUVRIR.
+   Constat (recette iPhone du 25/11, enregistrement d'écran) : la dernière série d'un exercice est validée, le passage automatique ouvre l'exercice suivant
+   DE FAÇON SYNCHRONE (`renderExBlocks` remplace le DOM avant que le doigt n'ait quitté l'écran) ; un second appui ~167 ms plus tard tombe donc sur la case
+   du nouvel exercice et la valide (+ le dock de transition est effacé, + `_rirPending` est écrasé : la question du RIR de la série précédente est perdue).
+   ⭐ LA PROTECTION (P1, décisions de Michel) : au moment EFFECTIF où le passage change l'exercice ouvert, on retient « quel exercice, à quel instant »
+   (`_gardeArmer`). Pendant `GARDE_PASSAGE_MS`, la VALIDATION d'une série de CET exercice, déclenchée par un geste de la personne, est ignorée en silence
+   (aucun toast, aucune vibration). Rien d'autre n'est touché : la dévalidation, les autres exercices, les séries d'un même exercice, les paliers d'un
+   dropset (pas de passage), la navigation manuelle (ouvrir une carte désarme), le chrono, le RIR, les charges et les compteurs.
+   ⛔ Ce n'est ni un verrou global, ni un retard du passage : le passage se fait comme avant, au même instant.
+   ⛔ AUCUNE DONNÉE PERSISTÉE : l'état ne vit qu'en mémoire (il disparaît à la relance, S13 n'est pas concerné).
+   ⏱️ RÉFÉRENCE MONOTONE : `performance.now()` (jamais `Date.now()`, qui peut reculer). L'instant du second appui est celui du GESTE (`event.timeStamp`, même
+   horloge), pas celui où son gestionnaire s'exécute : si le premier gestionnaire occupe le fil 400 ms, le second clic — arrivé physiquement à +167 ms —
+   est traité à +400 ms et sortirait de la fenêtre. Si `event.timeStamp` n'est pas dans la même horloge (anciens Safari : horodatage d'époque), on retombe
+   sur `performance.now()` — jamais pire que sans cette précaution.
+   👆 LES APPELS SANS GESTE (tests, code interne) NE SONT JAMAIS REFUSÉS : seule `window.event` (définie pendant le clic ou l'Entrée d'une vraie saisie) arme le
+   refus. C'est ce qui garde intacts les appels programmatiques des bancs existants ; le gabarit du bouton (`onclick="toggleSet(ei,si)"`) n'a pas changé.
+   ⚠️ LIMITE ÉCRITE : un second appui si rapide qu'il part AVANT le redessin vise encore l'ancienne case (la même) et la dévalide (double appui sur une même
+   case = comportement d'avant, décision produit séparée). Durée initiale 300 ms, à ajuster après la recette iPhone. */
+const GARDE_PASSAGE_MS=300;
+let _garde=null;   // { ex: l'OBJET exercice ouvert par le passage (pas son rang : un rang peut bouger), t: performance.now() }
+function _gardeInstant(ev){
+  const maintenant=performance.now();
+  const ts=ev&&typeof ev.timeStamp==='number'?ev.timeStamp:NaN;
+  return (ts>0&&ts<=maintenant+1&&maintenant-ts<5000)?ts:maintenant;   // même horloge que `performance.now()`, sinon repli
+}
+function _gardeArmer(idx){   // appelé AU MOMENT où `_expandedEx` change par un passage automatique, avant le redessin
+  try{ const ex=S.wkt&&Array.isArray(S.wkt.exs)?S.wkt.exs[idx]:null; _garde=ex?{ex,t:performance.now()}:null; }catch(e){ _garde=null; }
+}
+function _gardeDesarmer(){ _garde=null; }
+function _gardeRefuse(ex,ev){
+  if(!_garde||!ev||_garde.ex!==ex) return false;                       // pas de geste, ou pas l'exercice que le passage vient d'ouvrir
+  const dt=_gardeInstant(ev)-_garde.t;                                  // peut être légèrement négatif : appui parti pendant le gestionnaire
+  return dt<GARDE_PASSAGE_MS&&dt>-1000;
+}
 function toggleSet(ei,si){
   const set=S.wkt.exs[ei].sets[si];
+  if(set&&!set.done&&_gardeRefuse(S.wkt.exs[ei],(typeof window!=='undefined')?window.event:undefined)) return;   // S4 : AVANT toute mutation (le RIR en attente, le dock et les compteurs restent tels quels)
   const row=document.getElementById(`sr-${ei}-${si}`);
   /* 🔢 Une série « Non renseigné » ne se valide pas sans nombre : ni 0 inventé, ni 10 d'office. Le nombre saisi dans le champ (ou la suggestion
      grise qu'il affiche — la dernière fois, comme pour toute série) est repris à CET appui. Sinon : rien ne change, le champ est ramené sous le doigt. */
@@ -2320,11 +2355,11 @@ function toggleSet(ei,si){
       if(navigator.vibrate)navigator.vibrate([30]);
       if(_mouv.idx>ei){
         // Alternance A → B : avance immédiate SANS repos (la définition du superset, inchangée)
-        _expandedEx=_mouv.idx;renderExBlocks();_scrollTo(_mouv.idx);return;
+        _gardeArmer(_mouv.idx);_expandedEx=_mouv.idx;renderExBlocks();_scrollTo(_mouv.idx);return;
       }
       // Retour à un partenaire d'avant (tour suivant) : AVEC repos, l'écran est déjà sur lui avant que le chrono démarre
       const firstIdx=_mouv.idx;
-      _expandedEx=firstIdx;renderExBlocks();
+      _gardeArmer(firstIdx);_expandedEx=firstIdx;renderExBlocks();
       setTimeout(()=>{const el=document.getElementById('ex-block-'+firstIdx);if(el)el.scrollIntoView({behavior:'smooth',block:'start'});},80);
       startRest(sec);   // ⚠️ la consigne d'avance se pose APRÈS (startRest efface _restDoneCb)
       _restDoneCb=()=>{const el=document.getElementById('ex-block-'+firstIdx);if(el)el.scrollIntoView({behavior:'smooth',block:'start'});};
@@ -2347,7 +2382,7 @@ function toggleSet(ei,si){
       }
       if(groupType==='super'||groupType==='drop'){
         // Avance immédiate sans repos (super : tour suivant, drop : palier suivant)
-        _expandedEx=_ssNext;renderExBlocks();_scrollTo(_ssNext);return;
+        _gardeArmer(_ssNext);_expandedEx=_ssNext;renderExBlocks();_scrollTo(_ssNext);return;   // S4 : groupe « drop » hérité — même défaut (vue redessinée sous le doigt), aucun appui volontaire possible en 300 ms (le palier suivant se soulève)
       }
       // Pyramide : repos + auto-avance
       // ⚠️ APRÈS `startRest`, jamais avant : `startRest()` appelle `stopRest()`, qui remet
@@ -2355,7 +2390,7 @@ function toggleSet(ei,si){
       // ce passage automatique n'a donc JAMAIS fonctionné (trouvé le 11/08 en l'ajoutant
       // pour l'exercice ordinaire). Même correctif aux 3 endroits.
       startRest(sec);
-      _restDoneCb=()=>{_expandedEx=_ssNext;renderExBlocks();_scrollTo(_ssNext);};
+      _restDoneCb=()=>{_gardeArmer(_ssNext);_expandedEx=_ssNext;renderExBlocks();_scrollTo(_ssNext);};   // S4 : pyramide héritée — l'avance différée change l'exercice ouvert au moment effectif (fin du repos ou « Passer »)
       const lbl=document.getElementById('rest-label');
       if(lbl)lbl.textContent=groupType==='pyramid-up'?'📈 Pyramide +':'📉 Pyramide −';
       if(!isAbdo&&_REPOS_PRESETS.includes(sec))_highlightRestPreset(sec);else _highlightRestPreset(-1);
@@ -2401,6 +2436,7 @@ function toggleSet(ei,si){
        ⛔ Le repos reste celui de l'exercice qu'on vient de TERMINER (`_restEx`, ses −15/+15 s) : le dock le DIT (« Repos · … ») et offre « ＋ Série sur … ».
        ⚠️ On n'enroule PAS vers le début, et on ne termine JAMAIS la séance tout seule (R29). */
     const _versSuite=(_mouv.kind==='sortie'&&_mouv.idx!=null)?_mouv.idx:null;
+    if(_versSuite!==null) _gardeArmer(_versSuite);   // S4 : armé AU MOMENT effectif du changement d'exercice, dans le même tick, juste avant le redessin
     if(_versSuite!==null){ _expandedEx=_versSuite; renderExBlocks(); _scrollTo(_versSuite); }
     startRest(sec);
     /* 🗣️ ON DIT POURQUOI LE CHRONO A CHANGÉ, sinon 2 min au lieu de 45 s se lit comme un bug
@@ -4322,6 +4358,7 @@ function toggleExpandAll(){
   if(typeof toast==='function')toast(S.expandAll?'Tous les exercices déroulés':'Mode concentration (un exercice à la fois)','info');
 }
 function toggleExBlock(ei){
+  _gardeDesarmer();   // S4 : ouvrir une carte à la main est un choix de la personne — la protection du passage s'arrête
   _expandedEx=(_expandedEx===ei)?ei:ei;
   _expandedEx=ei;
   renderExBlocks();
