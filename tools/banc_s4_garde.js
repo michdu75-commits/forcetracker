@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 require('../tests/_garde_reseau.js');   // ⛔ GARDE RÉSEAU EN 1ʳᵉ INSTRUCTION (D-031-SÉCURITÉ-01 : tout nouveau banc se garde lui-même ; D031S-VII ①)
-/* BANC — S4-GARDE (Claude N°2 Séance, 28/11/2026, ft-v1269) : le double appui ne valide pas l'exercice que le passage vient d'ouvrir (blocs B-S4GARDE-*).
+/* BANC — S4-GARDE (Claude N°2 Séance, 27/11/2026, ft-v1269) : le double appui ne valide pas l'exercice que le passage vient d'ouvrir (blocs B-S4GARDE-*).
    ⚠️ PRÉPARÉ, NON EXÉCUTÉ : aucun lancement sans GO distinct de Michel. Non branché dans `tests/parcours/runner.js` ni dans `repartition-3.json` :
    l'enregistrement (et le calibrage des identités de témoins) se fait avec la D-031 de qualification.
    Sert aussi au contrôle négatif : `python3 tools/mut_s4_garde.py`.
@@ -21,7 +21,7 @@ const srv = http.createServer((q, r) => {
 let ok = 0, ko = 0;
 const t = (nom, cond, det) => { if (cond) { ok++; console.log('   OK  ' + nom); } else { ko++; console.log('❌ ROUGE ' + nom + (det ? '  >> ' + det : '')); } };
 (async () => {
-  await new Promise(r => srv.listen(0, r));
+  await new Promise(r => srv.listen(0, '127.0.0.1', r));   // isolé sur la machine elle-même : le dépôt n'est pas servi aux autres interfaces (27/11)
   const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' });
   const T = require(path.join(ROOT, 'tests', 'parcours', 's4_garde.js'));
   await T.tout(t, b, srv.address().port);

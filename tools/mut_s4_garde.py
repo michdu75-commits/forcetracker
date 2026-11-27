@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""CONTROLE NEGATIF — S4-GARDE (Claude N°2 Seance, 28/11/2026, ft-v1269) : les temoins B-S4GARDE-* savent-ils ROUGIR ?
+"""CONTROLE NEGATIF — S4-GARDE (Claude N°2 Seance, 27/11/2026, ft-v1269) : les temoins B-S4GARDE-* savent-ils ROUGIR ?
 (la protection contre le double appui : P1, 300 ms, ciblee, silencieuse, armee aux changements d'exercice par passage automatique)
 
 [!!] PREPARE, NON EXECUTE : aucun lancement sans GO distinct de Michel. Mis a jour avec le code de la protection (ancres relues a la main).
@@ -18,7 +18,7 @@ SRC = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 LO = 'log.js'
 FICHIERS = ('log.js',)
 
-_REFUS = "if(set&&!set.done&&_gardeRefuse(S.wkt.exs[ei],(typeof window!=='undefined')?window.event:undefined)) return;"
+_REFUS = "if(set&&!set.done&&_gardeRefuse(S.wkt.exs[ei],_gardeGeste((typeof window!=='undefined')?window.event:undefined,ei,si))) return;"
 
 MUT = [
     ('M1 [protection] la protection est absente (aucun refus)',
@@ -28,13 +28,13 @@ MUT = [
     ('M3 [duree] la fenetre vaut 0 ms',
      [(LO, "const GARDE_PASSAGE_MS=300;", "const GARDE_PASSAGE_MS=0;")], 'GARDE', 'B-S4GARDE-G0'),
     ('M4 [horloge] l\'instant du GESTE est ignore : on lit l\'heure d\'execution (un gestionnaire lent fait sortir le 2e appui de la fenetre)',
-     [(LO, "return (ts>0&&ts<=maintenant+1&&maintenant-ts<5000)?ts:maintenant;", "return maintenant;")], 'GARDE', 'B-S4GARDE-G3'),
+     [(LO, "return (Number.isFinite(ts)&&ts>0&&ts<=maintenant+1&&maintenant-ts<GARDE_AGE_MAX_MS)?ts:maintenant;", "return maintenant;")], 'GARDE', 'B-S4GARDE-G3'),
     ('M5 [devalidation] la protection refuse aussi la DEVALIDATION',
      [(LO, "if(set&&!set.done&&_gardeRefuse(", "if(set&&_gardeRefuse(")], 'GARDE', 'B-S4GARDE-G5'),
     ('M6 [borne] la borne est incluse (300 ms exactement est refuse)',
-     [(LO, "return dt<GARDE_PASSAGE_MS&&dt>-1000;", "return dt<=GARDE_PASSAGE_MS&&dt>-1000;")], 'GARDE', 'B-S4GARDE-G2'),
-    ('M7 [negatif] un geste parti AVANT l\'armement (pendant le gestionnaire) n\'est plus protege',
-     [(LO, "return dt<GARDE_PASSAGE_MS&&dt>-1000;", "return dt<GARDE_PASSAGE_MS&&dt>=0;")], 'GARDE', 'B-S4GARDE-G2'),
+     [(LO, "return (_gardeInstant(ev)-_garde.t)<GARDE_PASSAGE_MS;", "return (_gardeInstant(ev)-_garde.t)<=GARDE_PASSAGE_MS;")], 'GARDE', 'B-S4GARDE-G2'),
+    ('M7 [borne basse] l\'ancienne borne arbitraire de -1000 ms est reintroduite (un geste ne avant l\'armement de plus de 1 s n\'est plus refuse)',
+     [(LO, "return (_gardeInstant(ev)-_garde.t)<GARDE_PASSAGE_MS;", "return (_gardeInstant(ev)-_garde.t)<GARDE_PASSAGE_MS&&(_gardeInstant(ev)-_garde.t)>-1000;")], 'GARDE', 'B-S4GARDE-G2b'),
     ('M8 [navigation] ouvrir une carte a la main ne desarme plus la protection',
      [(LO, "  _gardeDesarmer();   // S4 : ouvrir une carte à la main est un choix de la personne — la protection du passage s'arrête\n", "")], 'GARDE', 'B-S4GARDE-G14'),
     ('M9 [armement] la sortie vers l\'exercice suivant n\'arme plus rien',
@@ -47,16 +47,32 @@ MUT = [
      [(LO, "_gardeArmer(_ssNext);_expandedEx=_ssNext;renderExBlocks();_scrollTo(_ssNext);return;", "_expandedEx=_ssNext;renderExBlocks();_scrollTo(_ssNext);return;")], 'GARDE', 'B-S4GARDE-G12'),
     ('M13 [armement] l\'ancienne pyramide (avance differee) n\'arme plus rien',
      [(LO, "_restDoneCb=()=>{_gardeArmer(_ssNext);_expandedEx=_ssNext;", "_restDoneCb=()=>{_expandedEx=_ssNext;")], 'GARDE', 'B-S4GARDE-G13'),
-    ('M14 [sans geste] un appel programmatique est refuse lui aussi',
-     [(LO, "(typeof window!=='undefined')?window.event:undefined)) return;", "(typeof window!=='undefined'&&window.event)||{})) return;")], 'GARDE', 'B-S4GARDE-G4'),
+    ('M14 [sans geste] un appel programmatique (aucun evenement) est refuse lui aussi',
+     [(LO, "if(!ev||typeof ev.type!=='string'||!ev.target) return null;", "if(!ev||typeof ev.type!=='string'||!ev.target) ev={type:'click',target:document.getElementById('sr-'+ei+'-'+si)};")], 'GARDE', 'B-S4GARDE-G4'),
     ('M15 [donnee] la protection ecrit une trace dans la seance (donnee persistee)',
      [(LO, "_garde=ex?{ex,t:performance.now()}:null; }catch(e){ _garde=null; }", "_garde=ex?{ex,t:performance.now()}:null; if(ex)S.wkt._garde=1; }catch(e){ _garde=null; }")], 'GARDE', 'B-S4GARDE-G15'),
     ('M16 [horloge] horloge murale `Date.now()` a la place de la reference monotone',
      [(LO, "const maintenant=performance.now();", "const maintenant=Date.now();")], 'GARDE', 'B-S4GARDE-G1'),
-    ('M17 [equivalente] seuil de plausibilite de l\'horodatage du geste 5000 -> 6000 ms',
-     [(LO, "maintenant-ts<5000", "maintenant-ts<6000")], 'OK'),
+    # M17 : ETIQUETEE « equivalente » A TORT dans la 1re version (27/11, contre-expertise) : elle change le resultat pour un horodatage de 5500 ms d'age
+    # (ecart 0 → refuse, au lieu du repli → accepte). Les entrees des premiers temoins ne couvraient pas cette zone : survivant = TROU, pas equivalence. Reclassee GARDE, exige G3c.
+    ('M17 [plausibilite] le seuil d\'age de l\'horodatage du geste passe de 5000 a 6000 ms (un horodatage de 5500 ms est cru)',
+     [(LO, "const GARDE_AGE_MAX_MS=5000;", "const GARDE_AGE_MAX_MS=6000;")], 'GARDE', 'B-S4GARDE-G3c'),
     ('M18 [equivalente] le desarmement met `undefined` au lieu de `null`',
      [(LO, "function _gardeDesarmer(){ _garde=null; }", "function _gardeDesarmer(){ _garde=undefined; }")], 'OK'),
+    ('M19 [identification] n\'importe quel type d\'evenement est un geste (un focusout, un appel pendant un evenement sans rapport, est refuse)',
+     [(LO, "if(ev.type!=='click'&&!(ev.type==='keydown'&&ev.key==='Enter')) return null;", "")], 'GARDE', 'B-S4GARDE-G20'),
+    ('M20 [identification] n\'importe quelle touche est un geste (pas seulement Entree)',
+     [(LO, "!(ev.type==='keydown'&&ev.key==='Enter')", "!(ev.type==='keydown')")], 'GARDE', 'B-S4GARDE-G20'),
+    ('M21 [identification] la cible n\'est plus verifiee (un clic dans une AUTRE ligne est un geste)',
+     [(LO, "return (ligne&&ligne.contains(ev.target))?ev:null;", "return ev;")], 'GARDE', 'B-S4GARDE-G20'),
+    ('M22 [arriere-plan] `visibilitychange` desarme meme quand la page est visible',
+     [(LO, "if(document.visibilityState==='hidden') _gardeDesarmer();", "_gardeDesarmer();")], 'GARDE', 'B-S4GARDE-G19'),
+    ('M23 [arriere-plan] `visibilitychange` ne desarme plus',
+     [(LO, "document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='hidden') _gardeDesarmer(); });", "")], 'GARDE', 'B-S4GARDE-G19'),
+    ('M24 [arriere-plan] `pagehide` ne desarme plus',
+     [(LO, "window.addEventListener('pagehide',_gardeDesarmer);", "")], 'GARDE', 'B-S4GARDE-G19b'),
+    ('M25 [equivalente] le test `Number.isFinite(ts)` est retire (`ts>0` rejette deja NaN et `ts<=maintenant+1` rejette deja l\'infini)',
+     [(LO, "(Number.isFinite(ts)&&ts>0&&ts<=maintenant+1", "(ts>0&&ts<=maintenant+1")], 'OK'),
 ]
 
 

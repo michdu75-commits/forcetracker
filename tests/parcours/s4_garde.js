@@ -1,6 +1,6 @@
 /* ═════════════════════════════════════════════════════════════════
-   🛡️ S4-GARDE (Claude N°2 Séance, 28/11/2026, lot `ft-v1269`) — LE DOUBLE APPUI NE VALIDE PAS L'EXERCICE QUE LE PASSAGE VIENT D'OUVRIR (blocs B-S4GARDE-*).
-   GO de Michel (28/11) : « P1 retenue — 300 ms, constante nommée, protection ciblée silencieuse, armement aux passages ordinaires, aux changements de
+   🛡️ S4-GARDE (Claude N°2 Séance, 27/11/2026, lot `ft-v1269`) — LE DOUBLE APPUI NE VALIDE PAS L'EXERCICE QUE LE PASSAGE VIENT D'OUVRIR (blocs B-S4GARDE-*).
+   GO de Michel (27/11) : « P1 retenue — 300 ms, constante nommée, protection ciblée silencieuse, armement aux passages ordinaires, aux changements de
    partenaire de superset, aux tours suivants et aux sorties, limitée à la VALIDATION de l'exercice nouvellement ouvert ; préserver la dévalidation, les
    validations volontaires et la navigation ; aucun verrou global ; aucune donnée persistée ; préserver le RIR précédent, le chrono, les charges et les
    compteurs ; référence temporelle monotone, armée au moment effectif du changement d'exercice. »
@@ -87,6 +87,11 @@ async function ecran(t, b, PORT) {
     t('B-S4GARDE-G2 limites : refusé à −10 (geste parti pendant le gestionnaire), 0, 1, 167 et 299 ms ; ACCEPTÉ à 300, 301, 400 et 600 ms',
       [-10, 0, 1, 167, 299].every(d => rep[d] === 0) && [300, 301, 400, 600].every(d => rep[d] === 1), _det(rep)); }
 
+  // G-2b : AUCUNE BORNE BASSE — un geste né AVANT l'armement (horodatage matériel, gestionnaire en retard) est refusé quel que soit son retard plausible.
+  { const rep = {};
+    for (const dg of [-2000, -4900]) rep[dg] = await run(`(() => { __g.ordinaire(); return __g.second(${dg}, 0).s.faits[1]; })()`);
+    t('B-S4GARDE-G2b aucune borne basse : un geste né 2000 ms, ou 4900 ms, AVANT l\'armement est refusé (ancienne borne arbitraire de −1000 ms supprimée)', rep[-2000] === 0 && rep[-4900] === 0, _det(rep)); }
+
   // G-3 : RÉFÉRENCE MONOTONE ET INSTANT DU GESTE — un gestionnaire lent ne doit pas faire sortir le 2ᵉ appui de la fenêtre.
   { const lent = await run(`(() => { __g.ordinaire(); return __g.second(167, 400).s.faits[1]; })()`);              // geste à +167, exécuté à +400
     const lentOk = await run(`(() => { __g.ordinaire(); return __g.second(400, 400).s.faits[1]; })()`);            // geste à +400 : volontaire
@@ -94,6 +99,16 @@ async function ecran(t, b, PORT) {
     const epoqueOk = await run(`(() => { __g.ordinaire(); const a = __g.tap(1, 2, 1.7e12, 5400); return __g.snap().faits[1]; })()`);
     t('B-S4GARDE-G3 horloge monotone : geste à +167 mais exécuté à +400 → refusé (c\'est l\'instant du GESTE qui compte) ; geste à +400 → accepté', lent === 0 && lentOk === 1, _det({ lent, lentOk }));
     t('B-S4GARDE-G3b horodatage de geste inutilisable (époque) : repli sur `performance.now()` — refusé à +100, accepté à +400', epoque === 0 && epoqueOk === 1, _det({ epoque, epoqueOk })); }
+
+  // G-3c : PLAUSIBILITÉ de l'horodatage du geste (`GARDE_AGE_MAX_MS` = 5000) — dedans on s'en sert, au-delà on retombe sur l'horloge d'exécution.
+  { const age = {};
+    for (const a of [4999, 5000, 5500]) age[a] = await run(`(() => { __g.ordinaire(); return __g.second(0, ${a}).s.faits[1]; })()`);   // geste à l'instant 5000, exécuté a ms plus tard
+    t('B-S4GARDE-G3c plausibilité : horodatage vieux de 4999 ms → utilisé (écart 0 : refusé) ; vieux de 5000 ms ou 5500 ms → repli sur l\'heure d\'exécution (écart ≥ 5000 : accepté)',
+      age[4999] === 0 && age[5000] === 1 && age[5500] === 1, _det(age)); }
+  { const sans = await run(`(() => { __g.ordinaire(); __g.tap(1, 2, NaN, 5100); return __g.snap().faits[1]; })()`);
+    const sansOk = await run(`(() => { __g.ordinaire(); __g.tap(1, 2, NaN, 5400); return __g.snap().faits[1]; })()`);
+    const zero = await run(`(() => { __g.ordinaire(); __g.tap(1, 2, 0, 5100); return __g.snap().faits[1]; })()`);
+    t('B-S4GARDE-G3d horodatage absent (NaN) ou nul : repli sur l\'heure d\'exécution — refusé à +100 ms, accepté à +400 ms', sans === 0 && sansOk === 1 && zero === 0, _det({ sans, sansOk, zero })); }
 
   // G-4 : un appel SANS geste n'est jamais refusé (code interne, bancs existants).
   { const r = await run(`(() => { __g.ordinaire(); toggleSet(1, 2); return __g.snap().faits[1]; })()`);
@@ -161,6 +176,31 @@ async function ecran(t, b, PORT) {
   { const r = await run(`(() => { __g.ordinaire(); const e = __g.entree(1, 2, 5167, 5167); return { e, f: __g.snap().faits }; })()`);
     const ok = await run(`(() => { __g.ordinaire(); const e = __g.entree(1, 2, 5400, 5400); return { e, f: __g.snap().faits }; })()`);
     t('B-S4GARDE-G17 Entrée dans le champ kg du squat : ignorée à +167 ms, acceptée à +400 ms (même protection que le toucher)', !r.e.absent && r.f[1] === 0 && !ok.e.absent && ok.f[1] === 1, _det({ r, ok })); }
+
+  // G-19 : EN ARRIÈRE-PLAN la protection est levée (l'horloge d'un appareil endormi n'est pas fiable) — `visibilitychange` masqué, `pagehide` ; « visible » ne lève rien.
+  { const r = await run(`(() => { const etat = v => Object.defineProperty(document, 'visibilityState', { get: () => v, configurable: true });
+      __g.ordinaire(); etat('visible'); document.dispatchEvent(new Event('visibilitychange')); const encore = __g.snap().garde;
+      etat('hidden'); document.dispatchEvent(new Event('visibilitychange')); const apres = __g.snap().garde; const a = __g.second(100, 100);
+      delete document.visibilityState; return { encore, apres, f: a.s.faits[1] }; })()`);
+    t('B-S4GARDE-G19 `visibilitychange` : « visible » ne lève pas la protection ; « hidden » la lève (un appui à +100 ms est alors accepté)', r.encore === true && r.apres === false && r.f === 1, _det(r)); }
+  { const r = await run(`(() => { __g.ordinaire(); window.dispatchEvent(new Event('pagehide')); const apres = __g.snap().garde; const a = __g.second(100, 100); return { apres, f: a.s.faits[1] }; })()`);
+    t('B-S4GARDE-G19b `pagehide` lève la protection (un appui à +100 ms est alors accepté)', r.apres === false && r.f === 1, _det(r)); }
+
+  // G-20 : IDENTIFICATION DU GESTE — seul un clic, ou Entrée, dont la cible est dans la ligne de la série visée peut être refusé ; tout le reste passe (jamais de blocage sur doute).
+  { const r = await run(`(() => {
+      const ev = (Ctor, type, extra, ts) => { const e = new Ctor(type, Object.assign({ bubbles: true, cancelable: true }, extra || {})); Object.defineProperty(e, 'timeStamp', { value: ts }); return e; };
+      const essai = (choix) => { __g.ordinaire(); __g.h = 5100; choix(); return __g.snap().faits[1]; };
+      // (a) un appel programmatique pendant un événement d'un AUTRE TYPE (focusout, même dans la ligne visée) n'est jamais refusé
+      const a = essai(() => { const c = document.querySelector('#sr-1-2 .sinp'); c.addEventListener('focusout', () => toggleSet(1, 2), { once: true }); c.dispatchEvent(ev(FocusEvent, 'focusout', {}, 5100)); });
+      // (b) un clic dont la cible est dans une AUTRE ligne (série 1 du squat) n'est pas un geste sur la série 3 : jamais refusé
+      const b = essai(() => { const c = document.querySelector('#sr-1-0 .snum'); c.addEventListener('click', () => toggleSet(1, 2), { once: true }); c.dispatchEvent(ev(MouseEvent, 'click', {}, 5100)); });
+      // (c) une touche autre qu'Entrée n'est pas un geste de validation : jamais refusée
+      const c2 = essai(() => { const k = document.querySelectorAll('#sr-1-2 .sinp')[1]; k.addEventListener('keydown', () => toggleSet(1, 2), { once: true }); k.dispatchEvent(ev(KeyboardEvent, 'keydown', { key: 'a' }, 5100)); });
+      // (d) CONTRÔLE : un clic dont la cible est dans LA ligne visée (ici son numéro, pas le bouton) EST un geste : refusé
+      const d = essai(() => { const c = document.querySelector('#sr-1-2 .snum'); c.addEventListener('click', () => toggleSet(1, 2), { once: true }); c.dispatchEvent(ev(MouseEvent, 'click', {}, 5100)); });
+      return { a, b, c2, d }; })()`);
+    t('B-S4GARDE-G20 identification : événement d\'un autre type (focusout), clic dans une autre ligne, touche autre qu\'Entrée → jamais refusés ; clic dont la cible est dans la ligne visée → refusé',
+      r.a === 1 && r.b === 1 && r.c2 === 1 && r.d === 0, _det(r)); }
 
   t('B-S4GARDE-G18 aucune erreur de page pendant les scénarios', X.errs.length === 0, X.errs.slice(0, 2).join(' | '));
   await X.cx.close();

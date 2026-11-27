@@ -2159,7 +2159,7 @@ function upSet(ei,si,f,v){
   s[f]=(f==='reps'&&s.reps===null&&!(n>0))?null:n;      // « Non renseigné » le reste tant qu'aucun nombre n'est saisi (effacer un champ vide ne l'invente pas à 0)
   if(s.kg&&s.reps)s.rm1=bz(s.kg,s.reps);persist();
 }
-/* 🛡️ S4 (ft-v1269, GO de Michel du 28/11/2026) — UN SECOND APPUI TROP RAPIDE NE VALIDE PAS L'EXERCICE QUE LE PASSAGE VIENT D'OUVRIR.
+/* 🛡️ S4 (ft-v1269, GO de Michel du 27/11/2026, finalisé le 27/11) — UN SECOND APPUI TROP RAPIDE NE VALIDE PAS L'EXERCICE QUE LE PASSAGE VIENT D'OUVRIR.
    Constat (recette iPhone du 25/11, enregistrement d'écran) : la dernière série d'un exercice est validée, le passage automatique ouvre l'exercice suivant
    DE FAÇON SYNCHRONE (`renderExBlocks` remplace le DOM avant que le doigt n'ait quitté l'écran) ; un second appui ~167 ms plus tard tombe donc sur la case
    du nouvel exercice et la valide (+ le dock de transition est effacé, + `_rirPending` est écrasé : la question du RIR de la série précédente est perdue).
@@ -2173,16 +2173,30 @@ function upSet(ei,si,f,v){
    horloge), pas celui où son gestionnaire s'exécute : si le premier gestionnaire occupe le fil 400 ms, le second clic — arrivé physiquement à +167 ms —
    est traité à +400 ms et sortirait de la fenêtre. Si `event.timeStamp` n'est pas dans la même horloge (anciens Safari : horodatage d'époque), on retombe
    sur `performance.now()` — jamais pire que sans cette précaution.
-   👆 LES APPELS SANS GESTE (tests, code interne) NE SONT JAMAIS REFUSÉS : seule `window.event` (définie pendant le clic ou l'Entrée d'une vraie saisie) arme le
-   refus. C'est ce qui garde intacts les appels programmatiques des bancs existants ; le gabarit du bouton (`onclick="toggleSet(ei,si)"`) n'a pas changé.
+   ⛔ PAS DE BORNE BASSE : un geste né AVANT l'armement ne peut pas viser une vue qui n'existait pas encore (cas d'un horodatage matériel comparé à un armement pris à
+   l'exécution du gestionnaire, en retard) — il est refusé quel que soit son retard. Seule la plausibilité (`GARDE_AGE_MAX_MS`) écarte un horodatage d'une autre horloge.
+   👆 SEUL UN GESTE IDENTIFIÉ PEUT ÊTRE REFUSÉ (`_gardeGeste`) : `window.event` doit être un clic, ou la touche Entrée, dont la CIBLE est dans la ligne de la série visée
+   (`#sr-ei-si`). Un appel sans événement (tests, code interne), un événement d'un autre type ou d'une autre ligne n'est JAMAIS refusé : une identification manquée laisse
+   passer, elle ne bloque jamais. `isTrusted` n'est PAS exigé (décision de Michel, 27/11 : les témoins envoient des événements synthétiques). Le gabarit du bouton
+   (`onclick="toggleSet(ei,si)"`) n'a pas changé.
+   📴 L'armement est levé quand la page passe en arrière-plan (`visibilitychange` masqué, `pagehide`) : l'horloge d'un appareil endormi n'est pas fiable.
    ⚠️ LIMITE ÉCRITE : un second appui si rapide qu'il part AVANT le redessin vise encore l'ancienne case (la même) et la dévalide (double appui sur une même
    case = comportement d'avant, décision produit séparée). Durée initiale 300 ms, à ajuster après la recette iPhone. */
 const GARDE_PASSAGE_MS=300;
+const GARDE_AGE_MAX_MS=5000;   // un horodatage de geste plus vieux que ça (ou dans le futur) n'est pas dans la même horloge : repli sur `performance.now()`
 let _garde=null;   // { ex: l'OBJET exercice ouvert par le passage (pas son rang : un rang peut bouger), t: performance.now() }
 function _gardeInstant(ev){
   const maintenant=performance.now();
   const ts=ev&&typeof ev.timeStamp==='number'?ev.timeStamp:NaN;
-  return (ts>0&&ts<=maintenant+1&&maintenant-ts<5000)?ts:maintenant;   // même horloge que `performance.now()`, sinon repli
+  return (Number.isFinite(ts)&&ts>0&&ts<=maintenant+1&&maintenant-ts<GARDE_AGE_MAX_MS)?ts:maintenant;   // même horloge que `performance.now()`, sinon repli
+}
+function _gardeGeste(ev,ei,si){   // l'événement en cours, SEULEMENT si c'est un clic ou Entrée sur la ligne de cette série ; sinon null (jamais refusé)
+  try{
+    if(!ev||typeof ev.type!=='string'||!ev.target) return null;
+    if(ev.type!=='click'&&!(ev.type==='keydown'&&ev.key==='Enter')) return null;
+    const ligne=document.getElementById('sr-'+ei+'-'+si);
+    return (ligne&&ligne.contains(ev.target))?ev:null;
+  }catch(e){ return null; }
 }
 function _gardeArmer(idx){   // appelé AU MOMENT où `_expandedEx` change par un passage automatique, avant le redessin
   try{ const ex=S.wkt&&Array.isArray(S.wkt.exs)?S.wkt.exs[idx]:null; _garde=ex?{ex,t:performance.now()}:null; }catch(e){ _garde=null; }
@@ -2190,12 +2204,15 @@ function _gardeArmer(idx){   // appelé AU MOMENT où `_expandedEx` change par u
 function _gardeDesarmer(){ _garde=null; }
 function _gardeRefuse(ex,ev){
   if(!_garde||!ev||_garde.ex!==ex) return false;                       // pas de geste, ou pas l'exercice que le passage vient d'ouvrir
-  const dt=_gardeInstant(ev)-_garde.t;                                  // peut être légèrement négatif : appui parti pendant le gestionnaire
-  return dt<GARDE_PASSAGE_MS&&dt>-1000;
+  return (_gardeInstant(ev)-_garde.t)<GARDE_PASSAGE_MS;                 // aucune borne basse : un geste né avant l'armement est refusé (voir l'en-tête)
 }
+try{
+  document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='hidden') _gardeDesarmer(); });   // en arrière-plan : on ne se fie plus à l'horloge
+  window.addEventListener('pagehide',_gardeDesarmer);
+}catch(e){}
 function toggleSet(ei,si){
   const set=S.wkt.exs[ei].sets[si];
-  if(set&&!set.done&&_gardeRefuse(S.wkt.exs[ei],(typeof window!=='undefined')?window.event:undefined)) return;   // S4 : AVANT toute mutation (le RIR en attente, le dock et les compteurs restent tels quels)
+  if(set&&!set.done&&_gardeRefuse(S.wkt.exs[ei],_gardeGeste((typeof window!=='undefined')?window.event:undefined,ei,si))) return;   // S4 : AVANT toute mutation (le RIR en attente, le dock et les compteurs restent tels quels)
   const row=document.getElementById(`sr-${ei}-${si}`);
   /* 🔢 Une série « Non renseigné » ne se valide pas sans nombre : ni 0 inventé, ni 10 d'office. Le nombre saisi dans le champ (ou la suggestion
      grise qu'il affiche — la dernière fois, comme pour toute série) est repris à CET appui. Sinon : rien ne change, le champ est ramené sous le doigt. */
@@ -2382,7 +2399,7 @@ function toggleSet(ei,si){
       }
       if(groupType==='super'||groupType==='drop'){
         // Avance immédiate sans repos (super : tour suivant, drop : palier suivant)
-        _gardeArmer(_ssNext);_expandedEx=_ssNext;renderExBlocks();_scrollTo(_ssNext);return;   // S4 : groupe « drop » hérité — même défaut (vue redessinée sous le doigt), aucun appui volontaire possible en 300 ms (le palier suivant se soulève)
+        _gardeArmer(_ssNext);_expandedEx=_ssNext;renderExBlocks();_scrollTo(_ssNext);return;   // S4 : groupe « drop » hérité — même défaut (vue redessinée sous le doigt) ; un refus à tort coûte un nouvel appui, un appui accepté à tort valide la mauvaise série
       }
       // Pyramide : repos + auto-avance
       // ⚠️ APRÈS `startRest`, jamais avant : `startRest()` appelle `stopRest()`, qui remet
