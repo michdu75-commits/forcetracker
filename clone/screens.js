@@ -446,6 +446,9 @@ const _HELP_DATA={
   log:{
     title:'⚡ Séance',
     tips:[
+      /* ⏭️ S2 (ft-v1269, 24/11/2026) — règle d'or #11, point 3 : ce qu'on ne devine pas, c'est que le passage au mouvement suivant a lieu AVANT le repos, que les échauffements non faits ne le retardent pas,
+         et comment revenir ajouter une série. */
+      {i:'⏭️',t:'<b>Passage automatique</b> : quand tu valides la <b>dernière série de travail</b> d\'un exercice, l\'écran ouvre le suivant <b>avant</b> que le repos démarre ; le repos dit de quel exercice il est. Un échauffement non fait ne bloque rien. En <b>superset</b>, l\'alternance suit ce qu\'il reste à faire, puis tu sors vers le mouvement suivant. Une série en plus ? <b>＋ Série sur…</b> (pendant le repos) te ramène sur l\'exercice terminé. La séance, elle, ne se termine <b>jamais</b> toute seule.'},
       /* 🧮 SÉANCE V4 (22/11/2026) — règle d'or #11, point 3 : ce qu'on ne devine pas, c'est qu'une charge laissée vide n'est PAS un zéro et que rien n'est copié d'un autre programme,
          que « Précédent » compare sans rien reprendre, et que « Supprimer une série… » retire exactement la ligne choisie (palier de dropset compris, sauf le dernier). */
       {i:'🧮',t:'<b>Charge vide</b> : si tu valides une série sans charge, elle reste « non renseignée » — rien n\'est copié d\'un autre programme. <b>Précédent</b> montre la dernière fois et ne copie rien : il sert à comparer. <b>⋯ → Supprimer une série…</b> retire la ligne choisie, un palier de dropset compris (le dernier palier reste : <b>⚙️ Modifier paliers</b>).'},

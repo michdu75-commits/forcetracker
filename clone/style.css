@@ -225,6 +225,12 @@ html #root.on-log.seance-on:not(.on-home) .screens{margin-top:0;}   /* ⚠️ `:
 .rd-time{display:flex;align-items:center;gap:6px;margin-top:2px;padding:0;background:none;border:none;cursor:pointer;color:inherit;font-family:var(--font-cond);touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
 .rd-pen{width:15px;height:15px;stroke:var(--t2);fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;flex:none;}
 #rest-time{font-family:var(--font-cond);font-size:30px;font-weight:700;line-height:1.05;letter-spacing:-.02em;font-variant-numeric:tabular-nums;color:var(--sea);transition:color .4s;}
+#rest-suite{display:none;margin-top:3px;text-align:center;}   /* S2 : « Repos · [exercice] » · « ⏭️ Ensuite » · « ＋ Série sur » — vide = masqué, comme `#rest-label` */
+#rest-suite:not(:empty){display:block;}
+#rest-suite .rs-l1{font-size:12px;line-height:1.3;color:var(--t2);}
+#rest-suite .rs-l1 b{color:var(--t1);}
+#rest-suite .rs-l2{font-size:11px;line-height:1.3;color:var(--t3);}
+#rest-bar #rest-suite .rs-add{margin-top:5px;height:38px;min-width:0;padding:0 14px;font-size:13px;}
 #rest-label:empty{display:none;}          /* ligne label masquée quand vide → gagne ~15px de hauteur */
 #rest-over{font-size:11px;color:var(--gold);line-height:1.3;}
 #rest-over:empty{display:none;}

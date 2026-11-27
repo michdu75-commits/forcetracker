@@ -1,7 +1,7 @@
 {
-  "ref": "eed94b363199f57a09a0d1c1adb273c773a9a37d",
-  "sha": "eed94b363199f57a09a0d1c1adb273c773a9a37d",
-  "genere_le": "2026-11-23 15:30 UTC",
+  "ref": "5e68270b",
+  "sha": "5e68270b36a3144c87e2f647a5d1beb8b8e8fb44",
+  "genere_le": "2026-11-24 22:13 UTC",
   "fichiers": [
     "index.html",
     "style.css",
@@ -21,5 +21,5 @@
     "app.js"
   ],
   "banc_isolation": "22 OK / 0 rouge",
-  "empreinte": "c857e73e026d3784602255a8f53b24a8334de27182b60d9dc57e41a927435d5c"
+  "empreinte": "74b0a41dc45023cf704017f34787fb350c583674fca40c758194c545c6c78117"
 }

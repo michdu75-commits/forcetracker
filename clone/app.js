@@ -10289,6 +10289,8 @@ function exitDemoMode(){
 // ── GUIDE DE L'APPLICATION (diaporama, Menu → L'application) ────────
 // Guide-film : chaque slide = un vrai écran de l'app (guide/*.jpg) + un doigt animé (tap) + une phrase.
 const APP_GUIDE_SLIDES=[
+  /* ⏭️ DIAPO DU GUIDE (règle d'or #11, point 5 — S2, ft-v1269, 24/11/2026), SANS IMAGE exprès : une capture montrerait la séance de quelqu'un d'autre. Elle ne répète pas le point rouge (qui ANNONCE) : elle dit OÙ et ce qui reste à ta main (R25). */
+  {icon:'⏭️', t:'Le mouvement suivant s\'ouvre tout seul', cap:'<b>Tu valides ta dernière série d\'un exercice : l\'écran ouvre le suivant, avant le repos.</b> En <b>superset</b> aussi — même si un exercice a plus de séries que l\'autre.<br><br>Une série en plus ? Pendant le repos, <b>＋ Série sur…</b> te ramène sur l\'exercice terminé. <b>« Terminer » reste ton geste</b> : la séance ne se termine jamais toute seule. Si tu fermes l\'app, tu retrouves <b>l\'exercice où tu étais</b>.'},
   /* 🏋️ DIAPO DU GUIDE (règle d'or #11, point 5 — SÉANCE V4, 22/11/2026), SANS IMAGE exprès : une capture montrerait la séance de quelqu'un d'autre (ses exercices, ses charges), et le bandeau de mise à jour
      n'existe que quand une version est prête. Elle ne répète pas la pop-up : celle-ci ANNONCE que les mises à jour se proposent ; la diapo dit OÙ et ce que la séance reprend ou ne reprend pas (R25). */
   {icon:'🏋️', t:'Tes séances, sans surprise', cap:'<b>Ton jour de programme se recharge depuis ta dernière séance de CE jour</b> — jamais celle d\'un autre programme ; si l\'exercice n\'y était pas, tu retrouves sa prescription.<br><br><b>Charge vide ≠ zéro</b> : rien ne s\'invente. Une charge non renseignée reste vide ; au poids du corps tu choisis <b>PDC</b>, <b>PDC + lest</b> ou <b>PDC − assistance</b>.<br><br><b>Les mises à jour te sont proposées</b> sur l\'Accueil (« Mettre à jour » / « Plus tard ») : jamais pendant une séance, un enregistrement ou un briefing.'},
@@ -11446,7 +11448,7 @@ function _brouillonDejaEnregistre(draft){
    Safari de ft-v144 → v153 (docs/GALERES-ET-LECONS.md).
    Ce que dit le CACHE, lui, se dit À PART : la version plus récente qu'un service worker neuf a installée (`.app-maj`, voir `_majRefresh`).
    `.app-ver` ne porte JAMAIS que le numéro du code qui tourne : l'export (`_ecrireExport`) et le banc de Milo le recopient tel quel. */
-const APP_BUILD='ft-v1268';
+const APP_BUILD='ft-v1269';
 // Remplit les libellés de version : `.app-ver` = le code qui TOURNE (APP_BUILD) ; `.app-maj` = « mise à jour ft-vNNNN prête » quand un service worker neuf l'attend (vide sinon).
 // `data-pre` : le séparateur propre à chaque endroit (le pied du Menu écrit « ft-v1266 · mise à jour ft-v1267 prête », le badge d'« À propos » l'écrit seul sur sa ligne).
 function _setAppVersionEls(){
