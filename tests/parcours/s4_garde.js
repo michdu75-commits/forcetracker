@@ -4,8 +4,8 @@
    partenaire de superset, aux tours suivants et aux sorties, limitée à la VALIDATION de l'exercice nouvellement ouvert ; préserver la dévalidation, les
    validations volontaires et la navigation ; aucun verrou global ; aucune donnée persistée ; préserver le RIR précédent, le chrono, les charges et les
    compteurs ; référence temporelle monotone, armée au moment effectif du changement d'exercice. »
-   ⚠️ CE MODULE EST PRÉPARÉ, PAS ENCORE EXÉCUTÉ (aucun test automatisé n'est autorisé sans GO distinct). Premier passage à faire : `node tools/banc_s4_garde.js`
-   (sain : 0 rouge attendu) puis `python3 tools/mut_s4_garde.py` (chaque mutation doit rougir son témoin). Un témoin qui ne rougit pas n'a pas sa place ici (R35).
+   ✅ Qualifié en ciblé le 27/11/2026 (commit 3899e4f0) : `node tools/banc_s4_garde.js` → 29 OK / 0 rouge ; `python3 tools/mut_s4_garde.py` → 25/25 conformes (chaque mutation rougit
+   son témoin). Branché dans `tests/parcours/runner.js` le même jour. Un témoin qui ne rougit pas n'a pas sa place ici (R35).
    Ce que les témoins CONDUISENT : la vraie page dans Chromium, réseau coupé, avec de VRAIS événements `click` / `keydown` envoyés aux vrais boutons ✓ et champs kg
    (donc `window.event` est défini, comme sur un vrai appui), un horodatage de GESTE imposé (`event.timeStamp`) et une horloge `performance.now()` pilotée.
    Ce qu'ils OBSERVENT : `S.wkt` (séries validées), `_expandedEx`, `restStartTs`, `_rirCible`, `#rest-suite`, `ft4_wkt` sur le disque, le nombre d'appels à `persist()`.

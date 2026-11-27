@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 require('../tests/_garde_reseau.js');   // ⛔ GARDE RÉSEAU EN 1ʳᵉ INSTRUCTION (D-031-SÉCURITÉ-01 : tout nouveau banc se garde lui-même ; D031S-VII ①)
 /* BANC — S4-GARDE (Claude N°2 Séance, 27/11/2026, ft-v1269) : le double appui ne valide pas l'exercice que le passage vient d'ouvrir (blocs B-S4GARDE-*).
-   ⚠️ PRÉPARÉ, NON EXÉCUTÉ : aucun lancement sans GO distinct de Michel. Non branché dans `tests/parcours/runner.js` ni dans `repartition-3.json` :
-   l'enregistrement (et le calibrage des identités de témoins) se fait avec la D-031 de qualification.
+   ✅ Qualifié en ciblé le 27/11/2026 (commit 3899e4f0 : 29 OK / 0 rouge ; contrôle négatif 25/25). Branché dans `tests/parcours/runner.js` (GO de Michel, 27/11) ;
+   volontairement absent de `repartition-3.json` : hors répartition, il tourne dans le processus 0 (docs/D031-ACCELEREE.md §7). Les identités de ses témoins
+   ne s'écrivent que par la passe de calibrage de la D-031 (tools/temoins.py).
    Sert aussi au contrôle négatif : `python3 tools/mut_s4_garde.py`.
    Usage : node tools/banc_s4_garde.js   (depuis la racine du dépôt ou d'un clone) */
 const { chromium } = require('/opt/node22/lib/node_modules/playwright');

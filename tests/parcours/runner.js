@@ -39216,6 +39216,10 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
   /* 🧭 S2-NAV (session-C / Claude N°2, 24/11/2026, lot ft-v1269) — le passage automatique entre exercices, ordinaire ET superset : non-régression dropset / pyramide / groupes / durées de repos
      (NR-*, écrite AVANT le code), nouvelle navigation (S2-*), vue `S.wkt.vue` et reprise (VUE-*). Blocs B-S2NAV-*. Banc : tools/banc_s2_nav.js · contrôle négatif : tools/mut_s2_nav.py. */
   await require('./s2_nav.js').tout(t, b, PORT);
+  /* 🛡️ S4-GARDE (Claude N°2 Séance, 27/11/2026, lot ft-v1269) — le double appui sur ✓ ne valide pas l'exercice que le passage automatique vient d'ouvrir (protection volatile de 300 ms, silencieuse,
+     limitée à la VALIDATION d'une série de l'exercice nouvellement ouvert ; dévalidation, appels sans geste et navigation libres ; aucune donnée persistée). 29 témoins B-S4GARDE-*, vrais événements dans Chromium.
+     Banc : tools/banc_s4_garde.js · contrôle négatif : tools/mut_s4_garde.py. Hors répartition (comme les modules Nutrition V2) : joué par le processus 0 (docs/D031-ACCELEREE.md §7). */
+  await require('./s4_garde.js').tout(t, b, PORT);
   /* 🏋️ UX SÉANCE (session-B, 16/10/2026, cadrage validé par Michel) — l'écran Séance en deux états : avant (« Séance libre »,
      « Programme », contexte, types, autres options), pendant (en-tête « Séance en cours » dans la barre haute : chrono,
      séries de TRAVAIL faites / prévues, ⋯, « Terminer » qui demande s'il reste des séries) ; menu ⋯ ; bouton central (même
