@@ -6507,3 +6507,18 @@ Saisie tardive / correction de charge d'un palier descendant (S12) · S12a (anci
 
 ### K. Prochain point de reprise EXACT
 Michel arbitre : **(1)** la durée T et la forme P1 de S4 (et si S11, `.rs-add` 44 px y partent) ; **(2)** K1/K2/K3 (dock + clavier) et Z1-Z4 (zoom) ; **(3)** S9 et S13 (A dérivée vs B persistée). Sans ces arbitrages : **rien n'est codé**. Après un GO explicite de correction : branche dédiée depuis `71295852`, `git fetch` + ligne au journal de partage, témoins S4 (positifs, négatifs, limites temporelles, mutations) **avant** le code, puis qualification complète (voir G). Dépôt : branche S2 `71295852` (+ cette mise à jour documentaire locale, non poussée), master `b4fea36b`, production `ft-v1268` (`dde3e9a2`).
+
+### L. Fiche d'arbitrage du 27/11/2026 (demande de Michel : détail de P1, K1-K3, Z1-Z4, A/B) — **PROPOSITIONS, rien n'est décidé, rien n'est codé** ; S4 reste la priorité bloquante
+**Décisions à prendre, une par une** (la colonne « Décision » se remplit au fil des arbitrages, ancienne valeur conservée) :
+| # | Ticket | Question | Options | Mon penchant (non décisionnel) | Décision de Michel |
+|---|---|---|---|---|---|
+| 1 | SEANCE-1269-S4 | Forme de la protection | P1 quarantaine ciblée · P2 anti-rebond par case · P3 verrou global · P4 CSS · P5 passage retardé · P6 ordre imposé | **P1** (seule qui couvre S4 sans gêner les validations volontaires) ; P2 hors S4 ; P3-P6 rejetées | _à arbitrer_ |
+| 2 | SEANCE-1269-S4 | Durée T, instant de référence, silence | 250 / 300 / 400 ms ; fin du 1ᵉʳ geste ou `event.timeStamp` ; refus silencieux ou vibration | 300 ms (constante nommée), fin du 1ᵉʳ geste, **silencieux** ; T confirmée par une mesure sur iPhone | _à arbitrer_ |
+| 3 | SEANCE-1269-S4 | Portée de l'armement | passages ordinaires + superset (avance, tour suivant, sortie) ; groupes drop/pyramide hérités inclus ou non | ordinaires + superset ; **hérités exclus** (aucun comportement nouveau pour eux) | _à arbitrer_ |
+| 4 | SEANCE-1269-S3 | Dock et clavier | K1 dock suit le clavier · K1b version compacte · K2 pilule existante en en-tête · K3 ne rien changer | **K2** si la pilule est visible sur l'écran Séance, sinon K1b ; vérification de l'emplacement d'abord | _à arbitrer_ |
+| 5 | SEANCE-1269-ZOOM | Zoom en séance | Z1 champ PDC à 16 px · Z2 dock suit zoom + clavier · Z3 blocage du pincement (réglage, défaut OFF) · Z4 rien | Z1 + Z2 ; Z3 seulement en réglage optionnel | _à arbitrer_ |
+| 6 | SEANCE-1269-S13 | Restauration du contexte de repos | A dérivation sans nouvelle donnée · B cible rangée dans `repos` (contredit la décision n°1) · C statu quo documenté | **A**, limitée aux cas non ambigus | _à arbitrer_ |
+| 7 | SEANCE-1269-S9 | Ajout nominatif après sortie de superset | un bouton par membre · statu quo | statu quo (faible gravité) | _à arbitrer_ |
+| 8 | SEANCE-1269-S11 / S3B | Petits correctifs à joindre à S4 ? | libellé « plus de série prévue » ; `.rs-add` à 44 px ; ou rien | libellé + 44 px seulement si Michel veut les joindre ; chaque ajout allonge la recette iPhone | _à arbitrer_ |
+**Mesure de l'exposition en tests (lecture seule, 27/11)** : 102 appels `toggleSet(` dans 21 fichiers de `tests/` (dont `import_fidelite.js` 26, `s2_nav.js` 17, `runner.js` 10, `debrief_provenance.js` 8, `seance_ui.js` 8) : c'est un MAJORANT du nombre de témoins qu'une quarantaine P1 pourrait atteindre ; l'impact réel (validations enchaînées entre exercices sans délai) n'est **pas mesuré** — à mesurer avant tout correctif, sans affaiblir un témoin (D-172).
+**Rappels** : tout correctif = branche dédiée depuis `71295852`, témoins avant le code, clone S2 régénéré si l'application change, D-031 complète sur l'arbre candidat, recette iPhone, R18, GO de production distinct.
