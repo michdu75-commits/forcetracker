@@ -6430,7 +6430,7 @@ vraie concurrence en processus séparés avec auto-contrôle sans verrou, non-r�
 | S1 passage automatique (DC 60 kg, sans « Passer ») | favorable déclaré (25/11 14:25, oral) | pas de capture archivée |
 | S2 « + Série sur [exercice] » pendant le repos | favorable déclaré (25/11 16:00) | sous-critères non documentés un à un |
 | **S3 clavier / zoom / dock** | **PARTIEL — écart à arbitrer** (25/11 23:54) | bouton central stable mesuré (x=194, y=1016, 51-52 × 52 px) ; restent : nom très long, largeurs 375/390/430, cible ≥ 44 px |
-| **S4 double appui** | **FAIL BLOQUANT** (25/11 23:48) | `ScreenRecording_11-25-2026 23-48-21_1.mp4` ; diagnostiquée, non corrigée |
+| **S4 double appui** | **FAIL BLOQUANT** (25/11 23:48) — **↪️ 28/11 : CLOS sur le clone TEST** (double appui ET bouton « Passer » validés par Michel, recette iPhone sur le clone `05843233`) | `ScreenRecording_11-25-2026 23-48-21_1.mp4` ; diagnostiquée ; corrigée (§168 M, N, S) ; validation 28/11 : déclaration de Michel, sans capture |
 | S5 échauffement non validé ne bloque pas | OK observé (25/11 23:57) | |
 | S6 dernière série X, repos 240 s | OK observé (26/11 00:01) | |
 | S7 superset 3+2 | OK observé (26/11 00:23) | |
@@ -6439,7 +6439,7 @@ vraie concurrence en processus séparés avec auto-contrôle sans verrou, non-r�
 | S10 RIR nominatif | OK : attribution et persistance du RIR 2 (historique, CSV, JSON, relance) | **non rouvert** sans élément nouveau |
 | S11 fin de séance | OK fonctionnel (26/11 16:09) ; écart UX | pas de fin automatique ; libellé « SÉRIE SUIVANTE » incohérent |
 | S12 dropsets / pyramides | a) anciens groupes **non joués** ; b) pyramide montante + dropset importé favorable partiel (charges vides, +10 % et import non vérifiés) ; c) dropset descendant OK ; saisie tardive / correction de palier **reportée par Michel** | |
-| S13 reprise après fermeture | a) favorable, **contexte de repos / bouton nominatif / RIR non restaurés** ; b) OK ; **c) migration V1268 → V1269 NON vérifiable sur le clone** ; d) favorable ; e) OK déclaré | |
+| S13 reprise après fermeture | a) favorable, **contexte de repos / bouton nominatif / RIR non restaurés** ; b) OK ; **c) migration V1268 → V1269 NON vérifiable sur le clone** ; d) favorable ; e) OK déclaré — **↪️ 28/11 : e) = VERROUILLAGE, validé par Michel sur le clone `05843233`** | **S13C reste « NON VÉRIFIÉE » : ne se valide qu'avec la migration réelle V1268 → V1269 (après publication)** |
 | S14 intégrité | favorable **AVEC RÉSERVES** | voir SEANCE-1269-S14 |
 
 ### B. Registre des anomalies et réserves — Lot A (sécurisation de ft-v1269)
